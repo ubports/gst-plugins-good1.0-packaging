@@ -39,14 +39,14 @@ endif
 version=$(shell dpkg-parsechangelog | grep ^Version: | cut -d ' ' -f 2)
 # upstream version
 gst_version=$(shell echo $(version) | cut -d '-' -f 1)
-gst_major=0
-gst_minor=10
+gst_major=1
+gst_minor=0
 gst_abi=$(gst_major).$(gst_minor)
 # gstreamer library package names
 gst_lib=libgstreamer$(gst_abi)-0
 gst_lib_dev=libgstreamer$(gst_abi)-dev
 # what gstreamer version is needed
-gst_lib_dev_dep=$(gst_lib_dev) (>= 0.10.36)
+gst_lib_dev_dep=$(gst_lib_dev) (>= 0.11.90)
 
 gst_pkgname=gstreamer$(gst_abi)
 gst_deb_abi=$(gst_abi)-0
