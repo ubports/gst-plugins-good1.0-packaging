@@ -10,8 +10,9 @@ gst-plugins-good1.0 (0.11.90-1) experimental; urgency=low
   [ Sebastian Dröge ]
   * Build-depend on libpng-dev instead of libpng12-dev.
   * Update copyright.
+  * Remove GConf build dependency.
 
- -- Sebastian Dröge <slomo@debian.org>  Wed, 02 May 2012 20:10:23 +0200
+ -- Sebastian Dröge <slomo@debian.org>  Wed, 02 May 2012 20:17:22 +0200
 
 gst-plugins-good0.10 (0.10.31-1) unstable; urgency=low
 
