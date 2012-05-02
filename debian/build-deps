@@ -12,7 +12,7 @@ debhelper (>= 8.1.3)
 dpkg-dev (>= 1.15.1)
 pkg-config (>= 0.11.0)
 gtk-doc-tools
-libglib2.0-dev (>= 2.24)
+libglib2.0-dev (>= 2.31.14)
 liborc-0.4-dev (>= 1:0.4.11)
 libcairo2-dev (>= 1.10.0)
 libcaca-dev
