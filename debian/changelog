@@ -1,7 +1,10 @@
 gst-plugins-good1.0 (0.11.91-1) experimental; urgency=low
 
   * Build-depend on GLib > 2.31.14.
-  * New upstream release, "I smell the blood of an Englishman".
+  * New upstream release, "I smell the blood of an Englishman":
+    + debian/rules,
+      debian/build-deps.in:
+      - Build depend on GStreamer core/base >= 0.11.91.
 
  -- Sebastian Dröge <slomo@debian.org>  Mon, 21 May 2012 12:56:30 +0200
 
