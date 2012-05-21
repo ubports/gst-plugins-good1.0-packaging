@@ -34,7 +34,7 @@ debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstmultipart.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstnavigationtest.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstpng.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstossaudio.so
-debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstoss4audio.so
+@oss4@
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstisomp4.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstreplaygain.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstrtp.so

@@ -6,7 +6,7 @@ Uploaders: Loic Minier <lool@dooz.org>,
            Sebastian Dröge <slomo@debian.org>,
            Sjoerd Simons <sjoerd@debian.org>
 Build-Depends: BUILDDEPS
-Standards-Version: 3.8.4
+Standards-Version: 3.9.3
 
 Package: @GST_PKGNAME@-plugins-good-doc
 Architecture: all
