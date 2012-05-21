@@ -880,6 +880,10 @@ static const GstV4L2FormatDesc gst_v4l2_formats[] = {
   {V4L2_PIX_FMT_DV, TRUE},
   {V4L2_PIX_FMT_MPEG, FALSE},
 
+#ifdef V4L2_PIX_FMT_H264
+  {V4L2_PIX_FMT_H264, TRUE},
+#endif
+
   /*  Vendor-specific formats   */
   {V4L2_PIX_FMT_WNVA, TRUE},
 
@@ -1199,6 +1203,11 @@ gst_v4l2_object_v4l2fourcc_to_structure (guint32 fourcc)
     case V4L2_PIX_FMT_HI240:   /*  8  8-bit color   */
       /* FIXME: get correct fourccs here */
       break;
+#ifdef V4L2_PIX_FMT_H264
+    case V4L2_PIX_FMT_H264:    /* H.264 */
+      structure = gst_structure_new_empty ("video/x-h264");
+      break;
+#endif
     case V4L2_PIX_FMT_RGB332:
     case V4L2_PIX_FMT_RGB555X:
     case V4L2_PIX_FMT_RGB565X:
@@ -1471,6 +1480,10 @@ gst_v4l2_object_get_caps_info (GstV4l2Object * v4l2object, GstCaps * caps,
       fourcc = V4L2_PIX_FMT_DV;
     } else if (g_str_equal (mimetype, "image/jpeg")) {
       fourcc = V4L2_PIX_FMT_JPEG;
+#ifdef V4L2_PIX_FMT_H264
+    } else if (g_str_equal (mimetype, "video/x-h264")) {
+      fourcc = V4L2_PIX_FMT_H264;
+#endif
 #ifdef V4L2_PIX_FMT_SBGGR8
     } else if (g_str_equal (mimetype, "video/x-bayer")) {
       fourcc = V4L2_PIX_FMT_SBGGR8;
@@ -2210,7 +2223,7 @@ gst_v4l2_object_set_format (GstV4l2Object * v4l2object, GstCaps * caps)
   fps_d = GST_VIDEO_INFO_FPS_D (&info);
   stride = GST_VIDEO_INFO_PLANE_STRIDE (&info, 0);
 
-  if (info.flags & GST_VIDEO_FLAG_INTERLACED) {
+  if (GST_VIDEO_INFO_IS_INTERLACED (&info)) {
     GST_DEBUG_OBJECT (v4l2object->element, "interlaced video");
     /* ideally we would differentiate between types of interlaced video
      * but there is not sufficient information in the caps..
@@ -2228,10 +2241,16 @@ gst_v4l2_object_set_format (GstV4l2Object * v4l2object, GstCaps * caps)
   GST_V4L2_CHECK_OPEN (v4l2object);
   GST_V4L2_CHECK_NOT_ACTIVE (v4l2object);
 
+  /* MPEG-TS source cameras don't get their format set for some reason.
+   * It looks wrong and we weren't able to track down the reason for that code
+   * so it is disabled until someone who has an mpeg-ts camera complains...
+   */
+#if 0
   /* Only unconditionally accept mpegts for sources */
   if ((v4l2object->type == V4L2_BUF_TYPE_VIDEO_CAPTURE) &&
       (pixelformat == GST_MAKE_FOURCC ('M', 'P', 'E', 'G')))
     goto done;
+#endif
 
   memset (&format, 0x00, sizeof (struct v4l2_format));
   format.type = v4l2object->type;

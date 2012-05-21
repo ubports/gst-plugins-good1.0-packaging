@@ -79,7 +79,6 @@ EXTRA_HFILES = \
 	$(top_srcdir)/ext/taglib/gstid3v2mux.h \
 	$(top_srcdir)/ext/pulse/pulsesink.h \
 	$(top_srcdir)/ext/pulse/pulsesrc.h \
-	$(top_srcdir)/ext/pulse/pulsemixer.h \
 	$(top_srcdir)/ext/speex/gstspeexenc.h \
 	$(top_srcdir)/ext/speex/gstspeexdec.h \
 	$(top_srcdir)/ext/wavpack/gstwavpackdec.h \
@@ -192,10 +191,8 @@ EXTRA_HFILES = \
 	$(top_srcdir)/gst/wavparse/gstwavparse.h \
 	$(top_srcdir)/gst/y4m/gsty4mencode.h \
 	$(top_srcdir)/sys/directsound/gstdirectsoundsink.h \
-	$(top_srcdir)/sys/oss4/oss4-mixer.h \
 	$(top_srcdir)/sys/oss4/oss4-sink.h \
 	$(top_srcdir)/sys/oss4/oss4-source.h \
-	$(top_srcdir)/sys/oss/gstossmixerelement.h \
 	$(top_srcdir)/sys/oss/gstosssink.h \
 	$(top_srcdir)/sys/oss/gstosssrc.h \
 	$(top_srcdir)/sys/osxaudio/gstosxaudiosrc.h \

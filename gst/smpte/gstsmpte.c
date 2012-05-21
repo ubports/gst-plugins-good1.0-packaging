@@ -146,11 +146,9 @@ gst_smpte_transition_type_get_type (void)
 }
 
 
-static void gst_smpte_class_init (GstSMPTEClass * klass);
-static void gst_smpte_init (GstSMPTE * smpte);
 static void gst_smpte_finalize (GstSMPTE * smpte);
 
-static GstFlowReturn gst_smpte_collected (GstCollectPads2 * pads,
+static GstFlowReturn gst_smpte_collected (GstCollectPads * pads,
     GstSMPTE * smpte);
 
 static void gst_smpte_set_property (GObject * object, guint prop_id,
@@ -161,33 +159,10 @@ static void gst_smpte_get_property (GObject * object, guint prop_id,
 static GstStateChangeReturn gst_smpte_change_state (GstElement * element,
     GstStateChange transition);
 
-static GstElementClass *parent_class = NULL;
-
 /*static guint gst_smpte_signals[LAST_SIGNAL] = { 0 }; */
 
-static GType
-gst_smpte_get_type (void)
-{
-  static GType smpte_type = 0;
-
-  if (!smpte_type) {
-    static const GTypeInfo smpte_info = {
-      sizeof (GstSMPTEClass),
-      NULL,
-      NULL,
-      (GClassInitFunc) gst_smpte_class_init,
-      NULL,
-      NULL,
-      sizeof (GstSMPTE),
-      0,
-      (GInstanceInitFunc) gst_smpte_init,
-    };
-
-    smpte_type =
-        g_type_register_static (GST_TYPE_ELEMENT, "GstSMPTE", &smpte_info, 0);
-  }
-  return smpte_type;
-}
+#define gst_smpte_parent_class parent_class
+G_DEFINE_TYPE (GstSMPTE, gst_smpte, GST_TYPE_ELEMENT);
 
 static void
 gst_smpte_class_init (GstSMPTEClass * klass)
@@ -338,8 +313,8 @@ gst_smpte_setcaps (GstPad * pad, GstCaps * caps)
 }
 
 static gboolean
-gst_smpte_sink_event (GstCollectPads2 * pads,
-    GstCollectData2 * data, GstEvent * event, gpointer user_data)
+gst_smpte_sink_event (GstCollectPads * pads,
+    GstCollectData * data, GstEvent * event, gpointer user_data)
 {
   GstPad *pad;
   gboolean ret = FALSE;
@@ -358,9 +333,11 @@ gst_smpte_sink_event (GstCollectPads2 * pads,
       break;
     }
     default:
-      ret = gst_pad_event_default (pad,
-          GST_OBJECT_CAST (GST_PAD_PARENT (pad)), event);
+      break;
   }
+
+  if (event != NULL)
+    return gst_collect_pads_event_default (pads, data, event, FALSE);
 
   return ret;
 }
@@ -382,16 +359,16 @@ gst_smpte_init (GstSMPTE * smpte)
       gst_pad_new_from_static_template (&gst_smpte_src_template, "src");
   gst_element_add_pad (GST_ELEMENT (smpte), smpte->srcpad);
 
-  smpte->collect = gst_collect_pads2_new ();
-  gst_collect_pads2_set_function (smpte->collect,
-      (GstCollectPads2Function) GST_DEBUG_FUNCPTR (gst_smpte_collected), smpte);
-  gst_collect_pads2_set_event_function (smpte->collect,
+  smpte->collect = gst_collect_pads_new ();
+  gst_collect_pads_set_function (smpte->collect,
+      (GstCollectPadsFunction) GST_DEBUG_FUNCPTR (gst_smpte_collected), smpte);
+  gst_collect_pads_set_event_function (smpte->collect,
       GST_DEBUG_FUNCPTR (gst_smpte_sink_event), smpte);
 
-  gst_collect_pads2_add_pad (smpte->collect, smpte->sinkpad1,
-      sizeof (GstCollectData2));
-  gst_collect_pads2_add_pad (smpte->collect, smpte->sinkpad2,
-      sizeof (GstCollectData2));
+  gst_collect_pads_add_pad (smpte->collect, smpte->sinkpad1,
+      sizeof (GstCollectData));
+  gst_collect_pads_add_pad (smpte->collect, smpte->sinkpad2,
+      sizeof (GstCollectData));
 
   smpte->fps = DEFAULT_PROP_FPS;
   smpte->type = DEFAULT_PROP_TYPE;
@@ -485,7 +462,7 @@ gst_smpte_blend_i420 (GstVideoFrame * frame1, GstVideoFrame * frame2,
 }
 
 static GstFlowReturn
-gst_smpte_collected (GstCollectPads2 * pads, GstSMPTE * smpte)
+gst_smpte_collected (GstCollectPads * pads, GstSMPTE * smpte)
 {
   GstBuffer *outbuf;
   GstClockTime ts;
@@ -505,14 +482,14 @@ gst_smpte_collected (GstCollectPads2 * pads, GstSMPTE * smpte)
       smpte->fps_denom, smpte->fps_num);
 
   for (collected = pads->data; collected; collected = g_slist_next (collected)) {
-    GstCollectData2 *data;
+    GstCollectData *data;
 
-    data = (GstCollectData2 *) collected->data;
+    data = (GstCollectData *) collected->data;
 
     if (data->pad == smpte->sinkpad1)
-      in1 = gst_collect_pads2_pop (pads, data);
+      in1 = gst_collect_pads_pop (pads, data);
     else if (data->pad == smpte->sinkpad2)
-      in2 = gst_collect_pads2_pop (pads, data);
+      in2 = gst_collect_pads_pop (pads, data);
   }
 
   if (in1 == NULL) {
@@ -684,17 +661,17 @@ gst_smpte_change_state (GstElement * element, GstStateChange transition)
     case GST_STATE_CHANGE_READY_TO_PAUSED:
       gst_smpte_reset (smpte);
       GST_LOG_OBJECT (smpte, "starting collectpads");
-      gst_collect_pads2_start (smpte->collect);
+      gst_collect_pads_start (smpte->collect);
       break;
     case GST_STATE_CHANGE_PAUSED_TO_READY:
       GST_LOG_OBJECT (smpte, "stopping collectpads");
-      gst_collect_pads2_stop (smpte->collect);
+      gst_collect_pads_stop (smpte->collect);
       break;
     default:
       break;
   }
 
-  ret = parent_class->change_state (element, transition);
+  ret = GST_ELEMENT_CLASS (parent_class)->change_state (element, transition);
 
   switch (transition) {
     case GST_STATE_CHANGE_PAUSED_TO_READY:

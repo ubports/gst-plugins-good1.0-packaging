@@ -48,7 +48,7 @@ This element decodes fli/flc/flx-video into raw video
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp12197840"></a><h3>Element Information</h3>
+<a name="idp5757568"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -71,7 +71,7 @@ This element decodes fli/flc/flx-video into raw video
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp5597472"></a><h3>Element Pads</h3>
+<a name="idp8040848"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -130,7 +130,7 @@ This element decodes fli/flc/flx-video into raw video
 
   gboolean active, new_meta;
 
-  GstBuffer *delta, *frame;
+  guint8 *delta_data, *frame_data;
   GstAdapter *adapter;
   gulong size;
   GstFlxDecState state;

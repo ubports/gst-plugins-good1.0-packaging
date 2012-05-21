@@ -23,7 +23,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#  include "config.h"
+#include "config.h"
 #endif
 
 #include <gst/gst.h>
@@ -51,6 +51,8 @@ struct _GstRndBufferSize
 
   GstPad *sinkpad, *srcpad;
   guint64 offset;
+
+  gboolean need_newsegment;
 };
 
 struct _GstRndBufferSizeClass
@@ -91,6 +93,8 @@ static gboolean gst_rnd_buffer_size_activate_mode (GstPad * pad,
 static void gst_rnd_buffer_size_loop (GstRndBufferSize * self);
 static GstStateChangeReturn gst_rnd_buffer_size_change_state (GstElement *
     element, GstStateChange transition);
+static gboolean gst_rnd_buffer_size_src_event (GstPad * pad,
+    GstObject * parent, GstEvent * event);
 
 GType gst_rnd_buffer_size_get_type (void);
 #define gst_rnd_buffer_size_parent_class parent_class
@@ -150,6 +154,8 @@ gst_rnd_buffer_size_init (GstRndBufferSize * self)
   gst_element_add_pad (GST_ELEMENT (self), self->sinkpad);
 
   self->srcpad = gst_pad_new_from_static_template (&src_template, "src");
+  gst_pad_set_event_function (self->srcpad,
+      GST_DEBUG_FUNCPTR (gst_rnd_buffer_size_src_event));
   gst_element_add_pad (GST_ELEMENT (self), self->srcpad);
 }
 
@@ -259,6 +265,7 @@ gst_rnd_buffer_size_activate_mode (GstPad * pad, GstObject * parent,
         res =
             gst_pad_start_task (pad, (GstTaskFunction) gst_rnd_buffer_size_loop,
             self);
+        self->need_newsegment = TRUE;
       } else {
         GST_INFO_OBJECT (self, "stopping pull");
         res = gst_pad_stop_task (pad);
@@ -271,6 +278,59 @@ gst_rnd_buffer_size_activate_mode (GstPad * pad, GstObject * parent,
   return res;
 }
 
+static gboolean
+gst_rnd_buffer_size_src_event (GstPad * pad, GstObject * parent,
+    GstEvent * event)
+{
+  GstRndBufferSize *self;
+  GstSeekType start_type;
+  GstSeekFlags flags;
+  GstFormat format;
+  gint64 start;
+
+  if (GST_EVENT_TYPE (event) != GST_EVENT_SEEK) {
+    GST_WARNING_OBJECT (pad, "dropping %s event", GST_EVENT_TYPE_NAME (event));
+    return FALSE;
+  }
+
+  self = GST_RND_BUFFER_SIZE (parent);
+  gst_event_parse_seek (event, NULL, &format, &flags, &start_type, &start,
+      NULL, NULL);
+
+  if (format != GST_FORMAT_BYTES) {
+    GST_WARNING_OBJECT (pad, "only BYTE format supported");
+    return FALSE;
+  }
+  if (start_type != GST_SEEK_TYPE_SET) {
+    GST_WARNING_OBJECT (pad, "only SEEK_TYPE_SET supported");
+    return FALSE;
+  }
+
+  if ((flags & GST_SEEK_FLAG_FLUSH)) {
+    gst_pad_push_event (self->srcpad, gst_event_new_flush_start ());
+    gst_pad_push_event (self->sinkpad, gst_event_new_flush_start ());
+  } else {
+    gst_pad_pause_task (self->sinkpad);
+  }
+
+  GST_PAD_STREAM_LOCK (self->sinkpad);
+
+  if ((flags & GST_SEEK_FLAG_FLUSH)) {
+    gst_pad_push_event (self->srcpad, gst_event_new_flush_stop (TRUE));
+    gst_pad_push_event (self->sinkpad, gst_event_new_flush_stop (TRUE));
+  }
+
+  GST_INFO_OBJECT (pad, "seeking to offset %" G_GINT64_FORMAT, start);
+
+  self->offset = start;
+  self->need_newsegment = TRUE;
+
+  gst_pad_start_task (self->sinkpad, (GstTaskFunction) gst_rnd_buffer_size_loop,
+      self);
+
+  GST_PAD_STREAM_UNLOCK (self->sinkpad);
+  return TRUE;
+}
 
 static void
 gst_rnd_buffer_size_loop (GstRndBufferSize * self)
@@ -300,6 +360,15 @@ gst_rnd_buffer_size_loop (GstRndBufferSize * self)
 
   if (size < num_bytes) {
     GST_WARNING_OBJECT (self, "short buffer: %u bytes", size);
+  }
+
+  if (self->need_newsegment) {
+    GstSegment segment;
+
+    gst_segment_init (&segment, GST_FORMAT_BYTES);
+    segment.start = self->offset;
+    gst_pad_push_event (self->srcpad, gst_event_new_segment (&segment));
+    self->need_newsegment = FALSE;
   }
 
   self->offset += size;
