@@ -90,7 +90,8 @@ enum
 static GstStaticPadTemplate sink_templ = GST_STATIC_PAD_TEMPLATE ("sink",
     GST_PAD_SINK,
     GST_PAD_ALWAYS,
-    GST_STATIC_CAPS ("video/x-matroska; video/webm")
+    GST_STATIC_CAPS ("audio/x-matroska; video/x-matroska; "
+        "video/x-matroska-3d; audio/webm; video/webm")
     );
 
 /* TODO: fill in caps! */
@@ -1669,7 +1670,10 @@ gst_matroska_demux_search_cluster (GstMatroskaDemux * demux, gint64 * pos)
     if (cluster_pos >= 0) {
       newpos += cluster_pos;
       /* prepare resuming at next byte */
-      gst_byte_reader_skip (&reader, cluster_pos + 1);
+      if (!gst_byte_reader_skip (&reader, cluster_pos + 1)) {
+        GST_DEBUG_OBJECT (demux, "Need more data -> continue");
+        continue;
+      }
       GST_DEBUG_OBJECT (demux,
           "found cluster ebml id at offset %" G_GINT64_FORMAT, newpos);
       /* extra checks whether we really sync'ed to a cluster:
@@ -1921,7 +1925,7 @@ gst_matroska_demux_handle_seek_event (GstMatroskaDemux * demux,
   GstSeekFlags flags;
   GstSeekType cur_type, stop_type;
   GstFormat format;
-  gboolean flush, keyunit;
+  gboolean flush, keyunit, before, after, snap_next;
   gdouble rate;
   gint64 cur, stop;
   GstMatroskaTrackContext *track = NULL;
@@ -1971,8 +1975,10 @@ gst_matroska_demux_handle_seek_event (GstMatroskaDemux * demux,
    * would be determined again when parsing, but anyway ... */
   seeksegment.duration = demux->common.segment.duration;
 
-  flush = ! !(flags & GST_SEEK_FLAG_FLUSH);
-  keyunit = ! !(flags & GST_SEEK_FLAG_KEY_UNIT);
+  flush = !!(flags & GST_SEEK_FLAG_FLUSH);
+  keyunit = !!(flags & GST_SEEK_FLAG_KEY_UNIT);
+  after = !!(flags & GST_SEEK_FLAG_SNAP_AFTER);
+  before = !!(flags & GST_SEEK_FLAG_SNAP_BEFORE);
 
   GST_DEBUG_OBJECT (demux, "New segment %" GST_SEGMENT_FORMAT, &seeksegment);
 
@@ -1985,11 +1991,14 @@ gst_matroska_demux_handle_seek_event (GstMatroskaDemux * demux,
   }
 
   /* check sanity before we start flushing and all that */
+  snap_next = after && !before;
+  if (seeksegment.rate < 0)
+    snap_next = !snap_next;
   GST_OBJECT_LOCK (demux);
   track = gst_matroska_read_common_get_seek_track (&demux->common, track);
   if ((entry = gst_matroska_read_common_do_index_seek (&demux->common, track,
-              seeksegment.position, &demux->seek_index, &demux->seek_entry)) ==
-      NULL) {
+              seeksegment.position, &demux->seek_index, &demux->seek_entry,
+              snap_next)) == NULL) {
     /* pull mode without index can scan later on */
     if (demux->streaming) {
       GST_DEBUG_OBJECT (demux, "No matching seek entry in index");
@@ -2049,8 +2058,9 @@ next:
   }
 
   if (keyunit) {
-    GST_DEBUG_OBJECT (demux, "seek to key unit, adjusting segment start to %"
-        GST_TIME_FORMAT, GST_TIME_ARGS (entry->time));
+    GST_DEBUG_OBJECT (demux, "seek to key unit, adjusting segment start from %"
+        GST_TIME_FORMAT " to %" GST_TIME_FORMAT,
+        GST_TIME_ARGS (seeksegment.start), GST_TIME_ARGS (entry->time));
     seeksegment.start = MAX (entry->time, demux->stream_start_time);
     seeksegment.position = seeksegment.start;
     seeksegment.time = seeksegment.start - demux->stream_start_time;

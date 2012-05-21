@@ -18,7 +18,7 @@
  */
 
 #include <gst/gst.h>
-#include <gst/base/gstbasetransform.h>
+#include <gst/video/gstvideofilter.h>
 #include <gst/video/video.h>
 
 #ifndef __GST_VIDEO_BOX_H__
@@ -52,12 +52,12 @@ GstVideoBoxFill;
 
 struct _GstVideoBox
 {
-  GstBaseTransform element;
+  GstVideoFilter element;
 
   /* <private> */
 
   /* Guarding everything below */
-  GMutex *mutex;
+  GMutex mutex;
   /* caps */
   GstVideoFormat in_format;
   gint in_width, in_height;
@@ -78,13 +78,13 @@ struct _GstVideoBox
 
   gboolean autocrop;
 
-  void (*fill) (GstVideoBoxFill fill_type, guint b_alpha, GstVideoFormat format, guint8 *dest, gboolean sdtv, gint width, gint height);
-  void (*copy) (guint i_alpha, GstVideoFormat dest_format, guint8 *dest, gboolean dest_sdtv, gint dest_width, gint dest_height, gint dest_x, gint dest_y, GstVideoFormat src_format, const guint8 *src, gboolean src_sdtv, gint src_width, gint src_height, gint src_x, gint src_y, gint w, gint h);
+  void (*fill) (GstVideoBoxFill fill_type, guint b_alpha, GstVideoFrame *dest, gboolean sdtv);
+  void (*copy) (guint i_alpha, GstVideoFrame * dest, gboolean dest_sdtv, gint dest_x, gint dest_y, GstVideoFrame * src, gboolean src_sdtv, gint src_x, gint src_y, gint w, gint h);
 };
 
 struct _GstVideoBoxClass
 {
-  GstBaseTransformClass parent_class;
+  GstVideoFilterClass parent_class;
 };
 
 GType gst_video_box_get_type (void);

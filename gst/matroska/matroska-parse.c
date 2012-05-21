@@ -87,13 +87,15 @@ enum
 static GstStaticPadTemplate sink_templ = GST_STATIC_PAD_TEMPLATE ("sink",
     GST_PAD_SINK,
     GST_PAD_ALWAYS,
-    GST_STATIC_CAPS ("video/x-matroska; video/webm")
+    GST_STATIC_CAPS ("audio/x-matroska; video/x-matroska; "
+        "video/x-matroska-3d; audio/webm; video/webm")
     );
 
 static GstStaticPadTemplate src_templ = GST_STATIC_PAD_TEMPLATE ("src",
     GST_PAD_SRC,
     GST_PAD_ALWAYS,
-    GST_STATIC_CAPS ("video/x-matroska; video/webm")
+    GST_STATIC_CAPS ("audio/x-matroska; video/x-matroska; "
+        "video/x-matroska-3d; audio/webm; video/webm")
     );
 
 static GstFlowReturn gst_matroska_parse_parse_id (GstMatroskaParse * parse,
@@ -1362,8 +1364,8 @@ gst_matroska_parse_handle_seek_event (GstMatroskaParse * parse,
   /* check sanity before we start flushing and all that */
   GST_OBJECT_LOCK (parse);
   if ((entry = gst_matroska_read_common_do_index_seek (&parse->common, track,
-              seeksegment.position, &parse->seek_index, &parse->seek_entry)) ==
-      NULL) {
+              seeksegment.position, &parse->seek_index, &parse->seek_entry,
+              FALSE)) == NULL) {
     /* pull mode without index can scan later on */
     GST_DEBUG_OBJECT (parse, "No matching seek entry in index");
     GST_OBJECT_UNLOCK (parse);
@@ -2523,7 +2525,13 @@ gst_matroska_parse_output (GstMatroskaParse * parse, GstBuffer * buffer,
     GValue bufval = { 0 };
     GstBuffer *buf;
 
-    caps = gst_caps_new_empty_simple ("video/x-matroska");
+    caps = gst_pad_get_current_caps (parse->common.sinkpad);
+    /* FIXME: could run typefinding over header and pick better default */
+    if (caps == NULL)
+      caps = gst_caps_new_empty_simple ("video/x-matroska");
+    else
+      caps = gst_caps_make_writable (caps);
+
     s = gst_caps_get_structure (caps, 0);
     g_value_init (&streamheader, GST_TYPE_ARRAY);
     g_value_init (&bufval, GST_TYPE_BUFFER);

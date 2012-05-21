@@ -23,7 +23,7 @@
 
 /**
  * SECTION:element-pulsesink
- * @see_also: pulsesrc, pulsemixer
+ * @see_also: pulsesrc
  *
  * This element outputs audio to a
  * <ulink href="http://www.pulseaudio.org">PulseAudio sound server</ulink>.
@@ -407,7 +407,7 @@ gst_pulsering_context_subscribe_cb (pa_context * c,
     GstPulseRingBuffer *pbuf = (GstPulseRingBuffer *) walk->data;
     psink = GST_PULSESINK_CAST (GST_OBJECT_PARENT (pbuf));
 
-    GST_LOG_OBJECT (psink, "type %d, idx %u", t, idx);
+    GST_LOG_OBJECT (psink, "type %04x, idx %u", t, idx);
 
     if (!pbuf->stream)
       continue;
@@ -904,8 +904,12 @@ gst_pulseringbuffer_acquire (GstAudioRingBuffer * buf,
   flags = PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_AUTO_TIMING_UPDATE |
       PA_STREAM_ADJUST_LATENCY | PA_STREAM_START_CORKED;
 
-  if (psink->mute_set && psink->mute)
-    flags |= PA_STREAM_START_MUTED;
+  if (psink->mute_set) {
+    if (psink->mute)
+      flags |= PA_STREAM_START_MUTED;
+    else
+      flags |= PA_STREAM_START_UNMUTED;
+  }
 
   /* we always start corked (see flags above) */
   pbuf->corked = TRUE;

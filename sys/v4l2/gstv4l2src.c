@@ -50,8 +50,8 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-#include "gst/video/gstvideometa.h"
-#include "gst/video/gstvideopool.h"
+#include <gst/video/gstvideometa.h>
+#include <gst/video/gstvideopool.h>
 
 #include "gstv4l2src.h"
 
@@ -79,6 +79,15 @@ enum
   PROP_ALWAYS_COPY,
   PROP_DECIMATE
 };
+
+/* signals and args */
+enum
+{
+  SIGNAL_PRE_SET_FORMAT,
+  LAST_SIGNAL
+};
+
+static guint gst_v4l2_signals[LAST_SIGNAL] = { 0 };
 
 GST_IMPLEMENT_V4L2_COLOR_BALANCE_METHODS (GstV4l2Src, gst_v4l2src);
 GST_IMPLEMENT_V4L2_TUNER_METHODS (GstV4l2Src, gst_v4l2src);
@@ -167,6 +176,29 @@ gst_v4l2src_class_init (GstV4l2SrcClass * klass)
       g_param_spec_int ("decimate", "Decimate",
           "Only use every nth frame", 1, G_MAXINT,
           PROP_DEF_DECIMATE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+  /**
+   * GstV4l2Src::prepare-format:
+   * @v4l2src: the v4l2src instance
+   * @fd: the file descriptor of the current device
+   * @fourcc: the fourcc of the format being set
+   * @width: The width of the video
+   * @height: The height of the video
+   *
+   * This signal gets emitted before calling the v4l2 VIDIOC_S_FMT ioctl
+   * (set format). This allows for any custom configuration of the device to
+   * happen prior to the format being set.
+   * This is mostly useful for UVC H264 encoding cameras which need the H264
+   * Probe & Commit to happen prior to the normal Probe & Commit.
+   *
+   * Since: 0.10.32
+   */
+  gst_v4l2_signals[SIGNAL_PRE_SET_FORMAT] = g_signal_new ("prepare-format",
+      G_TYPE_FROM_CLASS (klass),
+      G_SIGNAL_RUN_LAST,
+      0,
+      NULL, NULL,
+      NULL, G_TYPE_NONE, 4, G_TYPE_INT, G_TYPE_UINT, G_TYPE_UINT, G_TYPE_UINT);
 
   gst_element_class_set_static_metadata (element_class,
       "Video (video4linux2) Source", "Source/Video",
@@ -589,7 +621,7 @@ gst_v4l2src_decide_allocation (GstBaseSrc * bsrc, GstQuery * query)
   else
     gst_query_add_allocation_pool (query, pool, size, min, max);
 
-  return TRUE;
+  return GST_BASE_SRC_CLASS (parent_class)->decide_allocation (bsrc, query);
 }
 
 static gboolean
@@ -606,7 +638,7 @@ gst_v4l2src_query (GstBaseSrc * bsrc, GstQuery * query)
     case GST_QUERY_LATENCY:{
       GstClockTime min_latency, max_latency;
       guint32 fps_n, fps_d;
-      guint max_buffers;
+      guint num_buffers;
 
       /* device must be open */
       if (!GST_V4L2_IS_OPEN (obj)) {
@@ -629,12 +661,12 @@ gst_v4l2src_query (GstBaseSrc * bsrc, GstQuery * query)
       min_latency = gst_util_uint64_scale_int (GST_SECOND, fps_d, fps_n);
 
       /* max latency is total duration of the frame buffer */
-      max_buffers = GST_V4L2_BUFFER_POOL_CAST (obj->pool)->max_buffers;
+      num_buffers = GST_V4L2_BUFFER_POOL_CAST (obj->pool)->num_buffers;
 
-      if (max_buffers == 0)
+      if (num_buffers == 0)
         max_latency = -1;
       else
-        max_latency = max_buffers * min_latency;
+        max_latency = num_buffers * min_latency;
 
       GST_DEBUG_OBJECT (bsrc,
           "report latency min %" GST_TIME_FORMAT " max %" GST_TIME_FORMAT,
@@ -746,7 +778,8 @@ gst_v4l2src_fill (GstPushSrc * src, GstBuffer * buf)
   GstV4l2Object *obj = v4l2src->v4l2object;
   GstFlowReturn ret;
   GstClock *clock;
-  GstClockTime timestamp, duration;
+  GstClockTime abs_time, base_time, timestamp, duration;
+  GstClockTime delay;
 
 #if 0
   int i;
@@ -766,37 +799,81 @@ gst_v4l2src_fill (GstPushSrc * src, GstBuffer * buf)
   if (G_UNLIKELY (ret != GST_FLOW_OK))
     goto error;
 
-  /* set buffer metadata */
-  GST_BUFFER_OFFSET (buf) = v4l2src->offset++;
-  GST_BUFFER_OFFSET_END (buf) = v4l2src->offset;
+
+  timestamp = GST_BUFFER_TIMESTAMP (buf);
+  duration = obj->duration;
 
   /* timestamps, LOCK to get clock and base time. */
   /* FIXME: element clock and base_time is rarely changing */
   GST_OBJECT_LOCK (v4l2src);
   if ((clock = GST_ELEMENT_CLOCK (v4l2src))) {
     /* we have a clock, get base time and ref clock */
-    timestamp = GST_ELEMENT (v4l2src)->base_time;
+    base_time = GST_ELEMENT (v4l2src)->base_time;
     gst_object_ref (clock);
   } else {
     /* no clock, can't set timestamps */
-    timestamp = GST_CLOCK_TIME_NONE;
+    base_time = GST_CLOCK_TIME_NONE;
   }
   GST_OBJECT_UNLOCK (v4l2src);
 
-  duration = obj->duration;
-
-  if (G_LIKELY (clock)) {
-    /* the time now is the time of the clock minus the base time */
-    timestamp = gst_clock_get_time (clock) - timestamp;
+  /* sample pipeline clock */
+  if (clock) {
+    abs_time = gst_clock_get_time (clock);
     gst_object_unref (clock);
+  } else {
+    abs_time = GST_CLOCK_TIME_NONE;
+  }
 
-    /* if we have a framerate adjust timestamp for frame latency */
-    if (GST_CLOCK_TIME_IS_VALID (duration)) {
-      if (timestamp > duration)
-        timestamp -= duration;
-      else
-        timestamp = 0;
+  if (timestamp != GST_CLOCK_TIME_NONE) {
+    struct timespec now;
+    GstClockTime gstnow;
+
+    /* v4l2 specs say to use the system time although many drivers switched to
+     * the more desirable monotonic time. We first try to use the monotonic time
+     * and see how that goes */
+    clock_gettime (CLOCK_MONOTONIC, &now);
+    gstnow = GST_TIMESPEC_TO_TIME (now);
+
+    if (gstnow < timestamp && (timestamp - gstnow) > (10 * GST_SECOND)) {
+      GTimeVal now;
+
+      /* very large diff, fall back to system time */
+      g_get_current_time (&now);
+      gstnow = GST_TIMEVAL_TO_TIME (now);
     }
+
+    if (gstnow > timestamp) {
+      delay = gstnow - timestamp;
+    } else {
+      delay = 0;
+    }
+
+    GST_DEBUG_OBJECT (v4l2src, "ts: %" GST_TIME_FORMAT " now %" GST_TIME_FORMAT
+        " delay %" GST_TIME_FORMAT, GST_TIME_ARGS (timestamp),
+        GST_TIME_ARGS (gstnow), GST_TIME_ARGS (delay));
+  } else {
+    /* we assume 1 frame latency otherwise */
+    if (GST_CLOCK_TIME_IS_VALID (duration))
+      delay = duration;
+    else
+      delay = 0;
+  }
+
+  /* set buffer metadata */
+  GST_BUFFER_OFFSET (buf) = v4l2src->offset++;
+  GST_BUFFER_OFFSET_END (buf) = v4l2src->offset;
+
+  if (G_LIKELY (abs_time != GST_CLOCK_TIME_NONE)) {
+    /* the time now is the time of the clock minus the base time */
+    timestamp = abs_time - base_time;
+
+    /* adjust for delay in the device */
+    if (timestamp > delay)
+      timestamp -= delay;
+    else
+      timestamp = 0;
+  } else {
+    timestamp = GST_CLOCK_TIME_NONE;
   }
 
   /* activate settings for next frame */
@@ -809,10 +886,10 @@ gst_v4l2src_fill (GstPushSrc * src, GstBuffer * buf)
     v4l2src->ctrl_time = timestamp;
   }
   gst_object_sync_values (GST_OBJECT (src), v4l2src->ctrl_time);
-  GST_INFO_OBJECT (src, "sync to %" GST_TIME_FORMAT,
-      GST_TIME_ARGS (v4l2src->ctrl_time));
 
-  /* FIXME: use the timestamp from the buffer itself! */
+  GST_INFO_OBJECT (src, "sync to %" GST_TIME_FORMAT " out ts %" GST_TIME_FORMAT,
+      GST_TIME_ARGS (v4l2src->ctrl_time), GST_TIME_ARGS (timestamp));
+
   GST_BUFFER_TIMESTAMP (buf) = timestamp;
   GST_BUFFER_DURATION (buf) = duration;
 

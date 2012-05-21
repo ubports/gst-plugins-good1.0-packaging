@@ -1397,30 +1397,6 @@ gst_multiudpsink_get_type
 </SECTION>
 
 <SECTION>
-<FILE>element-oss4mixer</FILE>
-<TITLE>oss4mixer</TITLE>
-GstOss4Mixer
-<SUBSECTION Standard>
-GstOss4MixerClass
-GST_OSS4_MIXER
-GST_OSS4_MIXER_CLASS
-GST_IS_OSS4_MIXER
-GST_IS_OSS4_MIXER_CLASS
-GST_TYPE_OSS4_MIXER
-gst_oss4_mixer_get_type
-GST_OSS4_MIXER_CAST
-GST_OSS4_MIXER_IS_OPEN
-MIXEXT_ENUM_IS_AVAILABLE
-MIXEXT_HAS_DESCRIPTION
-MIXEXT_IS_ROOT
-MIXEXT_IS_SLIDER
-gst_oss4_mixer_get_control_val
-gst_oss4_mixer_set_control_val
-gst_oss4_source_input_get_type
-GstOss4MixerControl
-</SECTION>
-
-<SECTION>
 <FILE>element-oss4sink</FILE>
 <TITLE>oss4sink</TITLE>
 GstOss4Sink
@@ -1455,20 +1431,6 @@ GST_OSS4_SOURCE_INPUT_CLASS
 GST_TYPE_OSS4_SOURCE_INPUT
 GstOss4SourceInput
 GstOss4SourceInputClass
-</SECTION>
-
-<SECTION>
-<FILE>element-ossmixer</FILE>
-<TITLE>ossmixer</TITLE>
-GstOssMixerElement
-<SUBSECTION Standard>
-GstOssMixerElementClass
-GST_OSS_MIXER_ELEMENT
-GST_OSS_MIXER_ELEMENT_CLASS
-GST_IS_OSS_MIXER_ELEMENT
-GST_IS_OSS_MIXER_ELEMENT_CLASS
-GST_TYPE_OSS_MIXER_ELEMENT
-gst_oss_mixer_element_get_type
 </SECTION>
 
 <SECTION>

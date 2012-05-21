@@ -4,7 +4,7 @@
 %define gst_minver   0.11.0
 
 Name: 		%{gstreamer}-plugins-good
-Version: 	0.11.90
+Version: 	0.11.91
 Release: 	1.gst
 Summary: 	GStreamer plug-ins with good code and licensing
 
@@ -25,16 +25,16 @@ BuildRequires: libjpeg-devel
 BuildRequires: libcaca-devel
 BuildRequires: libdv-devel
 BuildRequires: libpng-devel >= 1.2.0
-#BuildRequires: glibc-devel
+BuildRequires: glibc-devel
 BuildRequires:	speex-devel
 BuildRequires: libshout-devel >= 2.0
 BuildRequires:  aalib-devel >= 1.3
 Provides:       gstreamer-aasink = %{version}-%{release}
 BuildRequires: pulseaudio-libs-devel
-#BuildRequires: libavc1394-devel
-#BuildRequires: libdc1394-devel
-#BuildRequires: libiec61883-devel  
-#BuildRequires: libraw1394-devel
+BuildRequires: libavc1394-devel
+BuildRequires: libdc1394-devel
+BuildRequires: libiec61883-devel  
+BuildRequires: libraw1394-devel
 
 %description
 GStreamer is a streaming media framework, based on graphs of filters which
@@ -118,7 +118,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/gstreamer-%{majorminor}/libgstmultifile.so
 %{_libdir}/gstreamer-%{majorminor}/libgstspectrum.so
 %{_libdir}/gstreamer-%{majorminor}/libgstgoom2k1.so
-# %{_libdir}/gstreamer-%{majorminor}/libgstinterleave.so
+%{_libdir}/gstreamer-%{majorminor}/libgstinterleave.so
 %{_libdir}/gstreamer-%{majorminor}/libgstreplaygain.so
 # %{_libdir}/gstreamer-%{majorminor}/libgstdeinterlace.so
 %{_libdir}/gstreamer-%{majorminor}/libgstflv.so
@@ -138,12 +138,12 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/gstreamer-%{majorminor}/libgstjack.so
 %{_libdir}/gstreamer-%{majorminor}/libgstjpeg.so
 %{_libdir}/gstreamer-%{majorminor}/libgstpng.so
-#%{_libdir}/gstreamer-%{majorminor}/libgstossaudio.so
+%{_libdir}/gstreamer-%{majorminor}/libgstossaudio.so
 %{_libdir}/gstreamer-%{majorminor}/libgstspeex.so
 %{_libdir}/gstreamer-%{majorminor}/libgstshout2.so
 %{_libdir}/gstreamer-%{majorminor}/libgstaasink.so
 %{_libdir}/gstreamer-%{majorminor}/libgstdv.so
-#%{_libdir}/gstreamer-%{majorminor}/libgst1394.so
+%{_libdir}/gstreamer-%{majorminor}/libgst1394.so
 %{_libdir}/gstreamer-%{majorminor}/libgstwavpack.so
 %{_libdir}/gstreamer-%{majorminor}/libgstsouphttpsrc.so
 %{_libdir}/gstreamer-%{majorminor}/libgstpulse.so

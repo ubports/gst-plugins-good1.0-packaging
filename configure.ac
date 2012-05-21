@@ -1,18 +1,18 @@
-AC_PREREQ(2.60)
+AC_PREREQ(2.62)
 
 dnl please read gstreamer/docs/random/autotools before changing this file
 
 dnl initialize autoconf
 dnl releases only do -Wall, git and prerelease does -Werror too
 dnl use a three digit version number for releases, and four for git/pre
-AC_INIT(GStreamer Good Plug-ins, 0.11.90,
+AC_INIT(GStreamer Good Plug-ins, 0.11.91,
     http://bugzilla.gnome.org/enter_bug.cgi?product=GStreamer,
     gst-plugins-good)
 
 AG_GST_INIT
 
 dnl initialize automake
-AM_INIT_AUTOMAKE([-Wno-portability 1.10])
+AM_INIT_AUTOMAKE([-Wno-portability 1.11 no-dist-gzip dist-xz tar-ustar])
 
 dnl define PACKAGE_VERSION_* variables
 AS_VERSION
@@ -27,7 +27,7 @@ dnl define the output header for config
 AM_CONFIG_HEADER([config.h])
 
 dnl AM_MAINTAINER_MODE only provides the option to configure to enable it
-AM_MAINTAINER_MODE
+AM_MAINTAINER_MODE([enable])
 
 dnl sets host_* variables
 AC_CANONICAL_HOST
@@ -45,14 +45,7 @@ AC_DEFINE_UNQUOTED(GST_API_VERSION, "$GST_API_VERSION",
   [GStreamer API Version])
 
 AG_GST_LIBTOOL_PREPARE
-
-dnl FIXME: this macro doesn't actually work;
-dnl the generated libtool script has no support for the listed tags.
-dnl So this needs to be fixed first if we want to use this
-dnl AS_LIBTOOL_TAGS
-
-AC_LIBTOOL_WIN32_DLL
-AM_PROG_LIBTOOL
+AS_LIBTOOL(GST, 0, 0, 0)
 
 dnl *** required versions of GStreamer stuff ***
 GST_REQ=0.11.90
@@ -141,7 +134,7 @@ AG_GST_PLUGIN_DOCS([1.3],[2.1])
 dnl *** checks for libraries ***
 
 dnl check for libm, for sin()
-AC_CHECK_LIBM
+LT_LIB_M
 AC_SUBST(LIBM)
 
 dnl *** checks for header files ***
@@ -315,10 +308,8 @@ dnl *** plug-ins to include ***
 
 dnl Non ported plugins (non-dependant, then dependant)
 dnl Make sure you have a space before and after all plugins
-GST_PLUGINS_NONPORTED="deinterlace flx \
- videobox \
- cairo cairo_gobject dv1394 gdk_pixbuf \
- oss oss4 \
+GST_PLUGINS_NONPORTED="deinterlace \
+ cairo cairo_gobject gdk_pixbuf \
  osx_video osx_audio "
 AC_SUBST(GST_PLUGINS_NONPORTED)
 
