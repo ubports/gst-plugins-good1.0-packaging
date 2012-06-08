@@ -1,6 +1,9 @@
 gst-plugins-good1.0 (0.11.92-1) experimental; urgency=low
 
-  * New upstream release, "Money".
+  * New upstream release, "Money":
+    + debian/rules,
+      debian/build-deps.in:
+      - Build depend on GStreamer core/base >= 0.11.92.
 
  -- Sebastian Dröge <slomo@debian.org>  Fri, 08 Jun 2012 12:25:20 +0200
 
