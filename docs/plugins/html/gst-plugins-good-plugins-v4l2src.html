@@ -30,6 +30,8 @@
                   <a href="#gst-plugins-good-plugins-v4l2src.implemented-interfaces" class="shortcut">Implemented Interfaces</a>
                    | 
                   <a href="#gst-plugins-good-plugins-v4l2src.properties" class="shortcut">Properties</a>
+                   | 
+                  <a href="#gst-plugins-good-plugins-v4l2src.signals" class="shortcut">Signals</a>
 </td></tr>
 </table>
 <div class="refentry">
@@ -83,11 +85,17 @@ GstV4l2Src implements
 </pre>
 </div>
 <div class="refsect1">
+<a name="gst-plugins-good-plugins-v4l2src.signals"></a><h2>Signals</h2>
+<pre class="synopsis">
+  "<a class="link" href="gst-plugins-good-plugins-v4l2src.html#GstV4l2Src-prepare-format" title='The "prepare-format" signal'>prepare-format</a>"                                 : <a href="http://library.gnome.org/devel/gobject/unstable/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS"><code class="literal">Run Last</code></a>
+</pre>
+</div>
+<div class="refsect1">
 <a name="gst-plugins-good-plugins-v4l2src.description"></a><h2>Description</h2>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp21517520"></a><h3>Element Information</h3>
+<a name="idp19246304"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -110,7 +118,7 @@ GstV4l2Src implements
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp16213136"></a><h3>Element Pads</h3>
+<a name="idp14972000"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -217,6 +225,10 @@ GstV4l2Src implements
 <tr>
 <td><p><span class="term"></span></p></td>
 <td> video/mpegts</td>
+</tr>
+<tr>
+<td><p><span class="term"></span></p></td>
+<td> video/x-h264, width=(int)[ 1, 32768 ], height=(int)[ 1, 32768 ], framerate=(fraction)[ 0/1, 100/1 ]</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
@@ -343,6 +355,33 @@ GstV4l2Src implements
 <pre class="programlisting">  "io-mode"                  <span class="type">GstV4l2IOMode</span>         : Read / Write</pre>
 <p>I/O mode.</p>
 <p>Default value: GST_V4L2_IO_AUTO</p>
+</div>
+</div>
+<div class="refsect1">
+<a name="gst-plugins-good-plugins-v4l2src.signal-details"></a><h2>Signal Details</h2>
+<div class="refsect2">
+<a name="GstV4l2Src-prepare-format"></a><h3>The <code class="literal">"prepare-format"</code> signal</h3>
+<pre class="programlisting"><span class="returnvalue">void</span>                user_function                      (<a class="link" href="gst-plugins-good-plugins-v4l2src.html#GstV4l2Src"><span class="type">GstV4l2Src</span></a> *gstv4l2src,
+                                                        <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a>        arg1,
+                                                        <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a>       arg2,
+                                                        <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a>       arg3,
+                                                        <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a>       arg4,
+                                                        <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>    user_data)       : <a href="http://library.gnome.org/devel/gobject/unstable/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS"><code class="literal">Run Last</code></a></pre>
+<p>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>gstv4l2src</code></em> :</span></p></td>
+<td>the object which received the signal.</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>user_data</code></em> :</span></p></td>
+<td>user data set when the signal handler was connected.</td>
+</tr>
+</tbody>
+</table></div>
 </div>
 </div>
 </div>

@@ -4,12 +4,6 @@ else
 AALIB_DIR =
 endif
 
-if USE_ANNODEX
-ANNODEX_DIR = annodex
-else
-ANNODEX_DIR =
-endif
-
 if USE_CAIRO
 CAIRO_DIR = cairo
 else
@@ -51,12 +45,6 @@ LIBDV_DIR = dv
 else
 LIBDV_DIR =
 endif
-
-# if USE_LIBMNG
-# LIBMNG_DIR = libmng
-# else
-LIBMNG_DIR =
-# endif
 
 if USE_LIBPNG
 LIBPNG_DIR = libpng
@@ -115,7 +103,6 @@ endif
 
 SUBDIRS = \
 	$(AALIB_DIR) \
-	$(ANNODEX_DIR) \
 	$(CAIRO_DIR) \
 	$(DV1394_DIR) \
 	$(FLAC_DIR) \
@@ -136,7 +123,6 @@ SUBDIRS = \
 
 DIST_SUBDIRS = \
 	aalib \
-	annodex \
 	cairo \
 	dv \
 	flac \

@@ -52,6 +52,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+target_triplet = @target@
 subdir = sys/osxvideo
 DIST_COMMON = $(noinst_HEADERS) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in
@@ -61,7 +62,6 @@ am__aclocal_m4_deps = $(top_srcdir)/common/m4/as-ac-expand.m4 \
 	$(top_srcdir)/common/m4/as-compiler-flag.m4 \
 	$(top_srcdir)/common/m4/as-gcc-inline-assembly.m4 \
 	$(top_srcdir)/common/m4/as-libtool.m4 \
-	$(top_srcdir)/common/m4/as-objc.m4 \
 	$(top_srcdir)/common/m4/as-python.m4 \
 	$(top_srcdir)/common/m4/as-scrub-include.m4 \
 	$(top_srcdir)/common/m4/as-version.m4 \
@@ -139,8 +139,8 @@ am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 libgstosxvideosink_la_LINK = $(LIBTOOL) $(AM_V_lt) \
 	$(libgstosxvideosink_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(OBJCLD) $(AM_OBJCFLAGS) $(OBJCFLAGS) \
-	$(libgstosxvideosink_la_LDFLAGS) $(LDFLAGS) -o $@
+	--mode=link $(OBJCLD) $(libgstosxvideosink_la_OBJCFLAGS) \
+	$(OBJCFLAGS) $(libgstosxvideosink_la_LDFLAGS) $(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -185,8 +185,6 @@ ACLOCAL = @ACLOCAL@
 ACLOCAL_AMFLAGS = @ACLOCAL_AMFLAGS@
 AMTAR = @AMTAR@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
-ANNODEX_CFLAGS = @ANNODEX_CFLAGS@
-ANNODEX_LIBS = @ANNODEX_LIBS@
 AR = @AR@
 AS = @AS@
 AUTOCONF = @AUTOCONF@
@@ -233,6 +231,7 @@ ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 ERROR_CFLAGS = @ERROR_CFLAGS@
 ERROR_CXXFLAGS = @ERROR_CXXFLAGS@
+ERROR_OBJCFLAGS = @ERROR_OBJCFLAGS@
 EXEEXT = @EXEEXT@
 FFLAGS = @FFLAGS@
 FGREP = @FGREP@
@@ -277,8 +276,10 @@ GST_LICENSE = @GST_LICENSE@
 GST_LT_LDFLAGS = @GST_LT_LDFLAGS@
 GST_NET_CFLAGS = @GST_NET_CFLAGS@
 GST_NET_LIBS = @GST_NET_LIBS@
+GST_OBJCFLAGS = @GST_OBJCFLAGS@
 GST_OPTION_CFLAGS = @GST_OPTION_CFLAGS@
 GST_OPTION_CXXFLAGS = @GST_OPTION_CXXFLAGS@
+GST_OPTION_OBJCFLAGS = @GST_OPTION_OBJCFLAGS@
 GST_PACKAGE_NAME = @GST_PACKAGE_NAME@
 GST_PACKAGE_ORIGIN = @GST_PACKAGE_ORIGIN@
 GST_PLUGINS_ALL = @GST_PLUGINS_ALL@
@@ -293,6 +294,10 @@ GST_PREFIX = @GST_PREFIX@
 GST_REVISION = @GST_REVISION@
 GST_TOOLS_DIR = @GST_TOOLS_DIR@
 GTKDOC_CHECK = @GTKDOC_CHECK@
+GTKDOC_DEPS_CFLAGS = @GTKDOC_DEPS_CFLAGS@
+GTKDOC_DEPS_LIBS = @GTKDOC_DEPS_LIBS@
+GTKDOC_MKPDF = @GTKDOC_MKPDF@
+GTKDOC_REBASE = @GTKDOC_REBASE@
 GTK_CFLAGS = @GTK_CFLAGS@
 GTK_LIBS = @GTK_LIBS@
 GTK_X11_CFLAGS = @GTK_X11_CFLAGS@
@@ -358,7 +363,7 @@ NM = @NM@
 NMEDIT = @NMEDIT@
 OBJC = @OBJC@
 OBJCDEPMODE = @OBJCDEPMODE@
-OBJC_LDFLAGS = @OBJC_LDFLAGS@
+OBJCFLAGS = @OBJCFLAGS@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
 ORCC = @ORCC@
@@ -414,6 +419,7 @@ VALGRIND_PATH = @VALGRIND_PATH@
 VERSION = @VERSION@
 WARNING_CFLAGS = @WARNING_CFLAGS@
 WARNING_CXXFLAGS = @WARNING_CXXFLAGS@
+WARNING_OBJCFLAGS = @WARNING_OBJCFLAGS@
 WAVPACK_CFLAGS = @WAVPACK_CFLAGS@
 WAVPACK_LIBS = @WAVPACK_LIBS@
 XDAMAGE_CFLAGS = @XDAMAGE_CFLAGS@
@@ -486,25 +492,30 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
 sysconfdir = @sysconfdir@
+target = @target@
 target_alias = @target_alias@
+target_cpu = @target_cpu@
+target_os = @target_os@
+target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 plugin_LTLIBRARIES = libgstosxvideosink.la
 libgstosxvideosink_la_SOURCES = osxvideosink.m cocoawindow.m 
 libgstosxvideosink_la_CFLAGS = $(GST_CFLAGS) $(GST_BASE_CFLAGS) \
-	$(GST_PLUGINS_BASE_CFLAGS)
+	$(GST_PLUGINS_BASE_CFLAGS) -DRUN_NS_APP_THREAD
+
+libgstosxvideosink_la_OBJCFLAGS = $(GST_OBJCFLAGS) $(GST_BASE_CFLAGS) \
+	$(GST_PLUGINS_BASE_CFLAGS) -DRUN_NS_APP_THREAD
 
 libgstosxvideosink_la_LIBADD = \
 	$(GST_LIBS) \
 	$(GST_BASE_LIBS) \
-    $(GST_PLUGINS_BASE_LIBS) \
-    -lgstvideo-$(GST_API_VERSION) \
-	-lgstinterfaces-$(GST_API_VERSION)
+	$(GST_PLUGINS_BASE_LIBS) \
+	-lgstvideo-$(GST_API_VERSION)
 
 libgstosxvideosink_la_LDFLAGS = $(GST_PLUGIN_LDFLAGS) -Wl,-framework -Wl,Cocoa -Wl,-framework -Wl,QuickTime -Wl,-framework -Wl,OpenGL
 libgstosxvideosink_la_LIBTOOLFLAGS = --tag=disable-static
-AM_OBJCFLAGS = $(CFLAGS) $(GST_CFLAGS) $(GST_PLUGINS_BASE_CFLAGS) $(GST_BASE_CFLAGS) -Wno-aggregate-return
 noinst_HEADERS = osxvideosink.h cocoawindow.h
 all: all-am
 
@@ -606,18 +617,18 @@ distclean-compile:
 @am__fastdepOBJC_FALSE@	$(AM_V_OBJC@am__nodep@)$(LTOBJCCOMPILE) -c -o $@ $<
 
 libgstosxvideosink_la-osxvideosink.lo: osxvideosink.m
-@am__fastdepOBJC_TRUE@	$(AM_V_OBJC)$(LIBTOOL) $(AM_V_lt) $(libgstosxvideosink_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(OBJC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_OBJCFLAGS) $(OBJCFLAGS) -MT libgstosxvideosink_la-osxvideosink.lo -MD -MP -MF $(DEPDIR)/libgstosxvideosink_la-osxvideosink.Tpo -c -o libgstosxvideosink_la-osxvideosink.lo `test -f 'osxvideosink.m' || echo '$(srcdir)/'`osxvideosink.m
+@am__fastdepOBJC_TRUE@	$(AM_V_OBJC)$(LIBTOOL) $(AM_V_lt) $(libgstosxvideosink_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(OBJC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstosxvideosink_la_OBJCFLAGS) $(OBJCFLAGS) -MT libgstosxvideosink_la-osxvideosink.lo -MD -MP -MF $(DEPDIR)/libgstosxvideosink_la-osxvideosink.Tpo -c -o libgstosxvideosink_la-osxvideosink.lo `test -f 'osxvideosink.m' || echo '$(srcdir)/'`osxvideosink.m
 @am__fastdepOBJC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstosxvideosink_la-osxvideosink.Tpo $(DEPDIR)/libgstosxvideosink_la-osxvideosink.Plo
 @AMDEP_TRUE@@am__fastdepOBJC_FALSE@	$(AM_V_OBJC)source='osxvideosink.m' object='libgstosxvideosink_la-osxvideosink.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepOBJC_FALSE@	DEPDIR=$(DEPDIR) $(OBJCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepOBJC_FALSE@	$(AM_V_OBJC@am__nodep@)$(LIBTOOL) $(AM_V_lt) $(libgstosxvideosink_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(OBJC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_OBJCFLAGS) $(OBJCFLAGS) -c -o libgstosxvideosink_la-osxvideosink.lo `test -f 'osxvideosink.m' || echo '$(srcdir)/'`osxvideosink.m
+@am__fastdepOBJC_FALSE@	$(AM_V_OBJC@am__nodep@)$(LIBTOOL) $(AM_V_lt) $(libgstosxvideosink_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(OBJC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstosxvideosink_la_OBJCFLAGS) $(OBJCFLAGS) -c -o libgstosxvideosink_la-osxvideosink.lo `test -f 'osxvideosink.m' || echo '$(srcdir)/'`osxvideosink.m
 
 libgstosxvideosink_la-cocoawindow.lo: cocoawindow.m
-@am__fastdepOBJC_TRUE@	$(AM_V_OBJC)$(LIBTOOL) $(AM_V_lt) $(libgstosxvideosink_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(OBJC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_OBJCFLAGS) $(OBJCFLAGS) -MT libgstosxvideosink_la-cocoawindow.lo -MD -MP -MF $(DEPDIR)/libgstosxvideosink_la-cocoawindow.Tpo -c -o libgstosxvideosink_la-cocoawindow.lo `test -f 'cocoawindow.m' || echo '$(srcdir)/'`cocoawindow.m
+@am__fastdepOBJC_TRUE@	$(AM_V_OBJC)$(LIBTOOL) $(AM_V_lt) $(libgstosxvideosink_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(OBJC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstosxvideosink_la_OBJCFLAGS) $(OBJCFLAGS) -MT libgstosxvideosink_la-cocoawindow.lo -MD -MP -MF $(DEPDIR)/libgstosxvideosink_la-cocoawindow.Tpo -c -o libgstosxvideosink_la-cocoawindow.lo `test -f 'cocoawindow.m' || echo '$(srcdir)/'`cocoawindow.m
 @am__fastdepOBJC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstosxvideosink_la-cocoawindow.Tpo $(DEPDIR)/libgstosxvideosink_la-cocoawindow.Plo
 @AMDEP_TRUE@@am__fastdepOBJC_FALSE@	$(AM_V_OBJC)source='cocoawindow.m' object='libgstosxvideosink_la-cocoawindow.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepOBJC_FALSE@	DEPDIR=$(DEPDIR) $(OBJCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepOBJC_FALSE@	$(AM_V_OBJC@am__nodep@)$(LIBTOOL) $(AM_V_lt) $(libgstosxvideosink_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(OBJC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_OBJCFLAGS) $(OBJCFLAGS) -c -o libgstosxvideosink_la-cocoawindow.lo `test -f 'cocoawindow.m' || echo '$(srcdir)/'`cocoawindow.m
+@am__fastdepOBJC_FALSE@	$(AM_V_OBJC@am__nodep@)$(LIBTOOL) $(AM_V_lt) $(libgstosxvideosink_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(OBJC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstosxvideosink_la_OBJCFLAGS) $(OBJCFLAGS) -c -o libgstosxvideosink_la-cocoawindow.lo `test -f 'cocoawindow.m' || echo '$(srcdir)/'`cocoawindow.m
 
 mostlyclean-libtool:
 	-rm -f *.lo

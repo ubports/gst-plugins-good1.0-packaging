@@ -1502,7 +1502,7 @@ gst_matroska_demux_send_event (GstMatroskaDemux * demux, GstEvent * event)
           GST_PTR_FORMAT, stream->pending_tags,
           GST_DEBUG_PAD_NAME (stream->pad), stream->pending_tags);
       gst_pad_push_event (stream->pad,
-          gst_event_new_tag (stream->pending_tags));
+          gst_event_new_tag ("GstDemuxer", stream->pending_tags));
       stream->pending_tags = NULL;
     }
   }
@@ -1514,7 +1514,7 @@ gst_matroska_demux_send_event (GstMatroskaDemux * demux, GstEvent * event)
     GST_DEBUG_OBJECT (demux, "Sending global_tags %p : %" GST_PTR_FORMAT,
         demux->common.global_tags, demux->common.global_tags);
 
-    tag_event = gst_event_new_tag (demux->common.global_tags);
+    tag_event = gst_event_new_tag ("GstDemuxer", demux->common.global_tags);
 
     for (i = 0; i < demux->common.src->len; i++) {
       GstMatroskaTrackContext *stream;
@@ -1975,10 +1975,10 @@ gst_matroska_demux_handle_seek_event (GstMatroskaDemux * demux,
    * would be determined again when parsing, but anyway ... */
   seeksegment.duration = demux->common.segment.duration;
 
-  flush = !!(flags & GST_SEEK_FLAG_FLUSH);
-  keyunit = !!(flags & GST_SEEK_FLAG_KEY_UNIT);
-  after = !!(flags & GST_SEEK_FLAG_SNAP_AFTER);
-  before = !!(flags & GST_SEEK_FLAG_SNAP_BEFORE);
+  flush = ! !(flags & GST_SEEK_FLAG_FLUSH);
+  keyunit = ! !(flags & GST_SEEK_FLAG_KEY_UNIT);
+  after = ! !(flags & GST_SEEK_FLAG_SNAP_AFTER);
+  before = ! !(flags & GST_SEEK_FLAG_SNAP_BEFORE);
 
   GST_DEBUG_OBJECT (demux, "New segment %" GST_SEGMENT_FORMAT, &seeksegment);
 
@@ -2010,6 +2010,11 @@ gst_matroska_demux_handle_seek_event (GstMatroskaDemux * demux,
   GST_OBJECT_UNLOCK (demux);
 
   if (demux->streaming) {
+    GST_OBJECT_LOCK (demux);
+    /* now update the real segment info */
+    GST_DEBUG_OBJECT (demux, "Committing new seek segment");
+    memcpy (&demux->common.segment, &seeksegment, sizeof (GstSegment));
+    GST_OBJECT_UNLOCK (demux);
     /* need to seek to cluster start to pick up cluster time */
     /* upstream takes care of flushing and all that
      * ... and segment event handling takes care of the rest */
@@ -3427,14 +3432,19 @@ gst_matroska_demux_parse_blockgroup_or_simpleblock (GstMatroskaDemux * demux,
             "Setting stream start time to %" GST_TIME_FORMAT,
             GST_TIME_ARGS (lace_time));
       }
-      if (GST_CLOCK_TIME_IS_VALID (segment->stop))
-        segment_duration = segment->stop - segment->start;
-      else if (GST_CLOCK_TIME_IS_VALID (segment->position))
-        segment_duration = segment->position - segment->start;
-      segment->base += segment_duration / fabs (segment->rate);
-      segment->start = MAX (lace_time, demux->stream_start_time);
-      segment->stop = GST_CLOCK_TIME_NONE;
-      segment->position = segment->start - demux->stream_start_time;
+      if (demux->common.segment.start == 0) {
+        /* set segment fields only if they weren't already set by seek handling
+         * code
+         */
+        if (GST_CLOCK_TIME_IS_VALID (segment->stop))
+          segment_duration = segment->stop - segment->start;
+        else if (GST_CLOCK_TIME_IS_VALID (segment->position))
+          segment_duration = segment->position - segment->start;
+        segment->base += segment_duration / fabs (segment->rate);
+        segment->start = MAX (lace_time, demux->stream_start_time);
+        segment->stop = GST_CLOCK_TIME_NONE;
+        segment->position = segment->start - demux->stream_start_time;
+      }
       /* now convey our segment notion downstream */
       gst_matroska_demux_send_event (demux, gst_event_new_segment (segment));
       demux->need_segment = FALSE;

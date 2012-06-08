@@ -5,9 +5,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: gst-plugins-good 0.11.91\n"
+"Project-Id-Version: gst-plugins-good 0.11.92\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2012-05-13 16:29+0200\n"
+"POT-Creation-Date: 2012-06-07 16:10+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,49 +22,48 @@ msgstr ""
 msgid "'%s' by '%s'"
 msgstr ""
 
-#: ext/jpeg/gstjpegdec.c:246
+#: ext/jpeg/gstjpegdec.c:251
 msgid "Failed to decode JPEG image"
-msgstr ""
-
-#: ext/libpng/gstpngdec.c:321 ext/libpng/gstpngdec.c:332
-#: ext/libpng/gstpngdec.c:625 gst/avi/gstavidemux.c:5223
-msgid "Internal data stream error."
 msgstr ""
 
 #: ext/shout2/gstshout2.c:549
 msgid "Could not connect to server"
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:804
+#: ext/soup/gstsouphttpsrc.c:805
 msgid "Server does not support seeking."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1020
+#: ext/soup/gstsouphttpsrc.c:1021
 msgid "Could not resolve server name."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1026
+#: ext/soup/gstsouphttpsrc.c:1027
 msgid "Could not establish connection to server."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1031
+#: ext/soup/gstsouphttpsrc.c:1032
 msgid "Secure connection setup failed."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1036
+#: ext/soup/gstsouphttpsrc.c:1037
 msgid ""
 "A network error occured, or the server closed the connection unexpectedly."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1042
+#: ext/soup/gstsouphttpsrc.c:1043
 msgid "Server sent bad data."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1189
+#: ext/soup/gstsouphttpsrc.c:1188
 msgid "No URL set."
 msgstr ""
 
-#: gst/avi/gstavimux.c:1778
+#: gst/avi/gstavidemux.c:5223
+msgid "Internal data stream error."
+msgstr ""
+
+#: gst/avi/gstavimux.c:1792
 msgid "No or invalid input audio, AVI stream will be corrupt."
 msgstr ""
 
@@ -72,50 +71,50 @@ msgstr ""
 msgid "This file contains no playable streams."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:592 gst/isomp4/qtdemux.c:4085
-#: gst/isomp4/qtdemux.c:4155 gst/isomp4/qtdemux.c:4306
+#: gst/isomp4/qtdemux.c:592 gst/isomp4/qtdemux.c:4086
+#: gst/isomp4/qtdemux.c:4156 gst/isomp4/qtdemux.c:4307
 msgid "This file is invalid and cannot be played."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:2454 gst/isomp4/qtdemux.c:2530
-#: gst/isomp4/qtdemux.c:2573 gst/isomp4/qtdemux.c:4909
-#: gst/isomp4/qtdemux.c:4916 gst/isomp4/qtdemux.c:5533
-#: gst/isomp4/qtdemux.c:5961 gst/isomp4/qtdemux.c:5968
-#: gst/isomp4/qtdemux.c:7539
+#: gst/isomp4/qtdemux.c:2455 gst/isomp4/qtdemux.c:2531
+#: gst/isomp4/qtdemux.c:2574 gst/isomp4/qtdemux.c:4910
+#: gst/isomp4/qtdemux.c:4917 gst/isomp4/qtdemux.c:5534
+#: gst/isomp4/qtdemux.c:5962 gst/isomp4/qtdemux.c:5969
+#: gst/isomp4/qtdemux.c:7540
 msgid "This file is corrupt and cannot be played."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:2664
+#: gst/isomp4/qtdemux.c:2665
 msgid "Invalid atom size."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:2730
+#: gst/isomp4/qtdemux.c:2731
 msgid "This file is incomplete and cannot be played."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:5131
+#: gst/isomp4/qtdemux.c:5132
 msgid "The video in this file might not play correctly."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:7568
+#: gst/isomp4/qtdemux.c:7569
 #, c-format
 msgid "This file contains too many streams. Only playing first %d"
 msgstr ""
 
-#: gst/rtsp/gstrtspsrc.c:5339
+#: gst/rtsp/gstrtspsrc.c:5340
 msgid ""
 "No supported stream was found. You might need to install a GStreamer RTSP "
 "extension plugin for Real media streams."
 msgstr ""
 
-#: gst/rtsp/gstrtspsrc.c:5344
+#: gst/rtsp/gstrtspsrc.c:5345
 msgid ""
 "No supported stream was found. You might need to allow more transport "
 "protocols or may otherwise be missing the right GStreamer RTSP extension "
 "plugin."
 msgstr ""
 
-#: gst/wavparse/gstwavparse.c:2081
+#: gst/wavparse/gstwavparse.c:2082
 msgid "Internal data flow error."
 msgstr ""
 

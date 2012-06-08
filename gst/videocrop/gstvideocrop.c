@@ -80,7 +80,7 @@ enum
 #define VIDEO_CROP_CAPS                                \
   GST_VIDEO_CAPS_MAKE ("{ RGBx, xRGB, BGRx, xBGR, "    \
       "RGBA, ARGB, BGRA, ABGR, RGB, BGR, AYUV, YUY2, " \
-      "YVYU, UYVY, Y800, I420, RGB16, RGB15, GRAY8 }")
+      "YVYU, UYVY, I420, RGB16, RGB15, GRAY8 }")
 
 static GstStaticPadTemplate src_template = GST_STATIC_PAD_TEMPLATE ("src",
     GST_PAD_SRC,
@@ -266,7 +266,7 @@ gst_video_crop_get_image_details_from_caps (GstVideoCrop * vcrop,
           details->macro_y_off = 0;
         }
         break;
-      case GST_VIDEO_FORMAT_Y800:
+      case GST_VIDEO_FORMAT_GRAY8:
         details->packing = VIDEO_CROP_PIXEL_FORMAT_PACKED_SIMPLE;
         break;
       case GST_VIDEO_FORMAT_I420:

@@ -25,6 +25,8 @@
                    | 
                   <a href="#gst-plugins-good-plugins-hdv1394src.description" class="shortcut">Description</a>
                    | 
+                  <a href="#gst-plugins-good-plugins-hdv1394src.object-hierarchy" class="shortcut">Object Hierarchy</a>
+                   | 
                   <a href="#gst-plugins-good-plugins-hdv1394src.implemented-interfaces" class="shortcut">Implemented Interfaces</a>
                    | 
                   <a href="#gst-plugins-good-plugins-hdv1394src.properties" class="shortcut">Properties</a>
@@ -41,7 +43,19 @@
 </tr></table></div>
 <div class="refsynopsisdiv">
 <a name="gst-plugins-good-plugins-hdv1394src.synopsis"></a><h2>Synopsis</h2>
-<pre class="synopsis">struct              <a class="link" href="gst-plugins-good-plugins-hdv1394src.html#GstHDV1394Src" title="struct GstHDV1394Src">GstHDV1394Src</a>;
+<a name="GstHDV1394Src"></a><pre class="synopsis">struct              <a class="link" href="gst-plugins-good-plugins-hdv1394src.html#GstHDV1394Src-struct" title="struct GstHDV1394Src">GstHDV1394Src</a>;
+</pre>
+</div>
+<div class="refsect1">
+<a name="gst-plugins-good-plugins-hdv1394src.object-hierarchy"></a><h2>Object Hierarchy</h2>
+<pre class="synopsis">
+  <a href="http://library.gnome.org/devel/gobject/unstable/gobject-The-Base-Object-Type.html#GObject">GObject</a>
+   +----<a href="http://library.gnome.org/devel/gobject/unstable/gobject-The-Base-Object-Type.html#GInitiallyUnowned">GInitiallyUnowned</a>
+         +----<a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstObject.html">GstObject</a>
+               +----<a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstElement.html">GstElement</a>
+                     +----<a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer-libs/html/GstBaseSrc.html">GstBaseSrc</a>
+                           +----<a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer-libs/html/GstPushSrc.html">GstPushSrc</a>
+                                 +----GstHDV1394Src
 </pre>
 </div>
 <div class="refsect1">
@@ -65,7 +79,7 @@ GstHDV1394Src implements
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp13761712"></a><h3>Element Information</h3>
+<a name="idp14566048"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -88,7 +102,7 @@ GstHDV1394Src implements
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp8682320"></a><h3>Element Pads</h3>
+<a name="idp11549312"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -118,35 +132,8 @@ GstHDV1394Src implements
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-hdv1394src.details"></a><h2>Details</h2>
 <div class="refsect2">
-<a name="GstHDV1394Src"></a><h3>struct GstHDV1394Src</h3>
-<pre class="programlisting">struct GstHDV1394Src {
-  GstPushSrc element;
-
-  gint num_ports;
-  gint port;
-  gint channel;
-  octlet_t guid;
-  gint avc_node;
-  gboolean use_avc;
-
-  struct raw1394_portinfo pinfo[16];
-  raw1394handle_t handle;
-
-  gpointer outdata;
-  gsize outoffset;
-  guint frame_size;
-  guint frame_sequence;
-
-  int control_sock[2];
-
-  gchar *uri;
-
-  gchar *device_name;
-
-  gboolean connected;
-  iec61883_mpeg2_t iec61883mpeg2;
-};
-</pre>
+<a name="GstHDV1394Src-struct"></a><h3>struct GstHDV1394Src</h3>
+<pre class="programlisting">struct GstHDV1394Src;</pre>
 <p>
 </p>
 </div>

@@ -104,6 +104,8 @@ static gboolean gst_pulsesrc_negotiate (GstBaseSrc * basesrc);
 static GstStateChangeReturn gst_pulsesrc_change_state (GstElement *
     element, GstStateChange transition);
 
+static GstClockTime gst_pulsesrc_get_time (GstClock * clock, GstPulseSrc * src);
+
 #if (G_BYTE_ORDER == G_LITTLE_ENDIAN)
 # define FORMATS "{ S16LE, S16BE, F32LE, F32BE, S32LE, S32BE, U8 }"
 #else
@@ -291,6 +293,14 @@ gst_pulsesrc_init (GstPulseSrc * pulsesrc)
   /* this should be the default but it isn't yet */
   gst_audio_base_src_set_slave_method (GST_AUDIO_BASE_SRC (pulsesrc),
       GST_AUDIO_BASE_SRC_SLAVE_SKEW);
+
+  /* override with a custom clock */
+  if (GST_AUDIO_BASE_SRC (pulsesrc)->clock)
+    gst_object_unref (GST_AUDIO_BASE_SRC (pulsesrc)->clock);
+
+  GST_AUDIO_BASE_SRC (pulsesrc)->clock =
+      gst_audio_clock_new ("GstPulseSrcClock",
+      (GstAudioClockGetTimeFunc) gst_pulsesrc_get_time, pulsesrc, NULL);
 }
 
 static void
@@ -985,13 +995,13 @@ gst_pulsesrc_read (GstAudioSrc * asrc, gpointer data, guint length)
   GstPulseSrc *pulsesrc = GST_PULSESRC_CAST (asrc);
   size_t sum = 0;
 
-  pa_threaded_mainloop_lock (pulsesrc->mainloop);
-  pulsesrc->in_read = TRUE;
-
   if (g_atomic_int_compare_and_exchange (&pulsesrc->notify, 1, 0)) {
     g_object_notify (G_OBJECT (pulsesrc), "volume");
     g_object_notify (G_OBJECT (pulsesrc), "mute");
   }
+
+  pa_threaded_mainloop_lock (pulsesrc->mainloop);
+  pulsesrc->in_read = TRUE;
 
   if (pulsesrc->paused)
     goto was_paused;
@@ -1322,6 +1332,7 @@ gst_pulsesrc_prepare (GstAudioSrc * asrc, GstAudioRingBufferSpec * spec)
   GstPulseSrc *pulsesrc = GST_PULSESRC_CAST (asrc);
   pa_stream_flags_t flags;
   pa_operation *o;
+  GstAudioClock *clock;
 
   pa_threaded_mainloop_lock (pulsesrc->mainloop);
 
@@ -1338,7 +1349,7 @@ gst_pulsesrc_prepare (GstAudioSrc * asrc, GstAudioRingBufferSpec * spec)
   /* enable event notifications */
   GST_LOG_OBJECT (pulsesrc, "subscribing to context events");
   if (!(o = pa_context_subscribe (pulsesrc->context,
-              PA_SUBSCRIPTION_MASK_SINK_INPUT, NULL, NULL))) {
+              PA_SUBSCRIPTION_MASK_SOURCE_OUTPUT, NULL, NULL))) {
     GST_ELEMENT_ERROR (pulsesrc, RESOURCE, FAILED,
         ("pa_context_subscribe() failed: %s",
             pa_strerror (pa_context_errno (pulsesrc->context))), (NULL));
@@ -1370,6 +1381,10 @@ gst_pulsesrc_prepare (GstAudioSrc * asrc, GstAudioRingBufferSpec * spec)
           flags) < 0) {
     goto connect_failed;
   }
+
+  /* our clock will now start from 0 again */
+  clock = GST_AUDIO_CLOCK (GST_AUDIO_BASE_SRC (pulsesrc)->clock);
+  gst_audio_clock_reset (clock, 0);
 
   pulsesrc->corked = TRUE;
 
@@ -1606,6 +1621,11 @@ gst_pulsesrc_change_state (GstElement * element, GstStateChange transition)
         goto mainloop_start_failed;
       }
       break;
+    case GST_STATE_CHANGE_READY_TO_PAUSED:
+      gst_element_post_message (element,
+          gst_message_new_clock_provide (GST_OBJECT_CAST (element),
+              GST_AUDIO_BASE_SRC (this)->clock, TRUE));
+      break;
     case GST_STATE_CHANGE_PAUSED_TO_PLAYING:
       /* uncork and start recording */
       gst_pulsesrc_play (this);
@@ -1639,6 +1659,12 @@ gst_pulsesrc_change_state (GstElement * element, GstStateChange transition)
         this->mainloop = NULL;
       }
       break;
+    case GST_STATE_CHANGE_PAUSED_TO_READY:
+      /* format_lost is reset in release() in baseaudiosink */
+      gst_element_post_message (element,
+          gst_message_new_clock_lost (GST_OBJECT_CAST (element),
+              GST_AUDIO_BASE_SRC (this)->clock));
+      break;
     default:
       break;
   }
@@ -1658,4 +1684,29 @@ mainloop_start_failed:
         ("pa_threaded_mainloop_start() failed"), (NULL));
     return GST_STATE_CHANGE_FAILURE;
   }
+}
+
+static GstClockTime
+gst_pulsesrc_get_time (GstClock * clock, GstPulseSrc * src)
+{
+  pa_usec_t time = 0;
+
+  pa_threaded_mainloop_lock (src->mainloop);
+
+  if (gst_pulsesrc_is_dead (src, TRUE)) {
+    goto unlock_and_out;
+  }
+
+  if (pa_stream_get_time (src->stream, &time) < 0) {
+    GST_DEBUG_OBJECT (src, "could not get time");
+    time = GST_CLOCK_TIME_NONE;
+  } else {
+    time *= 1000;
+  }
+
+
+unlock_and_out:
+  pa_threaded_mainloop_unlock (src->mainloop);
+
+  return time;
 }

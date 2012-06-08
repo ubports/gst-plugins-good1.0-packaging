@@ -24,6 +24,8 @@
 <a href="#gst-plugins-good-plugins-flxdec.synopsis" class="shortcut">Top</a>
                    | 
                   <a href="#gst-plugins-good-plugins-flxdec.description" class="shortcut">Description</a>
+                   | 
+                  <a href="#gst-plugins-good-plugins-flxdec.object-hierarchy" class="shortcut">Object Hierarchy</a>
 </td></tr>
 </table>
 <div class="refentry">
@@ -37,7 +39,17 @@
 </tr></table></div>
 <div class="refsynopsisdiv">
 <a name="gst-plugins-good-plugins-flxdec.synopsis"></a><h2>Synopsis</h2>
-<pre class="synopsis">struct              <a class="link" href="gst-plugins-good-plugins-flxdec.html#GstFlxDec" title="struct GstFlxDec">GstFlxDec</a>;
+<a name="GstFlxDec"></a><pre class="synopsis">struct              <a class="link" href="gst-plugins-good-plugins-flxdec.html#GstFlxDec-struct" title="struct GstFlxDec">GstFlxDec</a>;
+</pre>
+</div>
+<div class="refsect1">
+<a name="gst-plugins-good-plugins-flxdec.object-hierarchy"></a><h2>Object Hierarchy</h2>
+<pre class="synopsis">
+  <a href="http://library.gnome.org/devel/gobject/unstable/gobject-The-Base-Object-Type.html#GObject">GObject</a>
+   +----<a href="http://library.gnome.org/devel/gobject/unstable/gobject-The-Base-Object-Type.html#GInitiallyUnowned">GInitiallyUnowned</a>
+         +----<a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstObject.html">GstObject</a>
+               +----<a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstElement.html">GstElement</a>
+                     +----GstFlxDec
 </pre>
 </div>
 <div class="refsect1">
@@ -48,7 +60,7 @@ This element decodes fli/flc/flx-video into raw video
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp5757568"></a><h3>Element Information</h3>
+<a name="idp8838624"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -71,7 +83,7 @@ This element decodes fli/flc/flx-video into raw video
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp8040848"></a><h3>Element Pads</h3>
+<a name="idp9990176"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -110,7 +122,7 @@ This element decodes fli/flc/flx-video into raw video
 </tr>
 <tr>
 <td><p><span class="term">details</span></p></td>
-<td>video/x-raw-rgb, bpp=(int)32, depth=(int)24, endianness=(int)4321, red_mask=(int)65280, green_mask=(int)16711680, blue_mask=(int)-16777216, width=(int)[ 1, 2147483647 ], height=(int)[ 1, 2147483647 ], framerate=(fraction)[ 0/1, 2147483647/1 ]</td>
+<td>video/x-raw, format=(string)BGRx, width=(int)[ 1, 2147483647 ], height=(int)[ 1, 2147483647 ], framerate=(fraction)[ 0/1, 2147483647/1 ]</td>
 </tr>
 </tbody>
 </table></div>
@@ -122,27 +134,8 @@ This element decodes fli/flc/flx-video into raw video
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-flxdec.details"></a><h2>Details</h2>
 <div class="refsect2">
-<a name="GstFlxDec"></a><h3>struct GstFlxDec</h3>
-<pre class="programlisting">struct GstFlxDec {
-  GstElement element;
-
-  GstPad *sinkpad,*srcpad;
-
-  gboolean active, new_meta;
-
-  guint8 *delta_data, *frame_data;
-  GstAdapter *adapter;
-  gulong size;
-  GstFlxDecState state;
-  gint64 frame_time;
-  gint64 next_time;
-  gint64 duration;
-
-  FlxColorSpaceConverter *converter;
-
-  FlxHeader hdr;
-};
-</pre>
+<a name="GstFlxDec-struct"></a><h3>struct GstFlxDec</h3>
+<pre class="programlisting">struct GstFlxDec;</pre>
 <p>
 </p>
 </div>
