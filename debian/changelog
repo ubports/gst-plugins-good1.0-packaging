@@ -1,3 +1,9 @@
+gst-plugins-good1.0 (0.11.92-1) experimental; urgency=low
+
+  * New upstream release, "Money".
+
+ -- Sebastian Dröge <slomo@debian.org>  Fri, 08 Jun 2012 12:25:20 +0200
+
 gst-plugins-good1.0 (0.11.91-1) experimental; urgency=low
 
   * Build-depend on GLib > 2.31.14.
