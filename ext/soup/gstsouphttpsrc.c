@@ -788,7 +788,8 @@ gst_soup_http_src_got_headers_cb (SoupMessage * msg, GstSoupHTTPSrc * src)
   if (!gst_tag_list_is_empty (tag_list)) {
     GST_DEBUG_OBJECT (src,
         "calling gst_element_found_tags with %" GST_PTR_FORMAT, tag_list);
-    gst_pad_push_event (GST_BASE_SRC_PAD (src), gst_event_new_tag (tag_list));
+    gst_pad_push_event (GST_BASE_SRC_PAD (src), gst_event_new_tag ("GstSrc",
+            tag_list));
   } else {
     gst_tag_list_free (tag_list);
   }
@@ -1083,8 +1084,6 @@ gst_soup_http_src_build_message (GstSoupHTTPSrc * src)
           *cookie);
     }
   }
-  soup_message_headers_append (src->msg->request_headers,
-      "transferMode.dlna.org", "Streaming");
   src->retry = FALSE;
 
   g_signal_connect (src->msg, "got_headers",
@@ -1312,8 +1311,9 @@ gst_soup_http_src_do_seek (GstBaseSrc * bsrc, GstSegment * segment)
 
   GST_DEBUG_OBJECT (src, "do_seek(%" G_GUINT64_FORMAT ")", segment->start);
 
-  if (src->read_position == segment->start) {
-    GST_DEBUG_OBJECT (src, "Seeking to current read position");
+  if (src->read_position == segment->start &&
+      src->request_position == src->read_position) {
+    GST_DEBUG_OBJECT (src, "Seek to current read position and no seek pending");
     return TRUE;
   }
 

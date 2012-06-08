@@ -25,6 +25,8 @@
                    | 
                   <a href="#gst-plugins-good-plugins-osssink.description" class="shortcut">Description</a>
                    | 
+                  <a href="#gst-plugins-good-plugins-osssink.object-hierarchy" class="shortcut">Object Hierarchy</a>
+                   | 
                   <a href="#gst-plugins-good-plugins-osssink.properties" class="shortcut">Properties</a>
 </td></tr>
 </table>
@@ -39,7 +41,20 @@
 </tr></table></div>
 <div class="refsynopsisdiv">
 <a name="gst-plugins-good-plugins-osssink.synopsis"></a><h2>Synopsis</h2>
-<pre class="synopsis">struct              <a class="link" href="gst-plugins-good-plugins-osssink.html#GstOssSink" title="struct GstOssSink">GstOssSink</a>;
+<a name="GstOssSink"></a><pre class="synopsis">struct              <a class="link" href="gst-plugins-good-plugins-osssink.html#GstOssSink-struct" title="struct GstOssSink">GstOssSink</a>;
+</pre>
+</div>
+<div class="refsect1">
+<a name="gst-plugins-good-plugins-osssink.object-hierarchy"></a><h2>Object Hierarchy</h2>
+<pre class="synopsis">
+  <a href="http://library.gnome.org/devel/gobject/unstable/gobject-The-Base-Object-Type.html#GObject">GObject</a>
+   +----<a href="http://library.gnome.org/devel/gobject/unstable/gobject-The-Base-Object-Type.html#GInitiallyUnowned">GInitiallyUnowned</a>
+         +----<a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstObject.html">GstObject</a>
+               +----<a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstElement.html">GstElement</a>
+                     +----<a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer-libs/html/GstBaseSink.html">GstBaseSink</a>
+                           +----<a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gst-plugins-base-libs/html/gst-plugins-base-libs-gstaudiobasesink.html#GstAudioBaseSink">GstAudioBaseSink</a>
+                                 +----<a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gst-plugins-base-libs/html/gst-plugins-base-libs-gstaudiosink.html#GstAudioSink">GstAudioSink</a>
+                                       +----GstOssSink
 </pre>
 </div>
 <div class="refsect1">
@@ -53,7 +68,7 @@
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp13056000"></a><h3>Element Information</h3>
+<a name="idp17396592"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -76,7 +91,7 @@
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp17481680"></a><h3>Element Pads</h3>
+<a name="idp12343984"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -94,11 +109,11 @@
 </tr>
 <tr>
 <td><p><span class="term">details</span></p></td>
-<td>audio/x-raw-int, endianness=(int){ 1234 }, signed=(boolean){ true, false }, width=(int)16, depth=(int)16, rate=(int)[ 1, 2147483647 ], channels=(int)[ 1, 2 ]</td>
+<td>audio/x-raw, format=(string){ S16LE, U16LE, S8, U8 }, layout=(string)interleaved, rate=(int)[ 1, 2147483647 ], channels=(int)1</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> audio/x-raw-int, signed=(boolean){ true, false }, width=(int)8, depth=(int)8, rate=(int)[ 1, 2147483647 ], channels=(int)[ 1, 2 ]</td>
+<td> audio/x-raw, format=(string){ S16LE, U16LE, S8, U8 }, layout=(string)interleaved, rate=(int)[ 1, 2147483647 ], channels=(int)2, channel-mask=(bitmask)0x0000000000000003</td>
 </tr>
 </tbody>
 </table></div>
@@ -110,17 +125,8 @@
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-osssink.details"></a><h2>Details</h2>
 <div class="refsect2">
-<a name="GstOssSink"></a><h3>struct GstOssSink</h3>
-<pre class="programlisting">struct GstOssSink {
-  GstAudioSink    sink;
-
-  gchar *device;
-  gint   fd;
-  gint   bytes_per_sample;
-
-  GstCaps *probed_caps;
-};
-</pre>
+<a name="GstOssSink-struct"></a><h3>struct GstOssSink</h3>
+<pre class="programlisting">struct GstOssSink;</pre>
 <p>
 </p>
 </div>

@@ -25,6 +25,8 @@
                    | 
                   <a href="#gst-plugins-good-plugins-dv1394src.description" class="shortcut">Description</a>
                    | 
+                  <a href="#gst-plugins-good-plugins-dv1394src.object-hierarchy" class="shortcut">Object Hierarchy</a>
+                   | 
                   <a href="#gst-plugins-good-plugins-dv1394src.implemented-interfaces" class="shortcut">Implemented Interfaces</a>
                    | 
                   <a href="#gst-plugins-good-plugins-dv1394src.properties" class="shortcut">Properties</a>
@@ -43,7 +45,19 @@
 </tr></table></div>
 <div class="refsynopsisdiv">
 <a name="gst-plugins-good-plugins-dv1394src.synopsis"></a><h2>Synopsis</h2>
-<pre class="synopsis">struct              <a class="link" href="gst-plugins-good-plugins-dv1394src.html#GstDV1394Src" title="struct GstDV1394Src">GstDV1394Src</a>;
+<a name="GstDV1394Src"></a><pre class="synopsis">struct              <a class="link" href="gst-plugins-good-plugins-dv1394src.html#GstDV1394Src-struct" title="struct GstDV1394Src">GstDV1394Src</a>;
+</pre>
+</div>
+<div class="refsect1">
+<a name="gst-plugins-good-plugins-dv1394src.object-hierarchy"></a><h2>Object Hierarchy</h2>
+<pre class="synopsis">
+  <a href="http://library.gnome.org/devel/gobject/unstable/gobject-The-Base-Object-Type.html#GObject">GObject</a>
+   +----<a href="http://library.gnome.org/devel/gobject/unstable/gobject-The-Base-Object-Type.html#GInitiallyUnowned">GInitiallyUnowned</a>
+         +----<a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstObject.html">GstObject</a>
+               +----<a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstElement.html">GstElement</a>
+                     +----<a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer-libs/html/GstBaseSrc.html">GstBaseSrc</a>
+                           +----<a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer-libs/html/GstPushSrc.html">GstPushSrc</a>
+                                 +----GstDV1394Src
 </pre>
 </div>
 <div class="refsect1">
@@ -76,7 +90,7 @@ GstDV1394Src implements
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp12148768"></a><h3>Element Information</h3>
+<a name="idp11892656"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -99,7 +113,7 @@ GstDV1394Src implements
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp11487712"></a><h3>Element Pads</h3>
+<a name="idp10643440"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -129,47 +143,8 @@ GstDV1394Src implements
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-dv1394src.details"></a><h2>Details</h2>
 <div class="refsect2">
-<a name="GstDV1394Src"></a><h3>struct GstDV1394Src</h3>
-<pre class="programlisting">struct GstDV1394Src {
-  GstPushSrc element;
-
-  // consecutive=2, skip=4 will skip 4 frames, then let 2 consecutive ones thru
-  gint consecutive;
-  gint skip;
-  gboolean drop_incomplete;
-
-  gint num_ports;
-  gint port;
-  gint channel;
-  octlet_t guid;
-  gint avc_node;
-  gboolean use_avc;
-
-  struct raw1394_portinfo pinfo[16];
-  raw1394handle_t handle;
-
-  GstBuffer *buf;
-  
-  GstBuffer *frame;
-  guint frame_size;
-  guint frame_rate;
-  guint bytes_in_frame;
-  guint frame_sequence;
-
-  int control_sock[2];
-
-  gchar *uri;
-
-  gchar *device_name;
-
-  gboolean connected;
-  #ifdef HAVE_LIBIEC61883
-  iec61883_dv_fb_t iec61883dv;
-  #endif
-
-  Gst1394Clock *provided_clock;
-};
-</pre>
+<a name="GstDV1394Src-struct"></a><h3>struct GstDV1394Src</h3>
+<pre class="programlisting">struct GstDV1394Src;</pre>
 <p>
 </p>
 </div>
@@ -240,7 +215,7 @@ GstDV1394Src implements
 <a name="gst-plugins-good-plugins-dv1394src.signal-details"></a><h2>Signal Details</h2>
 <div class="refsect2">
 <a name="GstDV1394Src-frame-dropped"></a><h3>The <code class="literal">"frame-dropped"</code> signal</h3>
-<pre class="programlisting"><span class="returnvalue">void</span>                user_function                      (<a class="link" href="gst-plugins-good-plugins-dv1394src.html#GstDV1394Src" title="struct GstDV1394Src"><span class="type">GstDV1394Src</span></a> *gstdv1394src,
+<pre class="programlisting"><span class="returnvalue">void</span>                user_function                      (<a class="link" href="gst-plugins-good-plugins-dv1394src.html#GstDV1394Src"><span class="type">GstDV1394Src</span></a> *gstdv1394src,
                                                         <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>      user_data)         : <a href="http://library.gnome.org/devel/gobject/unstable/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS"><code class="literal">Run Last</code></a></pre>
 <p>
 </p>

@@ -794,7 +794,7 @@ gst_qtdemux_push_tags (GstQTDemux * qtdemux, QtDemuxStream * stream)
       GST_DEBUG_OBJECT (qtdemux, "Sending tags %" GST_PTR_FORMAT,
           stream->pending_tags);
       gst_pad_push_event (stream->pad,
-          gst_event_new_tag (stream->pending_tags));
+          gst_event_new_tag ("GstDemuxer", stream->pending_tags));
       stream->pending_tags = NULL;
     }
 
@@ -802,7 +802,8 @@ gst_qtdemux_push_tags (GstQTDemux * qtdemux, QtDemuxStream * stream)
       GST_DEBUG_OBJECT (qtdemux, "Sending global tags %" GST_PTR_FORMAT,
           qtdemux->tag_list);
       gst_pad_push_event (stream->pad,
-          gst_event_new_tag (gst_tag_list_copy (qtdemux->tag_list)));
+          gst_event_new_tag ("GstDemuxer",
+              gst_tag_list_copy (qtdemux->tag_list)));
       stream->send_global_tags = FALSE;
     }
   }
@@ -5138,7 +5139,7 @@ gst_qtdemux_add_stream (GstQTDemux * qtdemux,
         /* make sure it's not writable. We leave MALLOCDATA to NULL so that we
          * don't free any of the buffer data. */
         palette = _gst_buffer_new_wrapped ((gpointer) palette_data,
-            palette_count, NULL);
+            palette_count * 4, NULL);
 
         gst_caps_set_simple (stream->caps, "palette_data",
             GST_TYPE_BUFFER, palette, NULL);

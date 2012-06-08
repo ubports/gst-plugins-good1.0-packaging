@@ -231,14 +231,16 @@ gst_icydemux_add_srcpad (GstICYDemux * icydemux, GstCaps * new_caps)
     g_return_val_if_fail (icydemux->srcpad != NULL, FALSE);
 
     gst_pad_use_fixed_caps (icydemux->srcpad);
+    gst_pad_set_active (icydemux->srcpad, TRUE);
 
-    if (icydemux->src_caps)
-      gst_pad_set_caps (icydemux->srcpad, icydemux->src_caps);
+    if (icydemux->src_caps) {
+      if (!gst_pad_set_caps (icydemux->srcpad, icydemux->src_caps))
+        GST_WARNING_OBJECT (icydemux, "Failed to set caps on src pad");
+    }
 
     GST_DEBUG_OBJECT (icydemux, "Adding src pad with caps %" GST_PTR_FORMAT,
         icydemux->src_caps);
 
-    gst_pad_set_active (icydemux->srcpad, TRUE);
     if (!(gst_element_add_pad (GST_ELEMENT (icydemux), icydemux->srcpad)))
       return FALSE;
     gst_element_no_more_pads (GST_ELEMENT (icydemux));
@@ -615,7 +617,7 @@ gst_icydemux_send_tag_event (GstICYDemux * icydemux, GstTagList * tags)
   gst_element_post_message (GST_ELEMENT (icydemux),
       gst_message_new_tag (GST_OBJECT (icydemux), gst_tag_list_copy (tags)));
 
-  event = gst_event_new_tag (tags);
+  event = gst_event_new_tag ("GstDemuxer", tags);
   GST_EVENT_TIMESTAMP (event) = 0;
 
   GST_DEBUG_OBJECT (icydemux, "Sending tag event on src pad");

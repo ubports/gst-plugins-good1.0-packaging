@@ -5,7 +5,7 @@ dnl please read gstreamer/docs/random/autotools before changing this file
 dnl initialize autoconf
 dnl releases only do -Wall, git and prerelease does -Werror too
 dnl use a three digit version number for releases, and four for git/pre
-AC_INIT(GStreamer Good Plug-ins, 0.11.91,
+AC_INIT(GStreamer Good Plug-ins, 0.11.92,
     http://bugzilla.gnome.org/enter_bug.cgi?product=GStreamer,
     gst-plugins-good)
 
@@ -48,8 +48,8 @@ AG_GST_LIBTOOL_PREPARE
 AS_LIBTOOL(GST, 0, 0, 0)
 
 dnl *** required versions of GStreamer stuff ***
-GST_REQ=0.11.90
-GSTPB_REQ=0.11.90
+GST_REQ=0.11.91
+GSTPB_REQ=0.11.91
 
 dnl *** autotools stuff ****
 
@@ -112,7 +112,7 @@ dnl determine c++ preprocessor
 dnl FIXME: do we need this ?
 AC_PROG_CXXCPP
 
-AS_PROG_OBJC
+AC_PROG_OBJC
 
 dnl check if the compiler supports '-c' and '-o' options
 AM_PROG_CC_C_O
@@ -273,30 +273,32 @@ AG_GST_SET_PACKAGE_RELEASE_DATETIME_WITH_NANO([$PACKAGE_VERSION_NANO],
   ["${srcdir}/gst-plugins-good.doap"],
   [$PACKAGE_VERSION_MAJOR.$PACKAGE_VERSION_MINOR.$PACKAGE_VERSION_MICRO])
 
+# set by AG_GST_PARSE_SUBSYSTEM_DISABLES above
+dnl make sure it doesn't complain about unused variables if debugging is disabled
+NO_WARNINGS=""
+AG_GST_CHECK_GST_DEBUG_DISABLED([NO_WARNINGS="-Wno-unused"], [NO_WARNINGS=""])
+
 dnl define an ERROR_CFLAGS Makefile variable
 dnl -Wundef: too many broken headers
-if test "x$HAVE_OSX_VIDEO" != "xyes"; then
-  AG_GST_SET_ERROR_CFLAGS($FATAL_WARNINGS, [
-        -Wmissing-declarations -Wmissing-prototypes -Wredundant-decls
-        -Wwrite-strings -Wold-style-definition -Waggregate-return
-        -Winit-self -Wmissing-include-dirs -Waddress -Wno-multichar
-        -Wnested-externs ])
-else
-  dnl work-around for us passing GST_CFLAGS to the ObjC-compiler, which
-  dnl doesn't understand all warning flags that the C compiler knows about
-  dnl (e.g. -Waddress) or causes problems with some flags (-Waggregate-return)
-  AG_GST_SET_ERROR_CFLAGS($FATAL_WARNINGS, [
-        -Wmissing-declarations -Wmissing-prototypes -Wredundant-decls
-        -Wwrite-strings -Wold-style-definition
-        -Winit-self -Wmissing-include-dirs -Wno-multichar
-        -Wnested-externs ])
-fi
+AG_GST_SET_ERROR_CFLAGS($FATAL_WARNINGS, [
+      -Wmissing-declarations -Wmissing-prototypes -Wredundant-decls
+      -Wwrite-strings -Wold-style-definition -Waggregate-return
+      -Winit-self -Wmissing-include-dirs -Waddress -Wno-multichar
+      -Wnested-externs $NO_WARNINGS])
 
 dnl define an ERROR_CXXFLAGS Makefile variable
 AG_GST_SET_ERROR_CXXFLAGS($FATAL_WARNINGS, [
         -Wmissing-declarations -Wredundant-decls
         -Wwrite-strings
-        -Winit-self -Wmissing-include-dirs -Waddress -Wno-multichar ])
+        -Winit-self -Wmissing-include-dirs -Waddress -Wno-multichar
+        $NO_WARNINGS])
+
+dnl define an ERROR_OBJCFLAGS Makefile variable
+AG_GST_SET_ERROR_OBJCFLAGS($FATAL_WARNINGS, [
+      -Wmissing-declarations -Wmissing-prototypes -Wredundant-decls
+      -Wwrite-strings -Wold-style-definition
+      -Winit-self -Wmissing-include-dirs -Wno-multichar
+      -Wnested-externs $NO_WARNINGS])
 
 dnl define correct level for debugging messages
 AG_GST_SET_LEVEL_DEFAULT($GST_GIT)
@@ -310,7 +312,7 @@ dnl Non ported plugins (non-dependant, then dependant)
 dnl Make sure you have a space before and after all plugins
 GST_PLUGINS_NONPORTED="deinterlace \
  cairo cairo_gobject gdk_pixbuf \
- osx_video osx_audio "
+ osx_audio "
 AC_SUBST(GST_PLUGINS_NONPORTED)
 
 dnl these are all the gst plug-ins, compilable without additional libs
@@ -686,12 +688,6 @@ AG_GST_CHECK_FEATURE(AALIB, [aalib ASCII Art library], aasink, [
   AS_SCRUB_INCLUDE(AALIB_CFLAGS)
 ])
 
-dnl *** annodex ***
-translit(dnm, m, l) AM_CONDITIONAL(USE_ANNODEX, true)
-AG_GST_CHECK_FEATURE(ANNODEX, [XML library], annodex, [
-  AG_GST_PKG_CHECK_MODULES(ANNODEX, libxml-2.0 >= 2.4.9)
-])
-
 dnl *** cairo ***
 translit(dnm, m, l) AM_CONDITIONAL(USE_CAIRO, true)
 AG_GST_CHECK_FEATURE(CAIRO, [Cairo graphics rendering], cairo, [
@@ -954,7 +950,6 @@ else
 dnl not building plugins with external dependencies,
 dnl but we still need to set the conditionals
 AM_CONDITIONAL(USE_AALIB, false)
-AM_CONDITIONAL(USE_ANNODEX, false)
 AM_CONDITIONAL(USE_BZ2, false)
 AM_CONDITIONAL(USE_CAIRO, false)
 AM_CONDITIONAL(USE_CAIRO_GOBJECT, false)
@@ -1012,12 +1007,14 @@ else
 fi
 AC_SUBST(DEPRECATED_CFLAGS)
 
-dnl every flag in GST_OPTION_CFLAGS and GST_OPTION_CXXFLAGS can be overridden
+dnl every flag in GST_OPTION_CFLAGS, GST_OPTION_CXXFLAGS and GST_OPTION_OBJCFLAGS can be overridden
 dnl at make time with e.g. make ERROR_CFLAGS=""
 GST_OPTION_CFLAGS="\$(WARNING_CFLAGS) \$(ERROR_CFLAGS) \$(DEBUG_CFLAGS) \$(PROFILE_CFLAGS) \$(GCOV_CFLAGS) \$(OPT_CFLAGS) \$(DEPRECATED_CFLAGS)"
 GST_OPTION_CXXFLAGS="\$(WARNING_CXXFLAGS) \$(ERROR_CXXFLAGS) \$(DEBUG_CFLAGS) \$(PROFILE_CFLAGS) \$(GCOV_CFLAGS) \$(OPT_CFLAGS) \$(DEPRECATED_CFLAGS)"
+GST_OPTION_OBJCFLAGS="\$(WARNING_OBJCFLAGS) \$(ERROR_OBJCFLAGS) \$(DEBUG_CFLAGS) \$(PROFILE_CFLAGS) \$(GCOV_CFLAGS) \$(OPT_CFLAGS) \$(DEPRECATED_CFLAGS)"
 AC_SUBST(GST_OPTION_CFLAGS)
 AC_SUBST(GST_OPTION_CXXFLAGS)
+AC_SUBST(GST_OPTION_OBJCFLAGS)
 
 dnl our libraries need to be versioned correctly
 AC_SUBST(GST_LT_LDFLAGS)
@@ -1028,9 +1025,11 @@ dnl also add builddir include for enumtypes and marshal
 dnl add ERROR_CFLAGS, but overridable
 GST_CFLAGS="$GST_CFLAGS -DGST_USE_UNSTABLE_API"
 GST_CXXFLAGS="-I\$(top_srcdir)/gst-libs $GST_CFLAGS $GLIB_EXTRA_CFLAGS \$(GST_OPTION_CXXFLAGS)"
+GST_OBJCFLAGS="-I\$(top_srcdir)/gst-libs $GST_CFLAGS $GLIB_EXTRA_CFLAGS \$(GST_OPTION_OBJCFLAGS)"
 GST_CFLAGS="-I\$(top_srcdir)/gst-libs $GST_CFLAGS $GLIB_EXTRA_CFLAGS \$(GST_OPTION_CFLAGS)"
 AC_SUBST(GST_CFLAGS)
 AC_SUBST(GST_CXXFLAGS)
+AC_SUBST(GST_OBJCFLAGS)
 AC_SUBST(GST_LIBS)
 
 dnl LDFLAGS really should only contain flags, not libs - they get added before
@@ -1093,7 +1092,6 @@ gst/flx/Makefile
 gst/y4m/Makefile
 ext/Makefile
 ext/aalib/Makefile
-ext/annodex/Makefile
 ext/cairo/Makefile
 ext/dv/Makefile
 ext/flac/Makefile

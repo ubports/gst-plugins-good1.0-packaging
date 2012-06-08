@@ -31,6 +31,7 @@
 
 #include <string.h>
 #include <math.h>
+#include <objc/runtime.h>
 #include <Cocoa/Cocoa.h>
 
 #include <QuickTime/QuickTime.h>
@@ -38,6 +39,14 @@
 
 GST_DEBUG_CATEGORY_EXTERN (gst_debug_osx_video_sink);
 #define GST_CAT_DEFAULT gst_debug_osx_video_sink
+
+/* The hack doesn't work on leopard, the _CFMainPThread symbol
+ * is doesn't exist in the CoreFoundation library */
+#if MAC_OS_X_VERSION_MIN_REQUIRED <= MAC_OS_X_VERSION_10_5
+#ifdef RUN_NS_APP_THREAD
+#undef RUN_NS_APP_THREAD
+#endif
+#endif
 
 G_BEGIN_DECLS
 
@@ -62,15 +71,28 @@ typedef struct _GstOSXVideoSinkClass GstOSXVideoSinkClass;
 /* OSXWindow stuff */
 struct _GstOSXWindow {
   gint width, height;
+  gboolean closed;
   gboolean internal;
   GstGLView* gstview;
+  GstOSXVideoSinkWindow* win;
 };
 
 struct _GstOSXVideoSink {
   /* Our element stuff */
   GstVideoSink videosink;
   GstOSXWindow *osxwindow;
+  void *osxvideosinkobject;
   NSView *superview;
+  NSThread *ns_app_thread;
+#ifdef RUN_NS_APP_THREAD
+  GMutex *loop_thread_lock;
+  GCond *loop_thread_cond;
+#else
+  guint cocoa_timeout;
+#endif
+  gboolean app_started;
+  gboolean keep_par;
+  gboolean embed;
 };
 
 struct _GstOSXVideoSinkClass {
@@ -78,6 +100,53 @@ struct _GstOSXVideoSinkClass {
 };
 
 GType gst_osx_video_sink_get_type(void);
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4
+@interface NSApplication(AppleMenu)
+- (void)setAppleMenu:(NSMenu *)menu;
+@end
+#endif
+
+@interface GstBufferObject : NSObject
+{
+  @public
+  GstBuffer *buf;
+}
+
+-(id) initWithBuffer: (GstBuffer *) buf;
+@end
+
+
+#if MAC_OS_X_VERSION_MIN_REQUIRED <= MAC_OS_X_VERSION_10_5
+@interface GstWindowDelegate : NSObject
+#else
+@interface GstWindowDelegate : NSObject <NSWindowDelegate>
+#endif
+{
+  @public
+  GstOSXVideoSink *osxvideosink;
+}
+-(id) initWithSink: (GstOSXVideoSink *) sink;
+@end
+
+@interface GstOSXVideoSinkObject : NSObject
+{
+  BOOL destroyed;
+
+  @public
+  GstOSXVideoSink *osxvideosink;
+}
+
+-(id) initWithSink: (GstOSXVideoSink *) sink;
+-(void) createInternalWindow;
+-(void) resize;
+-(void) destroy;
+-(void) showFrame: (GstBufferObject*) buf;
+#ifdef RUN_NS_APP_THREAD
++ (BOOL) isMainThread;
+-(void) nsAppThread;
+#endif
+@end
 
 G_END_DECLS
 
