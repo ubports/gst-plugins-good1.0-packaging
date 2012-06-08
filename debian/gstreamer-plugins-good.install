@@ -4,7 +4,6 @@ debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstaasink.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstalaw.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstalphacolor.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstalpha.so
-debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstannodex.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstapetag.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstaudiofx.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstaudioparsers.so
