@@ -151,7 +151,7 @@ gst_matroska_parse_finalize (GObject * object)
   }
 
   if (parse->common.global_tags) {
-    gst_tag_list_free (parse->common.global_tags);
+    gst_tag_list_unref (parse->common.global_tags);
     parse->common.global_tags = NULL;
   }
 
@@ -256,7 +256,7 @@ gst_matroska_track_free (GstMatroskaTrackContext * track)
   }
 
   if (track->pending_tags)
-    gst_tag_list_free (track->pending_tags);
+    gst_tag_list_unref (track->pending_tags);
 
   if (track->index_table)
     g_array_free (track->index_table, TRUE);
@@ -370,7 +370,7 @@ gst_matroska_parse_reset (GstElement * element)
 #endif
 
   if (parse->common.global_tags) {
-    gst_tag_list_free (parse->common.global_tags);
+    gst_tag_list_unref (parse->common.global_tags);
   }
   parse->common.global_tags = gst_tag_list_new_empty ();
 
@@ -2984,6 +2984,8 @@ pause:
         gst_element_post_message (GST_ELEMENT (parse),
             gst_message_new_segment_done (GST_OBJECT (parse), GST_FORMAT_TIME,
                 stop));
+        gst_matroska_parse_send_event (parse,
+            gst_event_new_segment_done (GST_FORMAT_TIME, stop));
       } else {
         push_eos = TRUE;
       }

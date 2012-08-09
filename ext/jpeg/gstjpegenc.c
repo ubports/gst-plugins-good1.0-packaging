@@ -248,6 +248,8 @@ gst_jpegenc_term_destination (j_compress_ptr cinfo)
 
   gst_video_frame_unmap (&jpegenc->current_vframe);
 
+  GST_VIDEO_CODEC_FRAME_SET_SYNC_POINT (jpegenc->current_frame);
+
   gst_video_encoder_finish_frame (GST_VIDEO_ENCODER (jpegenc),
       jpegenc->current_frame);
   jpegenc->current_frame = NULL;
@@ -531,7 +533,7 @@ invalid_frame:
 static gboolean
 gst_jpegenc_propose_allocation (GstVideoEncoder * encoder, GstQuery * query)
 {
-  gst_query_add_allocation_meta (query, GST_VIDEO_META_API_TYPE);
+  gst_query_add_allocation_meta (query, GST_VIDEO_META_API_TYPE, NULL);
 
   return GST_VIDEO_ENCODER_CLASS (parent_class)->propose_allocation (encoder,
       query);

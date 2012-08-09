@@ -301,9 +301,11 @@ gst_dvdemux_add_pad (GstDVDemux * dvdemux, GstStaticPadTemplate * template)
   gst_pad_push_event (pad, gst_event_new_segment (&dvdemux->time_segment));
 
   if (no_more_pads) {
-    gst_pad_push_event (pad,
-        gst_event_new_tag ("GstDemuxer",
-            gst_tag_list_new (GST_TAG_CONTAINER_FORMAT, "DV", NULL)));
+    GstTagList *tags;
+
+    tags = gst_tag_list_new (GST_TAG_CONTAINER_FORMAT, "DV", NULL);
+    gst_tag_list_set_scope (tags, GST_TAG_SCOPE_GLOBAL);
+    gst_pad_push_event (pad, gst_event_new_tag (tags));
   }
 
   return pad;
@@ -1046,7 +1048,7 @@ gst_dvdemux_handle_pull_seek (GstDVDemux * demux, GstPad * pad,
   /* and restart the task in case it got paused explicitely or by
    * the FLUSH_START event we pushed out. */
   gst_pad_start_task (demux->sinkpad, (GstTaskFunction) gst_dvdemux_loop,
-      demux->sinkpad);
+      demux->sinkpad, NULL);
 
   /* and release the lock again so we can continue streaming */
   GST_PAD_STREAM_UNLOCK (demux->sinkpad);
@@ -1175,6 +1177,14 @@ gst_dvdemux_demux_audio (GstDVDemux * dvdemux, GstBuffer * buffer,
             || (channels != dvdemux->channels))) {
       GstCaps *caps;
       GstAudioInfo info;
+      gchar *stream_id;
+
+      stream_id =
+          gst_pad_create_stream_id (dvdemux->audiosrcpad,
+          GST_ELEMENT_CAST (dvdemux), "audio");
+      gst_pad_push_event (dvdemux->audiosrcpad,
+          gst_event_new_stream_start (stream_id));
+      g_free (stream_id);
 
       dvdemux->frequency = frequency;
       dvdemux->channels = channels;
@@ -1243,6 +1253,14 @@ gst_dvdemux_demux_video (GstDVDemux * dvdemux, GstBuffer * buffer,
   if (G_UNLIKELY ((dvdemux->height != height) || dvdemux->wide != wide)) {
     GstCaps *caps;
     gint par_x, par_y;
+    gchar *stream_id;
+
+    stream_id =
+        gst_pad_create_stream_id (dvdemux->videosrcpad,
+        GST_ELEMENT_CAST (dvdemux), "video");
+    gst_pad_push_event (dvdemux->videosrcpad,
+        gst_event_new_stream_start (stream_id));
+    g_free (stream_id);
 
     dvdemux->height = height;
     dvdemux->wide = wide;
@@ -1741,6 +1759,9 @@ pause:
         gst_element_post_message (GST_ELEMENT (dvdemux),
             gst_message_new_segment_done (GST_OBJECT_CAST (dvdemux),
                 dvdemux->time_segment.format, dvdemux->time_segment.position));
+        gst_dvdemux_push_event (dvdemux,
+            gst_event_new_segment_done (dvdemux->time_segment.format,
+                dvdemux->time_segment.position));
       } else {
         gst_dvdemux_push_event (dvdemux, gst_event_new_eos ());
       }
@@ -1766,7 +1787,7 @@ gst_dvdemux_sink_activate_mode (GstPad * sinkpad, GstObject * parent,
       if (active) {
         demux->seek_handler = gst_dvdemux_handle_pull_seek;
         res = gst_pad_start_task (sinkpad,
-            (GstTaskFunction) gst_dvdemux_loop, sinkpad);
+            (GstTaskFunction) gst_dvdemux_loop, sinkpad, NULL);
       } else {
         demux->seek_handler = NULL;
         res = gst_pad_stop_task (sinkpad);

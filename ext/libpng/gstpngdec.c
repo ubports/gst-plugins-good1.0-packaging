@@ -134,7 +134,7 @@ user_info_callback (png_structp png_ptr, png_infop info)
 
   /* Allocate output buffer */
   ret =
-      gst_video_decoder_alloc_output_frame (GST_VIDEO_DECODER (pngdec),
+      gst_video_decoder_allocate_output_frame (GST_VIDEO_DECODER (pngdec),
       pngdec->current_frame);
   if (G_UNLIKELY (ret != GST_FLOW_OK))
     GST_DEBUG_OBJECT (pngdec, "failed to acquire buffer");
@@ -330,6 +330,7 @@ gst_pngdec_caps_create_and_set (GstPngDec * pngdec)
   pngdec->output_state =
       gst_video_decoder_set_output_state (GST_VIDEO_DECODER (pngdec), format,
       width, height, pngdec->input_state);
+  gst_video_decoder_negotiate (GST_VIDEO_DECODER (pngdec));
   GST_DEBUG ("Final %d %d", GST_VIDEO_INFO_WIDTH (&pngdec->output_state->info),
       GST_VIDEO_INFO_HEIGHT (&pngdec->output_state->info));
 
@@ -393,18 +394,20 @@ beach:
 static gboolean
 gst_pngdec_decide_allocation (GstVideoDecoder * bdec, GstQuery * query)
 {
-  GstBufferPool *pool;
+  GstBufferPool *pool = NULL;
   GstStructure *config;
 
   if (!GST_VIDEO_DECODER_CLASS (parent_class)->decide_allocation (bdec, query))
     return FALSE;
 
-  g_assert (gst_query_get_n_allocation_pools (query) > 0);
-  gst_query_parse_nth_allocation_pool (query, 0, &pool, NULL, NULL, NULL);
-  g_assert (pool != NULL);
+  if (gst_query_get_n_allocation_pools (query) > 0)
+    gst_query_parse_nth_allocation_pool (query, 0, &pool, NULL, NULL, NULL);
+
+  if (pool == NULL)
+    return FALSE;
 
   config = gst_buffer_pool_get_config (pool);
-  if (gst_query_has_allocation_meta (query, GST_VIDEO_META_API_TYPE)) {
+  if (gst_query_find_allocation_meta (query, GST_VIDEO_META_API_TYPE, NULL)) {
     gst_buffer_pool_config_add_option (config,
         GST_BUFFER_POOL_OPTION_VIDEO_META);
   }

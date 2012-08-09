@@ -56,7 +56,7 @@ read_tags_from_file (const gchar * file, gboolean push_mode)
 
   /* kids, don't use a sync handler for this at home, really; we do because
    * we just want to abort and nothing else */
-  gst_bus_set_sync_handler (bus, error_cb, (gpointer) file);
+  gst_bus_set_sync_handler (bus, error_cb, (gpointer) file, NULL);
 
   src = gst_element_factory_make ("filesrc", "filesrc");
   fail_unless (src != NULL, "Failed to create 'filesrc' element!");
@@ -124,7 +124,7 @@ run_check_for_file (const gchar * filename, CheckTagsFunc * check_func)
   tags = read_tags_from_file (filename, FALSE);
   fail_unless (tags != NULL, "Failed to extract tags from '%s'", filename);
   check_func (tags, filename);
-  gst_tag_list_free (tags);
+  gst_tag_list_unref (tags);
 
   /* FIXME: need to fix id3demux for short content in push mode */
 #if 0
@@ -132,7 +132,7 @@ run_check_for_file (const gchar * filename, CheckTagsFunc * check_func)
   tags = read_tags_from_file (filename, TRUE);
   fail_unless (tags != NULL, "Failed to extract tags from '%s'", filename);
   check_func (tags, filename);
-  gst_tag_list_free (tags);
+  gst_tag_list_unref (tags);
 #endif
 }
 

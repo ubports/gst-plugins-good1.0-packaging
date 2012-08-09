@@ -114,7 +114,7 @@ gst_v4l2_buffer_pool_free_buffer (GstBufferPool * bpool, GstBuffer * buffer)
 
       index = meta->vbuffer.index;
       GST_LOG_OBJECT (pool,
-          "mmap buffer %p idx %d (data %p, len %u) freed, unmapping", buffer,
+          "unmap buffer %p idx %d (data %p, len %u)", buffer,
           index, meta->mem, meta->vbuffer.length);
 
       v4l2_munmap (meta->mem, meta->vbuffer.length);
@@ -190,24 +190,36 @@ gst_v4l2_buffer_pool_alloc_buffer (GstBufferPool * bpool, GstBuffer ** buffer,
 
       /* add metadata to raw video buffers */
       if (pool->add_videometa && info->finfo) {
+        const GstVideoFormatInfo *finfo = info->finfo;
         gsize offset[GST_VIDEO_MAX_PLANES];
-        gint stride[GST_VIDEO_MAX_PLANES];
+        gint width, height, n_planes, offs, i, stride[GST_VIDEO_MAX_PLANES];
 
-        offset[0] = 0;
-        stride[0] = obj->bytesperline;
+        width = GST_VIDEO_INFO_WIDTH (info);
+        height = GST_VIDEO_INFO_HEIGHT (info);
+        n_planes = GST_VIDEO_INFO_N_PLANES (info);
 
-        GST_DEBUG_OBJECT (pool, "adding video meta, stride %d", stride[0]);
+        GST_DEBUG_OBJECT (pool, "adding video meta, bytesperline %d",
+            obj->bytesperline);
+
+        offs = 0;
+        for (i = 0; i < n_planes; i++) {
+          offset[i] = offs;
+          stride[i] =
+              GST_VIDEO_FORMAT_INFO_SCALE_WIDTH (finfo, i, obj->bytesperline);
+
+          offs +=
+              stride[i] * GST_VIDEO_FORMAT_INFO_SCALE_HEIGHT (finfo, i, height);
+        }
         gst_buffer_add_video_meta_full (newbuf, GST_VIDEO_FRAME_FLAG_NONE,
-            GST_VIDEO_INFO_FORMAT (info), GST_VIDEO_INFO_WIDTH (info),
-            GST_VIDEO_INFO_HEIGHT (info), GST_VIDEO_INFO_N_PLANES (info),
+            GST_VIDEO_INFO_FORMAT (info), width, height, n_planes,
             offset, stride);
       }
       break;
     }
     case GST_V4L2_IO_USERPTR:
     default:
+      newbuf = NULL;
       g_assert_not_reached ();
-      break;
   }
 
   pool->num_allocated++;
@@ -344,9 +356,9 @@ gst_v4l2_buffer_pool_set_config (GstBufferPool * bpool, GstStructure * config)
   pool->num_buffers = num_buffers;
   pool->copy_threshold = copy_threshold;
   if (pool->allocator)
-    gst_allocator_unref (pool->allocator);
+    gst_object_unref (pool->allocator);
   if ((pool->allocator = allocator))
-    gst_allocator_ref (allocator);
+    gst_object_ref (allocator);
   pool->params = params;
 
   gst_buffer_pool_config_set_params (config, caps, size, min_buffers,
@@ -484,6 +496,7 @@ gst_v4l2_buffer_pool_stop (GstBufferPool * bpool)
   for (n = 0; n < pool->num_queued; n++) {
     gst_v4l2_buffer_pool_free_buffer (bpool, pool->buffers[n]);
   }
+  pool->num_queued = 0;
   g_free (pool->buffers);
   pool->buffers = NULL;
 
@@ -753,6 +766,7 @@ gst_v4l2_buffer_pool_acquire_buffer (GstBufferPool * bpool, GstBuffer ** buffer,
 
         case GST_V4L2_IO_USERPTR:
         default:
+          ret = GST_FLOW_ERROR;
           g_assert_not_reached ();
           break;
       }
@@ -775,12 +789,14 @@ gst_v4l2_buffer_pool_acquire_buffer (GstBufferPool * bpool, GstBuffer ** buffer,
 
         case GST_V4L2_IO_USERPTR:
         default:
+          ret = GST_FLOW_ERROR;
           g_assert_not_reached ();
           break;
       }
       break;
 
     default:
+      ret = GST_FLOW_ERROR;
       g_assert_not_reached ();
       break;
   }
@@ -874,7 +890,7 @@ gst_v4l2_buffer_pool_finalize (GObject * object)
   if (pool->video_fd >= 0)
     v4l2_close (pool->video_fd);
   if (pool->allocator)
-    gst_allocator_unref (pool->allocator);
+    gst_object_unref (pool->allocator);
   g_free (pool->buffers);
 
   G_OBJECT_CLASS (parent_class)->finalize (object);

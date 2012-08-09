@@ -5,7 +5,7 @@ dnl please read gstreamer/docs/random/autotools before changing this file
 dnl initialize autoconf
 dnl releases only do -Wall, git and prerelease does -Werror too
 dnl use a three digit version number for releases, and four for git/pre
-AC_INIT(GStreamer Good Plug-ins, 0.11.92,
+AC_INIT(GStreamer Good Plug-ins, 0.11.93,
     http://bugzilla.gnome.org/enter_bug.cgi?product=GStreamer,
     gst-plugins-good)
 
@@ -48,8 +48,8 @@ AG_GST_LIBTOOL_PREPARE
 AS_LIBTOOL(GST, 0, 0, 0)
 
 dnl *** required versions of GStreamer stuff ***
-GST_REQ=0.11.91
-GSTPB_REQ=0.11.91
+GST_REQ=0.11.93
+GSTPB_REQ=0.11.93
 
 dnl *** autotools stuff ****
 
@@ -198,11 +198,11 @@ dnl *** checks for dependency libraries ***
 
 
 dnl GLib
-GLIB_REQ=2.31.14
+GLIB_REQ=2.32.0
 AG_GST_GLIB_CHECK([$GLIB_REQ])
 
 dnl Orc
-ORC_CHECK([0.4.11])
+ORC_CHECK([0.4.16])
 
 dnl checks for gstreamer
 dnl uninstalled is selected preferentially -- see pkg-config(1)
@@ -234,21 +234,8 @@ AC_SUBST(GSTPB_PREFIX)
 
 dnl GTK is optional and used in examples
 HAVE_GTK=no
-GTK2_REQ=2.14.0
-GTK3_REQ=2.91.3
+GT_REQ=3.0.0
 if test "x$BUILD_EXAMPLES" = "xyes"; then
-  AC_MSG_CHECKING([which gtk+ version to compile examples against (optional)])
-  AC_ARG_WITH([gtk],
-    AC_HELP_STRING([--with-gtk=3.0|2.0],
-                   [which gtk+ version to compile against (default: 2.0)]),
-    [case "$with_gtk" in
-        2.0) GTK_REQ=$GTK2_REQ ;;
-        3.0) GTK_REQ=$GTK3_REQ ;;
-        *) AC_MSG_ERROR([invalid gtk+ version specified]);;
-    esac],
-    [with_gtk=2.0
-     GTK_REQ=$GTK2_REQ])
-  AC_MSG_RESULT([$with_gtk (>= $GTK_REQ)])
   PKG_CHECK_MODULES(GTK, gtk+-$with_gtk >= $GTK_REQ, HAVE_GTK=yes, HAVE_GTK=no)
   dnl some examples need gtk+-x11
   PKG_CHECK_MODULES(GTK_X11, gtk+-x11-$with_gtk >= $GTK_REQ, HAVE_GTK_X11=yes, HAVE_GTK_X11=no)
@@ -310,9 +297,7 @@ dnl *** plug-ins to include ***
 
 dnl Non ported plugins (non-dependant, then dependant)
 dnl Make sure you have a space before and after all plugins
-GST_PLUGINS_NONPORTED="deinterlace \
- cairo cairo_gobject gdk_pixbuf \
- osx_audio "
+GST_PLUGINS_NONPORTED="cairo cairo_gobject gdk_pixbuf osx_audio "
 AC_SUBST(GST_PLUGINS_NONPORTED)
 
 dnl these are all the gst plug-ins, compilable without additional libs
@@ -843,7 +828,7 @@ AG_GST_CHECK_FEATURE(SOUP, [soup http client plugin (2.4)], souphttpsrc, [
     HAVE_SOUP="yes"
     AC_DEFINE(HAVE_LIBSOUP_GNOME, 1, [soup gnome integration])
   ],[
-    PKG_CHECK_MODULES(SOUP, libsoup-2.4 >= 2.26, HAVE_SOUP="yes", [
+    PKG_CHECK_MODULES(SOUP, libsoup-2.4 >= 2.26.1, HAVE_SOUP="yes", [
       HAVE_SOUP="no"
     ])
   ])

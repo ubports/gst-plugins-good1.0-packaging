@@ -113,6 +113,34 @@ GST_STATIC_PAD_TEMPLATE ("sink",
 G_DEFINE_TYPE_WITH_CODE (GstWavParse, gst_wavparse, GST_TYPE_ELEMENT,
     DEBUG_INIT);
 
+typedef struct
+{
+  /* Offset Size    Description   Value
+   * 0x00   4       ID            unique identification value
+   * 0x04   4       Position      play order position
+   * 0x08   4       Data Chunk ID RIFF ID of corresponding data chunk
+   * 0x0c   4       Chunk Start   Byte Offset of Data Chunk *
+   * 0x10   4       Block Start   Byte Offset to sample of First Channel
+   * 0x14   4       Sample Offset Byte Offset to sample byte of First Channel
+   */
+  guint32 id;
+  guint32 position;
+  guint32 data_chunk_id;
+  guint32 chunk_start;
+  guint32 block_start;
+  guint32 sample_offset;
+} GstWavParseCue;
+
+typedef struct
+{
+  /* Offset Size    Description     Value
+   * 0x08   4       Cue Point ID    0 - 0xFFFFFFFF
+   * 0x0c           Text
+   */
+  guint32 cue_point_id;
+  gchar *text;
+} GstWavParseLabl;
+
 static void
 gst_wavparse_class_init (GstWavParseClass * klass)
 {
@@ -196,8 +224,17 @@ gst_wavparse_reset (GstWavParse * wav)
     wav->adapter = NULL;
   }
   if (wav->tags)
-    gst_tag_list_free (wav->tags);
+    gst_tag_list_unref (wav->tags);
   wav->tags = NULL;
+  if (wav->toc)
+    gst_toc_unref (wav->toc);
+  wav->toc = NULL;
+  if (wav->cues)
+    g_list_free_full (wav->cues, g_free);
+  wav->cues = NULL;
+  if (wav->labls)
+    g_list_free_full (wav->labls, g_free);
+  wav->labls = NULL;
   if (wav->caps)
     gst_caps_unref (wav->caps);
   wav->caps = NULL;
@@ -805,11 +842,7 @@ gst_wavparse_perform_seek (GstWavParse * wav, GstEvent * event)
     if (!event || wav->state != GST_WAVPARSE_DATA) {
       if (wav->start_segment)
         gst_event_unref (wav->start_segment);
-      // TODO
-/*      wav->start_segment =
-          gst_event_new_new_segment (FALSE, wav->segment.rate,
-          wav->segment.format, wav->segment.last_stop, wav->segment.duration,
-          wav->segment.last_stop);*/
+      wav->start_segment = gst_event_new_segment (&wav->segment);
       res = TRUE;
     } else {
       /* convert seek positions to byte positions in data sections */
@@ -963,7 +996,7 @@ gst_wavparse_perform_seek (GstWavParse * wav, GstEvent * event)
   /* and start the streaming task again */
   if (!wav->streaming) {
     gst_pad_start_task (wav->sinkpad, (GstTaskFunction) gst_wavparse_loop,
-        wav->sinkpad);
+        wav->sinkpad, NULL);
   }
 
   GST_PAD_STREAM_UNLOCK (wav->sinkpad);
@@ -1115,6 +1148,203 @@ gst_waveparse_ignore_chunk (GstWavParse * wav, GstBuffer * buf, guint32 tag,
   return TRUE;
 }
 
+/*
+ * gst_wavparse_cue_chunk:
+ * @wav GstWavParse object
+ * @data holder for data
+ * @size holder for data size
+ *
+ * Parse cue chunk from @data to wav->cues.
+ *
+ * Returns: %TRUE when cue chunk is available
+ */
+static gboolean
+gst_wavparse_cue_chunk (GstWavParse * wav, const guint8 * data, guint32 size)
+{
+  guint32 i, ncues;
+  GList *cues = NULL;
+  GstWavParseCue *cue;
+
+  if (wav->cues) {
+    GST_WARNING_OBJECT (wav, "found another cue's");
+    return TRUE;
+  }
+
+  ncues = GST_READ_UINT32_LE (data);
+
+  if (size < 4 + ncues * 24) {
+    GST_WARNING_OBJECT (wav, "broken file %d %d", size, ncues);
+    return FALSE;
+  }
+
+  /* parse data */
+  data += 4;
+  for (i = 0; i < ncues; i++) {
+    cue = g_new0 (GstWavParseCue, 1);
+    cue->id = GST_READ_UINT32_LE (data);
+    cue->position = GST_READ_UINT32_LE (data + 4);
+    cue->data_chunk_id = GST_READ_UINT32_LE (data + 8);
+    cue->chunk_start = GST_READ_UINT32_LE (data + 12);
+    cue->block_start = GST_READ_UINT32_LE (data + 16);
+    cue->sample_offset = GST_READ_UINT32_LE (data + 20);
+    cues = g_list_append (cues, cue);
+    data += 24;
+  }
+
+  wav->cues = cues;
+
+  return TRUE;
+}
+
+/*
+ * gst_wavparse_labl_chunk:
+ * @wav GstWavParse object
+ * @data holder for data
+ * @size holder for data size
+ *
+ * Parse labl from @data to wav->labls.
+ *
+ * Returns: %TRUE when labl chunk is available
+ */
+static gboolean
+gst_wavparse_labl_chunk (GstWavParse * wav, const guint8 * data, guint32 size)
+{
+  GstWavParseLabl *labl;
+
+  if (size < 5)
+    return FALSE;
+
+  labl = g_new0 (GstWavParseLabl, 1);
+
+  /* parse data */
+  data += 8;
+  labl->cue_point_id = GST_READ_UINT32_LE (data);
+  labl->text = (gchar *) g_new0 (gchar *, size - 4 + 1);
+  memcpy (labl->text, data + 4, size - 4);
+
+  wav->labls = g_list_append (wav->labls, labl);
+
+  return TRUE;
+}
+
+/*
+ * gst_wavparse_adtl_chunk:
+ * @wav GstWavParse object
+ * @data holder for data
+ * @size holder for data size
+ *
+ * Parse adtl from @data.
+ *
+ * Returns: %TRUE when adtl chunk is available
+ */
+static gboolean
+gst_wavparse_adtl_chunk (GstWavParse * wav, const guint8 * data, guint32 size)
+{
+  guint32 ltag, lsize, offset = 0;
+
+  while (size >= 8) {
+    ltag = GST_READ_UINT32_LE (data + offset);
+    lsize = GST_READ_UINT32_LE (data + offset + 4);
+    switch (ltag) {
+      case GST_RIFF_TAG_labl:
+        gst_wavparse_labl_chunk (wav, data + offset, size);
+      default:
+        break;
+    }
+    offset += 8 + GST_ROUND_UP_2 (lsize);
+    size -= 8 + GST_ROUND_UP_2 (lsize);
+  }
+
+  return TRUE;
+}
+
+/*
+ * gst_wavparse_create_toc:
+ * @wav GstWavParse object
+ *
+ * Create TOC from wav->cues and wav->labls.
+ */
+static gboolean
+gst_wavparse_create_toc (GstWavParse * wav)
+{
+  gint64 start, stop;
+  gchar *id;
+  GList *list;
+  GstWavParseCue *cue;
+  GstWavParseLabl *labl;
+  GstTagList *tags;
+  GstToc *toc;
+  GstTocEntry *entry = NULL, *cur_subentry = NULL, *prev_subentry = NULL;
+
+  GST_OBJECT_LOCK (wav);
+  if (wav->toc) {
+    GST_OBJECT_UNLOCK (wav);
+    GST_WARNING_OBJECT (wav, "found another TOC");
+    return FALSE;
+  }
+
+  if (!wav->cues) {
+    GST_OBJECT_UNLOCK (wav);
+    return TRUE;
+  }
+
+  /* FIXME: send CURRENT scope toc too */
+  toc = gst_toc_new (GST_TOC_SCOPE_GLOBAL);
+
+  /* add cue edition */
+  entry = gst_toc_entry_new (GST_TOC_ENTRY_TYPE_EDITION, "cue");
+  gst_toc_entry_set_start_stop_times (entry, 0, wav->duration);
+  gst_toc_append_entry (toc, entry);
+
+  /* add chapters in cue edition */
+  list = g_list_first (wav->cues);
+  while (list) {
+    cue = list->data;
+    prev_subentry = cur_subentry;
+    /* previous chapter stop time = current chapter start time */
+    if (prev_subentry != NULL) {
+      gst_toc_entry_get_start_stop_times (prev_subentry, &start, NULL);
+      stop = gst_util_uint64_scale_round (cue->position, GST_SECOND, wav->rate);
+      gst_toc_entry_set_start_stop_times (prev_subentry, start, stop);
+    }
+    id = g_strdup_printf ("%08x", cue->id);
+    cur_subentry = gst_toc_entry_new (GST_TOC_ENTRY_TYPE_CHAPTER, id);
+    g_free (id);
+    start = gst_util_uint64_scale_round (cue->position, GST_SECOND, wav->rate);
+    stop = wav->duration;
+    gst_toc_entry_set_start_stop_times (cur_subentry, start, stop);
+    gst_toc_entry_append_sub_entry (entry, cur_subentry);
+    list = g_list_next (list);
+  }
+
+  /* add tags in chapters */
+  list = g_list_first (wav->labls);
+  while (list) {
+    labl = list->data;
+    id = g_strdup_printf ("%08x", labl->cue_point_id);
+    cur_subentry = gst_toc_find_entry (toc, id);
+    g_free (id);
+    if (cur_subentry != NULL) {
+      tags = gst_tag_list_new_empty ();
+      gst_tag_list_add (tags, GST_TAG_MERGE_APPEND, GST_TAG_TITLE, labl->text,
+          NULL);
+      gst_toc_entry_set_tags (cur_subentry, tags);
+    }
+    list = g_list_next (list);
+  }
+
+  /* send data as TOC */
+  wav->toc = toc;
+
+  /* send TOC event */
+  if (wav->toc) {
+    GST_OBJECT_UNLOCK (wav);
+    gst_pad_push_event (wav->srcpad, gst_event_new_toc (wav->toc, FALSE));
+  }
+
+  return TRUE;
+}
+
 #define MAX_BUFFER_SIZE 4096
 
 static GstFlowReturn
@@ -1203,7 +1433,7 @@ gst_wavparse_stream_headers (GstWavParse * wav)
     wav->rate = header->rate;
     wav->channels = header->channels;
     wav->blockalign = header->blockalign;
-    wav->depth = header->size;
+    wav->depth = header->bits_per_sample;
     wav->av_bps = header->av_bps;
     wav->vbr = FALSE;
 
@@ -1497,13 +1727,39 @@ gst_wavparse_stream_headers (GstWavParse * wav)
                 wav->tags =
                     gst_tag_list_merge (old, new, GST_TAG_MERGE_REPLACE);
                 if (old)
-                  gst_tag_list_free (old);
-                gst_tag_list_free (new);
+                  gst_tag_list_unref (old);
+                gst_tag_list_unref (new);
               }
               gst_buffer_unref (buf);
               wav->offset += GST_ROUND_UP_2 (data_size);
             }
             break;
+          }
+          case GST_RIFF_LIST_adtl:{
+            const gint data_size = size;
+
+            GST_INFO_OBJECT (wav, "Have 'adtl' LIST, size %u", data_size);
+            if (wav->streaming) {
+              const guint8 *data = NULL;
+
+              gst_adapter_flush (wav->adapter, 12);
+              data = gst_adapter_map (wav->adapter, data_size);
+              gst_wavparse_adtl_chunk (wav, data, data_size);
+              gst_adapter_unmap (wav->adapter);
+            } else {
+              GstMapInfo map;
+
+              gst_buffer_unref (buf);
+              buf = NULL;
+              if ((res =
+                      gst_pad_pull_range (wav->sinkpad, wav->offset + 12,
+                          data_size, &buf)) != GST_FLOW_OK)
+                goto header_read_error;
+              gst_buffer_map (buf, &map, GST_MAP_READ);
+              gst_wavparse_adtl_chunk (wav, (const guint8 *) map.data,
+                  data_size);
+              gst_buffer_unmap (buf, &map);
+            }
           }
           default:
             GST_INFO_OBJECT (wav, "Ignoring LIST chunk %" GST_FOURCC_FORMAT,
@@ -1513,6 +1769,50 @@ gst_wavparse_stream_headers (GstWavParse * wav)
               goto exit;
             break;
         }
+        break;
+      }
+      case GST_RIFF_TAG_cue:{
+        const guint data_size = size;
+
+        GST_DEBUG_OBJECT (wav, "Have 'cue' TAG, size : %u", data_size);
+        if (wav->streaming) {
+          const guint8 *data = NULL;
+
+          if (!gst_wavparse_peek_chunk (wav, &tag, &size)) {
+            goto exit;
+          }
+          gst_adapter_flush (wav->adapter, 8);
+          wav->offset += 8;
+          data = gst_adapter_map (wav->adapter, data_size);
+          if (!gst_wavparse_cue_chunk (wav, data, data_size)) {
+            goto header_read_error;
+          }
+          gst_adapter_unmap (wav->adapter);
+        } else {
+          GstMapInfo map;
+
+          wav->offset += 8;
+          gst_buffer_unref (buf);
+          buf = NULL;
+          if ((res =
+                  gst_pad_pull_range (wav->sinkpad, wav->offset,
+                      data_size, &buf)) != GST_FLOW_OK)
+            goto header_read_error;
+          gst_buffer_map (buf, &map, GST_MAP_READ);
+          if (!gst_wavparse_cue_chunk (wav, (const guint8 *) map.data,
+                  data_size)) {
+            goto header_read_error;
+          }
+          gst_buffer_unmap (buf, &map);
+        }
+        size = GST_ROUND_UP_2 (size);
+        if (wav->streaming) {
+          gst_adapter_flush (wav->adapter, size);
+        } else {
+          gst_buffer_unref (buf);
+        }
+        size = GST_ROUND_UP_2 (size);
+        wav->offset += size;
         break;
       }
       default:
@@ -1545,6 +1845,8 @@ gst_wavparse_stream_headers (GstWavParse * wav)
     gst_segment_init (&wav->segment, GST_FORMAT_TIME);
     if (!wav->ignore_length)
       wav->segment.duration = wav->duration;
+    if (!wav->toc)
+      gst_wavparse_create_toc (wav);
   } else {
     /* no bitrate, let downstream peer do the math, we'll feed it bytes. */
     gst_segment_init (&wav->segment, GST_FORMAT_BYTES);
@@ -1786,8 +2088,7 @@ gst_wavparse_add_src_pad (GstWavParse * wav, GstBuffer * buf)
   }
 
   if (wav->tags) {
-    gst_pad_push_event (wav->srcpad, gst_event_new_tag ("GstParser",
-            wav->tags));
+    gst_pad_push_event (wav->srcpad, gst_event_new_tag (wav->tags));
     wav->tags = NULL;
   }
 }
@@ -2072,6 +2373,8 @@ pause:
         gst_element_post_message (GST_ELEMENT_CAST (wav),
             gst_message_new_segment_done (GST_OBJECT_CAST (wav),
                 wav->segment.format, stop));
+        gst_pad_push_event (wav->srcpad,
+            gst_event_new_segment_done (wav->segment.format, stop));
       } else {
         gst_pad_push_event (wav->srcpad, gst_event_new_eos ());
       }
@@ -2228,7 +2531,8 @@ gst_wavparse_sink_event (GstPad * pad, GstObject * parent, GstEvent * event)
       segment.stop = stop;
 
       /* accept upstream's notion of segment and distribute along */
-      segment.time = segment.start = segment.position;
+      segment.format = wav->segment.format;
+      segment.time = segment.position = segment.start;
       segment.duration = wav->segment.duration;
       segment.base = gst_segment_to_running_time (&wav->segment,
           GST_FORMAT_TIME, wav->segment.position);
@@ -2443,13 +2747,13 @@ gst_wavparse_pad_query (GstPad * pad, GstObject * parent, GstQuery * query)
       GST_INFO_OBJECT (wav, "pos query at %" G_GINT64_FORMAT, curb);
 
       switch (format) {
-        case GST_FORMAT_TIME:
-          res = gst_wavparse_pad_convert (pad, GST_FORMAT_BYTES, curb,
-              &format, &cur);
-          break;
-        default:
+        case GST_FORMAT_BYTES:
           format = GST_FORMAT_BYTES;
           cur = curb;
+          break;
+        default:
+          res = gst_wavparse_pad_convert (pad, GST_FORMAT_BYTES, curb,
+              &format, &cur);
           break;
       }
       if (res)
@@ -2469,18 +2773,22 @@ gst_wavparse_pad_query (GstPad * pad, GstObject * parent, GstQuery * query)
       gst_query_parse_duration (query, &format, NULL);
 
       switch (format) {
-        case GST_FORMAT_TIME:{
+        case GST_FORMAT_BYTES:{
+          format = GST_FORMAT_BYTES;
+          duration = wav->datasize;
+          break;
+        }
+        case GST_FORMAT_TIME:
           if ((res = gst_wavparse_calculate_duration (wav))) {
             duration = wav->duration;
           }
           break;
-        }
         default:
-          format = GST_FORMAT_BYTES;
-          duration = wav->datasize;
+          res = FALSE;
           break;
       }
-      gst_query_set_duration (query, format, duration);
+      if (res)
+        gst_query_set_duration (query, format, duration);
       break;
     }
     case GST_QUERY_CONVERT:
@@ -2547,6 +2855,47 @@ gst_wavparse_srcpad_event (GstPad * pad, GstObject * parent, GstEvent * event)
       }
       gst_event_unref (event);
       break;
+
+    case GST_EVENT_TOC_SELECT:
+    {
+      char *uid = NULL;
+      GstTocEntry *entry = NULL;
+      GstEvent *seek_event;
+      gint64 start_pos;
+
+      if (!wavparse->toc) {
+        GST_DEBUG_OBJECT (wavparse, "no TOC to select");
+        return FALSE;
+      } else {
+        gst_event_parse_toc_select (event, &uid);
+        if (uid != NULL) {
+          GST_OBJECT_LOCK (wavparse);
+          entry = gst_toc_find_entry (wavparse->toc, uid);
+          if (entry == NULL) {
+            GST_OBJECT_UNLOCK (wavparse);
+            GST_WARNING_OBJECT (wavparse, "no TOC entry with given UID: %s",
+                uid);
+            res = FALSE;
+          } else {
+            gst_toc_entry_get_start_stop_times (entry, &start_pos, NULL);
+            GST_OBJECT_UNLOCK (wavparse);
+            seek_event = gst_event_new_seek (1.0,
+                GST_FORMAT_TIME,
+                GST_SEEK_FLAG_FLUSH,
+                GST_SEEK_TYPE_SET, start_pos, GST_SEEK_TYPE_SET, -1);
+            res = gst_wavparse_perform_seek (wavparse, seek_event);
+            gst_event_unref (seek_event);
+          }
+          g_free (uid);
+        } else {
+          GST_WARNING_OBJECT (wavparse, "received empty TOC select event");
+          res = FALSE;
+        }
+      }
+      gst_event_unref (event);
+      break;
+    }
+
     default:
       res = gst_pad_push_event (wavparse->sinkpad, event);
       break;
@@ -2608,7 +2957,7 @@ gst_wavparse_sink_activate_mode (GstPad * sinkpad, GstObject * parent,
       if (active) {
         /* if we have a scheduler we can start the task */
         res = gst_pad_start_task (sinkpad, (GstTaskFunction) gst_wavparse_loop,
-            sinkpad);
+            sinkpad, NULL);
       } else {
         res = gst_pad_stop_task (sinkpad);
       }

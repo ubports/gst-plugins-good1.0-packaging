@@ -142,7 +142,7 @@ gst_flac_tag_dispose (GObject * object)
     tag->vorbiscomment = NULL;
   }
   if (tag->tags) {
-    gst_tag_list_free (tag->tags);
+    gst_tag_list_unref (tag->tags);
     tag->tags = NULL;
   }
 
@@ -319,7 +319,7 @@ gst_flac_tag_chain (GstPad * pad, GstObject * parent, GstBuffer * buffer)
           id_data, 4, NULL);
       if (tag->tags != NULL) {
         gst_pad_push_event (tag->srcpad,
-            gst_event_new_tag ("GstFlacTag", gst_tag_list_copy (tag->tags)));
+            gst_event_new_tag (gst_tag_list_ref (tag->tags)));
       }
 
       gst_buffer_unref (tag->vorbiscomment);
@@ -377,7 +377,7 @@ gst_flac_tag_chain (GstPad * pad, GstObject * parent, GstBuffer * buffer)
       buffer = gst_tag_list_to_vorbiscomment_buffer (merged_tags, header,
           sizeof (header), NULL);
       GST_DEBUG_OBJECT (tag, "Writing tags %" GST_PTR_FORMAT, merged_tags);
-      gst_tag_list_free (merged_tags);
+      gst_tag_list_unref (merged_tags);
       if (buffer == NULL)
         goto no_comment;
 
@@ -483,7 +483,7 @@ gst_flac_tag_change_state (GstElement * element, GstStateChange transition)
         tag->vorbiscomment = NULL;
       }
       if (tag->tags) {
-        gst_tag_list_free (tag->tags);
+        gst_tag_list_unref (tag->tags);
         tag->tags = NULL;
       }
       tag->metadata_block_size = 0;

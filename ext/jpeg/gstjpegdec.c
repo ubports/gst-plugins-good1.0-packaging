@@ -28,9 +28,8 @@
  * <refsect2>
  * <title>Example launch line</title>
  * |[
- * gst-launch -v v4l2src ! jpegdec ! ffmpegcolorspace ! xvimagesink
- * ]| The above pipeline reads a motion JPEG stream from a v4l2 camera
- * and renders it to the screen.
+ * gst-launch -v filesrc location=mjpeg.avi ! avidemux !  queue ! jpegdec ! videoconvert ! videoscale ! autovideosink
+ * ]| The above pipeline decode the mjpeg stream and renders it to the screen.
  * </refsect2>
  */
 
@@ -1051,6 +1050,8 @@ gst_jpeg_dec_negotiate (GstJpegDec * dec, gint width, gint height, gint clrspc)
 
   gst_video_codec_state_unref (outstate);
 
+  gst_video_decoder_negotiate (GST_VIDEO_DECODER (dec));
+
   GST_DEBUG_OBJECT (dec, "max_v_samp_factor=%d", dec->cinfo.max_v_samp_factor);
   GST_DEBUG_OBJECT (dec, "max_h_samp_factor=%d", dec->cinfo.max_h_samp_factor);
 }
@@ -1167,7 +1168,7 @@ gst_jpeg_dec_handle_frame (GstVideoDecoder * bdec, GstVideoCodecFrame * frame)
   gst_jpeg_dec_negotiate (dec, width, height, dec->cinfo.jpeg_color_space);
 
   state = gst_video_decoder_get_output_state (bdec);
-  ret = gst_video_decoder_alloc_output_frame (bdec, frame);
+  ret = gst_video_decoder_allocate_output_frame (bdec, frame);
   if (G_UNLIKELY (ret != GST_FLOW_OK))
     goto alloc_failed;
 
@@ -1315,18 +1316,20 @@ invalid_yuvrgbgrayscale:
 static gboolean
 gst_jpeg_dec_decide_allocation (GstVideoDecoder * bdec, GstQuery * query)
 {
-  GstBufferPool *pool;
+  GstBufferPool *pool = NULL;
   GstStructure *config;
 
   if (!GST_VIDEO_DECODER_CLASS (parent_class)->decide_allocation (bdec, query))
     return FALSE;
 
-  g_assert (gst_query_get_n_allocation_pools (query) > 0);
-  gst_query_parse_nth_allocation_pool (query, 0, &pool, NULL, NULL, NULL);
-  g_assert (pool != NULL);
+  if (gst_query_get_n_allocation_pools (query) > 0)
+    gst_query_parse_nth_allocation_pool (query, 0, &pool, NULL, NULL, NULL);
+
+  if (pool == NULL)
+    return FALSE;
 
   config = gst_buffer_pool_get_config (pool);
-  if (gst_query_has_allocation_meta (query, GST_VIDEO_META_API_TYPE)) {
+  if (gst_query_find_allocation_meta (query, GST_VIDEO_META_API_TYPE, NULL)) {
     gst_buffer_pool_config_add_option (config,
         GST_BUFFER_POOL_OPTION_VIDEO_META);
   }
