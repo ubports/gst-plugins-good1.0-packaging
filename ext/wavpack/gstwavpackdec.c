@@ -209,6 +209,7 @@ gst_wavpack_dec_negotiate (GstWavpackDec * dec)
       dec->width = 32;
       break;
     default:
+      fmt = GST_AUDIO_FORMAT_UNKNOWN;
       g_assert_not_reached ();
       break;
   }
@@ -258,9 +259,8 @@ gst_wavpack_dec_post_tags (GstWavpackDec * dec)
     bitrate = gst_util_uint64_scale (size, 8 * GST_SECOND, duration);
     gst_tag_list_add (list, GST_TAG_MERGE_REPLACE, GST_TAG_BITRATE,
         (guint) bitrate, NULL);
-
-    gst_element_post_message (GST_ELEMENT (dec),
-        gst_message_new_tag (GST_OBJECT (dec), list));
+    gst_audio_decoder_merge_tags (GST_AUDIO_DECODER (dec), list,
+        GST_TAG_MERGE_REPLACE);
   }
 }
 

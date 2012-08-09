@@ -649,7 +649,7 @@ gst_image_freeze_src_event (GstPad * pad, GstObject * parent, GstEvent * event)
 
         if (self->buffer != NULL)
           gst_pad_start_task (self->srcpad,
-              (GstTaskFunction) gst_image_freeze_src_loop, self->srcpad);
+              (GstTaskFunction) gst_image_freeze_src_loop, self->srcpad, NULL);
 
         g_mutex_unlock (&self->lock);
       }
@@ -685,7 +685,7 @@ gst_image_freeze_sink_chain (GstPad * pad, GstObject * parent,
   self->buffer = buffer;
 
   gst_pad_start_task (self->srcpad, (GstTaskFunction) gst_image_freeze_src_loop,
-      self->srcpad);
+      self->srcpad, NULL);
   g_mutex_unlock (&self->lock);
   return GST_FLOW_EOS;
 }
@@ -714,7 +714,7 @@ gst_image_freeze_src_loop (GstPad * pad)
   if (self->need_segment) {
     GstEvent *e;
 
-    GST_DEBUG_OBJECT (pad, "Pushing NEWSEGMENT event: %" GST_SEGMENT_FORMAT,
+    GST_DEBUG_OBJECT (pad, "Pushing SEGMENT event: %" GST_SEGMENT_FORMAT,
         &self->segment);
     e = gst_event_new_segment (&self->segment);
 
@@ -777,7 +777,8 @@ gst_image_freeze_src_loop (GstPad * pad)
   if (in_seg) {
     GstFlowReturn ret;
 
-    GST_BUFFER_TIMESTAMP (buffer) = cstart;
+    GST_BUFFER_DTS (buffer) = GST_CLOCK_TIME_NONE;
+    GST_BUFFER_PTS (buffer) = cstart;
     GST_BUFFER_DURATION (buffer) = cstop - cstart;
     GST_BUFFER_OFFSET (buffer) = offset;
     GST_BUFFER_OFFSET_END (buffer) = offset + 1;
@@ -793,15 +794,20 @@ gst_image_freeze_src_loop (GstPad * pad)
   if (eos) {
     if ((self->segment.flags & GST_SEEK_FLAG_SEGMENT)) {
       GstMessage *m;
+      GstEvent *e;
 
       GST_DEBUG_OBJECT (pad, "Sending segment done at end of segment");
-      if (self->segment.rate >= 0)
+      if (self->segment.rate >= 0) {
         m = gst_message_new_segment_done (GST_OBJECT_CAST (self),
             GST_FORMAT_TIME, self->segment.stop);
-      else
+        e = gst_event_new_segment_done (GST_FORMAT_TIME, self->segment.stop);
+      } else {
         m = gst_message_new_segment_done (GST_OBJECT_CAST (self),
             GST_FORMAT_TIME, self->segment.start);
+        e = gst_event_new_segment_done (GST_FORMAT_TIME, self->segment.start);
+      }
       gst_element_post_message (GST_ELEMENT_CAST (self), m);
+      gst_pad_push_event (self->srcpad, e);
     } else {
       GST_DEBUG_OBJECT (pad, "Sending EOS at end of segment");
       gst_pad_push_event (self->srcpad, gst_event_new_eos ());

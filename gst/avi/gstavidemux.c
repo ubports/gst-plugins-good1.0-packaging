@@ -231,7 +231,7 @@ gst_avi_demux_reset_stream (GstAviDemux * avi, GstAviStream * stream)
       gst_object_unref (stream->pad);
   }
   if (stream->taglist) {
-    gst_tag_list_free (stream->taglist);
+    gst_tag_list_unref (stream->taglist);
     stream->taglist = NULL;
   }
   memset (stream, 0, sizeof (GstAviStream));
@@ -278,7 +278,7 @@ gst_avi_demux_reset (GstAviDemux * avi)
   }
 
   if (avi->globaltags)
-    gst_tag_list_free (avi->globaltags);
+    gst_tag_list_unref (avi->globaltags);
   avi->globaltags = NULL;
 
   avi->got_tags = TRUE;         /* we always want to push global tags */
@@ -1924,6 +1924,7 @@ gst_avi_demux_parse_stream (GstAviDemux * avi, GstBuffer * buf)
   GstElement *element;
   gboolean got_strh = FALSE, got_strf = FALSE, got_vprp = FALSE;
   gst_riff_vprp *vprp = NULL;
+  gchar *stream_id;
 
   element = GST_ELEMENT_CAST (avi);
 
@@ -2299,7 +2300,12 @@ gst_avi_demux_parse_stream (GstAviDemux * avi, GstBuffer * buf)
   avi->num_streams++;
 
   gst_pad_set_active (pad, TRUE);
-  gst_pad_push_event (pad, gst_event_new_caps (caps));
+  stream_id =
+      gst_pad_create_stream_id_printf (pad, GST_ELEMENT_CAST (avi), "%u",
+      avi->num_streams);
+  gst_pad_push_event (pad, gst_event_new_stream_start (stream_id));
+  g_free (stream_id);
+  gst_pad_set_caps (pad, caps);
   gst_caps_unref (caps);
 
   /* make tags */
@@ -3227,8 +3233,8 @@ gst_avi_demux_stream_header_push (GstAviDemux * avi)
                 case GST_RIFF_TAG_JUNQ:
                 case GST_RIFF_TAG_JUNK:
                   goto next;
-                  break;
               }
+              break;
             case GST_RIFF_IDIT:
               gst_avi_demux_parse_idit (avi, sub);
               goto next;
@@ -4177,7 +4183,7 @@ gst_avi_demux_handle_seek (GstAviDemux * avi, GstPad * pad, GstEvent * event)
 
   if (!avi->streaming) {
     gst_pad_start_task (avi->sinkpad, (GstTaskFunction) gst_avi_demux_loop,
-        avi->sinkpad);
+        avi->sinkpad, NULL);
   }
   /* reset the last flow and mark discont, seek is always DISCONT */
   for (i = 0; i < avi->num_streams; i++) {
@@ -4443,10 +4449,9 @@ swap_line (guint8 * d1, guint8 * d2, guint8 * tmp, gint bytes)
 
 
 #define gst_avi_demux_is_uncompressed(fourcc)		\
-  (fourcc &&						\
-    (fourcc == GST_RIFF_DIB ||				\
-     fourcc == GST_RIFF_rgb ||				\
-     fourcc == GST_RIFF_RGB || fourcc == GST_RIFF_RAW))
+  (fourcc == GST_RIFF_DIB ||				\
+   fourcc == GST_RIFF_rgb ||				\
+   fourcc == GST_RIFF_RGB || fourcc == GST_RIFF_RAW)
 
 /*
  * Invert DIB buffers... Takes existing buffer and
@@ -4463,11 +4468,19 @@ gst_avi_demux_invert (GstAviStream * stream, GstBuffer * buf)
   guint8 *tmp = NULL;
   GstMapInfo map;
   GstCaps *caps;
+  guint32 fourcc;
 
   if (stream->strh->type != GST_RIFF_FCC_vids)
     return buf;
 
-  if (!gst_avi_demux_is_uncompressed (stream->strh->fcc_handler)) {
+  if (stream->strf.vids == NULL) {
+    GST_WARNING ("Failed to retrieve vids for stream");
+    return buf;
+  }
+
+  fourcc = (stream->strf.vids->compression) ?
+      stream->strf.vids->compression : stream->strh->fcc_handler;
+  if (!gst_avi_demux_is_uncompressed (fourcc)) {
     return buf;                 /* Ignore non DIB buffers */
   }
 
@@ -4477,11 +4490,6 @@ gst_avi_demux_invert (GstAviStream * stream, GstBuffer * buf)
 
   if (!gst_structure_get_int (s, "bpp", &bpp)) {
     GST_WARNING ("Failed to retrieve depth from caps");
-    return buf;
-  }
-
-  if (stream->strf.vids == NULL) {
-    GST_WARNING ("Failed to retrieve vids for stream");
     return buf;
   }
 
@@ -5119,7 +5127,7 @@ push_tag_lists (GstAviDemux * avi)
     if (pad && tags) {
       GST_DEBUG_OBJECT (pad, "Tags: %" GST_PTR_FORMAT, tags);
 
-      gst_pad_push_event (pad, gst_event_new_tag ("GstDemuxer", tags));
+      gst_pad_push_event (pad, gst_event_new_tag (tags));
       stream->taglist = NULL;
     }
   }
@@ -5131,7 +5139,8 @@ push_tag_lists (GstAviDemux * avi)
       GST_TAG_CONTAINER_FORMAT, "AVI", NULL);
 
   GST_DEBUG_OBJECT (avi, "Global tags: %" GST_PTR_FORMAT, tags);
-  gst_avi_demux_push_event (avi, gst_event_new_tag ("GstDemuxer", tags));
+  gst_tag_list_set_scope (tags, GST_TAG_SCOPE_GLOBAL);
+  gst_avi_demux_push_event (avi, gst_event_new_tag (tags));
   avi->globaltags = NULL;
   avi->got_tags = FALSE;
 }
@@ -5212,6 +5221,8 @@ pause:{
             (GST_ELEMENT_CAST (avi),
             gst_message_new_segment_done (GST_OBJECT_CAST (avi),
                 GST_FORMAT_TIME, stop));
+        gst_avi_demux_push_event (avi,
+            gst_event_new_segment_done (GST_FORMAT_TIME, stop));
       } else {
         push_eos = TRUE;
       }
@@ -5389,7 +5400,7 @@ gst_avi_demux_sink_activate_mode (GstPad * sinkpad, GstObject * parent,
       if (active) {
         avi->streaming = FALSE;
         res = gst_pad_start_task (sinkpad, (GstTaskFunction) gst_avi_demux_loop,
-            sinkpad);
+            sinkpad, NULL);
       } else {
         res = gst_pad_stop_task (sinkpad);
       }

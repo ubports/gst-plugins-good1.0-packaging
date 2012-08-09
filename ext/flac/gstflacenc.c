@@ -140,7 +140,9 @@ GST_DEBUG_CATEGORY_STATIC (flacenc_debug);
 
 #define gst_flac_enc_parent_class parent_class
 G_DEFINE_TYPE_WITH_CODE (GstFlacEnc, gst_flac_enc, GST_TYPE_AUDIO_ENCODER,
-    G_IMPLEMENT_INTERFACE (GST_TYPE_TAG_SETTER, NULL));
+    G_IMPLEMENT_INTERFACE (GST_TYPE_TAG_SETTER, NULL)
+    G_IMPLEMENT_INTERFACE (GST_TYPE_TOC_SETTER, NULL)
+    );
 
 static gboolean gst_flac_enc_start (GstAudioEncoder * enc);
 static gboolean gst_flac_enc_stop (GstAudioEncoder * enc);
@@ -415,6 +417,7 @@ gst_flac_enc_start (GstAudioEncoder * enc)
   flacenc->offset = 0;
   flacenc->eos = FALSE;
   flacenc->tags = gst_tag_list_new_empty ();
+  flacenc->toc = NULL;
 
   return TRUE;
 }
@@ -425,8 +428,11 @@ gst_flac_enc_stop (GstAudioEncoder * enc)
   GstFlacEnc *flacenc = GST_FLAC_ENC (enc);
 
   GST_DEBUG_OBJECT (enc, "stop");
-  gst_tag_list_free (flacenc->tags);
+  gst_tag_list_unref (flacenc->tags);
   flacenc->tags = NULL;
+  if (flacenc->toc)
+    gst_toc_unref (flacenc->toc);
+  flacenc->toc = NULL;
   if (FLAC__stream_encoder_get_state (flacenc->encoder) !=
       FLAC__STREAM_ENCODER_UNINITIALIZED) {
     flacenc->stopped = TRUE;
@@ -441,6 +447,9 @@ gst_flac_enc_stop (GstAudioEncoder * enc)
     if (flacenc->meta[2])
       FLAC__metadata_object_delete (flacenc->meta[2]);
 
+    if (flacenc->meta[3])
+      FLAC__metadata_object_delete (flacenc->meta[3]);
+
     g_free (flacenc->meta);
     flacenc->meta = NULL;
   }
@@ -449,6 +458,7 @@ gst_flac_enc_stop (GstAudioEncoder * enc)
   flacenc->headers = NULL;
 
   gst_tag_setter_reset_tags (GST_TAG_SETTER (enc));
+  gst_toc_setter_reset (GST_TOC_SETTER (enc));
 
   return TRUE;
 }
@@ -481,17 +491,94 @@ add_one_tag (const GstTagList * list, const gchar * tag, gpointer user_data)
   g_list_free (comments);
 }
 
+static gboolean
+add_cuesheet (const GstToc * toc, guint sample_rate,
+    FLAC__StreamMetadata * cuesheet)
+{
+  gint8 track_num = 0;
+  gint64 start, stop;
+  gchar *isrc = NULL;
+  const gchar *is_legal;
+  GList *list;
+  GstTagList *tags;
+  GstTocEntry *entry;
+  FLAC__StreamMetadata_CueSheet *cs;
+  FLAC__StreamMetadata_CueSheet_Track *track;
+
+  cs = &cuesheet->data.cue_sheet;
+  if (!cs)
+    return FALSE;
+
+  /* check if the TOC entries is valid */
+  list = gst_toc_get_entries (toc);
+  while (list) {
+    entry = list->data;
+    if (!gst_toc_entry_is_sequence (entry))
+      return FALSE;
+    list = g_list_next (list);
+  }
+
+  /* add tracks in cuesheet */
+  list = gst_toc_get_entries (toc);
+  while (list) {
+    entry = list->data;
+    gst_toc_entry_get_start_stop_times (entry, &start, &stop);
+    tags = gst_toc_entry_get_tags (entry);
+    if (tags)
+      gst_tag_list_get_string (tags, GST_TAG_ISRC, &isrc);
+    track = FLAC__metadata_object_cuesheet_track_new ();
+    track->offset =
+        (FLAC__uint64) gst_util_uint64_scale_round (start, sample_rate,
+        GST_SECOND);
+    track->number = (FLAC__byte) track_num + 1;
+    if (isrc)
+      strcpy (track->isrc, isrc);
+    if (track->number <= 0)
+      return FALSE;
+    if (!FLAC__metadata_object_cuesheet_insert_track (cuesheet, track_num,
+            track, FALSE))
+      return FALSE;
+    if (!FLAC__metadata_object_cuesheet_track_insert_blank_index (cuesheet,
+            track_num, 0))
+      return FALSE;
+    track_num++;
+    list = g_list_next (list);
+  }
+
+  if (cs->num_tracks <= 0)
+    return FALSE;
+
+  /* add lead-out track in cuesheet */
+  track = FLAC__metadata_object_cuesheet_track_new ();
+  track->offset =
+      (FLAC__uint64) gst_util_uint64_scale_round (stop, sample_rate,
+      GST_SECOND);
+  track->number = 255;
+  if (!FLAC__metadata_object_cuesheet_insert_track (cuesheet, cs->num_tracks,
+          track, FALSE))
+    return FALSE;
+
+  /* check if the cuesheet is valid */
+  if (!FLAC__metadata_object_cuesheet_is_legal (cuesheet, FALSE, &is_legal)) {
+    g_warning ("%s\n", is_legal);
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
 static void
-gst_flac_enc_set_metadata (GstFlacEnc * flacenc, guint64 total_samples)
+gst_flac_enc_set_metadata (GstFlacEnc * flacenc, GstAudioInfo * info,
+    guint64 total_samples)
 {
   const GstTagList *user_tags;
   GstTagList *copy;
   gint entries = 1;
   gint n_images, n_preview_images;
-  GstAudioInfo *info =
-      gst_audio_encoder_get_audio_info (GST_AUDIO_ENCODER (flacenc));
+  FLAC__StreamMetadata *cuesheet;
 
   g_return_if_fail (flacenc != NULL);
+
   user_tags = gst_tag_setter_get_tag_list (GST_TAG_SETTER (flacenc));
   if ((flacenc->tags == NULL) && (user_tags == NULL)) {
     return;
@@ -502,38 +589,48 @@ gst_flac_enc_set_metadata (GstFlacEnc * flacenc, guint64 total_samples)
   n_preview_images = gst_tag_list_get_tag_size (copy, GST_TAG_PREVIEW_IMAGE);
 
   flacenc->meta =
-      g_new0 (FLAC__StreamMetadata *, 3 + n_images + n_preview_images);
+      g_new0 (FLAC__StreamMetadata *, 4 + n_images + n_preview_images);
 
   flacenc->meta[0] =
       FLAC__metadata_object_new (FLAC__METADATA_TYPE_VORBIS_COMMENT);
   gst_tag_list_foreach (copy, add_one_tag, flacenc);
 
+  if (!flacenc->toc)
+    flacenc->toc = gst_toc_setter_get_toc (GST_TOC_SETTER (flacenc));
+
+  if (flacenc->toc) {
+    cuesheet = FLAC__metadata_object_new (FLAC__METADATA_TYPE_CUESHEET);
+    if (add_cuesheet (flacenc->toc, GST_AUDIO_INFO_RATE (info), cuesheet)) {
+      flacenc->meta[entries] = cuesheet;
+      entries++;
+    } else {
+      FLAC__metadata_object_delete (cuesheet);
+      flacenc->meta[entries] = NULL;
+    }
+  }
+
   if (n_images + n_preview_images > 0) {
+    GstSample *sample;
     GstBuffer *buffer;
-#if 0
-    GstCaps *caps;
-    GstStructure *structure;
+    const GstStructure *structure;
     GstTagImageType image_type = GST_TAG_IMAGE_TYPE_NONE;
-#endif
     gint i;
     GstMapInfo map;
 
     for (i = 0; i < n_images + n_preview_images; i++) {
       if (i < n_images) {
-        if (!gst_tag_list_get_buffer_index (copy, GST_TAG_IMAGE, i, &buffer))
+        if (!gst_tag_list_get_sample_index (copy, GST_TAG_IMAGE, i, &sample))
           continue;
       } else {
-        if (!gst_tag_list_get_buffer_index (copy, GST_TAG_PREVIEW_IMAGE,
-                i - n_images, &buffer))
+        if (!gst_tag_list_get_sample_index (copy, GST_TAG_PREVIEW_IMAGE,
+                i - n_images, &sample))
           continue;
       }
 
       flacenc->meta[entries] =
           FLAC__metadata_object_new (FLAC__METADATA_TYPE_PICTURE);
 
-#if 0
-      caps = gst_buffer_get_caps (buffer);
-      structure = gst_caps_get_structure (caps, 0);
+      structure = gst_sample_get_info (sample);
 
       gst_structure_get (structure, "image-type", GST_TYPE_TAG_IMAGE_TYPE,
           &image_type, NULL);
@@ -542,22 +639,19 @@ gst_flac_enc_set_metadata (GstFlacEnc * flacenc, guint64 total_samples)
         image_type = (i < n_images) ? 0x00 : 0x01;
       else
         image_type = image_type + 2;
-#endif
 
+      buffer = gst_sample_get_buffer (sample);
       gst_buffer_map (buffer, &map, GST_MAP_READ);
       FLAC__metadata_object_picture_set_data (flacenc->meta[entries],
           map.data, map.size, TRUE);
       gst_buffer_unmap (buffer, &map);
 
-#if 0
       /* FIXME: There's no way to set the picture type in libFLAC */
       flacenc->meta[entries]->data.picture.type = image_type;
       FLAC__metadata_object_picture_set_mime_type (flacenc->meta[entries],
           (char *) gst_structure_get_name (structure), TRUE);
-      gst_caps_unref (caps);
-#endif
 
-      gst_buffer_unref (buffer);
+      gst_sample_unref (sample);
       entries++;
     }
   }
@@ -601,7 +695,7 @@ gst_flac_enc_set_metadata (GstFlacEnc * flacenc, guint64 total_samples)
           flacenc->meta, entries) != true)
     g_warning ("Dude, i'm already initialized!");
 
-  gst_tag_list_free (copy);
+  gst_tag_list_unref (copy);
 }
 
 static GstCaps *
@@ -649,7 +743,7 @@ gst_flac_enc_getcaps (GstAudioEncoder * enc, GstCaps * filter)
         guint64 channel_mask;
 
         gst_audio_channel_positions_to_mask (channel_positions[i - 1], i,
-            &channel_mask);
+            FALSE, &channel_mask);
         gst_structure_set (s2, "channels", G_TYPE_INT, i, "channel-mask",
             GST_TYPE_BITMASK, channel_mask, NULL);
       }
@@ -661,7 +755,7 @@ gst_flac_enc_getcaps (GstAudioEncoder * enc, GstCaps * filter)
 
   GST_DEBUG_OBJECT (pad, "Return caps %" GST_PTR_FORMAT, ret);
 
-  caps = gst_audio_encoder_proxy_getcaps (enc, ret);
+  caps = gst_audio_encoder_proxy_getcaps (enc, ret, filter);
   gst_caps_unref (ret);
 
   return caps;
@@ -706,7 +800,6 @@ gst_flac_enc_set_format (GstAudioEncoder * enc, GstAudioInfo * info)
   GstFlacEnc *flacenc;
   guint64 total_samples = GST_CLOCK_TIME_NONE;
   FLAC__StreamEncoderInitStatus init_status;
-  GstCaps *caps;
 
   flacenc = GST_FLAC_ENC (enc);
 
@@ -715,14 +808,7 @@ gst_flac_enc_set_format (GstAudioEncoder * enc, GstAudioInfo * info)
       FLAC__STREAM_ENCODER_UNINITIALIZED)
     goto encoder_already_initialized;
 
-  caps = gst_caps_new_simple ("audio/x-flac",
-      "channels", G_TYPE_INT, GST_AUDIO_INFO_CHANNELS (info),
-      "rate", G_TYPE_INT, GST_AUDIO_INFO_RATE (info), NULL);
-
-  if (!gst_audio_encoder_set_output_format (enc, caps))
-    goto setting_src_caps_failed;
-
-  gst_caps_unref (caps);
+  /* delay setting output caps/format until we have all headers */
 
   gst_audio_get_channel_reorder_map (GST_AUDIO_INFO_CHANNELS (info),
       channel_positions[GST_AUDIO_INFO_CHANNELS (info) - 1], info->position,
@@ -732,7 +818,7 @@ gst_flac_enc_set_format (GstAudioEncoder * enc, GstAudioInfo * info)
       GST_AUDIO_ENCODER_SINK_PAD (enc));
 
   FLAC__stream_encoder_set_bits_per_sample (flacenc->encoder,
-      GST_AUDIO_INFO_WIDTH (info));
+      GST_AUDIO_INFO_DEPTH (info));
   FLAC__stream_encoder_set_sample_rate (flacenc->encoder,
       GST_AUDIO_INFO_RATE (info));
   FLAC__stream_encoder_set_channels (flacenc->encoder,
@@ -742,7 +828,7 @@ gst_flac_enc_set_format (GstAudioEncoder * enc, GstAudioInfo * info)
     FLAC__stream_encoder_set_total_samples_estimate (flacenc->encoder,
         MIN (total_samples, G_GUINT64_CONSTANT (0x0FFFFFFFFF)));
 
-  gst_flac_enc_set_metadata (flacenc, total_samples);
+  gst_flac_enc_set_metadata (flacenc, info, total_samples);
 
   /* callbacks clear to go now;
    * write callbacks receives headers during init */
@@ -761,13 +847,6 @@ gst_flac_enc_set_format (GstAudioEncoder * enc, GstAudioInfo * info)
 encoder_already_initialized:
   {
     g_warning ("flac already initialized -- fixme allow this");
-    return FALSE;
-  }
-setting_src_caps_failed:
-  {
-    GST_DEBUG_OBJECT (flacenc,
-        "Couldn't set caps on source pad: %" GST_PTR_FORMAT, caps);
-    gst_caps_unref (caps);
     return FALSE;
   }
 failed_to_initialize:
@@ -1116,6 +1195,7 @@ gst_flac_enc_sink_event (GstAudioEncoder * enc, GstEvent * event)
 {
   GstFlacEnc *flacenc;
   GstTagList *taglist;
+  GstToc *toc;
   gboolean ret = FALSE;
 
   flacenc = GST_FLAC_ENC (enc);
@@ -1134,6 +1214,17 @@ gst_flac_enc_sink_event (GstAudioEncoder * enc, GstEvent * event)
             gst_tag_setter_get_tag_merge_mode (GST_TAG_SETTER (flacenc)));
       } else {
         g_assert_not_reached ();
+      }
+      ret = GST_AUDIO_ENCODER_CLASS (parent_class)->sink_event (enc, event);
+      break;
+    case GST_EVENT_TOC:
+      gst_event_parse_toc (event, &toc, NULL);
+      if (toc) {
+        if (flacenc->toc != toc) {
+          if (flacenc->toc)
+            gst_toc_unref (flacenc->toc);
+          flacenc->toc = toc;
+        }
       }
       ret = GST_AUDIO_ENCODER_CLASS (parent_class)->sink_event (enc, event);
       break;
@@ -1232,7 +1323,7 @@ gst_flac_enc_handle_frame (GstAudioEncoder * enc, GstBuffer * buffer)
   gst_buffer_unmap (buffer, &map);
 
   res = FLAC__stream_encoder_process_interleaved (flacenc->encoder,
-      (const FLAC__int32 *) data, samples / channels);
+      (const FLAC__int32 *) data, samples);
 
   g_free (data);
 

@@ -469,11 +469,9 @@ gst_rtp_dec_chain_rtp (GstPad * pad, GstObject * parent, GstBuffer * buffer)
 
   GST_DEBUG_OBJECT (rtpdec, "got rtp packet");
 
-  if (!gst_rtp_buffer_validate (buffer))
+  if (!gst_rtp_buffer_map (buffer, GST_MAP_READ, &rtp))
     goto bad_packet;
 
-
-  gst_rtp_buffer_map (buffer, GST_MAP_READ, &rtp);
   ssrc = gst_rtp_buffer_get_ssrc (&rtp);
   pt = gst_rtp_buffer_get_payload_type (&rtp);
   gst_rtp_buffer_unmap (&rtp);
@@ -521,7 +519,7 @@ gst_rtp_dec_chain_rtp (GstPad * pad, GstObject * parent, GstBuffer * buffer)
     session->recv_rtp_src = gst_pad_new_from_template (templ, name);
     g_free (name);
 
-    gst_pad_push_event (session->recv_rtp_src, gst_event_new_caps (caps));
+    gst_pad_set_caps (session->recv_rtp_src, caps);
 
     gst_pad_set_element_private (session->recv_rtp_src, session);
     gst_pad_set_query_function (session->recv_rtp_src, gst_rtp_dec_query_src);

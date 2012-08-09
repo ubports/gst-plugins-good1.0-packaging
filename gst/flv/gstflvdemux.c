@@ -642,6 +642,7 @@ gst_flv_demux_audio_negotiate (GstFlvDemux * demux, guint32 codec_tag,
   gchar *codec_name = NULL;
   gboolean ret = FALSE;
   guint adjusted_rate = rate;
+  gchar *stream_id;
 
   switch (codec_tag) {
     case 1:
@@ -732,6 +733,11 @@ gst_flv_demux_audio_negotiate (GstFlvDemux * demux, guint32 codec_tag,
         demux->audio_codec_data, NULL);
   }
 
+  stream_id =
+      gst_pad_create_stream_id (demux->audio_pad, GST_ELEMENT_CAST (demux),
+      "audio");
+  gst_pad_push_event (demux->audio_pad, gst_event_new_stream_start (stream_id));
+  g_free (stream_id);
   ret = gst_pad_set_caps (demux->audio_pad, caps);
 
   if (G_LIKELY (ret)) {
@@ -796,8 +802,8 @@ gst_flv_demux_push_tags (GstFlvDemux * demux)
   if (demux->taglist) {
     GST_DEBUG_OBJECT (demux, "pushing tags out %" GST_PTR_FORMAT,
         demux->taglist);
-    gst_flv_demux_push_src_event (demux, gst_event_new_tag ("GstDemuxer",
-            demux->taglist));
+    gst_tag_list_set_scope (demux->taglist, GST_TAG_SCOPE_GLOBAL);
+    gst_flv_demux_push_src_event (demux, gst_event_new_tag (demux->taglist));
     demux->taglist = gst_tag_list_new_empty ();
     demux->push_tags = FALSE;
   }
@@ -1122,6 +1128,7 @@ gst_flv_demux_video_negotiate (GstFlvDemux * demux, guint32 codec_tag)
   gboolean ret = FALSE;
   GstCaps *caps = NULL;
   gchar *codec_name = NULL;
+  gchar *stream_id;
 
   /* Generate caps for that pad */
   switch (codec_tag) {
@@ -1178,6 +1185,10 @@ gst_flv_demux_video_negotiate (GstFlvDemux * demux, guint32 codec_tag)
         demux->video_codec_data, NULL);
   }
 
+  stream_id =
+      gst_pad_create_stream_id (demux->video_pad, GST_ELEMENT_CAST (demux),
+      "video");
+  gst_pad_push_event (demux->video_pad, gst_event_new_stream_start (stream_id));
   ret = gst_pad_set_caps (demux->video_pad, caps);
 
   if (G_LIKELY (ret)) {
@@ -2458,12 +2469,17 @@ pause:
           gst_element_post_message (GST_ELEMENT_CAST (demux),
               gst_message_new_segment_done (GST_OBJECT_CAST (demux),
                   GST_FORMAT_TIME, stop));
+          gst_flv_demux_push_src_event (demux,
+              gst_event_new_segment_done (GST_FORMAT_TIME, stop));
         } else {                /* Reverse playback */
           GST_LOG_OBJECT (demux, "Sending segment done, at beginning of "
               "segment");
           gst_element_post_message (GST_ELEMENT_CAST (demux),
               gst_message_new_segment_done (GST_OBJECT_CAST (demux),
                   GST_FORMAT_TIME, demux->segment.start));
+          gst_flv_demux_push_src_event (demux,
+              gst_event_new_segment_done (GST_FORMAT_TIME,
+                  demux->segment.start));
         }
       } else {
         /* normal playback, send EOS to all linked pads */
@@ -2828,7 +2844,7 @@ exit:
     gst_pad_pause_task (demux->sinkpad);
   } else {
     gst_pad_start_task (demux->sinkpad,
-        (GstTaskFunction) gst_flv_demux_loop, demux->sinkpad);
+        (GstTaskFunction) gst_flv_demux_loop, demux->sinkpad, NULL);
   }
 
   GST_PAD_STREAM_UNLOCK (demux->sinkpad);
@@ -2893,7 +2909,7 @@ gst_flv_demux_sink_activate_mode (GstPad * sinkpad, GstObject * parent,
       if (active) {
         demux->random_access = TRUE;
         res = gst_pad_start_task (sinkpad, (GstTaskFunction) gst_flv_demux_loop,
-            sinkpad);
+            sinkpad, NULL);
       } else {
         demux->random_access = FALSE;
         res = gst_pad_stop_task (sinkpad);
@@ -2979,6 +2995,10 @@ gst_flv_demux_sink_event (GstPad * pad, GstObject * parent, GstEvent * event)
         demux->video_need_segment = TRUE;
         ret = TRUE;
         gst_event_unref (event);
+        if (demux->new_seg_event) {
+          gst_event_unref (demux->new_seg_event);
+          demux->new_seg_event = NULL;
+        }
       }
       break;
     }
@@ -3229,7 +3249,7 @@ gst_flv_demux_dispose (GObject * object)
   }
 
   if (demux->taglist) {
-    gst_tag_list_free (demux->taglist);
+    gst_tag_list_unref (demux->taglist);
     demux->taglist = NULL;
   }
 

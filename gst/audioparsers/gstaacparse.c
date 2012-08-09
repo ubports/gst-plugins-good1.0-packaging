@@ -271,6 +271,9 @@ gst_aac_parse_sink_setcaps (GstBaseParse * parse, GstCaps * caps)
     gst_structure_get_int (structure, "rate", &aacparse->sample_rate);
     gst_structure_get_int (structure, "channels", &aacparse->channels);
   } else {
+    aacparse->sample_rate = 0;
+    aacparse->channels = 0;
+    aacparse->header_type = DSPAAC_HEADER_NOT_PARSED;
     gst_base_parse_set_passthrough (parse, FALSE);
   }
 
@@ -720,7 +723,7 @@ gst_aac_parse_detect_stream (GstAacParse * aacparse,
     if (((data[i] == 0xff) && ((data[i + 1] & 0xf6) == 0xf0)) ||
         ((data[0] == 0x56) && ((data[1] & 0xe0) == 0xe0)) ||
         strncmp ((char *) data + i, "ADIF", 4) == 0) {
-      GST_DEBUG_OBJECT (aacparse, "Found ADIF signature at offset %u", i);
+      GST_DEBUG_OBJECT (aacparse, "Found signature at offset %u", i);
       found = TRUE;
 
       if (i) {
@@ -745,10 +748,15 @@ gst_aac_parse_detect_stream (GstAacParse * aacparse,
 
     GST_INFO ("ADTS ID: %d, framesize: %d", (data[1] & 0x08) >> 3, *framesize);
 
-    aacparse->header_type = DSPAAC_HEADER_ADTS;
     gst_aac_parse_parse_adts_header (aacparse, data, &rate, &channels,
         &aacparse->object_type, &aacparse->mpegversion);
 
+    if (!channels || !framesize) {
+      GST_DEBUG_OBJECT (aacparse, "impossible ADTS configuration");
+      return FALSE;
+    }
+
+    aacparse->header_type = DSPAAC_HEADER_ADTS;
     gst_base_parse_set_frame_rate (GST_BASE_PARSE (aacparse), rate,
         aacparse->frame_samples, 2, 2);
 
@@ -986,8 +994,6 @@ gst_aac_parse_handle_frame (GstBaseParse * parse,
             || channels != aacparse->channels)) {
       aacparse->sample_rate = rate;
       aacparse->channels = channels;
-
-      GST_DEBUG_OBJECT (aacparse, "here");
 
       if (!gst_aac_parse_set_src_caps (aacparse, NULL)) {
         /* If linking fails, we need to return appropriate error */

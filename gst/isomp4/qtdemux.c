@@ -720,12 +720,16 @@ gst_qtdemux_handle_src_query (GstPad * pad, GstObject * parent,
 
       gst_query_parse_duration (query, &fmt, NULL);
       if (fmt == GST_FORMAT_TIME) {
-        gint64 duration = -1;
+        /* First try to query upstream */
+        res = gst_pad_query_default (pad, parent, query);
+        if (!res) {
+          gint64 duration = -1;
 
-        gst_qtdemux_get_duration (qtdemux, &duration);
-        if (duration > 0) {
-          gst_query_set_duration (query, GST_FORMAT_TIME, duration);
-          res = TRUE;
+          gst_qtdemux_get_duration (qtdemux, &duration);
+          if (duration > 0) {
+            gst_query_set_duration (query, GST_FORMAT_TIME, duration);
+            res = TRUE;
+          }
         }
       }
       break;
@@ -794,7 +798,7 @@ gst_qtdemux_push_tags (GstQTDemux * qtdemux, QtDemuxStream * stream)
       GST_DEBUG_OBJECT (qtdemux, "Sending tags %" GST_PTR_FORMAT,
           stream->pending_tags);
       gst_pad_push_event (stream->pad,
-          gst_event_new_tag ("GstDemuxer", stream->pending_tags));
+          gst_event_new_tag (stream->pending_tags));
       stream->pending_tags = NULL;
     }
 
@@ -802,8 +806,7 @@ gst_qtdemux_push_tags (GstQTDemux * qtdemux, QtDemuxStream * stream)
       GST_DEBUG_OBJECT (qtdemux, "Sending global tags %" GST_PTR_FORMAT,
           qtdemux->tag_list);
       gst_pad_push_event (stream->pad,
-          gst_event_new_tag ("GstDemuxer",
-              gst_tag_list_copy (qtdemux->tag_list)));
+          gst_event_new_tag (gst_tag_list_ref (qtdemux->tag_list)));
       stream->send_global_tags = FALSE;
     }
   }
@@ -1419,7 +1422,7 @@ gst_qtdemux_do_seek (GstQTDemux * qtdemux, GstPad * pad, GstEvent * event)
     qtdemux->streams[i]->last_ret = GST_FLOW_OK;
 
   gst_pad_start_task (qtdemux->sinkpad, (GstTaskFunction) gst_qtdemux_loop,
-      qtdemux->sinkpad);
+      qtdemux->sinkpad, NULL);
 
   GST_PAD_STREAM_UNLOCK (qtdemux->sinkpad);
 
@@ -1484,8 +1487,11 @@ gst_qtdemux_handle_src_event (GstPad * pad, GstObject * parent,
     }
       if (qtdemux->pullbased) {
         res = gst_qtdemux_do_seek (qtdemux, pad, event);
-      } else if (qtdemux->state == QTDEMUX_STATE_MOVIE && qtdemux->n_streams &&
-          !qtdemux->fragmented) {
+      } else if (gst_pad_push_event (qtdemux->sinkpad, gst_event_ref (event))) {
+        GST_DEBUG_OBJECT (qtdemux, "Upstream successfully seeked");
+        res = TRUE;
+      } else if (qtdemux->state == QTDEMUX_STATE_MOVIE && qtdemux->n_streams
+          && !qtdemux->fragmented) {
         res = gst_qtdemux_do_push_seek (qtdemux, pad, event);
       } else {
         GST_DEBUG_OBJECT (qtdemux,
@@ -1654,7 +1660,8 @@ gst_qtdemux_handle_sink_event (GstPad * sinkpad, GstObject * parent,
       }
 
       /* accept upstream's notion of segment and distribute along */
-      segment.time = segment.start;
+      segment.format = GST_FORMAT_TIME;
+      segment.position = segment.time = segment.start;
       segment.duration = demux->segment.duration;
       segment.base = gst_segment_to_running_time (&demux->segment,
           GST_FORMAT_TIME, demux->segment.position);
@@ -1789,7 +1796,7 @@ static void
 gst_qtdemux_stream_free (GstQTDemux * qtdemux, QtDemuxStream * stream)
 {
   if (stream->allocator)
-    gst_allocator_unref (stream->allocator);
+    gst_object_unref (stream->allocator);
   while (stream->buffers) {
     gst_buffer_unref (GST_BUFFER_CAST (stream->buffers->data));
     stream->buffers = g_slist_delete_link (stream->buffers, stream->buffers);
@@ -1801,7 +1808,7 @@ gst_qtdemux_stream_free (GstQTDemux * qtdemux, QtDemuxStream * stream)
     gst_caps_unref (stream->caps);
   g_free (stream->segments);
   if (stream->pending_tags)
-    gst_tag_list_free (stream->pending_tags);
+    gst_tag_list_unref (stream->pending_tags);
   g_free (stream->redirect_uri);
   /* free stbl sub-atoms */
   gst_qtdemux_stbl_free (stream);
@@ -1844,7 +1851,7 @@ gst_qtdemux_change_state (GstElement * element, GstStateChange transition)
         gst_buffer_unref (qtdemux->comp_brands);
       qtdemux->comp_brands = NULL;
       if (qtdemux->tag_list)
-        gst_tag_list_free (qtdemux->tag_list);
+        gst_tag_list_unref (qtdemux->tag_list);
       qtdemux->tag_list = NULL;
 #if 0
       if (qtdemux->element_index)
@@ -1873,20 +1880,6 @@ gst_qtdemux_change_state (GstElement * element, GstStateChange transition)
   }
 
   return result;
-}
-
-static void
-qtdemux_post_global_tags (GstQTDemux * qtdemux)
-{
-  if (qtdemux->tag_list) {
-    /* all header tags ready and parsed, push them */
-    GST_INFO_OBJECT (qtdemux, "posting global tags: %" GST_PTR_FORMAT,
-        qtdemux->tag_list);
-    /* post now, send event on pads later */
-    gst_element_post_message (GST_ELEMENT (qtdemux),
-        gst_message_new_tag (GST_OBJECT (qtdemux),
-            gst_tag_list_copy (qtdemux->tag_list)));
-  }
 }
 
 static void
@@ -1919,7 +1912,7 @@ qtdemux_handle_xmp_taglist (GstQTDemux * qtdemux, GstTagList * taglist)
     if (qtdemux->tag_list) {
       /* prioritize native tags using _KEEP mode */
       gst_tag_list_insert (qtdemux->tag_list, taglist, GST_TAG_MERGE_KEEP);
-      gst_tag_list_free (taglist);
+      gst_tag_list_unref (taglist);
     } else
       qtdemux->tag_list = taglist;
   }
@@ -2805,9 +2798,6 @@ beach:
   if (ret == GST_FLOW_EOS && qtdemux->got_moov) {
     /* digested all data, show what we have */
     ret = qtdemux_expose_streams (qtdemux);
-
-    /* Only post, event on pads is done after newsegment */
-    qtdemux_post_global_tags (qtdemux);
 
     qtdemux->state = QTDEMUX_STATE_MOVIE;
     GST_DEBUG_OBJECT (qtdemux, "switching state to STATE_MOVIE (%d)",
@@ -3880,12 +3870,17 @@ pause:
           gst_element_post_message (GST_ELEMENT_CAST (qtdemux),
               gst_message_new_segment_done (GST_OBJECT_CAST (qtdemux),
                   GST_FORMAT_TIME, stop));
+          gst_qtdemux_push_event (qtdemux,
+              gst_event_new_segment_done (GST_FORMAT_TIME, stop));
         } else {
           /*  For Reverse Playback */
           GST_LOG_OBJECT (qtdemux, "Sending segment done, at start of segment");
           gst_element_post_message (GST_ELEMENT_CAST (qtdemux),
               gst_message_new_segment_done (GST_OBJECT_CAST (qtdemux),
                   GST_FORMAT_TIME, qtdemux->segment.start));
+          gst_qtdemux_push_event (qtdemux,
+              gst_event_new_segment_done (GST_FORMAT_TIME,
+                  qtdemux->segment.start));
         }
       } else {
         GST_LOG_OBJECT (qtdemux, "Sending EOS at end of segment");
@@ -4095,10 +4090,6 @@ gst_qtdemux_chain (GstPad * sinkpad, GstObject * parent, GstBuffer * inbuf)
             demux->state = QTDEMUX_STATE_MOVIE;
             demux->neededbytes = next_entry_size (demux);
             demux->mdatleft = size;
-
-            /* Only post, event on pads is done after newsegment */
-            qtdemux_post_global_tags (demux);
-
           } else {
             /* no headers yet, try to get them */
             guint bs;
@@ -4237,10 +4228,6 @@ gst_qtdemux_chain (GstPad * sinkpad, GstObject * parent, GstBuffer * inbuf)
           demux->neededbytes = next_entry_size (demux);
           demux->state = QTDEMUX_STATE_MOVIE;
           demux->mdatleft = gst_adapter_available (demux->adapter);
-
-          /* Only post, event on pads is done after newsegment */
-          qtdemux_post_global_tags (demux);
-
         } else {
           GST_DEBUG_OBJECT (demux, "Carrying on normally");
           gst_adapter_flush (demux->adapter, demux->neededbytes);
@@ -4490,7 +4477,7 @@ qtdemux_sink_activate_mode (GstPad * sinkpad, GstObject * parent,
       if (active) {
         demux->pullbased = TRUE;
         res = gst_pad_start_task (sinkpad, (GstTaskFunction) gst_qtdemux_loop,
-            sinkpad);
+            sinkpad, NULL);
       } else {
         res = gst_pad_stop_task (sinkpad);
       }
@@ -5015,7 +5002,7 @@ qtdemux_do_allocation (GstQTDemux * qtdemux, QtDemuxStream * stream)
   }
 
   if (stream->allocator)
-    gst_allocator_unref (stream->allocator);
+    gst_object_unref (stream->allocator);
 
   if (gst_query_get_n_allocation_params (query) > 0) {
     /* try the allocator */
@@ -5181,6 +5168,8 @@ gst_qtdemux_add_stream (GstQTDemux * qtdemux,
   }
 
   if (stream->pad) {
+    gchar *stream_id;
+
     GST_PAD_ELEMENT_PRIVATE (stream->pad) = stream;
 
     gst_pad_use_fixed_caps (stream->pad);
@@ -5189,6 +5178,11 @@ gst_qtdemux_add_stream (GstQTDemux * qtdemux,
     gst_pad_set_active (stream->pad, TRUE);
 
     GST_DEBUG_OBJECT (qtdemux, "setting caps %" GST_PTR_FORMAT, stream->caps);
+    stream_id =
+        gst_pad_create_stream_id_printf (stream->pad,
+        GST_ELEMENT_CAST (qtdemux), "%u", stream->track_id);
+    gst_pad_push_event (stream->pad, gst_event_new_stream_start (stream_id));
+    g_free (stream_id);
     gst_pad_set_caps (stream->pad, stream->caps);
 
     GST_DEBUG_OBJECT (qtdemux, "adding pad %s %p to qtdemux %p",
@@ -5196,7 +5190,7 @@ gst_qtdemux_add_stream (GstQTDemux * qtdemux,
     gst_element_add_pad (GST_ELEMENT_CAST (qtdemux), stream->pad);
 
     if (stream->pending_tags)
-      gst_tag_list_free (stream->pending_tags);
+      gst_tag_list_unref (stream->pending_tags);
     stream->pending_tags = list;
     /* global tags go on each pad anyway */
     stream->send_global_tags = TRUE;
@@ -7747,8 +7741,6 @@ qtdemux_expose_streams (GstQTDemux * qtdemux)
   if (qtdemux->n_streams == 1 && qtdemux->streams[0]->redirect_uri != NULL) {
     GstMessage *m;
 
-    qtdemux_post_global_tags (qtdemux);
-
     GST_INFO_OBJECT (qtdemux, "Issuing a redirect due to a single track with "
         "an external content");
     m = gst_message_new_element (GST_OBJECT_CAST (qtdemux),
@@ -8469,7 +8461,7 @@ qtdemux_tag_add_id32 (GstQTDemux * demux, const char *tag,
   }
 
   if (taglist)
-    gst_tag_list_free (taglist);
+    gst_tag_list_unref (taglist);
 
   gst_buffer_unref (buf);
 }
@@ -8556,7 +8548,8 @@ qtdemux_tag_add_blob (GNode * node, GstQTDemux * demux)
   GstBuffer *buf;
   gchar *media_type;
   const gchar *style;
-  GstCaps *caps;
+  GstSample *sample;
+  GstStructure *s;
   guint i;
   guint8 ndata[4];
 
@@ -8588,18 +8581,16 @@ qtdemux_tag_add_blob (GNode * node, GstQTDemux * demux)
       ndata[0], ndata[1], ndata[2], ndata[3]);
   GST_DEBUG_OBJECT (demux, "media type %s", media_type);
 
-  caps = gst_caps_new_simple (media_type, "style", G_TYPE_STRING, style, NULL);
-  // TODO conver to metadata or ???
-//   gst_buffer_set_caps (buf, caps);
-  gst_caps_unref (caps);
+  s = gst_structure_new (media_type, "style", G_TYPE_STRING, style, NULL);
+  sample = gst_sample_new (buf, NULL, NULL, s);
+  gst_buffer_unref (buf);
   g_free (media_type);
 
-  GST_DEBUG_OBJECT (demux, "adding private tag; size %d, caps %" GST_PTR_FORMAT,
-      len, caps);
+  GST_DEBUG_OBJECT (demux, "adding private tag; size %d, info %" GST_PTR_FORMAT,
+      len, s);
 
   gst_tag_list_add (demux->tag_list, GST_TAG_MERGE_APPEND,
-      GST_QT_DEMUX_PRIVATE_TAG, buf, NULL);
-  gst_buffer_unref (buf);
+      GST_QT_DEMUX_PRIVATE_TAG, sample, NULL);
 }
 
 static void
@@ -8624,8 +8615,10 @@ qtdemux_parse_udta (GstQTDemux * qtdemux, GNode * udta)
   }
 
   GST_DEBUG_OBJECT (qtdemux, "new tag list");
-  if (!qtdemux->tag_list)
+  if (!qtdemux->tag_list) {
     qtdemux->tag_list = gst_tag_list_new_empty ();
+    gst_tag_list_set_scope (qtdemux->tag_list, GST_TAG_SCOPE_GLOBAL);
+  }
 
   i = 0;
   while (i < G_N_ELEMENTS (add_funcs)) {
@@ -8842,8 +8835,10 @@ qtdemux_add_container_format (GstQTDemux * qtdemux, GstTagList * tags)
 {
   const gchar *fmt;
 
-  if (tags == NULL)
+  if (tags == NULL) {
     tags = gst_tag_list_new_empty ();
+    gst_tag_list_set_scope (tags, GST_TAG_SCOPE_GLOBAL);
+  }
 
   if (qtdemux->major_brand == FOURCC_mjp2)
     fmt = "Motion JPEG 2000";
@@ -8920,8 +8915,10 @@ qtdemux_parse_tree (GstQTDemux * qtdemux)
     }
   }
   if (datetime) {
-    if (!qtdemux->tag_list)
+    if (!qtdemux->tag_list) {
       qtdemux->tag_list = gst_tag_list_new_empty ();
+      gst_tag_list_set_scope (qtdemux->tag_list, GST_TAG_SCOPE_GLOBAL);
+    }
 
     /* Use KEEP as explicit tags should have a higher priority than mvhd tag */
     gst_tag_list_add (qtdemux->tag_list, GST_TAG_MERGE_KEEP, GST_TAG_DATE_TIME,

@@ -82,7 +82,7 @@ gst_tag_inject_finalize (GObject * object)
   GstTagInject *self = GST_TAG_INJECT (object);
 
   if (self->tags) {
-    gst_tag_list_free (self->tags);
+    gst_tag_list_unref (self->tags);
     self->tags = NULL;
   }
 
@@ -148,7 +148,7 @@ gst_tag_inject_transform_ip (GstBaseTransform * trans, GstBuffer * buf)
     if (self->tags && !gst_tag_list_is_empty (self->tags)) {
       GST_DEBUG ("tag event :%" GST_PTR_FORMAT, self->tags);
       gst_pad_push_event (GST_BASE_TRANSFORM_SRC_PAD (trans),
-          gst_event_new_tag ("GstTagInject", gst_tag_list_copy (self->tags)));
+          gst_event_new_tag (gst_tag_list_ref (self->tags)));
     }
   }
 

@@ -904,7 +904,7 @@ gst_rtp_jitter_buffer_src_activate_mode (GstPad * pad, GstObject * parent,
         /* start pushing out buffers */
         GST_DEBUG_OBJECT (jitterbuffer, "Starting task on srcpad");
         result = gst_pad_start_task (jitterbuffer->priv->srcpad,
-            (GstTaskFunction) gst_rtp_jitter_buffer_loop, jitterbuffer);
+            (GstTaskFunction) gst_rtp_jitter_buffer_loop, jitterbuffer, NULL);
       } else {
         /* make sure all data processing stops ASAP */
         gst_rtp_jitter_buffer_flush_start (jitterbuffer);
@@ -1255,12 +1255,11 @@ gst_rtp_jitter_buffer_chain (GstPad * pad, GstObject * parent,
 
   jitterbuffer = GST_RTP_JITTER_BUFFER (parent);
 
-  if (G_UNLIKELY (!gst_rtp_buffer_validate (buffer)))
-    goto invalid_buffer;
-
   priv = jitterbuffer->priv;
 
-  gst_rtp_buffer_map (buffer, GST_MAP_READ, &rtp);
+  if (G_UNLIKELY (!gst_rtp_buffer_map (buffer, GST_MAP_READ, &rtp)))
+    goto invalid_buffer;
+
   pt = gst_rtp_buffer_get_payload_type (&rtp);
   seqnum = gst_rtp_buffer_get_seq (&rtp);
   gst_rtp_buffer_unmap (&rtp);
@@ -1529,7 +1528,7 @@ compute_elapsed (GstRtpJitterBuffer * jitterbuffer, GstBuffer * outbuf)
   guint64 ext_time, elapsed;
   guint32 rtp_time;
   GstRtpJitterBufferPrivate *priv;
-  GstRTPBuffer rtp = { NULL, };
+  GstRTPBuffer rtp = GST_RTP_BUFFER_INIT;
 
   priv = jitterbuffer->priv;
   gst_rtp_buffer_map (outbuf, GST_MAP_READ, &rtp);
@@ -1637,7 +1636,7 @@ again:
           GST_INFO_OBJECT (jitterbuffer, "scheduling timeout");
           id = gst_clock_new_single_shot_id (clock, sync_time);
           gst_clock_id_wait_async (id, (GstClockCallback) eos_reached,
-              jitterbuffer);
+              jitterbuffer, NULL);
         }
         GST_OBJECT_UNLOCK (jitterbuffer);
       }

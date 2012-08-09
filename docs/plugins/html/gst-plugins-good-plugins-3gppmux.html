@@ -56,7 +56,7 @@ nearly identical to the so-called ISO Base Media file format defined in
 ISO 14496-12 (except for some media specific parts).
 In turn, the latter ISO Base Media format was further specialized as a
 Motion JPEG-2000 file format in ISO 15444-3 (mj2mux)
-and in various 3GPP(2) specs (gppmux).
+and in various 3GPP(2) specs (3gppmux).
 The fragmented file features defined (only) in ISO Base Media are used by
 ISMV files making up (a.o.) Smooth Streaming (ismlmux).
 </p>
@@ -96,13 +96,13 @@ presentation-timestamp.
 <p>
 </p>
 <div class="refsect2">
-<a name="idp8328720"></a><h3>Example pipelines</h3>
+<a name="idp6208480"></a><h3>Example pipelines</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
       <tr>
         <td class="listing_lines" align="right"><pre>1</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch v4l2src num<span class="gtkdoc opt">-</span>buffers<span class="gtkdoc opt">=</span><span class="number">50</span> <span class="gtkdoc opt">!</span> queue <span class="gtkdoc opt">!</span> ffenc_h263 <span class="gtkdoc opt">!</span> gppmux <span class="gtkdoc opt">!</span> filesink location<span class="gtkdoc opt">=</span>video<span class="number">.3</span>gp</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch v4l2src num<span class="gtkdoc opt">-</span>buffers<span class="gtkdoc opt">=</span><span class="number">50</span> <span class="gtkdoc opt">!</span> queue <span class="gtkdoc opt">!</span> ffenc_h263 <span class="gtkdoc opt">!</span> <span class="number">3</span>gppmux <span class="gtkdoc opt">!</span> filesink location<span class="gtkdoc opt">=</span>video<span class="number">.3</span>gp</pre></td>
       </tr>
     </tbody>
   </table>
@@ -119,7 +119,7 @@ Documentation last reviewed on 2011-04-21
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp6518336"></a><h3>Element Information</h3>
+<a name="idp7337184"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -142,7 +142,7 @@ Documentation last reviewed on 2011-04-21
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp6229168"></a><h3>Element Pads</h3>
+<a name="idp6801616"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
