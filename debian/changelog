@@ -1,3 +1,21 @@
+gst-plugins-good1.0 (0.11.93-1) experimental; urgency=low
+
+  * New upstream release:
+    + debian/rules,
+      debian/build-deps.in:
+      - Build depend on GStreamer core/base >= 0.11.93.
+      - Build depend on GLib >= 2.32.
+      - Build depend on ORC >= 0.4.16.
+      - Build depend on libsoup >= 2.26.1.
+      - Build depend on GTK3 instead of GTK2.
+    + debian/gstreamer-plugins-good.install:
+      - Add the imagefreeze, interleave, deinterlace, monoscope,
+        smpte and wavpack plugins.
+    + debian/patches/0001-configure-Fix-GTK-required-version-variable-name.patch:
+      - Fix GTK configure check.
+
+ -- Sebastian Dröge <slomo@debian.org>  Thu, 09 Aug 2012 10:23:42 +0200
+
 gst-plugins-good1.0 (0.11.92-1) experimental; urgency=low
 
   * New upstream release, "Money":

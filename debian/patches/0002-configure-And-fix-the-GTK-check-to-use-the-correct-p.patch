@@ -1,0 +1,29 @@
+From 90740c3fee9ba089ef141de8c78dedde4078c2fd Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Sebastian=20Dr=C3=B6ge?= <sebastian.droege@collabora.co.uk>
+Date: Thu, 9 Aug 2012 10:31:39 +0200
+Subject: [PATCH 2/2] configure: And fix the GTK check to use the correct
+ pkg-config package name
+
+---
+ configure.ac |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index 848c92f..a3442ca 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -236,9 +236,9 @@ dnl GTK is optional and used in examples
+ HAVE_GTK=no
+ GTK_REQ=3.0.0
+ if test "x$BUILD_EXAMPLES" = "xyes"; then
+-  PKG_CHECK_MODULES(GTK, gtk+-$with_gtk >= $GTK_REQ, HAVE_GTK=yes, HAVE_GTK=no)
++  PKG_CHECK_MODULES(GTK, gtk+-3.0 >= $GTK_REQ, HAVE_GTK=yes, HAVE_GTK=no)
+   dnl some examples need gtk+-x11
+-  PKG_CHECK_MODULES(GTK_X11, gtk+-x11-$with_gtk >= $GTK_REQ, HAVE_GTK_X11=yes, HAVE_GTK_X11=no)
++  PKG_CHECK_MODULES(GTK_X11, gtk+-x11-3.0 >= $GTK_REQ, HAVE_GTK_X11=yes, HAVE_GTK_X11=no)
+   AC_SUBST(GTK_LIBS)
+   AC_SUBST(GTK_CFLAGS)
+ fi
+-- 
+1.7.10.4
+
