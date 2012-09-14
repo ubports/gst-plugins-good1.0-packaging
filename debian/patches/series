@@ -1,3 +1,1 @@
-0001-configure-Fix-GTK-required-version-variable-name.patch
-0002-configure-And-fix-the-GTK-check-to-use-the-correct-p.patch
 99_ltmain_as-needed.patch

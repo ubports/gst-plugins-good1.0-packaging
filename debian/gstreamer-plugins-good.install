@@ -20,6 +20,7 @@ debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstequalizer.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstflac.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstflv.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstflxdec.so
+debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstgdkpixbuf.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstgoom.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstgoom2k1.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgsticydemux.so

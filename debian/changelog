@@ -1,3 +1,18 @@
+gst-plugins-good1.0 (0.11.94-1) experimental; urgency=low
+
+  * New upstream release:
+    + debian/rules,
+      debian/build-deps.in:
+      - Build depend on GStreamer core/base >= 0.11.94.
+      - Build depend on gtk-doc >= 1.12.
+    + debian/gstreamer-plugins-good.install:
+      - Add gdkpixbuf plugin.
+    + debian/patches/0001-configure-Fix-GTK-required-version-variable-name.patch,
+      debian/patches/0002-configure-And-fix-the-GTK-check-to-use-the-correct-p.patch:
+      - Dropped, merged upstream.
+
+ -- Sebastian Dröge <slomo@debian.org>  Fri, 14 Sep 2012 10:15:48 +0200
+
 gst-plugins-good1.0 (0.11.93-1) experimental; urgency=low
 
   * New upstream release:
