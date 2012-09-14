@@ -69,7 +69,7 @@ webmmux muxes VP8 video and Vorbis audio streams into a WebM file.
 <p>
 </p>
 <div class="refsect2">
-<a name="idp22537760"></a><h3>Example launch line</h3>
+<a name="idp24838096"></a><h3>Example launch line</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
@@ -80,7 +80,7 @@ webmmux muxes VP8 video and Vorbis audio streams into a WebM file.
 4</pre></td>
         <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">0.10</span> webmmux name<span class="gtkdoc opt">=</span>mux <span class="gtkdoc opt">!</span> filesink location<span class="gtkdoc opt">=</span>newfile<span class="gtkdoc opt">.</span>webm         \
   uridecodebin uri<span class="gtkdoc opt">=</span>file<span class="gtkdoc opt">:</span><span class="gtkdoc slc">///path/to/somefile.ogv name=demux                \</span>
-  demux<span class="gtkdoc opt">. !</span> ffmpegcolorspace <span class="gtkdoc opt">!</span> vp8enc <span class="gtkdoc opt">!</span> queue <span class="gtkdoc opt">!</span> mux<span class="gtkdoc opt">.</span>video_0    \
+  demux<span class="gtkdoc opt">. !</span> videoconvert <span class="gtkdoc opt">!</span> vp8enc <span class="gtkdoc opt">!</span> queue <span class="gtkdoc opt">!</span> mux<span class="gtkdoc opt">.</span>video_0    \
   demux<span class="gtkdoc opt">. !</span> progressreport <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audiorate <span class="gtkdoc opt">!</span> vorbisenc <span class="gtkdoc opt">!</span> queue <span class="gtkdoc opt">!</span> mux<span class="gtkdoc opt">.</span>audio_0</pre></td>
       </tr>
     </tbody>
@@ -95,7 +95,7 @@ webmmux muxes VP8 video and Vorbis audio streams into a WebM file.
 2
 3</pre></td>
         <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">0.10</span> webmmux name<span class="gtkdoc opt">=</span>mux <span class="gtkdoc opt">!</span> filesink location<span class="gtkdoc opt">=</span>test<span class="gtkdoc opt">.</span>webm            \
-  videotestsrc num<span class="gtkdoc opt">-</span>buffers<span class="gtkdoc opt">=</span><span class="number">250</span> <span class="gtkdoc opt">!</span> video<span class="gtkdoc opt">/</span>x<span class="gtkdoc opt">-</span>raw<span class="gtkdoc opt">,</span>framerate<span class="gtkdoc opt">=</span><span class="number">25</span><span class="gtkdoc opt">/</span><span class="number">1</span> <span class="gtkdoc opt">!</span> ffmpegcolorspace <span class="gtkdoc opt">!</span> vp8enc <span class="gtkdoc opt">!</span> queue <span class="gtkdoc opt">!</span> mux<span class="gtkdoc opt">.</span>video_0 \
+  videotestsrc num<span class="gtkdoc opt">-</span>buffers<span class="gtkdoc opt">=</span><span class="number">250</span> <span class="gtkdoc opt">!</span> video<span class="gtkdoc opt">/</span>x<span class="gtkdoc opt">-</span>raw<span class="gtkdoc opt">,</span>framerate<span class="gtkdoc opt">=</span><span class="number">25</span><span class="gtkdoc opt">/</span><span class="number">1</span> <span class="gtkdoc opt">!</span> videoconvert <span class="gtkdoc opt">!</span> vp8enc <span class="gtkdoc opt">!</span> queue <span class="gtkdoc opt">!</span> mux<span class="gtkdoc opt">.</span>video_0 \
   audiotestsrc samplesperbuffer<span class="gtkdoc opt">=</span><span class="number">44100</span> num<span class="gtkdoc opt">-</span>buffers<span class="gtkdoc opt">=</span><span class="number">10</span> <span class="gtkdoc opt">!</span> audio<span class="gtkdoc opt">/</span>x<span class="gtkdoc opt">-</span>raw<span class="gtkdoc opt">,</span>rate<span class="gtkdoc opt">=</span><span class="number">44100</span> <span class="gtkdoc opt">!</span> vorbisenc <span class="gtkdoc opt">!</span> queue <span class="gtkdoc opt">!</span> mux<span class="gtkdoc opt">.</span>audio_0</pre></td>
       </tr>
     </tbody>
@@ -108,7 +108,7 @@ webmmux muxes VP8 video and Vorbis audio streams into a WebM file.
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp21435968"></a><h3>Element Information</h3>
+<a name="idp24929952"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -131,7 +131,7 @@ webmmux muxes VP8 video and Vorbis audio streams into a WebM file.
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp22051392"></a><h3>Element Pads</h3>
+<a name="idp23430528"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -190,7 +190,7 @@ webmmux muxes VP8 video and Vorbis audio streams into a WebM file.
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> video/x-dvd-subpicture</td>
+<td> subpicture/x-dvd</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>

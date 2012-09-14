@@ -1,7 +1,15 @@
 plugin_LTLIBRARIES = libgstgdkpixbuf.la
 
-libgstgdkpixbuf_la_SOURCES = gstgdkpixbuf.c gstgdkpixbufsink.c pixbufscale.c \
-	gstgdkpixbufoverlay.c
+# pixbufscale.[ch] - not sure the world needs this
+#
+# gstgdkanimation.[ch] - GdkPixbuf animations decode everything from the start,
+# which means it's easy to make us go OOM with manipulated input, disabled
+
+libgstgdkpixbuf_la_SOURCES = \
+	gstgdkpixbufdec.c \
+	gstgdkpixbufoverlay.c \
+	gstgdkpixbufplugin.c \
+	gstgdkpixbufsink.c
 libgstgdkpixbuf_la_CFLAGS = \
 	$(GST_PLUGINS_BASE_CFLAGS) \
 	$(GST_CONTROLLER_CFLAGS) \
@@ -16,8 +24,6 @@ libgstgdkpixbuf_la_LDFLAGS = $(GST_PLUGIN_LDFLAGS)
 libgstgdkpixbuf_la_LIBTOOLFLAGS = --tag=disable-static
 
 noinst_HEADERS = \
-	gstgdkpixbuf.h \
+	gstgdkpixbufdec.h \
 	gstgdkpixbufoverlay.h \
-	gstgdkpixbufsink.h \
-	pixbufscale.h \
-	gstgdkanimation.h
+	gstgdkpixbufsink.h

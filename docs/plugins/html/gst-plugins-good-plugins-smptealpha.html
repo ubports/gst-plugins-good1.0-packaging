@@ -87,13 +87,13 @@ avoid banding.
 <p>
 </p>
 <div class="refsect2">
-<a name="idp17131920"></a><h3>Sample pipelines</h3>
+<a name="idp19821200"></a><h3>Sample pipelines</h3>
 <p>
 Here is a pipeline to demonstrate the smpte transition :
 </p>
 <pre class="programlisting">
-gst-launch -v videotestsrc ! smptealpha border=20000 type=44
-position=0.5 ! videomixer ! ffmpegcolorspace ! ximagesink 
+gst-launch-1.0 -v videotestsrc ! smptealpha border=20000 type=44
+position=0.5 ! videomixer ! videoconvert ! ximagesink
 </pre>
 <p>
 This shows a midway bowtie-h transition a from a videotestsrc to a
@@ -106,7 +106,7 @@ transparent image. The edges of the transition are smoothed with a
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp16816768"></a><h3>Element Information</h3>
+<a name="idp15096368"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -129,7 +129,7 @@ transparent image. The edges of the transition are smoothed with a
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp20958128"></a><h3>Element Pads</h3>
+<a name="idp21531744"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>

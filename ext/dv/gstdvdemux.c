@@ -41,7 +41,7 @@
  * <refsect2>
  * <title>Example launch line</title>
  * |[
- * gst-launch filesrc location=test.dv ! dvdemux name=demux ! queue ! audioconvert ! alsasink demux. ! queue ! dvdec ! xvimagesink
+ * gst-launch-1.0 filesrc location=test.dv ! dvdemux name=demux ! queue ! audioconvert ! alsasink demux. ! queue ! dvdec ! xvimagesink
  * ]| This pipeline decodes and renders the raw DV stream to an audio and a videosink.
  * </refsect2>
  *
@@ -691,26 +691,6 @@ gst_dvdemux_handle_sink_event (GstPad * pad, GstObject * parent,
       switch (segment->format) {
         case GST_FORMAT_BYTES:
           gst_segment_copy_into (segment, &dvdemux->byte_segment);
-
-#if 0
-          /* FIXME ?? no longer such subtle distinction in 0.11 */
-          /* the update can always be sent */
-          if (update) {
-            GstEvent *update;
-
-            update = gst_event_new_new_segment (TRUE,
-                dvdemux->time_segment.rate, dvdemux->time_segment.format,
-                dvdemux->time_segment.start, dvdemux->time_segment.position,
-                dvdemux->time_segment.time);
-
-            gst_dvdemux_push_event (dvdemux, update);
-          } else {
-            /* and queue a SEGMENT before sending the next set of buffers, we
-             * cannot convert to time yet as we might not know the size of the
-             * frames, etc.. */
-            dvdemux->need_segment = TRUE;
-          }
-#endif
           dvdemux->need_segment = TRUE;
           gst_event_unref (event);
           break;
@@ -1824,7 +1804,8 @@ gst_dvdemux_sink_activate (GstPad * sinkpad, GstObject * parent)
     goto activate_push;
   }
 
-  pull_mode = gst_query_has_scheduling_mode (query, GST_PAD_MODE_PULL);
+  pull_mode = gst_query_has_scheduling_mode_with_flags (query,
+      GST_PAD_MODE_PULL, GST_SCHEDULING_FLAG_SEEKABLE);
   gst_query_unref (query);
 
   if (!pull_mode)

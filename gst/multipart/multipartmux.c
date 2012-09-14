@@ -27,7 +27,7 @@
  * <refsect2>
  * <title>Sample pipelines</title>
  * |[
- * gst-launch videotestsrc ! video/x-raw-yuv, framerate='(fraction)'5/1 ! jpegenc ! multipartmux ! filesink location=/tmp/test.multipart
+ * gst-launch-1.0 videotestsrc ! video/x-raw-yuv, framerate='(fraction)'5/1 ! jpegenc ! multipartmux ! filesink location=/tmp/test.multipart
  * ]| a pipeline to mux 5 JPEG frames per second into a multipart stream
  * stored to a file.
  * </refsect2>
@@ -195,7 +195,7 @@ gst_multipart_mux_request_new_pad (GstElement * element,
 
     multipartpad = (GstMultipartPadData *)
         gst_collect_pads_add_pad (multipart_mux->collect, newpad,
-        sizeof (GstMultipartPadData));
+        sizeof (GstMultipartPadData), NULL, TRUE);
 
     /* save a pointer to our data in the pad */
     multipartpad->pad = newpad;
@@ -395,7 +395,6 @@ gst_multipart_mux_collected (GstCollectPads * pads, GstMultipartMux * mux)
   GstStructure *structure = NULL;
   GstCaps *caps;
   const gchar *mime;
-  static GstAllocationParams params = { 0, 0, 0, 1, };
 
   GST_DEBUG_OBJECT (mux, "all pads are collected");
 
@@ -462,7 +461,7 @@ gst_multipart_mux_collected (GstCollectPads * pads, GstMultipartMux * mux)
       mux->boundary, mime, gst_buffer_get_size (best->buffer));
   headerlen = strlen (header);
 
-  headerbuf = gst_buffer_new_allocate (NULL, headerlen, &params);
+  headerbuf = gst_buffer_new_allocate (NULL, headerlen, NULL);
   gst_buffer_fill (headerbuf, 0, header, headerlen);
   g_free (header);
 
@@ -502,7 +501,7 @@ gst_multipart_mux_collected (GstCollectPads * pads, GstMultipartMux * mux)
      * don't need to unref headerbuf here. */
     goto beach;
 
-  footerbuf = gst_buffer_new_allocate (NULL, 2, &params);
+  footerbuf = gst_buffer_new_allocate (NULL, 2, NULL);
   gst_buffer_fill (footerbuf, 0, "\r\n", 2);
 
   /* the footer has the same timestamp as the data buffer and has a

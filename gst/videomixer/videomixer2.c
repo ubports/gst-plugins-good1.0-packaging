@@ -36,7 +36,7 @@
  * <refsect2>
  * <title>Sample pipelines</title>
  * |[
- * gst-launch-0.11 \
+ * gst-launch-1.0 \
  *   videotestsrc pattern=1 ! \
  *   video/x-raw,format=AYUV,framerate=\(fraction\)10/1,width=100,height=100 ! \
  *   videobox border-alpha=0 top=-70 bottom=-70 right=-220 ! \
@@ -52,21 +52,21 @@
  * video test source behind and the checker pattern under it. Note that the
  * framerate of the output video is 10 frames per second.
  * |[
- * gst-launch-0.11 videotestsrc pattern=1 ! \
+ * gst-launch-1.0 videotestsrc pattern=1 ! \
  *   video/x-raw, framerate=\(fraction\)10/1, width=100, height=100 ! \
  *   videomixer name=mix ! videoconvert ! ximagesink \
  *   videotestsrc !  \
  *   video/x-raw, framerate=\(fraction\)5/1, width=320, height=240 ! mix.
  * ]| A pipeline to demostrate bgra mixing. (This does not demonstrate alpha blending). 
  * |[
- * gst-launch-0.11 videotestsrc pattern=1 ! \
+ * gst-launch-1.0 videotestsrc pattern=1 ! \
  *   video/x-raw,format =I420, framerate=\(fraction\)10/1, width=100, height=100 ! \
  *   videomixer name=mix ! videoconvert ! ximagesink \
  *   videotestsrc ! \
  *   video/x-raw,format=I420, framerate=\(fraction\)5/1, width=320, height=240 ! mix.
  * ]| A pipeline to test I420
  * |[
- * gst-launch-0.11 videomixer name=mixer sink_1::alpha=0.5 sink_1::xpos=50 sink_1::ypos=50 ! \
+ * gst-launch-1.0 videomixer name=mixer sink_1::alpha=0.5 sink_1::xpos=50 sink_1::ypos=50 ! \
  *   videoconvert ! ximagesink \
  *   videotestsrc pattern=snow timestamp-offset=3000000000 ! \
  *   "video/x-raw,format=AYUV,width=640,height=480,framerate=(fraction)30/1" ! \
@@ -104,7 +104,8 @@ GST_DEBUG_CATEGORY_STATIC (gst_videomixer2_debug);
   (g_mutex_unlock(GST_VIDEO_MIXER2_GET_LOCK (mix)))
 
 #define FORMATS " { AYUV, BGRA, ARGB, RGBA, ABGR, Y444, Y42B, YUY2, UYVY, "\
-                "   YVYU, I420, YV12, Y41B, RGB, BGR, xRGB, xBGR, RGBx, BGRx } "
+                "   YVYU, I420, YV12, NV12, NV21, Y41B, RGB, BGR, xRGB, xBGR, "\
+                "   RGBx, BGRx } "
 
 static GstStaticPadTemplate src_factory = GST_STATIC_PAD_TEMPLATE ("src",
     GST_PAD_SRC,
@@ -818,7 +819,7 @@ gst_videomixer2_blend_buffers (GstVideoMixer2 * mix,
   guint outsize;
   BlendFunction composite;
   GstVideoFrame outframe;
-  static GstAllocationParams params = { 0, 0, 0, 15, };
+  static GstAllocationParams params = { 0, 15, 0, 0, };
 
   outsize = GST_VIDEO_INFO_SIZE (&mix->info);
 
@@ -1507,6 +1508,20 @@ gst_videomixer2_src_setcaps (GstPad * pad, GstVideoMixer2 * mix, GstCaps * caps)
       mix->fill_color = gst_video_mixer_fill_color_yv12;
       ret = TRUE;
       break;
+    case GST_VIDEO_FORMAT_NV12:
+      mix->blend = gst_video_mixer_blend_nv12;
+      mix->overlay = mix->blend;
+      mix->fill_checker = gst_video_mixer_fill_checker_nv12;
+      mix->fill_color = gst_video_mixer_fill_color_nv12;
+      ret = TRUE;
+      break;
+    case GST_VIDEO_FORMAT_NV21:
+      mix->blend = gst_video_mixer_blend_nv21;
+      mix->overlay = mix->blend;
+      mix->fill_checker = gst_video_mixer_fill_checker_nv21;
+      mix->fill_color = gst_video_mixer_fill_color_nv21;
+      ret = TRUE;
+      break;
     case GST_VIDEO_FORMAT_Y41B:
       mix->blend = gst_video_mixer_blend_y41b;
       mix->overlay = mix->blend;
@@ -1782,7 +1797,7 @@ gst_videomixer2_request_new_pad (GstElement * element,
     mixpad->alpha = DEFAULT_PAD_ALPHA;
 
     mixcol = (GstVideoMixer2Collect *)
-        gst_collect_pads_add_pad_full (mix->collect, GST_PAD (mixpad),
+        gst_collect_pads_add_pad (mix->collect, GST_PAD (mixpad),
         sizeof (GstVideoMixer2Collect),
         (GstCollectDataDestroyNotify) gst_videomixer2_collect_free, TRUE);
 

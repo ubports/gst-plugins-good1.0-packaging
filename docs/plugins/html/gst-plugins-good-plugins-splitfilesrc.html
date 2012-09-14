@@ -77,13 +77,13 @@ directories). The results will be sorted.
 <p>
 </p>
 <div class="refsect2">
-<a name="idp16789024"></a><h3>Example launch lines</h3>
+<a name="idp22668256"></a><h3>Example launch lines</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
       <tr>
         <td class="listing_lines" align="right"><pre>1</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch splitfilesrc location<span class="gtkdoc opt">=</span><span class="string">&quot;/path/to/part-*.mpg&quot;</span> <span class="gtkdoc opt">!</span> decodebin <span class="gtkdoc opt">! ...</span></pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> splitfilesrc location<span class="gtkdoc opt">=</span><span class="string">&quot;/path/to/part-*.mpg&quot;</span> <span class="gtkdoc opt">!</span> decodebin <span class="gtkdoc opt">! ...</span></pre></td>
       </tr>
     </tbody>
   </table>
@@ -94,7 +94,7 @@ directories). The results will be sorted.
     <tbody>
       <tr>
         <td class="listing_lines" align="right"><pre>1</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch playbin uri<span class="gtkdoc opt">=</span><span class="string">&quot;splitfile://path/to/foo.avi.*&quot;</span></pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> playbin uri<span class="gtkdoc opt">=</span><span class="string">&quot;splitfile://path/to/foo.avi.*&quot;</span></pre></td>
       </tr>
     </tbody>
   </table>
@@ -106,7 +106,7 @@ directories). The results will be sorted.
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp20089056"></a><h3>Element Information</h3>
+<a name="idp20533680"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -129,7 +129,7 @@ directories). The results will be sorted.
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp19955104"></a><h3>Element Pads</h3>
+<a name="idp14374800"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>

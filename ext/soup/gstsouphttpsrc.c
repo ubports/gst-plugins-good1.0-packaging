@@ -36,12 +36,12 @@
  * <refsect2>
  * <title>Example launch line</title>
  * |[
- * gst-launch -v souphttpsrc location=https://some.server.org/index.html
+ * gst-launch-1.0 -v souphttpsrc location=https://some.server.org/index.html
  *     ! filesink location=/home/joe/server.html
  * ]| The above pipeline reads a web page from a server using the HTTPS protocol
  * and writes it to a local file.
  * |[
- * gst-launch -v souphttpsrc user-agent="FooPlayer 0.99 beta"
+ * gst-launch-1.0 -v souphttpsrc user-agent="FooPlayer 0.99 beta"
  *     automatic-redirect=false proxy=http://proxy.intranet.local:8080
  *     location=http://music.foobar.com/demo.mp3 ! mad ! audioconvert
  *     ! audioresample ! alsasink
@@ -51,7 +51,7 @@
  * HTTP proxy server is used. The User-Agent HTTP request header
  * is set to a custom string instead of "GStreamer souphttpsrc."
  * |[
- * gst-launch -v souphttpsrc location=http://10.11.12.13/mjpeg
+ * gst-launch-1.0 -v souphttpsrc location=http://10.11.12.13/mjpeg
  *     do-timestamp=true ! multipartdemux
  *     ! image/jpeg,width=640,height=480 ! matroskamux
  *     ! filesink location=mjpeg.mkv
@@ -692,8 +692,7 @@ gst_soup_http_src_got_headers_cb (SoupMessage * msg, GstSoupHTTPSrc * src)
       basesrc = GST_BASE_SRC_CAST (src);
       basesrc->segment.duration = src->content_size;
       gst_element_post_message (GST_ELEMENT (src),
-          gst_message_new_duration (GST_OBJECT (src), GST_FORMAT_BYTES,
-              src->content_size));
+          gst_message_new_duration_changed (GST_OBJECT (src)));
     }
   }
 

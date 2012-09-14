@@ -70,13 +70,13 @@ Performs gamma correction on a video stream.
 <p>
 </p>
 <div class="refsect2">
-<a name="idp11779792"></a><h3>Example launch line</h3>
+<a name="idp12494832"></a><h3>Example launch line</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
       <tr>
         <td class="listing_lines" align="right"><pre>1</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch videotestsrc <span class="gtkdoc opt">!</span> gamma gamma<span class="gtkdoc opt">=</span><span class="number">2.0</span> <span class="gtkdoc opt">!</span> ffmpegcolorspace <span class="gtkdoc opt">!</span> ximagesink</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> videotestsrc <span class="gtkdoc opt">!</span> gamma gamma<span class="gtkdoc opt">=</span><span class="number">2.0</span> <span class="gtkdoc opt">!</span> videoconvert <span class="gtkdoc opt">!</span> ximagesink</pre></td>
       </tr>
     </tbody>
   </table>
@@ -87,7 +87,7 @@ Performs gamma correction on a video stream.
     <tbody>
       <tr>
         <td class="listing_lines" align="right"><pre>1</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch videotestsrc <span class="gtkdoc opt">!</span> gamma gamma<span class="gtkdoc opt">=</span><span class="number">0.5</span> <span class="gtkdoc opt">!</span> ffmpegcolorspace <span class="gtkdoc opt">!</span> ximagesink</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> videotestsrc <span class="gtkdoc opt">!</span> gamma gamma<span class="gtkdoc opt">=</span><span class="number">0.5</span> <span class="gtkdoc opt">!</span> videoconvert <span class="gtkdoc opt">!</span> ximagesink</pre></td>
       </tr>
     </tbody>
   </table>
@@ -102,7 +102,7 @@ Last reviewed on 2010-04-18 (0.10.22)
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp12452368"></a><h3>Element Information</h3>
+<a name="idp9829344"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -125,7 +125,7 @@ Last reviewed on 2010-04-18 (0.10.22)
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp8933504"></a><h3>Element Pads</h3>
+<a name="idp10156784"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>

@@ -31,7 +31,7 @@
  * <refsect2>
  * <title>Example launch line</title>
  * |[
- * gst-launch filesrc location=test.avi ! avidemux name=demux  demux.audio_00 ! decodebin ! audioconvert ! audioresample ! autoaudiosink   demux.video_00 ! queue ! decodebin ! ffmpegcolorspace ! videoscale ! autovideosink
+ * gst-launch-1.0 filesrc location=test.avi ! avidemux name=demux  demux.audio_00 ! decodebin ! audioconvert ! audioresample ! autoaudiosink   demux.video_00 ! queue ! decodebin ! videoconvert ! videoscale ! autovideosink
  * ]| Play (parse and decode) an .avi file and try to output it to
  * an automatically detected soundcard and videosink. If the AVI file contains
  * compressed audio or video data, this will only work if you have the
@@ -1895,6 +1895,50 @@ gst_avi_demux_roundup_list (GstAviDemux * avi, GstBuffer ** buf)
   }
 }
 
+static GstCaps *
+gst_avi_demux_check_caps (GstAviDemux * avi, GstCaps * caps)
+{
+  GstStructure *s;
+  const GValue *val;
+  GstBuffer *buf;
+
+  s = gst_caps_get_structure (caps, 0);
+  if (!gst_structure_has_name (s, "video/x-h264"))
+    return caps;
+
+  GST_DEBUG_OBJECT (avi, "checking caps %" GST_PTR_FORMAT, caps);
+
+  /* some muxers put invalid bytestream stuff in h264 extra data */
+  val = gst_structure_get_value (s, "codec_data");
+  if (val && (buf = gst_value_get_buffer (val))) {
+    guint8 *data;
+    gint size;
+    GstMapInfo map;
+
+    gst_buffer_map (buf, &map, GST_MAP_READ);
+    data = map.data;
+    size = map.size;
+    if (size >= 4) {
+      guint32 h = GST_READ_UINT32_BE (data);
+      gst_buffer_unmap (buf, &map);
+      if (h == 0x01) {
+        /* can hardly be valid AVC codec data */
+        GST_DEBUG_OBJECT (avi,
+            "discarding invalid codec_data containing byte-stream");
+        /* so do not pretend to downstream that it is packetized avc */
+        gst_structure_remove_field (s, "codec_data");
+        /* ... but rather properly parsed bytestream */
+        gst_structure_set (s, "stream-format", G_TYPE_STRING, "byte-stream",
+            "alignment", G_TYPE_STRING, "au", NULL);
+      }
+    } else {
+      gst_buffer_unmap (buf, &map);
+    }
+  }
+
+  return caps;
+}
+
 /*
  * gst_avi_demux_parse_stream:
  * @avi: calling element (used for debugging/errors).
@@ -2199,6 +2243,7 @@ gst_avi_demux_parse_stream (GstAviDemux * avi, GstBuffer * buf)
         g_free (vprp);
         vprp = NULL;
       }
+      caps = gst_avi_demux_check_caps (avi, caps);
       tag_name = GST_TAG_VIDEO_CODEC;
       avi->num_v_streams++;
       break;
@@ -3328,7 +3373,6 @@ gst_avi_demux_stream_header_push (GstAviDemux * avi)
               if (gst_avi_demux_peek_chunk (avi, &tag, &size)) {
                 avi->offset += 8 + GST_ROUND_UP_2 (size);
                 gst_adapter_flush (avi->adapter, 8 + GST_ROUND_UP_2 (size));
-                // ??? goto iterate; ???
               } else {
                 /* Need more data */
                 return GST_FLOW_OK;
@@ -3339,7 +3383,6 @@ gst_avi_demux_stream_header_push (GstAviDemux * avi)
           if (gst_avi_demux_peek_chunk (avi, &tag, &size)) {
             avi->offset += 8 + GST_ROUND_UP_2 (size);
             gst_adapter_flush (avi->adapter, 8 + GST_ROUND_UP_2 (size));
-            //goto iterate;
           } else {
             /* Need more data */
             return GST_FLOW_OK;
@@ -5372,7 +5415,8 @@ gst_avi_demux_sink_activate (GstPad * sinkpad, GstObject * parent)
     goto activate_push;
   }
 
-  pull_mode = gst_query_has_scheduling_mode (query, GST_PAD_MODE_PULL);
+  pull_mode = gst_query_has_scheduling_mode_with_flags (query,
+      GST_PAD_MODE_PULL, GST_SCHEDULING_FLAG_SEEKABLE);
   gst_query_unref (query);
 
   if (!pull_mode)

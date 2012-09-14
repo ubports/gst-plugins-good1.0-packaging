@@ -25,7 +25,7 @@
  * <refsect2>
  * <title>Example launch line</title>
  * |[
- * gst-launch -v filesrc location=/path/to/flv ! flvdemux ! audioconvert ! autoaudiosink
+ * gst-launch-1.0 -v filesrc location=/path/to/flv ! flvdemux ! audioconvert ! autoaudiosink
  * ]| This pipeline demuxes an FLV file and outputs the contained raw audio streams.
  * </refsect2>
  */
@@ -312,7 +312,7 @@ gst_flv_demux_parse_metadata_item (GstFlvDemux * demux, GstByteReader * reader,
   GST_DEBUG_OBJECT (demux, "tag name %s, tag type %d", tag_name, tag_type);
 
   switch (tag_type) {
-    case 0:                    // Double
+    case 0:                    /* Double */
     {                           /* Use a union to read the uint64 and then as a double */
       gdouble d = 0;
 
@@ -344,7 +344,7 @@ gst_flv_demux_parse_metadata_item (GstFlvDemux * demux, GstByteReader * reader,
 
       break;
     }
-    case 1:                    // Boolean
+    case 1:                    /* Boolean */
     {
       guint8 b = 0;
 
@@ -357,7 +357,7 @@ gst_flv_demux_parse_metadata_item (GstFlvDemux * demux, GstByteReader * reader,
 
       break;
     }
-    case 2:                    // String
+    case 2:                    /* String */
     {
       gchar *s = NULL;
 
@@ -395,7 +395,7 @@ gst_flv_demux_parse_metadata_item (GstFlvDemux * demux, GstByteReader * reader,
 
       break;
     }
-    case 3:                    // Object
+    case 3:                    /* Object */
     {
       gboolean end_of_object_marker = FALSE;
 
@@ -411,7 +411,7 @@ gst_flv_demux_parse_metadata_item (GstFlvDemux * demux, GstByteReader * reader,
 
       break;
     }
-    case 8:                    // ECMA array
+    case 8:                    /* ECMA array */
     {
       guint32 nb_elems = 0;
       gboolean end_of_object_marker = FALSE;
@@ -434,7 +434,7 @@ gst_flv_demux_parse_metadata_item (GstFlvDemux * demux, GstByteReader * reader,
 
       break;
     }
-    case 9:                    // End marker
+    case 9:                    /* End marker */
     {
       GST_DEBUG_OBJECT (demux, "end marker ?");
       if (tag_name[0] == '\0') {
@@ -446,7 +446,7 @@ gst_flv_demux_parse_metadata_item (GstFlvDemux * demux, GstByteReader * reader,
 
       break;
     }
-    case 10:                   // Array
+    case 10:                   /* Array */
     {
       guint32 nb_elems = 0;
 
@@ -499,7 +499,7 @@ gst_flv_demux_parse_metadata_item (GstFlvDemux * demux, GstByteReader * reader,
 
       break;
     }
-    case 11:                   // Date
+    case 11:                   /* Date */
     {
       gdouble d = 0;
       gint16 i = 0;
@@ -2875,7 +2875,8 @@ gst_flv_demux_sink_activate (GstPad * sinkpad, GstObject * parent)
     goto activate_push;
   }
 
-  pull_mode = gst_query_has_scheduling_mode (query, GST_PAD_MODE_PULL);
+  pull_mode = gst_query_has_scheduling_mode_with_flags (query,
+      GST_PAD_MODE_PULL, GST_SCHEDULING_FLAG_SEEKABLE);
   gst_query_unref (query);
 
   if (!pull_mode)

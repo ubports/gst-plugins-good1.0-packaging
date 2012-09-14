@@ -71,7 +71,7 @@ threshold of -6 dB.  This type of filter is mentioned in the proposed <a class="
 <p>
 </p>
 <div class="refsect2">
-<a name="idp16576208"></a><h3>Example launch line</h3>
+<a name="idp19063712"></a><h3>Example launch line</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
@@ -79,7 +79,7 @@ threshold of -6 dB.  This type of filter is mentioned in the proposed <a class="
         <td class="listing_lines" align="right"><pre>1
 2
 3</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch filesrc location<span class="gtkdoc opt">=</span>filename<span class="gtkdoc opt">.</span>ext <span class="gtkdoc opt">!</span> decodebin <span class="gtkdoc opt">!</span> audioconvert \
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> filesrc location<span class="gtkdoc opt">=</span>filename<span class="gtkdoc opt">.</span>ext <span class="gtkdoc opt">!</span> decodebin <span class="gtkdoc opt">!</span> audioconvert \
            <span class="gtkdoc opt">!</span> rgvolume pre<span class="gtkdoc opt">-</span>amp<span class="gtkdoc opt">=</span><span class="number">6.0</span> headroom<span class="gtkdoc opt">=</span><span class="number">10.0</span> <span class="gtkdoc opt">!</span> rglimiter \
            <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audioresample <span class="gtkdoc opt">!</span> alsasink</pre></td>
       </tr>
@@ -93,7 +93,7 @@ Playback of a file
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp13916960"></a><h3>Element Information</h3>
+<a name="idp15034560"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -116,7 +116,7 @@ Playback of a file
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp18335424"></a><h3>Element Pads</h3>
+<a name="idp14708928"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>

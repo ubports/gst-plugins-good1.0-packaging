@@ -30,11 +30,11 @@
  * <refsect2>
  * <title>Example launch line</title>
  * |[
- * gst-launch filesrc location=sine.wav ! wavparse ! audioconvert ! alsasink
+ * gst-launch-1.0 filesrc location=sine.wav ! wavparse ! audioconvert ! alsasink
  * ]| Read a wav file and output to the soundcard using the ALSA element. The
  * wav file is assumed to contain raw uncompressed samples.
  * |[
- * gst-launch gnomevfssrc location=http://www.example.org/sine.wav ! queue ! wavparse ! audioconvert ! alsasink
+ * gst-launch-1.0 gnomevfssrc location=http://www.example.org/sine.wav ! queue ! wavparse ! audioconvert ! alsasink
  * ]| Stream data from a network url.
  * </refsect2>
  *
@@ -2923,7 +2923,8 @@ gst_wavparse_sink_activate (GstPad * sinkpad, GstObject * parent)
     goto activate_push;
   }
 
-  pull_mode = gst_query_has_scheduling_mode (query, GST_PAD_MODE_PULL);
+  pull_mode = gst_query_has_scheduling_mode_with_flags (query,
+      GST_PAD_MODE_PULL, GST_SCHEDULING_FLAG_SEEKABLE);
   gst_query_unref (query);
 
   if (!pull_mode)

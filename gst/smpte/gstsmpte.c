@@ -31,7 +31,7 @@
  * <refsect2>
  * <title>Sample pipelines</title>
  * |[
- * gst-launch -v videotestsrc pattern=1 ! smpte name=s border=20000 type=234 duration=2000000000 ! ffmpegcolorspace ! ximagesink videotestsrc ! s.
+ * gst-launch-1.0 -v videotestsrc pattern=1 ! smpte name=s border=20000 type=234 duration=2000000000 ! videoconvert ! ximagesink videotestsrc ! s.
  * ]| A pipeline to demonstrate the smpte transition.
  * It shows a pinwheel transition a from a snow videotestsrc to an smpte
  * pattern videotestsrc. The transition will take 2 seconds to complete. The
@@ -356,9 +356,9 @@ gst_smpte_init (GstSMPTE * smpte)
       GST_DEBUG_FUNCPTR (gst_smpte_sink_event), smpte);
 
   gst_collect_pads_add_pad (smpte->collect, smpte->sinkpad1,
-      sizeof (GstCollectData));
+      sizeof (GstCollectData), NULL, TRUE);
   gst_collect_pads_add_pad (smpte->collect, smpte->sinkpad2,
-      sizeof (GstCollectData));
+      sizeof (GstCollectData), NULL, TRUE);
 
   smpte->type = DEFAULT_PROP_TYPE;
   smpte->border = DEFAULT_PROP_BORDER;

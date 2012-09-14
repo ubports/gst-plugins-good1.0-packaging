@@ -34,10 +34,10 @@
  * <refsect2>
  * <title>Example launch line</title>
  * |[
- * gst-launch -v filesrc location=/path/to/mp3 ! mp3parse ! matroskamux name=mux ! filesink location=test.mkv  filesrc location=/path/to/theora.ogg ! oggdemux ! theoraparse ! mux.
+ * gst-launch-1.0 -v filesrc location=/path/to/mp3 ! mp3parse ! matroskamux name=mux ! filesink location=test.mkv  filesrc location=/path/to/theora.ogg ! oggdemux ! theoraparse ! mux.
  * ]| This pipeline muxes an MP3 file and a Ogg Theora video into a Matroska file.
  * |[
- * gst-launch -v audiotestsrc num-buffers=100 ! audioconvert ! vorbisenc ! matroskamux ! filesink location=test.mka
+ * gst-launch-1.0 -v audiotestsrc num-buffers=100 ! audioconvert ! vorbisenc ! matroskamux ! filesink location=test.mka
  * ]| This pipeline muxes a 440Hz sine wave encoded with the Vorbis codec into a Matroska file.
  * </refsect2>
  */
@@ -109,8 +109,6 @@ static GstStaticPadTemplate videosink_templ =
         "video/x-h264, stream-format=avc, alignment=au, "
         COMMON_VIDEO_CAPS "; "
         "video/x-divx, "
-        COMMON_VIDEO_CAPS "; "
-        "video/x-xvid, "
         COMMON_VIDEO_CAPS "; "
         "video/x-huffyuv, "
         COMMON_VIDEO_CAPS "; "
@@ -190,8 +188,8 @@ static GstStaticPadTemplate subtitlesink_templ =
     GST_PAD_SINK,
     GST_PAD_REQUEST,
     GST_STATIC_CAPS ("subtitle/x-kate; "
-        "text/plain; application/x-ssa; application/x-ass; "
-        "application/x-usf; video/x-dvd-subpicture; "
+        "text/x-raw, format=utf8; application/x-ssa; application/x-ass; "
+        "application/x-usf; subpicture/x-dvd; "
         "application/x-subtitle-unknown")
     );
 
@@ -897,11 +895,11 @@ gst_matroska_mux_video_pad_setcaps (GstPad * pad, GstCaps * caps)
   GstMatroskaPad *collect_pad;
   GstStructure *structure;
   const gchar *mimetype;
+  const gchar *interlace_mode;
   const GValue *value = NULL;
   GstBuffer *codec_buf = NULL;
   gint width, height, pixel_width, pixel_height;
   gint fps_d, fps_n;
-  gboolean interlaced = FALSE;
 
   mux = GST_MATROSKA_MUX (GST_PAD_PARENT (pad));
 
@@ -918,8 +916,8 @@ gst_matroska_mux_video_pad_setcaps (GstPad * pad, GstCaps * caps)
 
   mimetype = gst_structure_get_name (structure);
 
-  if (gst_structure_get_boolean (structure, "interlaced", &interlaced)
-      && interlaced)
+  interlace_mode = gst_structure_get_string (structure, "interlace-mode");
+  if (interlace_mode != NULL && strcmp (interlace_mode, "progressive") != 0)
     context->flags |= GST_MATROSKA_VIDEOTRACK_INTERLACED;
 
   if (!strcmp (mimetype, "video/x-theora")) {
@@ -994,9 +992,8 @@ skip_details:
       videocontext->fourcc = GST_STR_FOURCC (fstr);
   } else if (!strcmp (mimetype, "image/jpeg")) {
     gst_matroska_mux_set_codec_id (context, GST_MATROSKA_CODEC_ID_VIDEO_MJPEG);
-  } else if (!strcmp (mimetype, "video/x-xvid") /* MS/VfW compatibility cases */
-      ||!strcmp (mimetype, "video/x-huffyuv")
-      || !strcmp (mimetype, "video/x-divx")
+  } else if (!strcmp (mimetype, "video/x-huffyuv")      /* MS/VfW compatibility cases */
+      ||!strcmp (mimetype, "video/x-divx")
       || !strcmp (mimetype, "video/x-dv")
       || !strcmp (mimetype, "video/x-h263")
       || !strcmp (mimetype, "video/x-msmpeg")
@@ -1006,9 +1003,7 @@ skip_details:
     gint size = sizeof (gst_riff_strf_vids);
     guint32 fourcc = 0;
 
-    if (!strcmp (mimetype, "video/x-xvid"))
-      fourcc = GST_MAKE_FOURCC ('X', 'V', 'I', 'D');
-    else if (!strcmp (mimetype, "video/x-huffyuv"))
+    if (!strcmp (mimetype, "video/x-huffyuv"))
       fourcc = GST_MAKE_FOURCC ('H', 'F', 'Y', 'U');
     else if (!strcmp (mimetype, "video/x-dv"))
       fourcc = GST_MAKE_FOURCC ('D', 'V', 'S', 'D');
@@ -2014,7 +2009,7 @@ gst_matroska_mux_subtitle_pad_setcaps (GstPad * pad, GstCaps * caps)
       ret = FALSE;
       goto exit;
     }
-  } else if (!strcmp (mimetype, "text/plain")) {
+  } else if (!strcmp (mimetype, "text/x-raw")) {
     gst_matroska_mux_set_codec_id (context,
         GST_MATROSKA_CODEC_ID_SUBTITLE_UTF8);
   } else if (!strcmp (mimetype, "application/x-ssa")) {
@@ -2023,7 +2018,7 @@ gst_matroska_mux_subtitle_pad_setcaps (GstPad * pad, GstCaps * caps)
     gst_matroska_mux_set_codec_id (context, GST_MATROSKA_CODEC_ID_SUBTITLE_ASS);
   } else if (!strcmp (mimetype, "application/x-usf")) {
     gst_matroska_mux_set_codec_id (context, GST_MATROSKA_CODEC_ID_SUBTITLE_USF);
-  } else if (!strcmp (mimetype, "video/x-dvd-subpicture")) {
+  } else if (!strcmp (mimetype, "subpicture/x-dvd")) {
     gst_matroska_mux_set_codec_id (context,
         GST_MATROSKA_CODEC_ID_SUBTITLE_VOBSUB);
   } else {
@@ -2149,7 +2144,7 @@ gst_matroska_mux_request_new_pad (GstElement * element,
 
   gst_matroskamux_pad_init (newpad);
   collect_pad = (GstMatroskaPad *)
-      gst_collect_pads_add_pad_full (mux->collect, GST_PAD (newpad),
+      gst_collect_pads_add_pad (mux->collect, GST_PAD (newpad),
       sizeof (GstMatroskamuxPad),
       (GstCollectDataDestroyNotify) gst_matroska_pad_free, locked);
 

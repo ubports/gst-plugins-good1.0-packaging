@@ -82,13 +82,13 @@ medium frequency and high frequency band.
 <p>
 </p>
 <div class="refsect2">
-<a name="idp12467376"></a><h3>Example launch line</h3>
+<a name="idp2991952"></a><h3>Example launch line</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
       <tr>
         <td class="listing_lines" align="right"><pre>1</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch filesrc location<span class="gtkdoc opt">=</span>song<span class="gtkdoc opt">.</span>ogg <span class="gtkdoc opt">!</span> oggdemux <span class="gtkdoc opt">!</span> vorbisdec <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> equalizer<span class="gtkdoc opt">-</span><span class="number">3</span>bands band1<span class="gtkdoc opt">=</span><span class="number">6.0</span> <span class="gtkdoc opt">!</span> alsasink</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> filesrc location<span class="gtkdoc opt">=</span>song<span class="gtkdoc opt">.</span>ogg <span class="gtkdoc opt">!</span> oggdemux <span class="gtkdoc opt">!</span> vorbisdec <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> equalizer<span class="gtkdoc opt">-</span><span class="number">3</span>bands band1<span class="gtkdoc opt">=</span><span class="number">6.0</span> <span class="gtkdoc opt">!</span> alsasink</pre></td>
       </tr>
     </tbody>
   </table>
@@ -100,7 +100,7 @@ medium frequency and high frequency band.
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp14230320"></a><h3>Element Information</h3>
+<a name="idp2919632"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -123,7 +123,7 @@ medium frequency and high frequency band.
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp8724848"></a><h3>Element Pads</h3>
+<a name="idp8446400"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>

@@ -84,15 +84,15 @@ state and will be set to the current delay by default.
 <p>
 </p>
 <div class="refsect2">
-<a name="idp8473856"></a><h3>Example launch line</h3>
+<a name="idp8769344"></a><h3>Example launch line</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
       <tr>
         <td class="listing_lines" align="right"><pre>1
 2</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch filesrc location<span class="gtkdoc opt">=</span><span class="string">&quot;melo1.ogg&quot;</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audioecho delay<span class="gtkdoc opt">=</span><span class="number">500000000</span> intensity<span class="gtkdoc opt">=</span><span class="number">0.6</span> feedback<span class="gtkdoc opt">=</span><span class="number">0.4</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> autoaudiosink
-gst<span class="gtkdoc opt">-</span>launch filesrc location<span class="gtkdoc opt">=</span><span class="string">&quot;melo1.ogg&quot;</span> <span class="gtkdoc opt">!</span> decodebin <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audioecho delay<span class="gtkdoc opt">=</span><span class="number">50000000</span> intensity<span class="gtkdoc opt">=</span><span class="number">0.6</span> feedback<span class="gtkdoc opt">=</span><span class="number">0.4</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> autoaudiosink</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> filesrc location<span class="gtkdoc opt">=</span><span class="string">&quot;melo1.ogg&quot;</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audioecho delay<span class="gtkdoc opt">=</span><span class="number">500000000</span> intensity<span class="gtkdoc opt">=</span><span class="number">0.6</span> feedback<span class="gtkdoc opt">=</span><span class="number">0.4</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> autoaudiosink
+gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> filesrc location<span class="gtkdoc opt">=</span><span class="string">&quot;melo1.ogg&quot;</span> <span class="gtkdoc opt">!</span> decodebin <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audioecho delay<span class="gtkdoc opt">=</span><span class="number">50000000</span> intensity<span class="gtkdoc opt">=</span><span class="number">0.6</span> feedback<span class="gtkdoc opt">=</span><span class="number">0.4</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> autoaudiosink</pre></td>
       </tr>
     </tbody>
   </table>
@@ -104,7 +104,7 @@ gst<span class="gtkdoc opt">-</span>launch filesrc location<span class="gtkdoc o
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp9602064"></a><h3>Element Information</h3>
+<a name="idp8483232"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -127,7 +127,7 @@ gst<span class="gtkdoc opt">-</span>launch filesrc location<span class="gtkdoc o
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp7672608"></a><h3>Element Pads</h3>
+<a name="idp9789984"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>

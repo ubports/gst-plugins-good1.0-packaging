@@ -26,7 +26,7 @@
  * <refsect2>
  * <title>Example pipelines</title>
  * |[
- * gst-launch -v oss4src ! queue ! audioconvert ! vorbisenc ! oggmux ! filesink location=mymusic.ogg
+ * gst-launch-1.0 -v oss4src ! queue ! audioconvert ! vorbisenc ! oggmux ! filesink location=mymusic.ogg
  * ]| will record sound from your sound card using OSS4 and encode it to an
  * Ogg/Vorbis file (this will only work if your mixer settings are right
  * and the right inputs areenabled etc.)
@@ -94,7 +94,7 @@ static gboolean gst_oss4_source_prepare (GstAudioSrc * asrc,
     GstAudioRingBufferSpec * spec);
 static gboolean gst_oss4_source_unprepare (GstAudioSrc * asrc);
 static guint gst_oss4_source_read (GstAudioSrc * asrc, gpointer data,
-    guint length);
+    guint length, GstClockTime * timestamp);
 static guint gst_oss4_source_delay (GstAudioSrc * asrc);
 static void gst_oss4_source_reset (GstAudioSrc * asrc);
 
@@ -485,7 +485,8 @@ couldnt_reopen:
 }
 
 static guint
-gst_oss4_source_read (GstAudioSrc * asrc, gpointer data, guint length)
+gst_oss4_source_read (GstAudioSrc * asrc, gpointer data, guint length,
+    GstClockTime * timestamp)
 {
   GstOss4Source *oss;
   int n;

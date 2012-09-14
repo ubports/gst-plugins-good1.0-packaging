@@ -31,13 +31,13 @@
  * <refsect2>
  * <title>Example pipelines</title>
  * |[
- * gst-launch -v filesrc location=sine.ogg ! oggdemux ! vorbisdec ! audioconvert ! audioresample ! pulsesink
+ * gst-launch-1.0 -v filesrc location=sine.ogg ! oggdemux ! vorbisdec ! audioconvert ! audioresample ! pulsesink
  * ]| Play an Ogg/Vorbis file.
  * |[
- * gst-launch -v audiotestsrc ! audioconvert ! volume volume=0.4 ! pulsesink
+ * gst-launch-1.0 -v audiotestsrc ! audioconvert ! volume volume=0.4 ! pulsesink
  * ]| Play a 440Hz sine wave.
  * |[
- * gst-launch -v audiotestsrc ! pulsesink stream-properties="props,media.title=test"
+ * gst-launch-1.0 -v audiotestsrc ! pulsesink stream-properties="props,media.title=test"
  * ]| Play a sine wave and set a stream property. The property can be checked
  * with "pactl list".
  * </refsect2>
@@ -1978,6 +1978,8 @@ gst_pulsesink_query_acceptcaps (GstPulseSink * psink, GstCaps * caps)
   pad_caps = gst_pad_query_caps (pad, caps);
   ret = pad_caps != NULL;
   gst_caps_unref (pad_caps);
+
+  GST_DEBUG_OBJECT (psink, "caps %" GST_PTR_FORMAT, caps);
 
   /* Either template caps didn't match, or we're still in NULL state */
   if (!ret || !pbuf->context)
