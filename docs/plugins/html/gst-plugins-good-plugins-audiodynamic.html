@@ -76,7 +76,7 @@ soft-knee mode is selected the ratio is applied smoothly.
 <p>
 </p>
 <div class="refsect2">
-<a name="idp10382224"></a><h3>Example launch line</h3>
+<a name="idp7888800"></a><h3>Example launch line</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
@@ -84,9 +84,9 @@ soft-knee mode is selected the ratio is applied smoothly.
         <td class="listing_lines" align="right"><pre>1
 2
 3</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch audiotestsrc wave<span class="gtkdoc opt">=</span>saw <span class="gtkdoc opt">!</span> audiodynamic characteristics<span class="gtkdoc opt">=</span>soft<span class="gtkdoc opt">-</span>knee mode<span class="gtkdoc opt">=</span>compressor threshold<span class="gtkdoc opt">=</span><span class="number">0.5</span> rate<span class="gtkdoc opt">=</span><span class="number">0.5</span> <span class="gtkdoc opt">!</span> alsasink
-gst<span class="gtkdoc opt">-</span>launch filesrc location<span class="gtkdoc opt">=</span><span class="string">&quot;melo1.ogg&quot;</span> <span class="gtkdoc opt">!</span> oggdemux <span class="gtkdoc opt">!</span> vorbisdec <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audiodynamic characteristics<span class="gtkdoc opt">=</span>hard<span class="gtkdoc opt">-</span>knee mode<span class="gtkdoc opt">=</span>expander threshold<span class="gtkdoc opt">=</span><span class="number">0.2</span> rate<span class="gtkdoc opt">=</span><span class="number">4.0</span> <span class="gtkdoc opt">!</span> alsasink
-gst<span class="gtkdoc opt">-</span>launch audiotestsrc wave<span class="gtkdoc opt">=</span>saw <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audiodynamic <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> alsasink</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> audiotestsrc wave<span class="gtkdoc opt">=</span>saw <span class="gtkdoc opt">!</span> audiodynamic characteristics<span class="gtkdoc opt">=</span>soft<span class="gtkdoc opt">-</span>knee mode<span class="gtkdoc opt">=</span>compressor threshold<span class="gtkdoc opt">=</span><span class="number">0.5</span> rate<span class="gtkdoc opt">=</span><span class="number">0.5</span> <span class="gtkdoc opt">!</span> alsasink
+gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> filesrc location<span class="gtkdoc opt">=</span><span class="string">&quot;melo1.ogg&quot;</span> <span class="gtkdoc opt">!</span> oggdemux <span class="gtkdoc opt">!</span> vorbisdec <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audiodynamic characteristics<span class="gtkdoc opt">=</span>hard<span class="gtkdoc opt">-</span>knee mode<span class="gtkdoc opt">=</span>expander threshold<span class="gtkdoc opt">=</span><span class="number">0.2</span> rate<span class="gtkdoc opt">=</span><span class="number">4.0</span> <span class="gtkdoc opt">!</span> alsasink
+gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> audiotestsrc wave<span class="gtkdoc opt">=</span>saw <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audiodynamic <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> alsasink</pre></td>
       </tr>
     </tbody>
   </table>
@@ -98,7 +98,7 @@ gst<span class="gtkdoc opt">-</span>launch audiotestsrc wave<span class="gtkdoc 
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp8946464"></a><h3>Element Information</h3>
+<a name="idp9258128"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -121,7 +121,7 @@ gst<span class="gtkdoc opt">-</span>launch audiotestsrc wave<span class="gtkdoc 
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp8596896"></a><h3>Element Pads</h3>
+<a name="idp8024704"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>

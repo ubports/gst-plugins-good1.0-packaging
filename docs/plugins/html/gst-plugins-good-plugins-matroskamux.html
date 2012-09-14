@@ -80,13 +80,13 @@ matroskamux muxes different input streams into a Matroska file.
 <p>
 </p>
 <div class="refsect2">
-<a name="idp15352928"></a><h3>Example launch line</h3>
+<a name="idp13050480"></a><h3>Example launch line</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
       <tr>
         <td class="listing_lines" align="right"><pre>1</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch <span class="gtkdoc opt">-</span>v filesrc location<span class="gtkdoc opt">=/</span>path<span class="gtkdoc opt">/</span>to<span class="gtkdoc opt">/</span>mp3 <span class="gtkdoc opt">!</span> mp3parse <span class="gtkdoc opt">!</span> matroskamux name<span class="gtkdoc opt">=</span>mux <span class="gtkdoc opt">!</span> filesink location<span class="gtkdoc opt">=</span>test<span class="gtkdoc opt">.</span>mkv  filesrc location<span class="gtkdoc opt">=/</span>path<span class="gtkdoc opt">/</span>to<span class="gtkdoc opt">/</span>theora<span class="gtkdoc opt">.</span>ogg <span class="gtkdoc opt">!</span> oggdemux <span class="gtkdoc opt">!</span> theoraparse <span class="gtkdoc opt">!</span> mux<span class="gtkdoc opt">.</span></pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> <span class="gtkdoc opt">-</span>v filesrc location<span class="gtkdoc opt">=/</span>path<span class="gtkdoc opt">/</span>to<span class="gtkdoc opt">/</span>mp3 <span class="gtkdoc opt">!</span> mp3parse <span class="gtkdoc opt">!</span> matroskamux name<span class="gtkdoc opt">=</span>mux <span class="gtkdoc opt">!</span> filesink location<span class="gtkdoc opt">=</span>test<span class="gtkdoc opt">.</span>mkv  filesrc location<span class="gtkdoc opt">=/</span>path<span class="gtkdoc opt">/</span>to<span class="gtkdoc opt">/</span>theora<span class="gtkdoc opt">.</span>ogg <span class="gtkdoc opt">!</span> oggdemux <span class="gtkdoc opt">!</span> theoraparse <span class="gtkdoc opt">!</span> mux<span class="gtkdoc opt">.</span></pre></td>
       </tr>
     </tbody>
   </table>
@@ -97,7 +97,7 @@ matroskamux muxes different input streams into a Matroska file.
     <tbody>
       <tr>
         <td class="listing_lines" align="right"><pre>1</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch <span class="gtkdoc opt">-</span>v audiotestsrc num<span class="gtkdoc opt">-</span>buffers<span class="gtkdoc opt">=</span><span class="number">100</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> vorbisenc <span class="gtkdoc opt">!</span> matroskamux <span class="gtkdoc opt">!</span> filesink location<span class="gtkdoc opt">=</span>test<span class="gtkdoc opt">.</span>mka</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> <span class="gtkdoc opt">-</span>v audiotestsrc num<span class="gtkdoc opt">-</span>buffers<span class="gtkdoc opt">=</span><span class="number">100</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> vorbisenc <span class="gtkdoc opt">!</span> matroskamux <span class="gtkdoc opt">!</span> filesink location<span class="gtkdoc opt">=</span>test<span class="gtkdoc opt">.</span>mka</pre></td>
       </tr>
     </tbody>
   </table>
@@ -109,7 +109,7 @@ matroskamux muxes different input streams into a Matroska file.
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp13528912"></a><h3>Element Information</h3>
+<a name="idp13678880"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -132,7 +132,7 @@ matroskamux muxes different input streams into a Matroska file.
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp15038080"></a><h3>Element Pads</h3>
+<a name="idp13756512"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -243,7 +243,7 @@ matroskamux muxes different input streams into a Matroska file.
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> video/x-dvd-subpicture</td>
+<td> subpicture/x-dvd</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>

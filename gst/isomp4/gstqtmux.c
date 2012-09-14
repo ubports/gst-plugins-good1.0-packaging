@@ -97,7 +97,7 @@
  * <refsect2>
  * <title>Example pipelines</title>
  * |[
- * gst-launch v4l2src num-buffers=500 ! video/x-raw,width=320,height=240 ! ffmpegcolorspace ! qtmux ! filesink location=video.mov
+ * gst-launch-1.0 v4l2src num-buffers=500 ! video/x-raw,width=320,height=240 ! videoconvert ! qtmux ! filesink location=video.mov
  * ]|
  * Records a video stream captured from a v4l2 device and muxes it into a qt file.
  * </refsect2>
@@ -3402,7 +3402,7 @@ gst_qt_mux_request_new_pad (GstElement * element,
   newpad = gst_pad_new_from_template (templ, name);
   g_free (name);
   collect_pad = (GstQTPad *)
-      gst_collect_pads_add_pad_full (qtmux->collect, newpad, sizeof (GstQTPad),
+      gst_collect_pads_add_pad (qtmux->collect, newpad, sizeof (GstQTPad),
       (GstCollectDataDestroyNotify) (gst_qt_mux_pad_reset), TRUE);
   /* set up pad */
   gst_qt_mux_pad_reset (collect_pad);

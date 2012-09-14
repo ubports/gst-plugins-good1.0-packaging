@@ -76,7 +76,7 @@ Muxes raw or compressed audio and/or video streams into an AVI file.
 <p>
 </p>
 <div class="refsect2">
-<a name="idp10785168"></a><h3>Example launch lines</h3>
+<a name="idp8286064"></a><h3>Example launch lines</h3>
 <p>(write everything in one line, without the backslash characters)</p>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
@@ -88,7 +88,7 @@ Muxes raw or compressed audio and/or video streams into an AVI file.
 4
 5
 6</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch videotestsrc num<span class="gtkdoc opt">-</span>buffers<span class="gtkdoc opt">=</span><span class="number">250</span> \
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> videotestsrc num<span class="gtkdoc opt">-</span>buffers<span class="gtkdoc opt">=</span><span class="number">250</span> \
 <span class="gtkdoc opt">!</span> <span class="string">'video/x-raw,format=(string)I420,width=320,height=240,framerate=(fraction)25/1'</span> \
 <span class="gtkdoc opt">!</span> queue <span class="gtkdoc opt">!</span> mux<span class="gtkdoc opt">.</span> \
 audiotestsrc num<span class="gtkdoc opt">-</span>buffers<span class="gtkdoc opt">=</span><span class="number">440</span> <span class="gtkdoc opt">!</span> audioconvert \
@@ -111,7 +111,7 @@ test sound.
 4
 5
 6</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch videotestsrc num<span class="gtkdoc opt">-</span>buffers<span class="gtkdoc opt">=</span><span class="number">250</span> \
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> videotestsrc num<span class="gtkdoc opt">-</span>buffers<span class="gtkdoc opt">=</span><span class="number">250</span> \
 <span class="gtkdoc opt">!</span> <span class="string">'video/x-raw,format=(string)I420,width=320,height=240,framerate=(fraction)25/1'</span> \
 <span class="gtkdoc opt">!</span> xvidenc <span class="gtkdoc opt">!</span> queue <span class="gtkdoc opt">!</span> mux<span class="gtkdoc opt">.</span> \
 audiotestsrc num<span class="gtkdoc opt">-</span>buffers<span class="gtkdoc opt">=</span><span class="number">440</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> <span class="string">'audio/x-raw,rate=44100,channels=2'</span> \
@@ -130,7 +130,7 @@ only work if you have the necessary encoder elements installed of course.
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp12289696"></a><h3>Element Information</h3>
+<a name="idp7349936"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -153,7 +153,7 @@ only work if you have the necessary encoder elements installed of course.
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp8587312"></a><h3>Element Pads</h3>
+<a name="idp7466528"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>

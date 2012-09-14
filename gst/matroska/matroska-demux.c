@@ -39,7 +39,7 @@
  * <refsect2>
  * <title>Example launch line</title>
  * |[
- * gst-launch -v filesrc location=/path/to/mkv ! matroskademux ! vorbisdec ! audioconvert ! audioresample ! autoaudiosink
+ * gst-launch-1.0 -v filesrc location=/path/to/mkv ! matroskademux ! vorbisdec ! audioconvert ! audioresample ! autoaudiosink
  * ]| This pipeline demuxes a Matroska file and outputs the contained Vorbis audio.
  * </refsect2>
  */
@@ -114,8 +114,8 @@ static GstStaticPadTemplate subtitle_src_templ =
     GST_STATIC_PAD_TEMPLATE ("subtitle_%u",
     GST_PAD_SRC,
     GST_PAD_SOMETIMES,
-    GST_STATIC_CAPS ("text/x-pango-markup; application/x-ssa; "
-        "application/x-ass;application/x-usf; video/x-dvd-subpicture; "
+    GST_STATIC_CAPS ("text/x-raw, format=pango-markup; application/x-ssa; "
+        "application/x-ass;application/x-usf; subpicture/x-dvd; "
         "subpicture/x-pgs; subtitle/x-kate; " "application/x-subtitle-unknown")
     );
 
@@ -3147,7 +3147,7 @@ gst_matroska_demux_align_buffer (GstMatroskaDemux * demux,
 
   if (((guintptr) map.data) & (alignment - 1)) {
     GstBuffer *new_buffer;
-    GstAllocationParams params = { 0, 0, 0, alignment - 1, };
+    GstAllocationParams params = { 0, alignment - 1, 0, 0, };
 
     new_buffer = gst_buffer_new_allocate (NULL,
         gst_buffer_get_size (buffer), &params);
@@ -3674,8 +3674,7 @@ gst_matroska_demux_parse_blockgroup_or_simpleblock (GstMatroskaDemux * demux,
           GST_OBJECT_UNLOCK (demux);
           if (!demux->invalid_duration) {
             gst_element_post_message (GST_ELEMENT_CAST (demux),
-                gst_message_new_duration (GST_OBJECT_CAST (demux),
-                    GST_FORMAT_TIME, GST_CLOCK_TIME_NONE));
+                gst_message_new_duration_changed (GST_OBJECT_CAST (demux)));
             demux->invalid_duration = TRUE;
           }
         } else {
@@ -4849,7 +4848,8 @@ gst_matroska_demux_sink_activate (GstPad * sinkpad, GstObject * parent)
   query = gst_query_new_scheduling ();
 
   if (gst_pad_peer_query (sinkpad, query))
-    pull_mode = gst_query_has_scheduling_mode (query, GST_PAD_MODE_PULL);
+    pull_mode = gst_query_has_scheduling_mode_with_flags (query,
+        GST_PAD_MODE_PULL, GST_SCHEDULING_FLAG_SEEKABLE);
 
   gst_query_unref (query);
 
@@ -5031,14 +5031,6 @@ gst_matroska_demux_video_caps (GstMatroskaTrackVideoContext *
     *codec_name = g_strdup ("MPEG-4 simple profile");
   } else if (!strcmp (codec_id, GST_MATROSKA_CODEC_ID_VIDEO_MPEG4_ASP) ||
       !strcmp (codec_id, GST_MATROSKA_CODEC_ID_VIDEO_MPEG4_AP)) {
-#if 0
-    caps = gst_caps_new_full (gst_structure_new ("video/x-divx",
-            "divxversion", G_TYPE_INT, 5, NULL),
-        gst_structure_new ("video/x-xvid", NULL),
-        gst_structure_new ("video/mpeg",
-            "mpegversion", G_TYPE_INT, 4,
-            "systemstream", G_TYPE_BOOLEAN, FALSE, NULL), NULL);
-#endif
     caps = gst_caps_new_simple ("video/mpeg",
         "mpegversion", G_TYPE_INT, 4,
         "systemstream", G_TYPE_BOOLEAN, FALSE, NULL);
@@ -5627,7 +5619,8 @@ gst_matroska_demux_subtitle_caps (GstMatroskaTrackSubtitleContext *
    * Check if we have to do something with codec_private */
   if (!strcmp (codec_id, GST_MATROSKA_CODEC_ID_SUBTITLE_UTF8)) {
     /* well, plain text simply does not have a lot of markup ... */
-    caps = gst_caps_new_empty_simple ("text/x-pango-markup");
+    caps = gst_caps_new_simple ("text/x-raw", "format", G_TYPE_STRING,
+        "pango-markup", NULL);
     context->postprocess_frame = gst_matroska_demux_check_subtitle_buffer;
     subtitlecontext->check_markup = TRUE;
   } else if (!strcmp (codec_id, GST_MATROSKA_CODEC_ID_SUBTITLE_SSA)) {
@@ -5643,7 +5636,7 @@ gst_matroska_demux_subtitle_caps (GstMatroskaTrackSubtitleContext *
     context->postprocess_frame = gst_matroska_demux_check_subtitle_buffer;
     subtitlecontext->check_markup = FALSE;
   } else if (!strcmp (codec_id, GST_MATROSKA_CODEC_ID_SUBTITLE_VOBSUB)) {
-    caps = gst_caps_new_empty_simple ("video/x-dvd-subpicture");
+    caps = gst_caps_new_empty_simple ("subpicture/x-dvd");
     ((GstMatroskaTrackContext *) subtitlecontext)->send_dvd_event = TRUE;
   } else if (!strcmp (codec_id, GST_MATROSKA_CODEC_ID_SUBTITLE_HDMVPGS)) {
     caps = gst_caps_new_empty_simple ("subpicture/x-pgs");

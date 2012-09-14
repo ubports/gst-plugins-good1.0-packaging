@@ -26,7 +26,7 @@
  * <refsect2>
  * <title>Example launch line</title>
  * |[
- * gst-launch -v filesrc location=/path/to/audio ! decodebin2 ! queue ! flvmux name=m ! filesink location=file.flv   filesrc location=/path/to/video ! decodebin2 ! queue ! m.
+ * gst-launch-1.0 -v filesrc location=/path/to/audio ! decodebin2 ! queue ! flvmux name=m ! filesink location=file.flv   filesrc location=/path/to/video ! decodebin2 ! queue ! m.
  * ]| This pipeline muxes an audio and video file into a single FLV file.
  * </refsect2>
  */
@@ -572,8 +572,8 @@ gst_flv_mux_request_new_pad (GstElement * element,
   }
 
   pad = gst_pad_new_from_template (templ, name);
-  cpad = (GstFlvPad *)
-      gst_collect_pads_add_pad (mux->collect, pad, sizeof (GstFlvPad));
+  cpad = (GstFlvPad *) gst_collect_pads_add_pad (mux->collect, pad,
+      sizeof (GstFlvPad), NULL, TRUE);
 
   cpad->audio_codec_data = NULL;
   cpad->video_codec_data = NULL;

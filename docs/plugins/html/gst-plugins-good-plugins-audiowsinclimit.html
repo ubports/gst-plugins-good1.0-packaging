@@ -83,7 +83,7 @@ disadvantage is the much slower execution time with larger kernels.
 <p>
 </p>
 <div class="refsect2">
-<a name="idp9529936"></a><h3>Example launch line</h3>
+<a name="idp8076576"></a><h3>Example launch line</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
@@ -91,9 +91,9 @@ disadvantage is the much slower execution time with larger kernels.
         <td class="listing_lines" align="right"><pre>1
 2
 3</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch audiotestsrc freq<span class="gtkdoc opt">=</span><span class="number">1500</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audiowsinclimit mode<span class="gtkdoc opt">=</span>low<span class="gtkdoc opt">-</span>pass frequency<span class="gtkdoc opt">=</span><span class="number">1000</span> length<span class="gtkdoc opt">=</span><span class="number">501</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> alsasink
-gst<span class="gtkdoc opt">-</span>launch filesrc location<span class="gtkdoc opt">=</span><span class="string">&quot;melo1.ogg&quot;</span> <span class="gtkdoc opt">!</span> oggdemux <span class="gtkdoc opt">!</span> vorbisdec <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audiowsinclimit mode<span class="gtkdoc opt">=</span>high<span class="gtkdoc opt">-</span>pass frequency<span class="gtkdoc opt">=</span><span class="number">15000</span> length<span class="gtkdoc opt">=</span><span class="number">501</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> alsasink
-gst<span class="gtkdoc opt">-</span>launch audiotestsrc wave<span class="gtkdoc opt">=</span>white<span class="gtkdoc opt">-</span>noise <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audiowsinclimit mode<span class="gtkdoc opt">=</span>low<span class="gtkdoc opt">-</span>pass frequency<span class="gtkdoc opt">=</span><span class="number">1000</span> length<span class="gtkdoc opt">=</span><span class="number">10001</span> window<span class="gtkdoc opt">=</span>blackman <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> alsasink</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> audiotestsrc freq<span class="gtkdoc opt">=</span><span class="number">1500</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audiowsinclimit mode<span class="gtkdoc opt">=</span>low<span class="gtkdoc opt">-</span>pass frequency<span class="gtkdoc opt">=</span><span class="number">1000</span> length<span class="gtkdoc opt">=</span><span class="number">501</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> alsasink
+gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> filesrc location<span class="gtkdoc opt">=</span><span class="string">&quot;melo1.ogg&quot;</span> <span class="gtkdoc opt">!</span> oggdemux <span class="gtkdoc opt">!</span> vorbisdec <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audiowsinclimit mode<span class="gtkdoc opt">=</span>high<span class="gtkdoc opt">-</span>pass frequency<span class="gtkdoc opt">=</span><span class="number">15000</span> length<span class="gtkdoc opt">=</span><span class="number">501</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> alsasink
+gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> audiotestsrc wave<span class="gtkdoc opt">=</span>white<span class="gtkdoc opt">-</span>noise <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audiowsinclimit mode<span class="gtkdoc opt">=</span>low<span class="gtkdoc opt">-</span>pass frequency<span class="gtkdoc opt">=</span><span class="number">1000</span> length<span class="gtkdoc opt">=</span><span class="number">10001</span> window<span class="gtkdoc opt">=</span>blackman <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> alsasink</pre></td>
       </tr>
     </tbody>
   </table>
@@ -105,7 +105,7 @@ gst<span class="gtkdoc opt">-</span>launch audiotestsrc wave<span class="gtkdoc 
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp6156448"></a><h3>Element Information</h3>
+<a name="idp7613808"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -128,7 +128,7 @@ gst<span class="gtkdoc opt">-</span>launch audiotestsrc wave<span class="gtkdoc 
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp6200064"></a><h3>Element Pads</h3>
+<a name="idp6064608"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>

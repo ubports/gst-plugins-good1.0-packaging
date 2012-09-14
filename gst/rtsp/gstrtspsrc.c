@@ -69,7 +69,7 @@
  * <refsect2>
  * <title>Example launch line</title>
  * |[
- * gst-launch rtspsrc location=rtsp://some.server/url ! fakesink
+ * gst-launch-1.0 rtspsrc location=rtsp://some.server/url ! fakesink
  * ]| Establish a connection to an RTSP server and send the raw RTP packets to a
  * fakesink.
  * </refsect2>
@@ -167,6 +167,7 @@ gst_rtsp_src_buffer_mode_get_type (void)
 #define DEFAULT_UDP_BUFFER_SIZE  0x80000
 #define DEFAULT_TCP_TIMEOUT      20000000
 #define DEFAULT_LATENCY_MS       2000
+#define DEFAULT_DROP_ON_LATENCY  FALSE
 #define DEFAULT_CONNECTION_SPEED 0
 #define DEFAULT_NAT_METHOD       GST_RTSP_NAT_DUMMY
 #define DEFAULT_DO_RTCP          TRUE
@@ -178,6 +179,7 @@ gst_rtsp_src_buffer_mode_get_type (void)
 #define DEFAULT_BUFFER_MODE      BUFFER_MODE_AUTO
 #define DEFAULT_PORT_RANGE       NULL
 #define DEFAULT_SHORT_HEADER     FALSE
+#define DEFAULT_PROBATION        2
 
 enum
 {
@@ -189,6 +191,7 @@ enum
   PROP_TIMEOUT,
   PROP_TCP_TIMEOUT,
   PROP_LATENCY,
+  PROP_DROP_ON_LATENCY,
   PROP_CONNECTION_SPEED,
   PROP_NAT_METHOD,
   PROP_DO_RTCP,
@@ -201,6 +204,7 @@ enum
   PROP_PORT_RANGE,
   PROP_UDP_BUFFER_SIZE,
   PROP_SHORT_HEADER,
+  PROP_PROBATION,
   PROP_LAST
 };
 
@@ -347,6 +351,12 @@ gst_rtspsrc_class_init (GstRTSPSrcClass * klass)
           "Amount of ms to buffer", 0, G_MAXUINT, DEFAULT_LATENCY_MS,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
+  g_object_class_install_property (gobject_class, PROP_DROP_ON_LATENCY,
+      g_param_spec_boolean ("drop-on-latency",
+          "Drop buffers when maximum latency is reached",
+          "Tells the jitterbuffer to never exceed the given latency in size",
+          DEFAULT_DROP_ON_LATENCY, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
   g_object_class_install_property (gobject_class, PROP_CONNECTION_SPEED,
       g_param_spec_uint64 ("connection-speed", "Connection Speed",
           "Network connection speed in kbps (0 = unknown)",
@@ -474,6 +484,12 @@ gst_rtspsrc_class_init (GstRTSPSrcClass * klass)
           "Only send the basic RTSP headers for broken encoders",
           DEFAULT_SHORT_HEADER, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
+  g_object_class_install_property (gobject_class, PROP_PROBATION,
+      g_param_spec_uint ("probation", "Number of probations",
+          "Consecutive packet sequence numbers to accept the source",
+          0, G_MAXUINT, DEFAULT_PROBATION,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
   gstelement_class->send_event = gst_rtspsrc_send_event;
   gstelement_class->change_state = gst_rtspsrc_change_state;
 
@@ -503,6 +519,7 @@ gst_rtspsrc_init (GstRTSPSrc * src)
   src->udp_timeout = DEFAULT_TIMEOUT;
   gst_rtspsrc_set_tcp_timeout (src, DEFAULT_TCP_TIMEOUT);
   src->latency = DEFAULT_LATENCY_MS;
+  src->drop_on_latency = DEFAULT_DROP_ON_LATENCY;
   src->connection_speed = DEFAULT_CONNECTION_SPEED;
   src->nat_method = DEFAULT_NAT_METHOD;
   src->do_rtcp = DEFAULT_DO_RTCP;
@@ -516,6 +533,7 @@ gst_rtspsrc_init (GstRTSPSrc * src)
   src->client_port_range.max = 0;
   src->udp_buffer_size = DEFAULT_UDP_BUFFER_SIZE;
   src->short_header = DEFAULT_SHORT_HEADER;
+  src->probation = DEFAULT_PROBATION;
 
   /* get a list of all extensions */
   src->extensions = gst_rtsp_ext_list_get ();
@@ -656,6 +674,9 @@ gst_rtspsrc_set_property (GObject * object, guint prop_id, const GValue * value,
     case PROP_LATENCY:
       rtspsrc->latency = g_value_get_uint (value);
       break;
+    case PROP_DROP_ON_LATENCY:
+      rtspsrc->drop_on_latency = g_value_get_boolean (value);
+      break;
     case PROP_CONNECTION_SPEED:
       rtspsrc->connection_speed = g_value_get_uint64 (value);
       break;
@@ -707,6 +728,9 @@ gst_rtspsrc_set_property (GObject * object, guint prop_id, const GValue * value,
     case PROP_SHORT_HEADER:
       rtspsrc->short_header = g_value_get_boolean (value);
       break;
+    case PROP_PROBATION:
+      rtspsrc->probation = g_value_get_uint (value);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -748,6 +772,9 @@ gst_rtspsrc_get_property (GObject * object, guint prop_id, GValue * value,
     }
     case PROP_LATENCY:
       g_value_set_uint (value, rtspsrc->latency);
+      break;
+    case PROP_DROP_ON_LATENCY:
+      g_value_set_boolean (value, rtspsrc->drop_on_latency);
       break;
     case PROP_CONNECTION_SPEED:
       g_value_set_uint64 (value, rtspsrc->connection_speed);
@@ -804,6 +831,9 @@ gst_rtspsrc_get_property (GObject * object, guint prop_id, GValue * value,
       break;
     case PROP_SHORT_HEADER:
       g_value_set_boolean (value, rtspsrc->short_header);
+      break;
+    case PROP_PROBATION:
+      g_value_set_uint (value, rtspsrc->probation);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -2370,6 +2400,11 @@ gst_rtspsrc_stream_configure_manager (GstRTSPSrc * src, GstRTSPStream * stream,
       g_object_set (src->manager, "latency", src->latency, NULL);
 
       klass = G_OBJECT_GET_CLASS (G_OBJECT (src->manager));
+      if (g_object_class_find_property (klass, "drop-on-latency")) {
+        g_object_set (src->manager, "drop-on-latency", src->drop_on_latency,
+            NULL);
+      }
+
       if (g_object_class_find_property (klass, "buffer-mode")) {
         if (src->buffer_mode != BUFFER_MODE_AUTO) {
           g_object_set (src->manager, "buffer-mode", src->buffer_mode, NULL);
@@ -2455,6 +2490,9 @@ gst_rtspsrc_stream_configure_manager (GstRTSPSrc * src, GstRTSPStream * stream,
           g_object_set (rtpsession, "rtcp-rs-bandwidth", stream->rs_bandwidth,
               NULL);
         }
+
+        g_object_set (rtpsession, "probation", src->probation, NULL);
+
         g_signal_connect (rtpsession, "on-bye-ssrc", (GCallback) on_bye_ssrc,
             stream);
         g_signal_connect (rtpsession, "on-bye-timeout", (GCallback) on_timeout,
@@ -5510,6 +5548,7 @@ gst_rtspsrc_open_from_sdp (GstRTSPSrc * src, GstSDPMessage * sdp,
 setup_failed:
   {
     GST_ERROR_OBJECT (src, "setup failed");
+    gst_rtspsrc_cleanup (src);
     return res;
   }
 }

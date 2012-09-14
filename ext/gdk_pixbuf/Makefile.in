@@ -131,10 +131,10 @@ am__DEPENDENCIES_1 =
 libgstgdkpixbuf_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
-am_libgstgdkpixbuf_la_OBJECTS = libgstgdkpixbuf_la-gstgdkpixbuf.lo \
-	libgstgdkpixbuf_la-gstgdkpixbufsink.lo \
-	libgstgdkpixbuf_la-pixbufscale.lo \
-	libgstgdkpixbuf_la-gstgdkpixbufoverlay.lo
+am_libgstgdkpixbuf_la_OBJECTS = libgstgdkpixbuf_la-gstgdkpixbufdec.lo \
+	libgstgdkpixbuf_la-gstgdkpixbufoverlay.lo \
+	libgstgdkpixbuf_la-gstgdkpixbufplugin.lo \
+	libgstgdkpixbuf_la-gstgdkpixbufsink.lo
 libgstgdkpixbuf_la_OBJECTS = $(am_libgstgdkpixbuf_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -505,8 +505,16 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 plugin_LTLIBRARIES = libgstgdkpixbuf.la
-libgstgdkpixbuf_la_SOURCES = gstgdkpixbuf.c gstgdkpixbufsink.c pixbufscale.c \
-	gstgdkpixbufoverlay.c
+
+# pixbufscale.[ch] - not sure the world needs this
+#
+# gstgdkanimation.[ch] - GdkPixbuf animations decode everything from the start,
+# which means it's easy to make us go OOM with manipulated input, disabled
+libgstgdkpixbuf_la_SOURCES = \
+	gstgdkpixbufdec.c \
+	gstgdkpixbufoverlay.c \
+	gstgdkpixbufplugin.c \
+	gstgdkpixbufsink.c
 
 libgstgdkpixbuf_la_CFLAGS = \
 	$(GST_PLUGINS_BASE_CFLAGS) \
@@ -523,11 +531,9 @@ libgstgdkpixbuf_la_LIBADD = \
 libgstgdkpixbuf_la_LDFLAGS = $(GST_PLUGIN_LDFLAGS)
 libgstgdkpixbuf_la_LIBTOOLFLAGS = --tag=disable-static
 noinst_HEADERS = \
-	gstgdkpixbuf.h \
+	gstgdkpixbufdec.h \
 	gstgdkpixbufoverlay.h \
-	gstgdkpixbufsink.h \
-	pixbufscale.h \
-	gstgdkanimation.h
+	gstgdkpixbufsink.h
 
 all: all-am
 
@@ -604,10 +610,10 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstgdkpixbuf_la-gstgdkpixbuf.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstgdkpixbuf_la-gstgdkpixbufdec.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstgdkpixbuf_la-gstgdkpixbufoverlay.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstgdkpixbuf_la-gstgdkpixbufplugin.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstgdkpixbuf_la-gstgdkpixbufsink.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstgdkpixbuf_la-pixbufscale.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -630,26 +636,12 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
 
-libgstgdkpixbuf_la-gstgdkpixbuf.lo: gstgdkpixbuf.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstgdkpixbuf_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstgdkpixbuf_la_CFLAGS) $(CFLAGS) -MT libgstgdkpixbuf_la-gstgdkpixbuf.lo -MD -MP -MF $(DEPDIR)/libgstgdkpixbuf_la-gstgdkpixbuf.Tpo -c -o libgstgdkpixbuf_la-gstgdkpixbuf.lo `test -f 'gstgdkpixbuf.c' || echo '$(srcdir)/'`gstgdkpixbuf.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstgdkpixbuf_la-gstgdkpixbuf.Tpo $(DEPDIR)/libgstgdkpixbuf_la-gstgdkpixbuf.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstgdkpixbuf.c' object='libgstgdkpixbuf_la-gstgdkpixbuf.lo' libtool=yes @AMDEPBACKSLASH@
+libgstgdkpixbuf_la-gstgdkpixbufdec.lo: gstgdkpixbufdec.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstgdkpixbuf_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstgdkpixbuf_la_CFLAGS) $(CFLAGS) -MT libgstgdkpixbuf_la-gstgdkpixbufdec.lo -MD -MP -MF $(DEPDIR)/libgstgdkpixbuf_la-gstgdkpixbufdec.Tpo -c -o libgstgdkpixbuf_la-gstgdkpixbufdec.lo `test -f 'gstgdkpixbufdec.c' || echo '$(srcdir)/'`gstgdkpixbufdec.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstgdkpixbuf_la-gstgdkpixbufdec.Tpo $(DEPDIR)/libgstgdkpixbuf_la-gstgdkpixbufdec.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstgdkpixbufdec.c' object='libgstgdkpixbuf_la-gstgdkpixbufdec.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstgdkpixbuf_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstgdkpixbuf_la_CFLAGS) $(CFLAGS) -c -o libgstgdkpixbuf_la-gstgdkpixbuf.lo `test -f 'gstgdkpixbuf.c' || echo '$(srcdir)/'`gstgdkpixbuf.c
-
-libgstgdkpixbuf_la-gstgdkpixbufsink.lo: gstgdkpixbufsink.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstgdkpixbuf_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstgdkpixbuf_la_CFLAGS) $(CFLAGS) -MT libgstgdkpixbuf_la-gstgdkpixbufsink.lo -MD -MP -MF $(DEPDIR)/libgstgdkpixbuf_la-gstgdkpixbufsink.Tpo -c -o libgstgdkpixbuf_la-gstgdkpixbufsink.lo `test -f 'gstgdkpixbufsink.c' || echo '$(srcdir)/'`gstgdkpixbufsink.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstgdkpixbuf_la-gstgdkpixbufsink.Tpo $(DEPDIR)/libgstgdkpixbuf_la-gstgdkpixbufsink.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstgdkpixbufsink.c' object='libgstgdkpixbuf_la-gstgdkpixbufsink.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstgdkpixbuf_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstgdkpixbuf_la_CFLAGS) $(CFLAGS) -c -o libgstgdkpixbuf_la-gstgdkpixbufsink.lo `test -f 'gstgdkpixbufsink.c' || echo '$(srcdir)/'`gstgdkpixbufsink.c
-
-libgstgdkpixbuf_la-pixbufscale.lo: pixbufscale.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstgdkpixbuf_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstgdkpixbuf_la_CFLAGS) $(CFLAGS) -MT libgstgdkpixbuf_la-pixbufscale.lo -MD -MP -MF $(DEPDIR)/libgstgdkpixbuf_la-pixbufscale.Tpo -c -o libgstgdkpixbuf_la-pixbufscale.lo `test -f 'pixbufscale.c' || echo '$(srcdir)/'`pixbufscale.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstgdkpixbuf_la-pixbufscale.Tpo $(DEPDIR)/libgstgdkpixbuf_la-pixbufscale.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='pixbufscale.c' object='libgstgdkpixbuf_la-pixbufscale.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstgdkpixbuf_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstgdkpixbuf_la_CFLAGS) $(CFLAGS) -c -o libgstgdkpixbuf_la-pixbufscale.lo `test -f 'pixbufscale.c' || echo '$(srcdir)/'`pixbufscale.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstgdkpixbuf_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstgdkpixbuf_la_CFLAGS) $(CFLAGS) -c -o libgstgdkpixbuf_la-gstgdkpixbufdec.lo `test -f 'gstgdkpixbufdec.c' || echo '$(srcdir)/'`gstgdkpixbufdec.c
 
 libgstgdkpixbuf_la-gstgdkpixbufoverlay.lo: gstgdkpixbufoverlay.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstgdkpixbuf_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstgdkpixbuf_la_CFLAGS) $(CFLAGS) -MT libgstgdkpixbuf_la-gstgdkpixbufoverlay.lo -MD -MP -MF $(DEPDIR)/libgstgdkpixbuf_la-gstgdkpixbufoverlay.Tpo -c -o libgstgdkpixbuf_la-gstgdkpixbufoverlay.lo `test -f 'gstgdkpixbufoverlay.c' || echo '$(srcdir)/'`gstgdkpixbufoverlay.c
@@ -657,6 +649,20 @@ libgstgdkpixbuf_la-gstgdkpixbufoverlay.lo: gstgdkpixbufoverlay.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstgdkpixbufoverlay.c' object='libgstgdkpixbuf_la-gstgdkpixbufoverlay.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstgdkpixbuf_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstgdkpixbuf_la_CFLAGS) $(CFLAGS) -c -o libgstgdkpixbuf_la-gstgdkpixbufoverlay.lo `test -f 'gstgdkpixbufoverlay.c' || echo '$(srcdir)/'`gstgdkpixbufoverlay.c
+
+libgstgdkpixbuf_la-gstgdkpixbufplugin.lo: gstgdkpixbufplugin.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstgdkpixbuf_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstgdkpixbuf_la_CFLAGS) $(CFLAGS) -MT libgstgdkpixbuf_la-gstgdkpixbufplugin.lo -MD -MP -MF $(DEPDIR)/libgstgdkpixbuf_la-gstgdkpixbufplugin.Tpo -c -o libgstgdkpixbuf_la-gstgdkpixbufplugin.lo `test -f 'gstgdkpixbufplugin.c' || echo '$(srcdir)/'`gstgdkpixbufplugin.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstgdkpixbuf_la-gstgdkpixbufplugin.Tpo $(DEPDIR)/libgstgdkpixbuf_la-gstgdkpixbufplugin.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstgdkpixbufplugin.c' object='libgstgdkpixbuf_la-gstgdkpixbufplugin.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstgdkpixbuf_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstgdkpixbuf_la_CFLAGS) $(CFLAGS) -c -o libgstgdkpixbuf_la-gstgdkpixbufplugin.lo `test -f 'gstgdkpixbufplugin.c' || echo '$(srcdir)/'`gstgdkpixbufplugin.c
+
+libgstgdkpixbuf_la-gstgdkpixbufsink.lo: gstgdkpixbufsink.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstgdkpixbuf_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstgdkpixbuf_la_CFLAGS) $(CFLAGS) -MT libgstgdkpixbuf_la-gstgdkpixbufsink.lo -MD -MP -MF $(DEPDIR)/libgstgdkpixbuf_la-gstgdkpixbufsink.Tpo -c -o libgstgdkpixbuf_la-gstgdkpixbufsink.lo `test -f 'gstgdkpixbufsink.c' || echo '$(srcdir)/'`gstgdkpixbufsink.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstgdkpixbuf_la-gstgdkpixbufsink.Tpo $(DEPDIR)/libgstgdkpixbuf_la-gstgdkpixbufsink.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstgdkpixbufsink.c' object='libgstgdkpixbuf_la-gstgdkpixbufsink.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstgdkpixbuf_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstgdkpixbuf_la_CFLAGS) $(CFLAGS) -c -o libgstgdkpixbuf_la-gstgdkpixbufsink.lo `test -f 'gstgdkpixbufsink.c' || echo '$(srcdir)/'`gstgdkpixbufsink.c
 
 mostlyclean-libtool:
 	-rm -f *.lo

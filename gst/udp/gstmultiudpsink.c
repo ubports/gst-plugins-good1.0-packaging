@@ -44,6 +44,10 @@
 #include <sys/socket.h>
 #endif
 
+#ifndef G_OS_WIN32
+#include <netinet/in.h>
+#endif
+
 #include "gst/glib-compat-private.h"
 
 GST_DEBUG_CATEGORY_STATIC (multiudpsink_debug);
@@ -638,8 +642,8 @@ gst_multiudpsink_setup_qos_dscp (GstMultiUDPSink * sink)
     if (setsockopt (fd, IPPROTO_IPV6, IPV6_TCLASS, &tos, sizeof (tos)) < 0) {
       GST_ERROR_OBJECT (sink, "could not set TCLASS: %s", g_strerror (errno));
     }
-  }
 #endif
+  }
 #endif
 }
 
@@ -790,7 +794,8 @@ join_group_failed:
   {
     gst_multiudpsink_stop (GST_BASE_SINK (sink));
     GST_ELEMENT_ERROR (sink, RESOURCE, SETTINGS, (NULL),
-        ("Could not join multicast group: %s", err->message));
+        ("Could not join multicast group: %s",
+            err ? err->message : "unknown reason"));
     g_clear_error (&err);
     return FALSE;
   }

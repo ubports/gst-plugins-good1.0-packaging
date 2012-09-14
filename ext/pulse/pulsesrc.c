@@ -29,7 +29,7 @@
  * <refsect2>
  * <title>Example pipelines</title>
  * |[
- * gst-launch -v pulsesrc ! audioconvert ! vorbisenc ! oggmux ! filesink location=alsasrc.ogg
+ * gst-launch-1.0 -v pulsesrc ! audioconvert ! vorbisenc ! oggmux ! filesink location=alsasrc.ogg
  * ]| Record from a sound card using pulseaudio and encode to Ogg/Vorbis.
  * </refsect2>
  */
@@ -94,12 +94,13 @@ static gboolean gst_pulsesrc_prepare (GstAudioSrc * asrc,
 static gboolean gst_pulsesrc_unprepare (GstAudioSrc * asrc);
 
 static guint gst_pulsesrc_read (GstAudioSrc * asrc, gpointer data,
-    guint length);
+    guint length, GstClockTime * timestamp);
 static guint gst_pulsesrc_delay (GstAudioSrc * asrc);
 
 static void gst_pulsesrc_reset (GstAudioSrc * src);
 
 static gboolean gst_pulsesrc_negotiate (GstBaseSrc * basesrc);
+static gboolean gst_pulsesrc_event (GstBaseSrc * basesrc, GstEvent * event);
 
 static GstStateChangeReturn gst_pulsesrc_change_state (GstElement *
     element, GstStateChange transition);
@@ -148,6 +149,7 @@ gst_pulsesrc_class_init (GstPulseSrcClass * klass)
   gstelement_class->change_state =
       GST_DEBUG_FUNCPTR (gst_pulsesrc_change_state);
 
+  gstbasesrc_class->event = GST_DEBUG_FUNCPTR (gst_pulsesrc_event);
   gstbasesrc_class->negotiate = GST_DEBUG_FUNCPTR (gst_pulsesrc_negotiate);
 
   gstaudiosrc_class->open = GST_DEBUG_FUNCPTR (gst_pulsesrc_open);
@@ -366,6 +368,9 @@ gst_pulsesrc_finalize (GObject * object)
 static gboolean
 gst_pulsesrc_is_dead (GstPulseSrc * pulsesrc, gboolean check_stream)
 {
+  if (!pulsesrc->stream_connected)
+    return TRUE;
+
   if (!CONTEXT_OK (pulsesrc->context))
     goto error;
 
@@ -990,7 +995,8 @@ gst_pulsesrc_unprepare (GstAudioSrc * asrc)
 }
 
 static guint
-gst_pulsesrc_read (GstAudioSrc * asrc, gpointer data, guint length)
+gst_pulsesrc_read (GstAudioSrc * asrc, gpointer data, guint length,
+    GstClockTime * timestamp)
 {
   GstPulseSrc *pulsesrc = GST_PULSESRC_CAST (asrc);
   size_t sum = 0;
@@ -1002,6 +1008,9 @@ gst_pulsesrc_read (GstAudioSrc * asrc, gpointer data, guint length)
 
   pa_threaded_mainloop_lock (pulsesrc->mainloop);
   pulsesrc->in_read = TRUE;
+
+  if (!pulsesrc->stream_connected)
+    goto not_connected;
 
   if (pulsesrc->paused)
     goto was_paused;
@@ -1068,6 +1077,11 @@ gst_pulsesrc_read (GstAudioSrc * asrc, gpointer data, guint length)
   return sum;
 
   /* ERRORS */
+not_connected:
+  {
+    GST_LOG_OBJECT (pulsesrc, "we are not connected");
+    goto unlock_and_fail;
+  }
 was_paused:
   {
     GST_LOG_OBJECT (pulsesrc, "we are paused");
@@ -1136,49 +1150,71 @@ server_dead:
 }
 
 static gboolean
-gst_pulsesrc_create_stream (GstPulseSrc * pulsesrc, GstCaps ** caps)
+gst_pulsesrc_create_stream (GstPulseSrc * pulsesrc, GstCaps ** caps,
+    GstAudioRingBufferSpec * rspec)
 {
   pa_channel_map channel_map;
   const pa_channel_map *m;
   GstStructure *s;
   gboolean need_channel_layout = FALSE;
-  GstAudioRingBufferSpec spec;
+  GstAudioRingBufferSpec new_spec, *spec;
   const gchar *name;
+  int i;
 
-  s = gst_caps_get_structure (*caps, 0);
-  gst_structure_get_int (s, "channels", &spec.info.channels);
-  if (!gst_structure_has_field (s, "channel-mask")) {
-    if (spec.info.channels == 1) {
-      pa_channel_map_init_mono (&channel_map);
-    } else if (spec.info.channels == 2) {
-      gst_structure_set (s, "channel-mask", GST_TYPE_BITMASK,
-          GST_AUDIO_CHANNEL_POSITION_MASK (FRONT_LEFT) |
-          GST_AUDIO_CHANNEL_POSITION_MASK (FRONT_RIGHT), NULL);
-      pa_channel_map_init_stereo (&channel_map);
-    } else {
+  /* If we already have a stream (renegotiation), free it first */
+  if (pulsesrc->stream)
+    gst_pulsesrc_destroy_stream (pulsesrc);
+
+  if (rspec) {
+    /* Post-negotiation, we already have a ringbuffer spec, so we just need to
+     * use it to create a stream. */
+    spec = rspec;
+
+    /* At this point, we expect the channel-mask to be set in caps, so we just
+     * use that */
+    if (!gst_pulse_gst_to_channel_map (&channel_map, spec))
+      goto invalid_spec;
+
+  } else if (caps) {
+    /* At negotiation time, we get a fixed caps and use it to set up a stream */
+    s = gst_caps_get_structure (*caps, 0);
+    gst_structure_get_int (s, "channels", &new_spec.info.channels);
+    if (!gst_structure_has_field (s, "channel-mask")) {
+      if (new_spec.info.channels == 1) {
+        pa_channel_map_init_mono (&channel_map);
+      } else if (new_spec.info.channels == 2) {
+        pa_channel_map_init_stereo (&channel_map);
+      } else {
+        need_channel_layout = TRUE;
+        gst_structure_set (s, "channel-mask", GST_TYPE_BITMASK,
+            G_GUINT64_CONSTANT (0), NULL);
+      }
+    }
+
+    memset (&new_spec, 0, sizeof (GstAudioRingBufferSpec));
+    new_spec.latency_time = GST_SECOND;
+    if (!gst_audio_ring_buffer_parse_caps (&new_spec, *caps))
+      goto invalid_caps;
+
+    /* Keep the refcount of the caps at 1 to make them writable */
+    gst_caps_unref (new_spec.caps);
+
+    if (!need_channel_layout
+        && !gst_pulse_gst_to_channel_map (&channel_map, &new_spec)) {
       need_channel_layout = TRUE;
       gst_structure_set (s, "channel-mask", GST_TYPE_BITMASK,
           G_GUINT64_CONSTANT (0), NULL);
+      for (i = 0; i < G_N_ELEMENTS (new_spec.info.position); i++)
+        new_spec.info.position[i] = GST_AUDIO_CHANNEL_POSITION_INVALID;
     }
+
+    spec = &new_spec;
+  } else {
+    /* !rspec && !caps */
+    g_assert_not_reached ();
   }
 
-  memset (&spec, 0, sizeof (GstAudioRingBufferSpec));
-  spec.latency_time = GST_SECOND;
-  if (!gst_audio_ring_buffer_parse_caps (&spec, *caps))
-    goto invalid_caps;
-
-  /* Keep the refcount of the caps at 1 to make them writable */
-  gst_caps_unref (spec.caps);
-
-  if (!need_channel_layout
-      && !gst_pulse_gst_to_channel_map (&channel_map, &spec)) {
-    need_channel_layout = TRUE;
-    gst_structure_set (s, "channel-mask", GST_TYPE_BITMASK,
-        G_GUINT64_CONSTANT (0), NULL);
-    memset (spec.info.position, 0xff, sizeof (spec.info.position));
-  }
-
-  if (!gst_pulse_fill_sample_spec (&spec, &pulsesrc->sample_spec))
+  if (!gst_pulse_fill_sample_spec (spec, &pulsesrc->sample_spec))
     goto invalid_spec;
 
   pa_threaded_mainloop_lock (pulsesrc->mainloop);
@@ -1199,14 +1235,17 @@ gst_pulsesrc_create_stream (GstPulseSrc * pulsesrc, GstCaps ** caps)
               (need_channel_layout) ? NULL : &channel_map)))
     goto create_failed;
 
-  m = pa_stream_get_channel_map (pulsesrc->stream);
-  gst_pulse_channel_map_to_gst (m, &spec);
-  gst_audio_channel_positions_to_valid_order (spec.info.position,
-      spec.info.channels);
-  gst_caps_unref (*caps);
-  *caps = gst_audio_info_to_caps (&spec.info);
+  if (caps) {
+    m = pa_stream_get_channel_map (pulsesrc->stream);
+    gst_pulse_channel_map_to_gst (m, &new_spec);
+    gst_audio_channel_positions_to_valid_order (new_spec.info.position,
+        new_spec.info.channels);
+    gst_caps_unref (*caps);
+    *caps = gst_audio_info_to_caps (&new_spec.info);
 
-  GST_DEBUG_OBJECT (pulsesrc, "Caps are %" GST_PTR_FORMAT, *caps);
+    GST_DEBUG_OBJECT (pulsesrc, "Caps are %" GST_PTR_FORMAT, *caps);
+  }
+
 
   pa_stream_set_state_callback (pulsesrc->stream, gst_pulsesrc_stream_state_cb,
       pulsesrc);
@@ -1259,6 +1298,21 @@ unlock_and_fail:
   }
 }
 
+static gboolean
+gst_pulsesrc_event (GstBaseSrc * basesrc, GstEvent * event)
+{
+  GST_DEBUG_OBJECT (basesrc, "handle event %" GST_PTR_FORMAT, event);
+
+  switch (GST_EVENT_TYPE (event)) {
+    case GST_EVENT_RECONFIGURE:
+      gst_pad_check_reconfigure (GST_BASE_SRC_PAD (basesrc));
+      break;
+    default:
+      break;
+  }
+  return GST_BASE_SRC_CLASS (parent_class)->event (basesrc, event);
+}
+
 /* This is essentially gst_base_src_negotiate_default() but the caps
  * are guaranteed to have a channel layout for > 2 channels
  */
@@ -1306,7 +1360,7 @@ gst_pulsesrc_negotiate (GstBaseSrc * basesrc)
         result = TRUE;
       } else if (gst_caps_is_fixed (caps)) {
         /* yay, fixed caps, use those then */
-        result = gst_pulsesrc_create_stream (pulsesrc, &caps);
+        result = gst_pulsesrc_create_stream (pulsesrc, &caps, NULL);
         if (result)
           result = gst_base_src_set_caps (basesrc, caps);
       }
@@ -1335,6 +1389,9 @@ gst_pulsesrc_prepare (GstAudioSrc * asrc, GstAudioRingBufferSpec * spec)
   GstAudioClock *clock;
 
   pa_threaded_mainloop_lock (pulsesrc->mainloop);
+
+  if (!pulsesrc->stream)
+    gst_pulsesrc_create_stream (pulsesrc, NULL, spec);
 
   {
     GstAudioRingBufferSpec s = *spec;
@@ -1692,10 +1749,11 @@ gst_pulsesrc_get_time (GstClock * clock, GstPulseSrc * src)
   pa_usec_t time = 0;
 
   pa_threaded_mainloop_lock (src->mainloop);
-
-  if (gst_pulsesrc_is_dead (src, TRUE)) {
+  if (!src->stream)
     goto unlock_and_out;
-  }
+
+  if (gst_pulsesrc_is_dead (src, TRUE))
+    goto unlock_and_out;
 
   if (pa_stream_get_time (src->stream, &time) < 0) {
     GST_DEBUG_OBJECT (src, "could not get time");

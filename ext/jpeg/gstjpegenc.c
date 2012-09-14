@@ -26,7 +26,7 @@
  * <refsect2>
  * <title>Example launch line</title>
  * |[
- * gst-launch videotestsrc num-buffers=50 ! video/x-raw-yuv, framerate='(fraction)'5/1 ! jpegenc ! avimux ! filesink location=mjpeg.avi
+ * gst-launch-1.0 videotestsrc num-buffers=50 ! video/x-raw-yuv, framerate='(fraction)'5/1 ! jpegenc ! avimux ! filesink location=mjpeg.avi
  * ]| a pipeline to mux 5 JPEG frames per second into a 10 sec. long motion jpeg
  * avi.
  * </refsect2>
@@ -179,7 +179,7 @@ ensure_memory (GstJpegEnc * jpegenc)
   GstMapInfo map;
   gsize old_size, desired_size, new_size;
   guint8 *new_data;
-  static GstAllocationParams params = { 0, 0, 0, 3, };
+  static GstAllocationParams params = { 0, 3, 0, 0, };
 
   old_size = jpegenc->output_map.size;
   if (old_size == 0)

@@ -5,7 +5,7 @@ dnl please read gstreamer/docs/random/autotools before changing this file
 dnl initialize autoconf
 dnl releases only do -Wall, git and prerelease does -Werror too
 dnl use a three digit version number for releases, and four for git/pre
-AC_INIT(GStreamer Good Plug-ins, 0.11.93,
+AC_INIT(GStreamer Good Plug-ins, 0.11.94,
     http://bugzilla.gnome.org/enter_bug.cgi?product=GStreamer,
     gst-plugins-good)
 
@@ -48,8 +48,8 @@ AG_GST_LIBTOOL_PREPARE
 AS_LIBTOOL(GST, 0, 0, 0)
 
 dnl *** required versions of GStreamer stuff ***
-GST_REQ=0.11.93
-GSTPB_REQ=0.11.93
+GST_REQ=0.11.94
+GSTPB_REQ=0.11.94
 
 dnl *** autotools stuff ****
 
@@ -127,7 +127,7 @@ AC_PATH_PROG(VALGRIND_PATH, valgrind, no)
 AM_CONDITIONAL(HAVE_VALGRIND, test ! "x$VALGRIND_PATH" = "xno")
 
 dnl check for documentation tools
-GTK_DOC_CHECK([1.3])
+GTK_DOC_CHECK([1.12])
 AS_PATH_PYTHON([2.1])
 AG_GST_PLUGIN_DOCS([1.3],[2.1])
 
@@ -234,11 +234,11 @@ AC_SUBST(GSTPB_PREFIX)
 
 dnl GTK is optional and used in examples
 HAVE_GTK=no
-GT_REQ=3.0.0
+GTK_REQ=3.0.0
 if test "x$BUILD_EXAMPLES" = "xyes"; then
-  PKG_CHECK_MODULES(GTK, gtk+-$with_gtk >= $GTK_REQ, HAVE_GTK=yes, HAVE_GTK=no)
+  PKG_CHECK_MODULES(GTK, gtk+-3.0 >= $GTK_REQ, HAVE_GTK=yes, HAVE_GTK=no)
   dnl some examples need gtk+-x11
-  PKG_CHECK_MODULES(GTK_X11, gtk+-x11-$with_gtk >= $GTK_REQ, HAVE_GTK_X11=yes, HAVE_GTK_X11=no)
+  PKG_CHECK_MODULES(GTK_X11, gtk+-x11-3.0 >= $GTK_REQ, HAVE_GTK_X11=yes, HAVE_GTK_X11=no)
   AC_SUBST(GTK_LIBS)
   AC_SUBST(GTK_CFLAGS)
 fi
@@ -297,7 +297,7 @@ dnl *** plug-ins to include ***
 
 dnl Non ported plugins (non-dependant, then dependant)
 dnl Make sure you have a space before and after all plugins
-GST_PLUGINS_NONPORTED="cairo cairo_gobject gdk_pixbuf osx_audio "
+GST_PLUGINS_NONPORTED="cairo cairo_gobject osx_audio "
 AC_SUBST(GST_PLUGINS_NONPORTED)
 
 dnl these are all the gst plug-ins, compilable without additional libs

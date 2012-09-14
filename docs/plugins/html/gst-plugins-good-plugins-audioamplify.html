@@ -72,7 +72,7 @@ The difference between the clipping modes is best evaluated by testing.
 <p>
 </p>
 <div class="refsect2">
-<a name="idp6603536"></a><h3>Example launch line</h3>
+<a name="idp9911072"></a><h3>Example launch line</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
@@ -80,9 +80,9 @@ The difference between the clipping modes is best evaluated by testing.
         <td class="listing_lines" align="right"><pre>1
 2
 3</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch audiotestsrc wave<span class="gtkdoc opt">=</span>saw <span class="gtkdoc opt">!</span> audioamplify amplification<span class="gtkdoc opt">=</span><span class="number">1.5</span> <span class="gtkdoc opt">!</span> alsasink
-gst<span class="gtkdoc opt">-</span>launch filesrc location<span class="gtkdoc opt">=</span><span class="string">&quot;melo1.ogg&quot;</span> <span class="gtkdoc opt">!</span> oggdemux <span class="gtkdoc opt">!</span> vorbisdec <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audioamplify amplification<span class="gtkdoc opt">=</span><span class="number">1.5</span> method<span class="gtkdoc opt">=</span>wrap<span class="gtkdoc opt">-</span>negative <span class="gtkdoc opt">!</span> alsasink
-gst<span class="gtkdoc opt">-</span>launch audiotestsrc wave<span class="gtkdoc opt">=</span>saw <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audioamplify amplification<span class="gtkdoc opt">=</span><span class="number">1.5</span> method<span class="gtkdoc opt">=</span>wrap<span class="gtkdoc opt">-</span>positive <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> alsasink</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> audiotestsrc wave<span class="gtkdoc opt">=</span>saw <span class="gtkdoc opt">!</span> audioamplify amplification<span class="gtkdoc opt">=</span><span class="number">1.5</span> <span class="gtkdoc opt">!</span> alsasink
+gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> filesrc location<span class="gtkdoc opt">=</span><span class="string">&quot;melo1.ogg&quot;</span> <span class="gtkdoc opt">!</span> oggdemux <span class="gtkdoc opt">!</span> vorbisdec <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audioamplify amplification<span class="gtkdoc opt">=</span><span class="number">1.5</span> method<span class="gtkdoc opt">=</span>wrap<span class="gtkdoc opt">-</span>negative <span class="gtkdoc opt">!</span> alsasink
+gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> audiotestsrc wave<span class="gtkdoc opt">=</span>saw <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audioamplify amplification<span class="gtkdoc opt">=</span><span class="number">1.5</span> method<span class="gtkdoc opt">=</span>wrap<span class="gtkdoc opt">-</span>positive <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> alsasink</pre></td>
       </tr>
     </tbody>
   </table>
@@ -94,7 +94,7 @@ gst<span class="gtkdoc opt">-</span>launch audiotestsrc wave<span class="gtkdoc 
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp9960256"></a><h3>Element Information</h3>
+<a name="idp6382752"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -117,7 +117,7 @@ gst<span class="gtkdoc opt">-</span>launch audiotestsrc wave<span class="gtkdoc 
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp8943104"></a><h3>Element Pads</h3>
+<a name="idp8043440"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>

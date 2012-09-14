@@ -72,13 +72,13 @@ stream from a network source.
 <p>
 </p>
 <div class="refsect2">
-<a name="idp21427840"></a><h3>Example launch line</h3>
+<a name="idp23949168"></a><h3>Example launch line</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
       <tr>
         <td class="listing_lines" align="right"><pre>1</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch filesrc location<span class="gtkdoc opt">=</span>sine<span class="gtkdoc opt">.</span>wav <span class="gtkdoc opt">!</span> wavparse <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> alsasink</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> filesrc location<span class="gtkdoc opt">=</span>sine<span class="gtkdoc opt">.</span>wav <span class="gtkdoc opt">!</span> wavparse <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> alsasink</pre></td>
       </tr>
     </tbody>
   </table>
@@ -90,7 +90,7 @@ wav file is assumed to contain raw uncompressed samples.
     <tbody>
       <tr>
         <td class="listing_lines" align="right"><pre>1</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch gnomevfssrc location<span class="gtkdoc opt">=</span>http<span class="gtkdoc opt">:</span><span class="gtkdoc slc">//www.example.org/sine.wav ! queue ! wavparse ! audioconvert ! alsasink</span></pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> gnomevfssrc location<span class="gtkdoc opt">=</span>http<span class="gtkdoc opt">:</span><span class="gtkdoc slc">//www.example.org/sine.wav ! queue ! wavparse ! audioconvert ! alsasink</span></pre></td>
       </tr>
     </tbody>
   </table>
@@ -105,7 +105,7 @@ Last reviewed on 2007-02-14 (0.10.6)
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp23384256"></a><h3>Element Information</h3>
+<a name="idp22250128"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -128,7 +128,7 @@ Last reviewed on 2007-02-14 (0.10.6)
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp24161712"></a><h3>Element Pads</h3>
+<a name="idp22134736"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>

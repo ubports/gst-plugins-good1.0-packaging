@@ -62,11 +62,17 @@ rtp_pipeline_chain_list (GstPad * pad, GstObject * parent, GstBufferList * list)
   /* Loop through all groups */
   for (i = 0; i < len; i++) {
     GstBuffer *paybuf;
+    GstMemory *mem;
+    gint size;
 
-    /* FIXME need to discard RTP header */
     paybuf = gst_buffer_list_get (list, i);
-    /* Loop through all payload buffers in the current group */
-    chain_list_bytes_received += gst_buffer_get_size (paybuf);
+    /* only count real data which is expected in last memory block */
+    fail_unless (gst_buffer_n_memory (paybuf) > 1);
+    mem = gst_buffer_get_memory_range (paybuf, gst_buffer_n_memory (paybuf) - 1,
+        1);
+    size = gst_memory_get_sizes (mem, NULL, NULL);
+    gst_memory_unref (mem);
+    chain_list_bytes_received += size;
   }
   gst_buffer_list_unref (list);
 
@@ -279,17 +285,13 @@ rtp_pipeline_run (rtp_pipeline * p)
 }
 
 /*
- * Enables buffer lists. Sets the buffer-list property of the payloader
- * and adds a chain_list_function to the depayloader.
+ * Enables buffer lists and adds a chain_list_function to the depayloader.
  * @param p Pointer to the RTP pipeline.
  */
 static void
 rtp_pipeline_enable_lists (rtp_pipeline * p, guint mtu_size)
 {
   GstPad *pad;
-
-  /* use buffer lists */
-  g_object_set (p->rtppay, "buffer-list", TRUE, NULL);
 
   /* set mtu size if needed */
   if (mtu_size) {
@@ -525,7 +527,7 @@ GST_END_TEST;
 static const guint8 rtp_h264_list_lt_mtu_frame_data[] =
     /* not packetized, next NAL starts with 0001 */
 { 0x00, 0x00, 0x00, 0x01, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00,
   0xad, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0d, 0x00
 };
 
@@ -534,6 +536,7 @@ static int rtp_h264_list_lt_mtu_frame_data_size = 16;
 static int rtp_h264_list_lt_mtu_frame_count = 2;
 
 /* NAL = 4 bytes */
+/* also 2 bytes FU-A header each time */
 static int rtp_h264_list_lt_mtu_bytes_sent = 2 * (16 - 4);
 
 static int rtp_h264_list_lt_mtu_mtu_size = 1024;

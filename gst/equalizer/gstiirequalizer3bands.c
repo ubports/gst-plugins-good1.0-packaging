@@ -26,7 +26,7 @@
  * <refsect2>
  * <title>Example launch line</title>
  * |[
- * gst-launch filesrc location=song.ogg ! oggdemux ! vorbisdec ! audioconvert ! equalizer-3bands band1=6.0 ! alsasink
+ * gst-launch-1.0 filesrc location=song.ogg ! oggdemux ! vorbisdec ! audioconvert ! equalizer-3bands band1=6.0 ! alsasink
  * ]| This raises the volume of the 2nd band, which is at 1110 Hz, by 6 db.
  * </refsect2>
  */
@@ -54,8 +54,8 @@ GST_DEBUG_CATEGORY_EXTERN (equalizer_debug);
 #define GST_CAT_DEFAULT equalizer_debug
 
 #define gst_iir_equalizer_3bands_parent_class parent_class
-G_DEFINE_TYPE_WITH_CODE (GstIirEqualizer3Bands, gst_iir_equalizer_3bands,
-    GST_TYPE_IIR_EQUALIZER, G_IMPLEMENT_INTERFACE (GST_TYPE_PRESET, NULL));
+G_DEFINE_TYPE (GstIirEqualizer3Bands, gst_iir_equalizer_3bands,
+    GST_TYPE_IIR_EQUALIZER);
 
 /* equalizer implementation */
 

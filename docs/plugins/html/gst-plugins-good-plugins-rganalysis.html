@@ -90,13 +90,13 @@ an album, not just the last one.
 <p>
 </p>
 <div class="refsect2">
-<a name="idp17336704"></a><h3>Example launch lines</h3>
+<a name="idp15636464"></a><h3>Example launch lines</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
       <tr>
         <td class="listing_lines" align="right"><pre>1</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch <span class="gtkdoc opt">-</span>t audiotestsrc wave<span class="gtkdoc opt">=</span>sine num<span class="gtkdoc opt">-</span>buffers<span class="gtkdoc opt">=</span><span class="number">512</span> <span class="gtkdoc opt">!</span> rganalysis <span class="gtkdoc opt">!</span> fakesink</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> <span class="gtkdoc opt">-</span>t audiotestsrc wave<span class="gtkdoc opt">=</span>sine num<span class="gtkdoc opt">-</span>buffers<span class="gtkdoc opt">=</span><span class="number">512</span> <span class="gtkdoc opt">!</span> rganalysis <span class="gtkdoc opt">!</span> fakesink</pre></td>
       </tr>
     </tbody>
   </table>
@@ -108,7 +108,7 @@ an album, not just the last one.
       <tr>
         <td class="listing_lines" align="right"><pre>1
 2</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch <span class="gtkdoc opt">-</span>t filesrc location<span class="gtkdoc opt">=</span>filename<span class="gtkdoc opt">.</span>ext <span class="gtkdoc opt">!</span> decodebin \
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> <span class="gtkdoc opt">-</span>t filesrc location<span class="gtkdoc opt">=</span>filename<span class="gtkdoc opt">.</span>ext <span class="gtkdoc opt">!</span> decodebin \
     <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audioresample <span class="gtkdoc opt">!</span> rganalysis <span class="gtkdoc opt">!</span> fakesink</pre></td>
       </tr>
     </tbody>
@@ -121,7 +121,7 @@ an album, not just the last one.
       <tr>
         <td class="listing_lines" align="right"><pre>1
 2</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch <span class="gtkdoc opt">-</span>t gnomevfssrc location<span class="gtkdoc opt">=</span>http<span class="gtkdoc opt">:</span><span class="gtkdoc slc">//replaygain.hydrogenaudio.org/ref_pink.wav \</span>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> <span class="gtkdoc opt">-</span>t gnomevfssrc location<span class="gtkdoc opt">=</span>http<span class="gtkdoc opt">:</span><span class="gtkdoc slc">//replaygain.hydrogenaudio.org/ref_pink.wav \</span>
     <span class="gtkdoc opt">!</span> wavparse <span class="gtkdoc opt">!</span> rganalysis <span class="gtkdoc opt">!</span> fakesink</pre></td>
       </tr>
     </tbody>
@@ -138,7 +138,7 @@ property documentation for more information.
 </p>
 <hr>
 <div class="refsect2">
-<a name="idp17701760"></a><h3>Acknowledgements</h3>
+<a name="idp17730096"></a><h3>Acknowledgements</h3>
 <p>
 This element is based on code used in the <a class="ulink" href="http://sjeng.org/vorbisgain.html" target="_top">vorbisgain</a> program and many
 others.  The relevant parts are copyrighted by David Robinson, Glen Sawyer
@@ -150,7 +150,7 @@ and Frank Klemm.
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp16660448"></a><h3>Element Information</h3>
+<a name="idp19843296"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -173,7 +173,7 @@ and Frank Klemm.
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp15233984"></a><h3>Element Pads</h3>
+<a name="idp19270880"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>

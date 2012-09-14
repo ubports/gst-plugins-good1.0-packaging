@@ -34,7 +34,7 @@
  * <title>Example launch lines</title>
  * <para>(write everything in one line, without the backslash characters)</para>
  * |[
- * gst-launch videotestsrc num-buffers=250 \
+ * gst-launch-1.0 videotestsrc num-buffers=250 \
  * ! 'video/x-raw,format=(string)I420,width=320,height=240,framerate=(fraction)25/1' \
  * ! queue ! mux. \
  * audiotestsrc num-buffers=440 ! audioconvert \
@@ -44,7 +44,7 @@
  * with a test picture and an uncompressed audio stream containing a
  * test sound.
  * |[
- * gst-launch videotestsrc num-buffers=250 \
+ * gst-launch-1.0 videotestsrc num-buffers=250 \
  * ! 'video/x-raw,format=(string)I420,width=320,height=240,framerate=(fraction)25/1' \
  * ! xvidenc ! queue ! mux. \
  * audiotestsrc num-buffers=440 ! audioconvert ! 'audio/x-raw,rate=44100,channels=2' \
@@ -106,14 +106,6 @@ static GstStaticPadTemplate video_sink_factory =
         "height = (int) [ 16, 4096 ], "
         "framerate = (fraction) [ 0, MAX ], "
         "divxversion = (int) [ 3, 5 ]; "
-        "video/x-xvid, "
-        "width = (int) [ 16, 4096 ], "
-        "height = (int) [ 16, 4096 ], "
-        "framerate = (fraction) [ 0, MAX ]; "
-        "video/x-3ivx, "
-        "width = (int) [ 16, 4096 ], "
-        "height = (int) [ 16, 4096 ], "
-        "framerate = (fraction) [ 0, MAX ]; "
         "video/x-msmpeg, "
         "width = (int) [ 16, 4096 ], "
         "height = (int) [ 16, 4096 ], "
@@ -511,10 +503,6 @@ gst_avi_mux_vidsink_set_caps (GstPad * pad, GstCaps * vscaps)
           avipad->vids.compression = GST_MAKE_FOURCC ('D', 'X', '5', '0');
           break;
       }
-    } else if (!strcmp (mimetype, "video/x-xvid")) {
-      avipad->vids.compression = GST_MAKE_FOURCC ('X', 'V', 'I', 'D');
-    } else if (!strcmp (mimetype, "video/x-3ivx")) {
-      avipad->vids.compression = GST_MAKE_FOURCC ('3', 'I', 'V', '2');
     } else if (gst_structure_has_name (structure, "video/x-msmpeg")) {
       gint msmpegversion;
 
@@ -980,7 +968,7 @@ gst_avi_mux_request_new_pad (GstElement * element,
   g_free (name);
 
   avipad->collect = gst_collect_pads_add_pad (avimux->collect,
-      newpad, sizeof (GstAviCollectData));
+      newpad, sizeof (GstAviCollectData), NULL, TRUE);
   ((GstAviCollectData *) (avipad->collect))->avipad = avipad;
 
   if (!gst_element_add_pad (element, newpad))

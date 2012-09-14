@@ -32,7 +32,7 @@
  * <refsect2>
  * <title>Example launch line</title>
  * |[
- * gst-launch videotestsrc ! videobalance saturation=0.0 ! ffmpegcolorspace ! ximagesink
+ * gst-launch-1.0 videotestsrc ! videobalance saturation=0.0 ! videoconvert ! ximagesink
  * ]| This pipeline converts the image to black and white by setting the
  * saturation to 0.0.
  * </refsect2>
@@ -601,10 +601,10 @@ gst_video_balance_colorbalance_set_value (GstColorBalance * balance,
     changed = new_val != vb->contrast;
     vb->contrast = new_val;
   }
+  GST_OBJECT_UNLOCK (vb);
 
   if (changed)
     gst_video_balance_update_properties (vb);
-  GST_OBJECT_UNLOCK (vb);
 
   if (changed) {
     gst_color_balance_value_changed (balance, channel,

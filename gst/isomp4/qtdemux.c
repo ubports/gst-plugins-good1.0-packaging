@@ -33,7 +33,7 @@
  * <refsect2>
  * <title>Example launch line</title>
  * |[
- * gst-launch filesrc location=test.mov ! qtdemux name=demux  demux.audio_0 ! decodebin ! audioconvert ! audioresample ! autoaudiosink   demux.video_0 ! queue ! decodebin ! ffmpegcolorspace ! videoscale ! autovideosink
+ * gst-launch-1.0 filesrc location=test.mov ! qtdemux name=demux  demux.audio_0 ! decodebin ! audioconvert ! audioresample ! autoaudiosink   demux.video_0 ! queue ! decodebin ! videoconvert ! videoscale ! autovideosink
  * ]| Play (parse and decode) a .mov file and try to output it to
  * an automatically detected soundcard and videosink. If the MOV file contains
  * compressed audio or video data, this will only work if you have the
@@ -2373,11 +2373,43 @@ unknown_stream:
 }
 
 static gboolean
+qtdemux_parse_tfdt (GstQTDemux * qtdemux, GstByteReader * br,
+    guint64 * decode_time)
+{
+  guint32 version = 0;
+
+  if (!gst_byte_reader_get_uint32_be (br, &version))
+    return FALSE;
+
+  version >>= 24;
+  if (version == 1) {
+    if (!gst_byte_reader_get_uint64_be (br, decode_time))
+      goto failed;
+  } else {
+    guint32 dec_time = 0;
+    if (!gst_byte_reader_get_uint32_be (br, &dec_time))
+      goto failed;
+    *decode_time = dec_time;
+  }
+
+  GST_INFO_OBJECT (qtdemux, "Track fragment decode time: %" G_GUINT64_FORMAT,
+      *decode_time);
+
+  return TRUE;
+
+failed:
+  {
+    GST_DEBUG_OBJECT (qtdemux, "parsing tfdt failed");
+    return FALSE;
+  }
+}
+
+static gboolean
 qtdemux_parse_moof (GstQTDemux * qtdemux, const guint8 * buffer, guint length,
     guint64 moof_offset, QtDemuxStream * stream)
 {
-  GNode *moof_node, *traf_node, *tfhd_node, *trun_node;
-  GstByteReader trun_data, tfhd_data;
+  GNode *moof_node, *traf_node, *tfhd_node, *trun_node, *tfdt_node;
+  GstByteReader trun_data, tfhd_data, tfdt_data;
   guint32 ds_size = 0, ds_duration = 0, ds_flags = 0;
   gint64 base_offset, running_offset;
 
@@ -2400,6 +2432,26 @@ qtdemux_parse_moof (GstQTDemux * qtdemux, const guint8 * buffer, guint length,
     if (!qtdemux_parse_tfhd (qtdemux, &tfhd_data, &stream, &ds_duration,
             &ds_size, &ds_flags, &base_offset))
       goto missing_tfhd;
+    tfdt_node =
+        qtdemux_tree_get_child_by_type_full (traf_node, FOURCC_tfdt,
+        &tfdt_data);
+    if (tfdt_node) {
+      guint64 decode_time = 0;
+      qtdemux_parse_tfdt (qtdemux, &tfdt_data, &decode_time);
+      /* If there is a new segment pending, update the time/position */
+      if (qtdemux->pending_newsegment) {
+        GstSegment segment;
+
+        gst_segment_init (&segment, GST_FORMAT_TIME);
+        segment.time = gst_util_uint64_scale (decode_time,
+            GST_SECOND, stream->timescale);
+        gst_event_replace (&qtdemux->pending_newsegment,
+            gst_event_new_segment (&segment));
+        /* ref added when replaced, release the original _new one */
+        gst_event_unref (qtdemux->pending_newsegment);
+      }
+    }
+
     if (G_UNLIKELY (!stream)) {
       /* we lost track of offset, we'll need to regain it,
        * but can delay complaining until later or avoid doing so altogether */
@@ -3068,7 +3120,6 @@ gst_qtdemux_activate_segment (GstQTDemux * qtdemux, QtDemuxStream * stream,
   rate = segment->rate * qtdemux->segment.rate;
 
   /* update the segment values used for clipping */
-  gst_segment_init (&stream->segment, GST_FORMAT_TIME);
   /* accumulate previous segments */
   if (GST_CLOCK_TIME_IS_VALID (stream->segment.stop))
     stream->segment.base += (stream->segment.stop - stream->segment.start) /
@@ -4445,7 +4496,8 @@ qtdemux_sink_activate (GstPad * sinkpad, GstObject * parent)
     goto activate_push;
   }
 
-  pull_mode = gst_query_has_scheduling_mode (query, GST_PAD_MODE_PULL);
+  pull_mode = gst_query_has_scheduling_mode_with_flags (query,
+      GST_PAD_MODE_PULL, GST_SCHEDULING_FLAG_SEEKABLE);
   gst_query_unref (query);
 
   if (!pull_mode)
@@ -9364,11 +9416,6 @@ qtdemux_video_caps (GstQTDemux * qtdemux, QtDemuxStream * stream,
       caps = gst_caps_new_simple ("video/x-msmpeg",
           "msmpegversion", G_TYPE_INT, 43, NULL);
       break;
-    case GST_MAKE_FOURCC ('3', 'I', 'V', '1'):
-    case GST_MAKE_FOURCC ('3', 'I', 'V', '2'):
-      _codec ("3ivX video");
-      caps = gst_caps_new_empty_simple ("video/x-3ivx");
-      break;
     case GST_MAKE_FOURCC ('D', 'I', 'V', '3'):
       _codec ("DivX 3");
       caps = gst_caps_new_simple ("video/x-divx",
@@ -9385,18 +9432,17 @@ qtdemux_video_caps (GstQTDemux * qtdemux, QtDemuxStream * stream,
       caps = gst_caps_new_simple ("video/x-divx",
           "divxversion", G_TYPE_INT, 5, NULL);
       break;
+
+    case GST_MAKE_FOURCC ('3', 'I', 'V', '1'):
+    case GST_MAKE_FOURCC ('3', 'I', 'V', '2'):
     case GST_MAKE_FOURCC ('X', 'V', 'I', 'D'):
     case GST_MAKE_FOURCC ('x', 'v', 'i', 'd'):
-      _codec ("XVID MPEG-4");
-      caps = gst_caps_new_empty_simple ("video/x-xvid");
-      break;
-
     case GST_MAKE_FOURCC ('F', 'M', 'P', '4'):
     case GST_MAKE_FOURCC ('U', 'M', 'P', '4'):
       caps = gst_caps_new_simple ("video/mpeg",
           "mpegversion", G_TYPE_INT, 4, NULL);
       if (codec_name)
-        *codec_name = g_strdup ("FFmpeg MPEG-4");
+        *codec_name = g_strdup ("MPEG-4");
       break;
 
     case GST_MAKE_FOURCC ('c', 'v', 'i', 'd'):
@@ -9492,6 +9538,10 @@ qtdemux_video_caps (GstQTDemux * qtdemux, QtDemuxStream * stream,
     case GST_MAKE_FOURCC ('V', 'P', '8', '0'):
       _codec ("On2 VP8");
       caps = gst_caps_from_string ("video/x-vp8");
+      break;
+    case GST_MAKE_FOURCC ('a', 'p', 'c', 's'):
+      _codec ("Apple ProRes");
+      caps = gst_caps_from_string ("video/x-prores");
       break;
     case FOURCC_ovc1:
       _codec ("VC-1");
@@ -9749,7 +9799,7 @@ qtdemux_sub_caps (GstQTDemux * qtdemux, QtDemuxStream * stream,
   switch (fourcc) {
     case GST_MAKE_FOURCC ('m', 'p', '4', 's'):
       _codec ("DVD subtitle");
-      caps = gst_caps_new_empty_simple ("video/x-dvd-subpicture");
+      caps = gst_caps_new_empty_simple ("subpicture/x-dvd");
       break;
     case GST_MAKE_FOURCC ('t', 'e', 'x', 't'):
       _codec ("Quicktime timed text");
@@ -9757,7 +9807,8 @@ qtdemux_sub_caps (GstQTDemux * qtdemux, QtDemuxStream * stream,
     case GST_MAKE_FOURCC ('t', 'x', '3', 'g'):
       _codec ("3GPP timed text");
     text:
-      caps = gst_caps_new_empty_simple ("text/plain");
+      caps = gst_caps_new_simple ("text/x-raw", "format", G_TYPE_STRING,
+          "utf8", NULL);
       /* actual text piece needs to be extracted */
       stream->need_process = TRUE;
       break;

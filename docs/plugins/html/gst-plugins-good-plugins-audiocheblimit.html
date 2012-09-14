@@ -100,7 +100,7 @@ a cutoff frequency at a quarter of the sampling rate.
 <p>
 </p>
 <div class="refsect2">
-<a name="idp10597408"></a><h3>Example launch line</h3>
+<a name="idp7929872"></a><h3>Example launch line</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
@@ -108,9 +108,9 @@ a cutoff frequency at a quarter of the sampling rate.
         <td class="listing_lines" align="right"><pre>1
 2
 3</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch audiotestsrc freq<span class="gtkdoc opt">=</span><span class="number">1500</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audiocheblimit mode<span class="gtkdoc opt">=</span>low<span class="gtkdoc opt">-</span>pass cutoff<span class="gtkdoc opt">=</span><span class="number">1000</span> poles<span class="gtkdoc opt">=</span><span class="number">4</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> alsasink
-gst<span class="gtkdoc opt">-</span>launch filesrc location<span class="gtkdoc opt">=</span><span class="string">&quot;melo1.ogg&quot;</span> <span class="gtkdoc opt">!</span> oggdemux <span class="gtkdoc opt">!</span> vorbisdec <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audiocheblimit mode<span class="gtkdoc opt">=</span>high<span class="gtkdoc opt">-</span>pass cutoff<span class="gtkdoc opt">=</span><span class="number">400</span> ripple<span class="gtkdoc opt">=</span><span class="number">0.2</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> alsasink
-gst<span class="gtkdoc opt">-</span>launch audiotestsrc wave<span class="gtkdoc opt">=</span>white<span class="gtkdoc opt">-</span>noise <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audiocheblimit mode<span class="gtkdoc opt">=</span>low<span class="gtkdoc opt">-</span>pass cutoff<span class="gtkdoc opt">=</span><span class="number">800</span> type<span class="gtkdoc opt">=</span><span class="number">2</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> alsasink</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> audiotestsrc freq<span class="gtkdoc opt">=</span><span class="number">1500</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audiocheblimit mode<span class="gtkdoc opt">=</span>low<span class="gtkdoc opt">-</span>pass cutoff<span class="gtkdoc opt">=</span><span class="number">1000</span> poles<span class="gtkdoc opt">=</span><span class="number">4</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> alsasink
+gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> filesrc location<span class="gtkdoc opt">=</span><span class="string">&quot;melo1.ogg&quot;</span> <span class="gtkdoc opt">!</span> oggdemux <span class="gtkdoc opt">!</span> vorbisdec <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audiocheblimit mode<span class="gtkdoc opt">=</span>high<span class="gtkdoc opt">-</span>pass cutoff<span class="gtkdoc opt">=</span><span class="number">400</span> ripple<span class="gtkdoc opt">=</span><span class="number">0.2</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> alsasink
+gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> audiotestsrc wave<span class="gtkdoc opt">=</span>white<span class="gtkdoc opt">-</span>noise <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audiocheblimit mode<span class="gtkdoc opt">=</span>low<span class="gtkdoc opt">-</span>pass cutoff<span class="gtkdoc opt">=</span><span class="number">800</span> type<span class="gtkdoc opt">=</span><span class="number">2</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> alsasink</pre></td>
       </tr>
     </tbody>
   </table>
@@ -122,7 +122,7 @@ gst<span class="gtkdoc opt">-</span>launch audiotestsrc wave<span class="gtkdoc 
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp9915776"></a><h3>Element Information</h3>
+<a name="idp9096512"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -145,7 +145,7 @@ gst<span class="gtkdoc opt">-</span>launch audiotestsrc wave<span class="gtkdoc 
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp3247456"></a><h3>Element Pads</h3>
+<a name="idp7206576"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>

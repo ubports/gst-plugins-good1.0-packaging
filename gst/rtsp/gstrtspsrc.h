@@ -201,6 +201,7 @@ struct _GstRTSPSrc {
   GTimeVal          tcp_timeout;
   GTimeVal         *ptcp_timeout;
   guint             latency;
+  gboolean          drop_on_latency;
   guint64           connection_speed;
   GstRTSPNatMethod  nat_method;
   gboolean          do_rtcp;
@@ -216,6 +217,7 @@ struct _GstRTSPSrc {
   GstRTSPRange      client_port_range;
   gint              udp_buffer_size;
   gboolean          short_header;
+  guint             probation;
 
   /* state */
   GstRTSPState       state;

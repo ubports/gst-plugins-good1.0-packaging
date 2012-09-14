@@ -30,11 +30,11 @@
  * <refsect2>
  * <title>Example launch lines</title>
  * |[
- * gst-launch v4l2src ! xvimagesink
+ * gst-launch-1.0 v4l2src ! xvimagesink
  * ]| This pipeline shows the video captured from /dev/video0 tv card and for
  * webcams.
  * |[
- * gst-launch v4l2src ! jpegdec ! xvimagesink
+ * gst-launch-1.0 v4l2src ! jpegdec ! xvimagesink
  * ]| This pipeline shows the video captured from a webcam that delivers jpeg
  * images.
  * </refsect2>
@@ -67,17 +67,13 @@
 GST_DEBUG_CATEGORY (v4l2src_debug);
 #define GST_CAT_DEFAULT v4l2src_debug
 
-#define PROP_DEF_ALWAYS_COPY        TRUE
-#define PROP_DEF_DECIMATE           1
-
 #define DEFAULT_PROP_DEVICE   "/dev/video0"
 
 enum
 {
   PROP_0,
   V4L2_STD_OBJECT_PROPS,
-  PROP_ALWAYS_COPY,
-  PROP_DECIMATE
+  PROP_LAST
 };
 
 /* signals and args */
@@ -132,6 +128,7 @@ static gboolean gst_v4l2src_decide_allocation (GstBaseSrc * src,
     GstQuery * query);
 static GstFlowReturn gst_v4l2src_fill (GstPushSrc * src, GstBuffer * out);
 static GstCaps *gst_v4l2src_fixate (GstBaseSrc * basesrc, GstCaps * caps);
+static gboolean gst_v4l2src_event (GstBaseSrc * src, GstEvent * event);
 static gboolean gst_v4l2src_negotiate (GstBaseSrc * basesrc);
 
 static void gst_v4l2src_set_property (GObject * object, guint prop_id,
@@ -161,21 +158,6 @@ gst_v4l2src_class_init (GstV4l2SrcClass * klass)
 
   gst_v4l2_object_install_properties_helper (gobject_class,
       DEFAULT_PROP_DEVICE);
-  g_object_class_install_property (gobject_class, PROP_ALWAYS_COPY,
-      g_param_spec_boolean ("always-copy", "Always Copy",
-          "If the buffer will or not be used directly from mmap",
-          PROP_DEF_ALWAYS_COPY, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
-  /**
-   * GstV4l2Src:decimate
-   *
-   * Only use every nth frame
-   *
-   * Since: 0.10.26
-   */
-  g_object_class_install_property (gobject_class, PROP_DECIMATE,
-      g_param_spec_int ("decimate", "Decimate",
-          "Only use every nth frame", 1, G_MAXINT,
-          PROP_DEF_DECIMATE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * GstV4l2Src::prepare-format:
@@ -219,6 +201,7 @@ gst_v4l2src_class_init (GstV4l2SrcClass * klass)
   basesrc_class->stop = GST_DEBUG_FUNCPTR (gst_v4l2src_stop);
   basesrc_class->query = GST_DEBUG_FUNCPTR (gst_v4l2src_query);
   basesrc_class->fixate = GST_DEBUG_FUNCPTR (gst_v4l2src_fixate);
+  basesrc_class->event = GST_DEBUG_FUNCPTR (gst_v4l2src_event);
   basesrc_class->negotiate = GST_DEBUG_FUNCPTR (gst_v4l2src_negotiate);
   basesrc_class->decide_allocation =
       GST_DEBUG_FUNCPTR (gst_v4l2src_decide_allocation);
@@ -237,9 +220,6 @@ gst_v4l2src_init (GstV4l2Src * v4l2src)
   v4l2src->v4l2object = gst_v4l2_object_new (GST_ELEMENT (v4l2src),
       V4L2_BUF_TYPE_VIDEO_CAPTURE, DEFAULT_PROP_DEVICE,
       gst_v4l2_get_input, gst_v4l2_set_input, NULL);
-
-  v4l2src->v4l2object->always_copy = PROP_DEF_ALWAYS_COPY;
-  v4l2src->decimate = PROP_DEF_DECIMATE;
 
   gst_base_src_set_format (GST_BASE_SRC (v4l2src), GST_FORMAT_TIME);
   gst_base_src_set_live (GST_BASE_SRC (v4l2src), TRUE);
@@ -276,12 +256,6 @@ gst_v4l2src_set_property (GObject * object,
   if (!gst_v4l2_object_set_property_helper (v4l2src->v4l2object,
           prop_id, value, pspec)) {
     switch (prop_id) {
-      case PROP_ALWAYS_COPY:
-        v4l2src->v4l2object->always_copy = g_value_get_boolean (value);
-        break;
-      case PROP_DECIMATE:
-        v4l2src->decimate = g_value_get_int (value);
-        break;
       default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
         break;
@@ -298,12 +272,6 @@ gst_v4l2src_get_property (GObject * object,
   if (!gst_v4l2_object_get_property_helper (v4l2src->v4l2object,
           prop_id, value, pspec)) {
     switch (prop_id) {
-      case PROP_ALWAYS_COPY:
-        g_value_set_boolean (value, v4l2src->v4l2object->always_copy);
-        break;
-      case PROP_DECIMATE:
-        g_value_set_int (value, v4l2src->decimate);
-        break;
       default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
         break;
@@ -339,6 +307,22 @@ gst_v4l2src_fixate (GstBaseSrc * basesrc, GstCaps * caps)
   caps = GST_BASE_SRC_CLASS (parent_class)->fixate (basesrc, caps);
 
   return caps;
+}
+
+
+static gboolean
+gst_v4l2src_event (GstBaseSrc * src, GstEvent * event)
+{
+  GST_DEBUG_OBJECT (src, "handle event %" GST_PTR_FORMAT, event);
+
+  switch (GST_EVENT_TYPE (event)) {
+    case GST_EVENT_RECONFIGURE:
+      gst_pad_check_reconfigure (GST_BASE_SRC_PAD (src));
+      break;
+    default:
+      break;
+  }
+  return GST_BASE_SRC_CLASS (parent_class)->event (src, event);
 }
 
 
@@ -782,18 +766,6 @@ gst_v4l2src_fill (GstPushSrc * src, GstBuffer * buf)
   GstClock *clock;
   GstClockTime abs_time, base_time, timestamp, duration;
   GstClockTime delay;
-
-#if 0
-  int i;
-  /* decimate, just capture and throw away frames */
-  for (i = 0; i < v4l2src->decimate - 1; i++) {
-    ret = gst_v4l2_buffer_pool_process (obj, buf);
-    if (ret != GST_FLOW_OK) {
-      return ret;
-    }
-    gst_buffer_unref (*buf);
-  }
-#endif
 
   ret =
       gst_v4l2_buffer_pool_process (GST_V4L2_BUFFER_POOL_CAST (obj->pool), buf);
