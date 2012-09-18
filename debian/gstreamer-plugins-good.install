@@ -57,6 +57,7 @@ debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstvideobox.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstvideocrop.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstvideofilter.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstvideomixer.so
+debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstvpx.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstwavenc.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstwavpack.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstwavparse.so

@@ -1,6 +1,6 @@
 @GST_LIB_DEV_DEP@
 @GST_EXTRA_BUILD_DEPENDS@
-libgstreamer-plugins-base@GST_ABI@-dev (>= 0.11.94)
+libgstreamer-plugins-base@GST_ABI@-dev (>= 0.11.99)
 autotools-dev
 dh-autoreconf
 automake (>= 1.11)
@@ -30,10 +30,11 @@ libxv-dev
 libgtk-3-dev
 libtag1-dev (>= 1.5)
 libwavpack-dev (>= 4.20)
-gstreamer@GST_ABI@-plugins-base (>= 0.11.94)
+gstreamer@GST_ABI@-plugins-base (>= 0.11.99)
 libsoup-gnome2.4-dev (>= 2.26.1)
 libpulse-dev (>= 1.0)
 libbz2-dev
 gstreamer@GST_ABI@-doc
 gstreamer@GST_ABI@-plugins-base-doc
 libjack-dev (>= 1:0.99.10)
+libvpx-dev (>= 1.1.0)

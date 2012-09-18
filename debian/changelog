@@ -1,3 +1,12 @@
+gst-plugins-good1.0 (0.11.99-1) experimental; urgency=low
+
+  * New upstream release:
+    + debian/rules,
+      debian/build-deps.in:
+      - Build depend on GStreamer core/base >= 0.11.99.
+
+ -- Sebastian Dröge <slomo@debian.org>  Tue, 18 Sep 2012 09:38:33 +0200
+
 gst-plugins-good1.0 (0.11.94-1) experimental; urgency=low
 
   * New upstream release:
