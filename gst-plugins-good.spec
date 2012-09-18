@@ -1,10 +1,10 @@
 %define majorminor  1.0
-%define gstreamer   gstreamer011
+%define gstreamer   gstreamer1
 
 %define gst_minver   0.11.0
 
 Name: 		%{gstreamer}-plugins-good
-Version: 	0.11.94
+Version: 	0.11.99
 Release: 	1.gst
 Summary: 	GStreamer plug-ins with good code and licensing
 
@@ -76,6 +76,7 @@ rm -rf $RPM_BUILD_ROOT
 %doc AUTHORS COPYING README REQUIREMENTS gst-plugins-good.doap
 %{_datadir}/gstreamer-%{majorminor}/presets/GstIirEqualizer10Bands.prs
 %{_datadir}/gstreamer-%{majorminor}/presets/GstIirEqualizer3Bands.prs
+%{_datadir}/gstreamer-%{majorminor}/presets/GstVP8Enc.prs
 
 # non-core plugins without external dependencies
 %{_libdir}/gstreamer-%{majorminor}/libgstalaw.so
@@ -120,7 +121,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/gstreamer-%{majorminor}/libgstgoom2k1.so
 %{_libdir}/gstreamer-%{majorminor}/libgstinterleave.so
 %{_libdir}/gstreamer-%{majorminor}/libgstreplaygain.so
-# %{_libdir}/gstreamer-%{majorminor}/libgstdeinterlace.so
+%{_libdir}/gstreamer-%{majorminor}/libgstdeinterlace.so
 %{_libdir}/gstreamer-%{majorminor}/libgstflv.so
 %{_libdir}/gstreamer-%{majorminor}/libgsty4menc.so
 %{_libdir}/gstreamer-%{majorminor}/libgstoss4audio.so
@@ -147,6 +148,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/gstreamer-%{majorminor}/libgstwavpack.so
 %{_libdir}/gstreamer-%{majorminor}/libgstsouphttpsrc.so
 %{_libdir}/gstreamer-%{majorminor}/libgstpulse.so
+%{_libdir}/gstreamer-%{majorminor}/libgstvpx.so
+
 
 %changelog
 * Tue Jun 12 2007 Jan Schmidt <jan at fluendo dot com>

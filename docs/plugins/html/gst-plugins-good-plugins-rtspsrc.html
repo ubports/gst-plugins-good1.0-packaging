@@ -85,6 +85,8 @@ GstRTSPSrc implements
   "<a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--udp-buffer-size" title='The "udp-buffer-size" property'>udp-buffer-size</a>"          <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a>                  : Read / Write
   "<a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--short-header" title='The "short-header" property'>short-header</a>"             <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a>              : Read / Write
   "<a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--do-rtsp-keep-alive" title='The "do-rtsp-keep-alive" property'>do-rtsp-keep-alive</a>"       <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a>              : Read / Write
+  "<a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--drop-on-latency" title='The "drop-on-latency" property'>drop-on-latency</a>"          <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a>              : Read / Write
+  "<a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--probation" title='The "probation" property'>probation</a>"                <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a>                 : Read / Write
 </pre>
 </div>
 <div class="refsect1">
@@ -120,7 +122,7 @@ PLAYING state.
 <p>
 </p>
 <div class="refsect2">
-<a name="idp18616384"></a><h3>Example launch line</h3>
+<a name="idp18375456"></a><h3>Example launch line</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
@@ -142,7 +144,7 @@ Last reviewed on 2006-08-18 (0.10.5)
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp17252368"></a><h3>Element Information</h3>
+<a name="idp20462480"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -165,7 +167,7 @@ Last reviewed on 2006-08-18 (0.10.5)
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp18384192"></a><h3>Element Pads</h3>
+<a name="idp19164208"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -342,6 +344,20 @@ Last reviewed on 2006-08-18 (0.10.5)
 <pre class="programlisting">  "do-rtsp-keep-alive"       <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a>              : Read / Write</pre>
 <p>Send RTSP keep alive packets, disable for old incompatible server.</p>
 <p>Default value: TRUE</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRTSPSrc--drop-on-latency"></a><h3>The <code class="literal">"drop-on-latency"</code> property</h3>
+<pre class="programlisting">  "drop-on-latency"          <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a>              : Read / Write</pre>
+<p>Tells the jitterbuffer to never exceed the given latency in size.</p>
+<p>Default value: FALSE</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRTSPSrc--probation"></a><h3>The <code class="literal">"probation"</code> property</h3>
+<pre class="programlisting">  "probation"                <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a>                 : Read / Write</pre>
+<p>Consecutive packet sequence numbers to accept the source.</p>
+<p>Default value: 2</p>
 </div>
 </div>
 </div>

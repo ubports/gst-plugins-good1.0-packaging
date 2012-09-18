@@ -320,6 +320,15 @@
 /* Define if valgrind should be used */
 #undef HAVE_VALGRIND
 
+/* Defined if the VP8 decoder is available */
+#undef HAVE_VP8_DECODER
+
+/* Defined if the VP8 encoder is available */
+#undef HAVE_VP8_ENCODER
+
+/* Define to enable VPX decoder (used by vpx). */
+#undef HAVE_VPX
+
 /* Define to enable Win32 WaveForm (used by waveformsink). */
 #undef HAVE_WAVEFORM
 

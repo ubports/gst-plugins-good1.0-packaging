@@ -1001,34 +1001,6 @@ GST_IS_RTP_SSRC_DEMUX_CLASS
 </SECTION>
 
 <SECTION>
-<FILE>element-halaudiosink</FILE>
-<TITLE>halaudiosink</TITLE>
-GstHalAudioSink
-<SUBSECTION Standard>
-GstHalAudioSinkClass
-GST_TYPE_HAL_AUDIO_SINK
-GST_HAL_AUDIO_SINK
-GST_HAL_AUDIO_SINK_CLASS
-GST_IS_HAL_AUDIO_SINK
-GST_IS_HAL_AUDIO_SINK_CLASS
-gst_hal_audio_sink_get_type
-</SECTION>
-
-<SECTION>
-<FILE>element-halaudiosrc</FILE>
-<TITLE>halaudiosrc</TITLE>
-GstHalAudioSrc
-<SUBSECTION Standard>
-GstHalAudioSrcClass
-GST_TYPE_HAL_AUDIO_SRC
-GST_HAL_AUDIO_SRC
-GST_HAL_AUDIO_SRC_CLASS
-GST_IS_HAL_AUDIO_SRC
-GST_IS_HAL_AUDIO_SRC_CLASS
-gst_hal_audio_src_get_type
-</SECTION>
-
-<SECTION>
 <FILE>element-icydemux</FILE>
 <TITLE>icydemux</TITLE>
 GstICYDemux
@@ -1529,20 +1501,6 @@ gst_pulsesrc_get_type
 </SECTION>
 
 <SECTION>
-<FILE>element-pulsemixer</FILE>
-<TITLE>pulsemixer</TITLE>
-GstPulseMixer
-<SUBSECTION Standard>
-GstPulseMixerClass
-GST_PULSEMIXER
-GST_IS_PULSEMIXER
-GST_TYPE_PULSEMIXER
-GST_PULSEMIXER_CLASS
-GST_IS_PULSEMIXER_CLASS
-gst_pulsemixer_get_type
-</SECTION>
-
-<SECTION>
 <FILE>element-progressreport</FILE>
 <TITLE>progressreport</TITLE>
 GstProgressReport
@@ -2002,35 +1960,6 @@ gst_video_mixer_get_type
 </SECTION>
 
 <SECTION>
-<FILE>gstvideomixer2pad</FILE>
-<TITLE>GstVideoMixer2Pad</TITLE>
-GstVideoMixer2Pad
-<SUBSECTION Standard>
-GstVideoMixer2PadClass
-GST_VIDEO_MIXER2_PAD
-GST_VIDEO_MIXER2_PAD_CLASS
-GST_IS_VIDEO_MIXER2_PAD
-GST_IS_VIDEO_MIXER2_PAD_CLASS
-GST_TYPE_VIDEO_MIXER2_PAD
-gst_videomixer2_pad_get_type
-</SECTION>
-
-<SECTION>
-<FILE>element-videomixer2</FILE>
-<TITLE>videomixer2</TITLE>
-GstVideoMixer2
-GstVideoMixer2Background
-<SUBSECTION Standard>
-GstVideoMixer2Class
-GST_VIDEO_MIXER2
-GST_IS_VIDEO_MIXER2
-GST_TYPE_VIDEO_MIXER2
-GST_VIDEO_MIXER2_CLASS
-GST_IS_VIDEO_MIXER2_CLASS
-gst_videomixer2_get_type
-</SECTION>
-
-<SECTION>
 <FILE>element-v4l2src</FILE>
 <TITLE>v4l2src</TITLE>
 GstV4l2Src
@@ -2071,6 +2000,34 @@ GST_TYPE_V4L2RADIO
 GST_V4L2RADIO_CLASS
 GST_IS_V4L2RADIO_CLASS
 gst_v4l2radio_get_type
+</SECTION>
+
+<SECTION>
+<FILE>element-vp8dec</FILE>
+<TITLE>vp8dec</TITLE>
+GstVP8Dec
+<SUBSECTION Standard>
+GstVP8DecClass
+GST_VP8_DEC
+GST_VP8_DEC_CLASS
+GST_IS_VP8_DEC
+GST_IS_VP8_DEC_CLASS
+GST_TYPE_VP8_DEC
+gst_vp8_dec_get_type
+</SECTION>
+
+<SECTION>
+<FILE>element-vp8enc</FILE>
+<TITLE>vp8enc</TITLE>
+GstVP8Enc
+<SUBSECTION Standard>
+GstVP8EncClass
+GST_VP8_ENC
+GST_VP8_ENC_CLASS
+GST_IS_VP8_ENC
+GST_IS_VP8_ENC_CLASS
+GST_TYPE_VP8_ENC
+gst_vp8_enc_get_type
 </SECTION>
 
 <SECTION>

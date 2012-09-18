@@ -78,6 +78,7 @@ GstRtpBin implements
   "<a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin--use-pipeline-clock" title='The "use-pipeline-clock" property'>use-pipeline-clock</a>"       <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a>              : Read / Write
   "<a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin--rtcp-sync" title='The "rtcp-sync" property'>rtcp-sync</a>"                <span class="type">GstRTCPSync</span>           : Read / Write
   "<a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin--rtcp-sync-interval" title='The "rtcp-sync-interval" property'>rtcp-sync-interval</a>"       <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a>                 : Read / Write
+  "<a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin--drop-on-latency" title='The "drop-on-latency" property'>drop-on-latency</a>"          <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a>              : Read / Write
 </pre>
 </div>
 <div class="refsect1">
@@ -105,7 +106,7 @@ GstRtpBin implements
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp20515936"></a><h3>Element Information</h3>
+<a name="idp20650256"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -128,7 +129,7 @@ GstRtpBin implements
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp20639088"></a><h3>Element Pads</h3>
+<a name="idp20657712"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -338,6 +339,13 @@ GstRtpBin implements
 <pre class="programlisting">  "rtcp-sync-interval"       <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a>                 : Read / Write</pre>
 <p>RTCP SR interval synchronization (ms) (0 = always).</p>
 <p>Default value: 0</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRtpBin--drop-on-latency"></a><h3>The <code class="literal">"drop-on-latency"</code> property</h3>
+<pre class="programlisting">  "drop-on-latency"          <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a>              : Read / Write</pre>
+<p>Tells the jitterbuffer to never exceed the given latency in size.</p>
+<p>Default value: FALSE</p>
 </div>
 </div>
 <div class="refsect1">

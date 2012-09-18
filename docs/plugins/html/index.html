@@ -15,7 +15,7 @@
 <div>
 <div><table class="navigation" id="top" width="100%" cellpadding="2" cellspacing="0"><tr><th valign="middle"><p class="title">GStreamer Good Plugins 1.0 Plugins Reference Manual</p></th></tr></table></div>
 <div><p class="releaseinfo">
-      for GStreamer Good Plugins 1.0 (0.11.94)
+      for GStreamer Good Plugins 1.0 (0.11.99)
       The latest version of this documentation can be found on-line at
       <a class="ulink" href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gst-plugins-good/html/" target="_top">http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gst-plugins-good/html/</a>.
     </p></div>
@@ -215,12 +215,6 @@
 <span class="refentrytitle"><a href="gst-plugins-good-plugins-goom2k1.html">goom2k1</a></span><span class="refpurpose"> — Takes frames of data and outputs video frames using the GOOM 2k1 filter</span>
 </dt>
 <dt>
-<span class="refentrytitle"><a href="gst-plugins-good-plugins-halaudiosink.html">halaudiosink</a></span><span class="refpurpose"> — Audio sink for sound device access via HAL</span>
-</dt>
-<dt>
-<span class="refentrytitle"><a href="gst-plugins-good-plugins-halaudiosrc.html">halaudiosrc</a></span><span class="refpurpose"> — Audio source for sound device access via HAL</span>
-</dt>
-<dt>
 <span class="refentrytitle"><a href="gst-plugins-good-plugins-hdv1394src.html">hdv1394src</a></span><span class="refpurpose"> — Source for MPEG-TS video data from firewire port</span>
 </dt>
 <dt>
@@ -335,9 +329,6 @@
 <span class="refentrytitle"><a href="gst-plugins-good-plugins-pulsesrc.html">pulsesrc</a></span><span class="refpurpose"> — Captures audio from a PulseAudio server</span>
 </dt>
 <dt>
-<span class="refentrytitle"><a href="gst-plugins-good-plugins-pulsemixer.html">pulsemixer</a></span><span class="refpurpose"></span>
-</dt>
-<dt>
 <span class="refentrytitle"><a href="gst-plugins-good-plugins-quarktv.html">quarktv</a></span><span class="refpurpose"> — Motion dissolver</span>
 </dt>
 <dt>
@@ -401,12 +392,6 @@
 <span class="refentrytitle"><a href="gst-plugins-good-plugins-shapewipe.html">shapewipe</a></span><span class="refpurpose"> — Adds a shape wipe transition to a video stream</span>
 </dt>
 <dt>
-<span class="refentrytitle"><a href="gst-plugins-good-plugins-smokedec.html">smokedec</a></span><span class="refpurpose"></span>
-</dt>
-<dt>
-<span class="refentrytitle"><a href="gst-plugins-good-plugins-smokeenc.html">smokeenc</a></span><span class="refpurpose"></span>
-</dt>
-<dt>
 <span class="refentrytitle"><a href="gst-plugins-good-plugins-smpte.html">smpte</a></span><span class="refpurpose"> — Apply the standard SMPTE transitions on video images</span>
 </dt>
 <dt>
@@ -467,7 +452,10 @@
 <span class="refentrytitle"><a href="gst-plugins-good-plugins-videomixer.html">videomixer</a></span><span class="refpurpose"> — Mix multiple video streams</span>
 </dt>
 <dt>
-<span class="refentrytitle"><a href="gst-plugins-good-plugins-videomixer2.html">videomixer2</a></span><span class="refpurpose"></span>
+<span class="refentrytitle"><a href="gst-plugins-good-plugins-vp8dec.html">vp8dec</a></span><span class="refpurpose"> — Decode VP8 video streams</span>
+</dt>
+<dt>
+<span class="refentrytitle"><a href="gst-plugins-good-plugins-vp8enc.html">vp8enc</a></span><span class="refpurpose"> — Encode VP8 video streams</span>
 </dt>
 <dt>
 <span class="refentrytitle"><a href="gst-plugins-good-plugins-warptv.html">warptv</a></span><span class="refpurpose"> — WarpTV does realtime goo'ing of the video input</span>
@@ -569,16 +557,13 @@
 <span class="refentrytitle"><a href="gst-plugins-good-plugins-plugin-flxdec.html">flxdec</a></span><span class="refpurpose"> — <a name="plugin-flxdec"></a>FLC/FLI/FLX video decoder</span>
 </dt>
 <dt>
-<span class="refentrytitle"><a href="gst-plugins-good-plugins-plugin-gdkpixbuf.html">gdkpixbuf</a></span><span class="refpurpose"> — <a name="plugin-gdkpixbuf"></a>GdkPixbuf-based image decoder, scaler and sink</span>
+<span class="refentrytitle"><a href="gst-plugins-good-plugins-plugin-gdkpixbuf.html">gdkpixbuf</a></span><span class="refpurpose"> — <a name="plugin-gdkpixbuf"></a>GdkPixbuf-based image decoder, overlay and sink</span>
 </dt>
 <dt>
 <span class="refentrytitle"><a href="gst-plugins-good-plugins-plugin-goom.html">goom</a></span><span class="refpurpose"> — <a name="plugin-goom"></a>GOOM visualization filter</span>
 </dt>
 <dt>
 <span class="refentrytitle"><a href="gst-plugins-good-plugins-plugin-goom2k1.html">goom2k1</a></span><span class="refpurpose"> — <a name="plugin-goom2k1"></a>GOOM 2k1 visualization filter</span>
-</dt>
-<dt>
-<span class="refentrytitle"><a href="gst-plugins-good-plugins-plugin-halelements.html">halelements</a></span><span class="refpurpose"> — <a name="plugin-halelements"></a>elements wrapping the GStreamer/HAL audio input/output devices</span>
 </dt>
 <dt>
 <span class="refentrytitle"><a href="gst-plugins-good-plugins-plugin-icydemux.html">icydemux</a></span><span class="refpurpose"> — <a name="plugin-icydemux"></a>Demux ICY tags from a stream</span>
@@ -692,6 +677,9 @@
 <span class="refentrytitle"><a href="gst-plugins-good-plugins-plugin-videomixer.html">videomixer</a></span><span class="refpurpose"> — <a name="plugin-videomixer"></a>Video mixer</span>
 </dt>
 <dt>
+<span class="refentrytitle"><a href="gst-plugins-good-plugins-plugin-vpx.html">vpx</a></span><span class="refpurpose"> — <a name="plugin-vpx"></a>VP8 plugin</span>
+</dt>
+<dt>
 <span class="refentrytitle"><a href="gst-plugins-good-plugins-plugin-waveform.html">waveform</a></span><span class="refpurpose"> — <a name="plugin-waveform"></a>WaveForm API based plugin</span>
 </dt>
 <dt>
@@ -717,9 +705,6 @@
 </dt>
 <dt>
 <span class="refentrytitle"><a href="gst-plugins-good-plugins-GstVideoMixerPad.html">GstVideoMixerPad</a></span><span class="refpurpose"></span>
-</dt>
-<dt>
-<span class="refentrytitle"><a href="GstVideoMixer2Pad.html">GstVideoMixer2Pad</a></span><span class="refpurpose"></span>
 </dt>
 </dl></dd>
 </dl></div>

@@ -7,7 +7,7 @@
 <link rel="home" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-videoflip.html" title="videoflip">
-<link rel="next" href="gst-plugins-good-plugins-videomixer2.html" title="videomixer2">
+<link rel="next" href="gst-plugins-good-plugins-vp8dec.html" title="vp8dec">
 <meta name="generator" content="GTK-Doc V1.18 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
@@ -18,7 +18,7 @@
 <td><a accesskey="u" href="ch01.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td>
 <td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td>
 <th width="100%" align="center">GStreamer Good Plugins 1.0 Plugins Reference Manual</th>
-<td><a accesskey="n" href="gst-plugins-good-plugins-videomixer2.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td>
+<td><a accesskey="n" href="gst-plugins-good-plugins-vp8dec.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td>
 </tr>
 <tr><td colspan="5" class="shortcuts">
 <a href="#gst-plugins-good-plugins-videomixer.synopsis" class="shortcut">Top</a>
@@ -54,12 +54,12 @@ No colorspace conversion is done.
 </p>
 <p>
 Individual parameters for each input stream can be configured on the
-<a class="link" href="GstVideoMixer2Pad.html" title="GstVideoMixer2Pad"><span class="type">GstVideoMixer2Pad</span></a>.
+<span class="type">GstVideoMixer2Pad</span>.
 </p>
 <p>
 </p>
 <div class="refsect2">
-<a name="idp21588256"></a><h3>Sample pipelines</h3>
+<a name="idp9356352"></a><h3>Sample pipelines</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
@@ -160,7 +160,7 @@ framerate of the output video is 10 frames per second.
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp21460512"></a><h3>Element Information</h3>
+<a name="idp13301200"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -183,7 +183,7 @@ framerate of the output video is 10 frames per second.
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp19342096"></a><h3>Element Pads</h3>
+<a name="idp22987296"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -201,7 +201,7 @@ framerate of the output video is 10 frames per second.
 </tr>
 <tr>
 <td><p><span class="term">details</span></p></td>
-<td>video/x-raw, format=(string){ AYUV, BGRA, ARGB, RGBA, ABGR, Y444, Y42B, YUY2, UYVY, YVYU, I420, YV12, Y41B, RGB, BGR, xRGB, xBGR, RGBx, BGRx }, width=(int)[ 1, 2147483647 ], height=(int)[ 1, 2147483647 ], framerate=(fraction)[ 0/1, 2147483647/1 ]</td>
+<td>video/x-raw, format=(string){ AYUV, BGRA, ARGB, RGBA, ABGR, Y444, Y42B, YUY2, UYVY, YVYU, I420, YV12, NV12, NV21, Y41B, RGB, BGR, xRGB, xBGR, RGBx, BGRx }, width=(int)[ 1, 2147483647 ], height=(int)[ 1, 2147483647 ], framerate=(fraction)[ 0/1, 2147483647/1 ]</td>
 </tr>
 </tbody>
 </table></div>
@@ -222,7 +222,7 @@ framerate of the output video is 10 frames per second.
 </tr>
 <tr>
 <td><p><span class="term">details</span></p></td>
-<td>video/x-raw, format=(string){ AYUV, BGRA, ARGB, RGBA, ABGR, Y444, Y42B, YUY2, UYVY, YVYU, I420, YV12, Y41B, RGB, BGR, xRGB, xBGR, RGBx, BGRx }, width=(int)[ 1, 2147483647 ], height=(int)[ 1, 2147483647 ], framerate=(fraction)[ 0/1, 2147483647/1 ]</td>
+<td>video/x-raw, format=(string){ AYUV, BGRA, ARGB, RGBA, ABGR, Y444, Y42B, YUY2, UYVY, YVYU, I420, YV12, NV12, NV21, Y41B, RGB, BGR, xRGB, xBGR, RGBx, BGRx }, width=(int)[ 1, 2147483647 ], height=(int)[ 1, 2147483647 ], framerate=(fraction)[ 0/1, 2147483647/1 ]</td>
 </tr>
 </tbody>
 </table></div>
