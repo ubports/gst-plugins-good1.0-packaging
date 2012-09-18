@@ -67,6 +67,7 @@ GstAutoVideoSink implements
 <a name="gst-plugins-good-plugins-autovideosink.properties"></a><h2>Properties</h2>
 <pre class="synopsis">
   "<a class="link" href="gst-plugins-good-plugins-autovideosink.html#GstAutoVideoSink--filter-caps" title='The "filter-caps" property'>filter-caps</a>"              <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstCaps.html#GstCaps"><span class="type">GstCaps</span></a>*              : Read / Write
+  "<a class="link" href="gst-plugins-good-plugins-autovideosink.html#GstAutoVideoSink--ts-offset" title='The "ts-offset" property'>ts-offset</a>"                <span class="type">gint64</span>                : Read / Write
 </pre>
 </div>
 <div class="refsect1">
@@ -80,7 +81,7 @@ of their element information, and also have a non-zero autoplugging rank.
 <p>
 </p>
 <div class="refsect2">
-<a name="idp11199616"></a><h3>Example launch line</h3>
+<a name="idp7700688"></a><h3>Example launch line</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
@@ -98,7 +99,7 @@ of their element information, and also have a non-zero autoplugging rank.
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp2925200"></a><h3>Element Information</h3>
+<a name="idp7377632"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -121,7 +122,7 @@ of their element information, and also have a non-zero autoplugging rank.
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp10763872"></a><h3>Element Pads</h3>
+<a name="idp7287808"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -171,6 +172,13 @@ are selected.
 This property can only be set before the element goes to the READY state.
 </p>
 <p class="since">Since 0.10.7</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstAutoVideoSink--ts-offset"></a><h3>The <code class="literal">"ts-offset"</code> property</h3>
+<pre class="programlisting">  "ts-offset"                <span class="type">gint64</span>                : Read / Write</pre>
+<p>Timestamp offset in nanoseconds.</p>
+<p>Default value: 0</p>
 </div>
 </div>
 <div class="refsect1">

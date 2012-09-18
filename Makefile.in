@@ -427,6 +427,8 @@ VALGRIND_CFLAGS = @VALGRIND_CFLAGS@
 VALGRIND_LIBS = @VALGRIND_LIBS@
 VALGRIND_PATH = @VALGRIND_PATH@
 VERSION = @VERSION@
+VPX_CFLAGS = @VPX_CFLAGS@
+VPX_LIBS = @VPX_LIBS@
 WARNING_CFLAGS = @WARNING_CFLAGS@
 WARNING_CXXFLAGS = @WARNING_CXXFLAGS@
 WARNING_OBJCFLAGS = @WARNING_OBJCFLAGS@
@@ -560,7 +562,8 @@ CRUFT_FILES = \
 
 CRUFT_DIRS = \
 	$(top_srcdir)/gst/qtdemux \
-	$(top_srcdir)/gst/quicktime
+	$(top_srcdir)/gst/quicktime \
+	$(top_srcdir)/ext/annodex
 
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive

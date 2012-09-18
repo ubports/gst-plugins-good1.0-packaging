@@ -26,7 +26,7 @@
  * <refsect2>
  * <title>Example launch line</title>
  * |[
- * gst-launch-1.0 videotestsrc num-buffers=50 ! video/x-raw-yuv, framerate='(fraction)'5/1 ! jpegenc ! avimux ! filesink location=mjpeg.avi
+ * gst-launch-1.0 videotestsrc num-buffers=50 ! video/x-raw, framerate='(fraction)'5/1 ! jpegenc ! avimux ! filesink location=mjpeg.avi
  * ]| a pipeline to mux 5 JPEG frames per second into a 10 sec. long motion jpeg
  * avi.
  * </refsect2>
@@ -152,7 +152,7 @@ gst_jpegenc_class_init (GstJpegEncClass * klass)
       gst_static_pad_template_get (&gst_jpegenc_sink_pad_template));
   gst_element_class_add_pad_template (element_class,
       gst_static_pad_template_get (&gst_jpegenc_src_pad_template));
-  gst_element_class_set_details_simple (element_class, "JPEG image encoder",
+  gst_element_class_set_metadata (element_class, "JPEG image encoder",
       "Codec/Encoder/Image",
       "Encode images in JPEG format", "Wim Taymans <wim.taymans@tvd.be>");
 

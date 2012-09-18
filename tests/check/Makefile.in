@@ -87,7 +87,8 @@ check_PROGRAMS = generic/states$(EXEEXT) elements/aacparse$(EXEEXT) \
 	pipelines/effectv$(EXEEXT) pipelines/tagschecking$(EXEEXT) \
 	pipelines/wavenc$(EXEEXT) $(am__EXEEXT_1) $(am__EXEEXT_2) \
 	$(am__EXEEXT_3) $(am__EXEEXT_4) $(am__EXEEXT_5) \
-	$(am__EXEEXT_6) $(am__EXEEXT_7) $(am__EXEEXT_8)
+	$(am__EXEEXT_6) $(am__EXEEXT_7) $(am__EXEEXT_8) \
+	$(am__EXEEXT_9)
 subdir = tests/check
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/common/m4/as-ac-expand.m4 \
@@ -149,10 +150,12 @@ libparser_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 @USE_SUNAUDIO_TRUE@am__EXEEXT_5 = elements/sunaudio$(EXEEXT)
 @USE_TAGLIB_TRUE@am__EXEEXT_6 = elements/id3v2mux$(EXEEXT) \
 @USE_TAGLIB_TRUE@	elements/apev2mux$(EXEEXT)
-@USE_WAVPACK_TRUE@am__EXEEXT_7 = elements/wavpackdec$(EXEEXT) \
+@USE_VPX_TRUE@am__EXEEXT_7 = elements/vp8enc$(EXEEXT) \
+@USE_VPX_TRUE@	elements/vp8dec$(EXEEXT)
+@USE_WAVPACK_TRUE@am__EXEEXT_8 = elements/wavpackdec$(EXEEXT) \
 @USE_WAVPACK_TRUE@	elements/wavpackenc$(EXEEXT) \
 @USE_WAVPACK_TRUE@	pipelines/wavpack$(EXEEXT)
-@HAVE_ORC_TRUE@am__EXEEXT_8 = orc/deinterlace$(EXEEXT) \
+@HAVE_ORC_TRUE@am__EXEEXT_9 = orc/deinterlace$(EXEEXT) \
 @HAVE_ORC_TRUE@	orc/videomixer$(EXEEXT) orc/videobox$(EXEEXT)
 elements_aacparse_SOURCES = elements/aacparse.c
 elements_aacparse_OBJECTS = aacparse.$(OBJEXT)
@@ -529,6 +532,14 @@ elements_videofilter_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(elements_videofilter_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
+elements_vp8dec_SOURCES = elements/vp8dec.c
+elements_vp8dec_OBJECTS = vp8dec.$(OBJEXT)
+elements_vp8dec_LDADD = $(LDADD)
+elements_vp8dec_DEPENDENCIES = $(am__DEPENDENCIES_1)
+elements_vp8enc_SOURCES = elements/vp8enc.c
+elements_vp8enc_OBJECTS = vp8enc.$(OBJEXT)
+elements_vp8enc_LDADD = $(LDADD)
+elements_vp8enc_DEPENDENCIES = $(am__DEPENDENCIES_1)
 elements_wavpackdec_SOURCES = elements/wavpackdec.c
 elements_wavpackdec_OBJECTS = wavpackdec.$(OBJEXT)
 elements_wavpackdec_LDADD = $(LDADD)
@@ -657,9 +668,9 @@ SOURCES = $(libparser_la_SOURCES) elements/aacparse.c \
 	elements/rtpjitterbuffer.c elements/shapewipe.c \
 	elements/souphttpsrc.c elements/spectrum.c elements/sunaudio.c \
 	elements/udpsink.c elements/udpsrc.c elements/videocrop.c \
-	elements/videofilter.c elements/wavpackdec.c \
-	elements/wavpackenc.c elements/wavpackparse.c \
-	elements/y4menc.c generic/states.c \
+	elements/videofilter.c elements/vp8dec.c elements/vp8enc.c \
+	elements/wavpackdec.c elements/wavpackenc.c \
+	elements/wavpackparse.c elements/y4menc.c generic/states.c \
 	$(nodist_orc_deinterlace_SOURCES) \
 	$(nodist_orc_videobox_SOURCES) \
 	$(nodist_orc_videomixer_SOURCES) pipelines/effectv.c \
@@ -690,12 +701,12 @@ DIST_SOURCES = $(libparser_la_SOURCES) elements/aacparse.c \
 	elements/rtpjitterbuffer.c elements/shapewipe.c \
 	elements/souphttpsrc.c elements/spectrum.c elements/sunaudio.c \
 	elements/udpsink.c elements/udpsrc.c elements/videocrop.c \
-	elements/videofilter.c elements/wavpackdec.c \
-	elements/wavpackenc.c elements/wavpackparse.c \
-	elements/y4menc.c generic/states.c pipelines/effectv.c \
-	pipelines/flacdec.c pipelines/simple-launch-lines.c \
-	pipelines/tagschecking.c pipelines/wavenc.c \
-	pipelines/wavpack.c
+	elements/videofilter.c elements/vp8dec.c elements/vp8enc.c \
+	elements/wavpackdec.c elements/wavpackenc.c \
+	elements/wavpackparse.c elements/y4menc.c generic/states.c \
+	pipelines/effectv.c pipelines/flacdec.c \
+	pipelines/simple-launch-lines.c pipelines/tagschecking.c \
+	pipelines/wavenc.c pipelines/wavpack.c
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -947,6 +958,8 @@ VALGRIND_CFLAGS = @VALGRIND_CFLAGS@
 VALGRIND_LIBS = @VALGRIND_LIBS@
 VALGRIND_PATH = @VALGRIND_PATH@
 VERSION = @VERSION@
+VPX_CFLAGS = @VPX_CFLAGS@
+VPX_LIBS = @VPX_LIBS@
 WARNING_CFLAGS = @WARNING_CFLAGS@
 WARNING_CXXFLAGS = @WARNING_CXXFLAGS@
 WARNING_OBJCFLAGS = @WARNING_OBJCFLAGS@
@@ -1084,6 +1097,8 @@ CLEANFILES = core.* test-registry.*
 @USE_TAGLIB_TRUE@	elements/id3v2mux \
 @USE_TAGLIB_TRUE@	elements/apev2mux
 
+@USE_VPX_FALSE@check_vpx = 
+@USE_VPX_TRUE@check_vpx = elements/vp8enc elements/vp8dec
 @USE_WAVPACK_FALSE@check_wavpack = 
 @USE_WAVPACK_TRUE@check_wavpack = \
 @USE_WAVPACK_TRUE@       elements/wavpackdec \
@@ -1455,6 +1470,12 @@ elements/videocrop$(EXEEXT): $(elements_videocrop_OBJECTS) $(elements_videocrop_
 elements/videofilter$(EXEEXT): $(elements_videofilter_OBJECTS) $(elements_videofilter_DEPENDENCIES) $(EXTRA_elements_videofilter_DEPENDENCIES) elements/$(am__dirstamp)
 	@rm -f elements/videofilter$(EXEEXT)
 	$(AM_V_CCLD)$(elements_videofilter_LINK) $(elements_videofilter_OBJECTS) $(elements_videofilter_LDADD) $(LIBS)
+elements/vp8dec$(EXEEXT): $(elements_vp8dec_OBJECTS) $(elements_vp8dec_DEPENDENCIES) $(EXTRA_elements_vp8dec_DEPENDENCIES) elements/$(am__dirstamp)
+	@rm -f elements/vp8dec$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(elements_vp8dec_OBJECTS) $(elements_vp8dec_LDADD) $(LIBS)
+elements/vp8enc$(EXEEXT): $(elements_vp8enc_OBJECTS) $(elements_vp8enc_DEPENDENCIES) $(EXTRA_elements_vp8enc_DEPENDENCIES) elements/$(am__dirstamp)
+	@rm -f elements/vp8enc$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(elements_vp8enc_OBJECTS) $(elements_vp8enc_LDADD) $(LIBS)
 elements/wavpackdec$(EXEEXT): $(elements_wavpackdec_OBJECTS) $(elements_wavpackdec_DEPENDENCIES) $(EXTRA_elements_wavpackdec_DEPENDENCIES) elements/$(am__dirstamp)
 	@rm -f elements/wavpackdec$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(elements_wavpackdec_OBJECTS) $(elements_wavpackdec_LDADD) $(LIBS)
@@ -1580,6 +1601,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/states.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tagschecking.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/udpsink.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vp8dec.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vp8enc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wavpackdec.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wavpackenc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wavpackparse.Po@am__quote@
@@ -2396,6 +2419,34 @@ elements_videofilter-videofilter.obj: elements/videofilter.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/videofilter.c' object='elements_videofilter-videofilter.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_videofilter_CFLAGS) $(CFLAGS) -c -o elements_videofilter-videofilter.obj `if test -f 'elements/videofilter.c'; then $(CYGPATH_W) 'elements/videofilter.c'; else $(CYGPATH_W) '$(srcdir)/elements/videofilter.c'; fi`
+
+vp8dec.o: elements/vp8dec.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT vp8dec.o -MD -MP -MF $(DEPDIR)/vp8dec.Tpo -c -o vp8dec.o `test -f 'elements/vp8dec.c' || echo '$(srcdir)/'`elements/vp8dec.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/vp8dec.Tpo $(DEPDIR)/vp8dec.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/vp8dec.c' object='vp8dec.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o vp8dec.o `test -f 'elements/vp8dec.c' || echo '$(srcdir)/'`elements/vp8dec.c
+
+vp8dec.obj: elements/vp8dec.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT vp8dec.obj -MD -MP -MF $(DEPDIR)/vp8dec.Tpo -c -o vp8dec.obj `if test -f 'elements/vp8dec.c'; then $(CYGPATH_W) 'elements/vp8dec.c'; else $(CYGPATH_W) '$(srcdir)/elements/vp8dec.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/vp8dec.Tpo $(DEPDIR)/vp8dec.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/vp8dec.c' object='vp8dec.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o vp8dec.obj `if test -f 'elements/vp8dec.c'; then $(CYGPATH_W) 'elements/vp8dec.c'; else $(CYGPATH_W) '$(srcdir)/elements/vp8dec.c'; fi`
+
+vp8enc.o: elements/vp8enc.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT vp8enc.o -MD -MP -MF $(DEPDIR)/vp8enc.Tpo -c -o vp8enc.o `test -f 'elements/vp8enc.c' || echo '$(srcdir)/'`elements/vp8enc.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/vp8enc.Tpo $(DEPDIR)/vp8enc.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/vp8enc.c' object='vp8enc.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o vp8enc.o `test -f 'elements/vp8enc.c' || echo '$(srcdir)/'`elements/vp8enc.c
+
+vp8enc.obj: elements/vp8enc.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT vp8enc.obj -MD -MP -MF $(DEPDIR)/vp8enc.Tpo -c -o vp8enc.obj `if test -f 'elements/vp8enc.c'; then $(CYGPATH_W) 'elements/vp8enc.c'; else $(CYGPATH_W) '$(srcdir)/elements/vp8enc.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/vp8enc.Tpo $(DEPDIR)/vp8enc.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/vp8enc.c' object='vp8enc.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o vp8enc.obj `if test -f 'elements/vp8enc.c'; then $(CYGPATH_W) 'elements/vp8enc.c'; else $(CYGPATH_W) '$(srcdir)/elements/vp8enc.c'; fi`
 
 wavpackdec.o: elements/wavpackdec.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT wavpackdec.o -MD -MP -MF $(DEPDIR)/wavpackdec.Tpo -c -o wavpackdec.o `test -f 'elements/wavpackdec.c' || echo '$(srcdir)/'`elements/wavpackdec.c
