@@ -1838,10 +1838,6 @@ restart:
   if (self->cur_field_idx < 0)
     return ret;
 
-  if (!flushing && self->cur_field_idx < 1) {
-    return ret;
-  }
-
   /* deinterlace bottom_field */
   if ((self->field_history[self->cur_field_idx].flags ==
           PICTURE_INTERLACED_BOTTOM && (self->fields == GST_DEINTERLACE_BF
@@ -2439,7 +2435,7 @@ gst_deinterlace_setcaps (GstDeinterlace * self, GstPad * pad, GstCaps * caps)
     goto caps_not_accepted;
 
   if (fps_n != 0) {
-    self->field_duration = gst_util_uint64_scale (GST_SECOND, fps_d, 2 * fps_n);
+    self->field_duration = gst_util_uint64_scale (GST_SECOND, fps_d, fps_n);
   } else {
     self->field_duration = 0;
   }
