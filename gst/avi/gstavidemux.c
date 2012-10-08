@@ -767,7 +767,7 @@ gst_avi_demux_handle_sink_event (GstPad * pad, GstObject * parent,
             k = i;
           }
           /* exact match needs no further searching */
-          if (stream->index[index].offset == segment.start)
+          if (stream->index[index].offset == boffset)
             break;
         } while (++i < avi->num_streams);
         boffset -= 8;
@@ -2656,6 +2656,9 @@ gst_avi_demux_parse_index (GstAviDemux * avi, GstBuffer * buf)
     if (stream->strh->type == GST_RIFF_FCC_auds) {
       /* all audio frames are keyframes */
       ENTRY_SET_KEYFRAME (&entry);
+    } else if (stream->strf.vids->compression == GST_RIFF_DXSB) {
+      /* all xsub frames are keyframes */
+      ENTRY_SET_KEYFRAME (&entry);
     } else {
       guint32 flags;
       /* else read flags */
@@ -3206,6 +3209,7 @@ gst_avi_demux_stream_header_push (GstAviDemux * avi)
 
   switch (avi->header_state) {
     case GST_AVI_DEMUX_HEADER_TAG_LIST:
+    again:
       if (gst_avi_demux_peek_chunk (avi, &tag, &size)) {
         avi->offset += 8 + GST_ROUND_UP_2 (size);
         if (tag != GST_RIFF_TAG_LIST)
@@ -3218,8 +3222,12 @@ gst_avi_demux_stream_header_push (GstAviDemux * avi)
 
         gst_buffer_extract (buf, 0, fourcc, 4);
 
-        if (GST_READ_UINT32_LE (fourcc) != GST_RIFF_LIST_hdrl)
-          goto header_no_hdrl;
+        if (GST_READ_UINT32_LE (fourcc) != GST_RIFF_LIST_hdrl) {
+          GST_WARNING_OBJECT (avi, "Invalid AVI header (no hdrl at start): %"
+              GST_FOURCC_FORMAT, GST_FOURCC_ARGS (tag));
+          gst_buffer_unref (buf);
+          goto again;
+        }
 
         /* mind padding */
         if (size & 1)
@@ -3436,14 +3444,6 @@ header_no_list:
     GST_ELEMENT_ERROR (avi, STREAM, DEMUX, (NULL),
         ("Invalid AVI header (no LIST at start): %"
             GST_FOURCC_FORMAT, GST_FOURCC_ARGS (tag)));
-    return GST_FLOW_ERROR;
-  }
-header_no_hdrl:
-  {
-    GST_ELEMENT_ERROR (avi, STREAM, DEMUX, (NULL),
-        ("Invalid AVI header (no hdrl at start): %"
-            GST_FOURCC_FORMAT, GST_FOURCC_ARGS (tag)));
-    gst_buffer_unref (buf);
     return GST_FLOW_ERROR;
   }
 header_no_avih:
