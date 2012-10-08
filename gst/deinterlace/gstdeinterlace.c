@@ -1439,6 +1439,15 @@ gst_deinterlace_get_pattern_lock (GstDeinterlace * self, gboolean * flush_one)
   self->output_count = 0;
   self->pattern_lock = TRUE;
 
+  for (i = 0; i < telecine_patterns[pattern].length; i++) {
+    gint state_idx =
+        self->low_latency ? (self->history_count - 1) >> 1 : self->state_count -
+        1;
+    state_idx -= i;
+    GST_LOG_OBJECT (self, "buf[%d] %s", i,
+        STATE_TO_STRING (self->buf_states[state_idx].state));
+  }
+
   /* check for the case that the first field of the pattern is an orphan */
   if (pattern > 1
       && telecine_patterns[pattern].states[phase] & (GST_ONE | GST_INT)) {
@@ -1710,7 +1719,8 @@ restart:
   if ((self->field_history[self->cur_field_idx].flags == PICTURE_INTERLACED_TOP
           && (self->fields == GST_DEINTERLACE_TF
               || IS_TELECINE (interlacing_mode)))
-      || self->fields == GST_DEINTERLACE_ALL) {
+      || (self->fields == GST_DEINTERLACE_ALL
+          && !IS_TELECINE (interlacing_mode))) {
     GST_DEBUG_OBJECT (self, "deinterlacing top field");
 
     /* create new buffer */
@@ -1740,8 +1750,10 @@ restart:
           GST_TIME_ARGS (GST_BUFFER_TIMESTAMP (outbuf) +
               GST_BUFFER_DURATION (outbuf)));
     } else {
-      GST_BUFFER_TIMESTAMP (outbuf) = GST_BUFFER_TIMESTAMP (buf);
-      GST_BUFFER_DURATION (outbuf) = GST_BUFFER_DURATION (buf);
+      GST_BUFFER_TIMESTAMP (outbuf) =
+          GST_BUFFER_TIMESTAMP (field1->frame->buffer);
+      GST_BUFFER_DURATION (outbuf) =
+          GST_BUFFER_DURATION (field1->frame->buffer);
     }
 
     /* Check if we need to drop the frame because of QoS */
@@ -1779,9 +1791,12 @@ restart:
       gst_video_frame_unmap_and_free (outframe);
 
       self->cur_field_idx--;
-      if (self->cur_field_idx + 1 +
-          gst_deinterlace_method_get_latency (self->method)
-          < self->history_count || flushing) {
+      /* need to remove the field in the telecine weaving case */
+      if ((IS_TELECINE (interlacing_mode)
+              && self->method_id == GST_DEINTERLACE_WEAVE)
+          || self->cur_field_idx + 1 +
+          gst_deinterlace_method_get_latency (self->method) <
+          self->history_count || flushing) {
         gst_video_frame_unmap_and_free (gst_deinterlace_pop_history (self));
       }
 
@@ -1801,7 +1816,7 @@ restart:
       outbuf = NULL;
       if (ret != GST_FLOW_OK)
         return ret;
-      if (interlacing_mode == GST_VIDEO_INTERLACE_MODE_MIXED
+      if (IS_TELECINE (interlacing_mode)
           && self->method_id == GST_DEINTERLACE_WEAVE) {
         /* pop off the second field */
         GST_DEBUG_OBJECT (self, "Removing unused field (count: %d)",
@@ -1842,7 +1857,8 @@ restart:
   if ((self->field_history[self->cur_field_idx].flags ==
           PICTURE_INTERLACED_BOTTOM && (self->fields == GST_DEINTERLACE_BF
               || IS_TELECINE (interlacing_mode)))
-      || self->fields == GST_DEINTERLACE_ALL) {
+      || (self->fields == GST_DEINTERLACE_ALL
+          && !IS_TELECINE (interlacing_mode))) {
     GST_DEBUG_OBJECT (self, "deinterlacing bottom field");
 
     /* create new buffer */
@@ -1873,8 +1889,10 @@ restart:
           GST_TIME_ARGS (GST_BUFFER_TIMESTAMP (outbuf) +
               GST_BUFFER_DURATION (outbuf)));
     } else {
-      GST_BUFFER_TIMESTAMP (outbuf) = GST_BUFFER_TIMESTAMP (buf);
-      GST_BUFFER_DURATION (outbuf) = GST_BUFFER_DURATION (buf);
+      GST_BUFFER_TIMESTAMP (outbuf) =
+          GST_BUFFER_TIMESTAMP (field1->frame->buffer);
+      GST_BUFFER_DURATION (outbuf) =
+          GST_BUFFER_DURATION (field1->frame->buffer);
     }
 
     /* Check if we need to drop the frame because of QoS */
@@ -1898,9 +1916,12 @@ restart:
       gst_video_frame_unmap_and_free (outframe);
 
       self->cur_field_idx--;
-      if (self->cur_field_idx + 1 +
-          gst_deinterlace_method_get_latency (self->method)
-          < self->history_count) {
+      /* need to remove the field in the telecine weaving case */
+      if ((IS_TELECINE (interlacing_mode)
+              && self->method_id == GST_DEINTERLACE_WEAVE)
+          || self->cur_field_idx + 1 +
+          gst_deinterlace_method_get_latency (self->method) <
+          self->history_count) {
         gst_video_frame_unmap_and_free (gst_deinterlace_pop_history (self));
       }
 
@@ -1920,7 +1941,7 @@ restart:
       outbuf = NULL;
       if (ret != GST_FLOW_OK)
         return ret;
-      if (interlacing_mode == GST_VIDEO_INTERLACE_MODE_MIXED
+      if (IS_TELECINE (interlacing_mode)
           && self->method_id == GST_DEINTERLACE_WEAVE) {
         /* pop off the second field */
         GST_DEBUG_OBJECT (self, "Removing unused field (count: %d)",
