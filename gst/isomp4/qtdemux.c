@@ -431,6 +431,10 @@ static GstCaps *qtdemux_audio_caps (GstQTDemux * qtdemux,
 static GstCaps *qtdemux_sub_caps (GstQTDemux * qtdemux,
     QtDemuxStream * stream, guint32 fourcc, const guint8 * data,
     gchar ** codec_name);
+static GstCaps *qtdemux_generic_caps (GstQTDemux * qtdemux,
+    QtDemuxStream * stream, guint32 fourcc, const guint8 * stsd_data,
+    gchar ** codec_name);
+
 static gboolean qtdemux_parse_samples (GstQTDemux * qtdemux,
     QtDemuxStream * stream, guint32 n);
 static GstFlowReturn qtdemux_expose_streams (GstQTDemux * qtdemux);
@@ -5199,10 +5203,17 @@ gst_qtdemux_add_stream (GstQTDemux * qtdemux,
         gst_pad_new_from_static_template (&gst_qtdemux_audiosrc_template, name);
     g_free (name);
     if (stream->caps) {
-      /* FIXME: Need to set channel-mask here and maybe reorder */
       gst_caps_set_simple (stream->caps,
           "rate", G_TYPE_INT, (int) stream->rate,
           "channels", G_TYPE_INT, stream->n_channels, NULL);
+
+      if (stream->n_channels > 2) {
+        /* FIXME: Need to parse the 'chan' atom to get channel layouts
+         * correctly; this is just the minimum we can do - assume
+         * we don't actually have any channel positions. */
+        gst_caps_set_simple (stream->caps,
+            "channel-mask", GST_TYPE_BITMASK, G_GUINT64_CONSTANT (0), NULL);
+      }
     }
     qtdemux->n_audio_streams++;
   } else if (stream->subtype == FOURCC_strm) {
@@ -5214,6 +5225,13 @@ gst_qtdemux_add_stream (GstQTDemux * qtdemux,
         gst_pad_new_from_static_template (&gst_qtdemux_subsrc_template, name);
     g_free (name);
     qtdemux->n_sub_streams++;
+  } else if (stream->caps) {
+    gchar *name = g_strdup_printf ("video_%u", qtdemux->n_video_streams);
+
+    stream->pad =
+        gst_pad_new_from_static_template (&gst_qtdemux_videosrc_template, name);
+    g_free (name);
+    qtdemux->n_video_streams++;
   } else {
     GST_DEBUG_OBJECT (qtdemux, "unknown stream type");
     goto done;
@@ -7320,6 +7338,7 @@ qtdemux_parse_trak (GstQTDemux * qtdemux, GNode * trak)
 
                 if (extra)
                   gst_buffer_unref (extra);
+                g_free (header);
               }
             }
           } else
@@ -7505,7 +7524,22 @@ qtdemux_parse_trak (GstQTDemux * qtdemux, GNode * trak)
         break;
     }
   } else {
-    goto unknown_stream;
+    /* everything in 1 sample */
+    stream->sampled = TRUE;
+
+    stream->caps =
+        qtdemux_generic_caps (qtdemux, stream, fourcc, stsd_data, &codec);
+
+    if (stream->caps == NULL)
+      goto unknown_stream;
+
+    if (codec) {
+      list = gst_tag_list_new_empty ();
+      gst_tag_list_add (list, GST_TAG_MERGE_REPLACE,
+          GST_TAG_SUBTITLE_CODEC, codec, NULL);
+      g_free (codec);
+      codec = NULL;
+    }
   }
 
   /* promote to sampled format */
@@ -7636,7 +7670,8 @@ gst_qtdemux_guess_bitrate (GstQTDemux * qtdemux)
 
   GST_DEBUG_OBJECT (qtdemux, "Looking for streams with unknown bitrate");
 
-  if (!gst_pad_peer_query_duration (qtdemux->sinkpad, GST_FORMAT_BYTES, &size)) {
+  if (!gst_pad_peer_query_duration (qtdemux->sinkpad, GST_FORMAT_BYTES, &size)
+      || size <= 0) {
     GST_DEBUG_OBJECT (qtdemux,
         "Size in bytes of the stream not known - bailing");
     return;
@@ -7645,7 +7680,10 @@ gst_qtdemux_guess_bitrate (GstQTDemux * qtdemux)
   /* Subtract the header size */
   GST_DEBUG_OBJECT (qtdemux, "Total size %" G_GINT64_FORMAT ", header size %u",
       size, qtdemux->header_size);
-  g_assert (size >= qtdemux->header_size);
+
+  if (size < qtdemux->header_size)
+    return;
+
   size = size - qtdemux->header_size;
 
   if (!gst_qtdemux_get_duration (qtdemux, &duration) ||
@@ -9540,8 +9578,34 @@ qtdemux_video_caps (GstQTDemux * qtdemux, QtDemuxStream * stream,
       caps = gst_caps_from_string ("video/x-vp8");
       break;
     case GST_MAKE_FOURCC ('a', 'p', 'c', 's'):
+      _codec ("Apple ProRes LT");
+      caps =
+          gst_caps_new_simple ("video/x-prores", "variant", G_TYPE_STRING, "lt",
+          NULL);
+      break;
+    case GST_MAKE_FOURCC ('a', 'p', 'c', 'h'):
+      _codec ("Apple ProRes HQ");
+      caps =
+          gst_caps_new_simple ("video/x-prores", "variant", G_TYPE_STRING, "hq",
+          NULL);
+      break;
+    case GST_MAKE_FOURCC ('a', 'p', 'c', 'n'):
       _codec ("Apple ProRes");
-      caps = gst_caps_from_string ("video/x-prores");
+      caps =
+          gst_caps_new_simple ("video/x-prores", "variant", G_TYPE_STRING,
+          "standard", NULL);
+      break;
+    case GST_MAKE_FOURCC ('a', 'p', 'c', 'o'):
+      _codec ("Apple ProRes Proxy");
+      caps =
+          gst_caps_new_simple ("video/x-prores", "variant", G_TYPE_STRING,
+          "proxy", NULL);
+      break;
+    case GST_MAKE_FOURCC ('a', 'p', '4', 'h'):
+      _codec ("Apple ProRes 4444");
+      caps =
+          gst_caps_new_simple ("video/x-prores", "variant", G_TYPE_STRING,
+          "4444", NULL);
       break;
     case FOURCC_ovc1:
       _codec ("VC-1");
@@ -9821,6 +9885,25 @@ qtdemux_sub_caps (GstQTDemux * qtdemux, QtDemuxStream * stream,
       caps = gst_caps_new_empty_simple (s);
       break;
     }
+  }
+  return caps;
+}
+
+static GstCaps *
+qtdemux_generic_caps (GstQTDemux * qtdemux, QtDemuxStream * stream,
+    guint32 fourcc, const guint8 * stsd_data, gchar ** codec_name)
+{
+  GstCaps *caps;
+
+  switch (fourcc) {
+    case GST_MAKE_FOURCC ('m', '1', 'v', ' '):
+      _codec ("MPEG 1 video");
+      caps = gst_caps_new_simple ("video/mpeg", "mpegversion", G_TYPE_INT, 1,
+          "systemstream", G_TYPE_BOOLEAN, FALSE, NULL);
+      break;
+    default:
+      caps = NULL;
+      break;
   }
   return caps;
 }

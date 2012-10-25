@@ -223,6 +223,8 @@ gst_avi_demux_reset_stream (GstAviDemux * avi, GstAviStream * stream)
     gst_buffer_unref (stream->initdata);
   if (stream->extradata)
     gst_buffer_unref (stream->extradata);
+  if (stream->rgb8_palette)
+    gst_buffer_unref (stream->rgb8_palette);
   if (stream->pad) {
     if (stream->exposed) {
       gst_pad_set_active (stream->pad, FALSE);
@@ -1847,8 +1849,7 @@ gst_avi_demux_expose_streams (GstAviDemux * avi, gboolean force)
     GstAviStream *stream = &avi->stream[i];
 
     if (force || stream->idx_n != 0) {
-      GST_LOG_OBJECT (avi, "Adding pad %s" GST_PTR_FORMAT,
-          GST_PAD_NAME (stream->pad));
+      GST_LOG_OBJECT (avi, "Adding pad %s", GST_PAD_NAME (stream->pad));
       gst_element_add_pad ((GstElement *) avi, stream->pad);
 
 #if 0
@@ -1896,15 +1897,24 @@ gst_avi_demux_roundup_list (GstAviDemux * avi, GstBuffer ** buf)
 }
 
 static GstCaps *
-gst_avi_demux_check_caps (GstAviDemux * avi, GstCaps * caps)
+gst_avi_demux_check_caps (GstAviDemux * avi, GstCaps * caps,
+    GstBuffer ** rgb8_palette)
 {
   GstStructure *s;
   const GValue *val;
   GstBuffer *buf;
 
+  caps = gst_caps_make_writable (caps);
+
   s = gst_caps_get_structure (caps, 0);
-  if (!gst_structure_has_name (s, "video/x-h264"))
+  if (gst_structure_has_name (s, "video/x-raw") &&
+      gst_structure_has_field_typed (s, "palette_data", GST_TYPE_BUFFER)) {
+    gst_structure_get (s, "palette_data", GST_TYPE_BUFFER, rgb8_palette, NULL);
+    gst_structure_remove_field (s, "palette_data");
     return caps;
+  } else if (!gst_structure_has_name (s, "video/x-h264")) {
+    return caps;
+  }
 
   GST_DEBUG_OBJECT (avi, "checking caps %" GST_PTR_FORMAT, caps);
 
@@ -2243,7 +2253,7 @@ gst_avi_demux_parse_stream (GstAviDemux * avi, GstBuffer * buf)
         g_free (vprp);
         vprp = NULL;
       }
-      caps = gst_avi_demux_check_caps (avi, caps);
+      caps = gst_avi_demux_check_caps (avi, caps, &stream->rgb8_palette);
       tag_name = GST_TAG_VIDEO_CODEC;
       avi->num_v_streams++;
       break;
@@ -2296,8 +2306,7 @@ gst_avi_demux_parse_stream (GstAviDemux * avi, GstBuffer * buf)
     goto fail;
   }
 
-  GST_DEBUG_OBJECT (element, "codec-name=%s",
-      (codec_name ? codec_name : "NULL"));
+  GST_DEBUG_OBJECT (element, "codec-name=%s", codec_name ? codec_name : "NULL");
   GST_DEBUG_OBJECT (element, "caps=%" GST_PTR_FORMAT, caps);
 
   /* set proper settings and add it */
@@ -4505,12 +4514,10 @@ swap_line (guint8 * d1, guint8 * d2, guint8 * tmp, gint bytes)
 static GstBuffer *
 gst_avi_demux_invert (GstAviStream * stream, GstBuffer * buf)
 {
-  GstStructure *s;
   gint y, w, h;
   gint bpp, stride;
   guint8 *tmp = NULL;
   GstMapInfo map;
-  GstCaps *caps;
   guint32 fourcc;
 
   if (stream->strh->type != GST_RIFF_FCC_vids)
@@ -4527,17 +4534,10 @@ gst_avi_demux_invert (GstAviStream * stream, GstBuffer * buf)
     return buf;                 /* Ignore non DIB buffers */
   }
 
-  caps = gst_pad_get_current_caps (stream->pad);
-  s = gst_caps_get_structure (caps, 0);
-  gst_caps_unref (caps);
-
-  if (!gst_structure_get_int (s, "bpp", &bpp)) {
-    GST_WARNING ("Failed to retrieve depth from caps");
-    return buf;
-  }
 
   h = stream->strf.vids->height;
   w = stream->strf.vids->width;
+  bpp = stream->strf.vids->bit_cnt ? stream->strf.vids->bit_cnt : 8;
   stride = GST_ROUND_UP_4 (w * (bpp / 8));
 
   buf = gst_buffer_make_writable (buf);
@@ -4559,6 +4559,10 @@ gst_avi_demux_invert (GstAviStream * stream, GstBuffer * buf)
   g_free (tmp);
 
   gst_buffer_unmap (buf, &map);
+
+  /* append palette to paletted RGB8 buffer data */
+  if (stream->rgb8_palette != NULL)
+    buf = gst_buffer_append (buf, gst_buffer_ref (stream->rgb8_palette));
 
   return buf;
 }
@@ -4819,7 +4823,7 @@ gst_avi_demux_loop_data (GstAviDemux * avi)
     if (gst_buffer_get_size (buf) < size)
       goto short_buffer;
 
-    /* invert the picture if needed */
+    /* invert the picture if needed, and append palette for RGB8P */
     buf = gst_avi_demux_invert (stream, buf);
 
     /* mark non-keyframes */
@@ -5100,7 +5104,7 @@ gst_avi_demux_stream_data (GstAviDemux * avi)
         if (saw_desired_kf && buf) {
           GstClockTime dur_ts = 0;
 
-          /* invert the picture if needed */
+          /* invert the picture if needed, and append palette for RGB8P */
           buf = gst_avi_demux_invert (stream, buf);
 
           gst_pad_query_position (stream->pad, GST_FORMAT_TIME,

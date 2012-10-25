@@ -416,7 +416,7 @@ gst_vp8_enc_class_init (GstVP8EncClass * klass)
   gst_element_class_add_pad_template (element_class,
       gst_static_pad_template_get (&gst_vp8_enc_sink_template));
 
-  gst_element_class_set_metadata (element_class,
+  gst_element_class_set_static_metadata (element_class,
       "On2 VP8 Encoder",
       "Codec/Encoder/Video",
       "Encode VP8 video streams", "David Schleef <ds@entropywave.com>, "
@@ -724,7 +724,7 @@ gst_vp8_enc_init (GstVP8Enc * gst_vp8_enc)
   }
 
   gst_vp8_enc->cfg.rc_end_usage = DEFAULT_RC_END_USAGE;
-  gst_vp8_enc->cfg.rc_target_bitrate = DEFAULT_RC_TARGET_BITRATE;
+  gst_vp8_enc->cfg.rc_target_bitrate = DEFAULT_RC_TARGET_BITRATE / 1000;
   gst_vp8_enc->rc_target_bitrate_set = FALSE;
   gst_vp8_enc->cfg.rc_min_quantizer = DEFAULT_RC_MIN_QUANTIZER;
   gst_vp8_enc->cfg.rc_max_quantizer = DEFAULT_RC_MAX_QUANTIZER;
@@ -1504,7 +1504,8 @@ gst_vp8_enc_set_format (GstVideoEncoder * video_encoder,
   if (!encoder->rc_target_bitrate_set)
     encoder->cfg.rc_target_bitrate =
         gst_util_uint64_scale (DEFAULT_RC_TARGET_BITRATE,
-        GST_VIDEO_INFO_WIDTH (info) * GST_VIDEO_INFO_HEIGHT (info), 320 * 240);
+        GST_VIDEO_INFO_WIDTH (info) * GST_VIDEO_INFO_HEIGHT (info),
+        320 * 240 * 1000);
 
   encoder->cfg.g_w = GST_VIDEO_INFO_WIDTH (info);
   encoder->cfg.g_h = GST_VIDEO_INFO_HEIGHT (info);
@@ -1974,6 +1975,7 @@ gst_vp8_enc_pre_push (GstVideoEncoder * video_encoder,
       encoder->keyframe_distance++;
     }
 
+    GST_BUFFER_FLAG_SET (buf, GST_BUFFER_FLAG_DECODE_ONLY);
     GST_BUFFER_TIMESTAMP (buf) = GST_BUFFER_TIMESTAMP (frame->output_buffer);
     GST_BUFFER_DURATION (buf) = 0;
     GST_BUFFER_OFFSET_END (buf) =

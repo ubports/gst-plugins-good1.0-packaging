@@ -5,9 +5,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: gst-plugins-good 1.0.1\n"
+"Project-Id-Version: gst-plugins-good 1.0.2\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2012-10-07 15:23+0100\n"
+"POT-Creation-Date: 2012-10-24 14:11+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 #. TRANSLATORS: 'song title' by 'artist name'
-#: ext/pulse/pulsesink.c:2778
+#: ext/pulse/pulsesink.c:2793
 #, c-format
 msgid "'%s' by '%s'"
 msgstr ""
@@ -59,7 +59,7 @@ msgstr ""
 msgid "No URL set."
 msgstr ""
 
-#: gst/avi/gstavidemux.c:5277
+#: gst/avi/gstavidemux.c:5281
 msgid "Internal data stream error."
 msgstr ""
 
@@ -67,47 +67,47 @@ msgstr ""
 msgid "No or invalid input audio, AVI stream will be corrupt."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:522 gst/isomp4/qtdemux.c:526
+#: gst/isomp4/qtdemux.c:526 gst/isomp4/qtdemux.c:530
 msgid "This file contains no playable streams."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:592 gst/isomp4/qtdemux.c:4132
-#: gst/isomp4/qtdemux.c:4198 gst/isomp4/qtdemux.c:4345
+#: gst/isomp4/qtdemux.c:596 gst/isomp4/qtdemux.c:4136
+#: gst/isomp4/qtdemux.c:4202 gst/isomp4/qtdemux.c:4349
 msgid "This file is invalid and cannot be played."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:2500 gst/isomp4/qtdemux.c:2576
-#: gst/isomp4/qtdemux.c:2619 gst/isomp4/qtdemux.c:4949
-#: gst/isomp4/qtdemux.c:4956 gst/isomp4/qtdemux.c:5580
-#: gst/isomp4/qtdemux.c:6008 gst/isomp4/qtdemux.c:6015
-#: gst/isomp4/qtdemux.c:7586
+#: gst/isomp4/qtdemux.c:2504 gst/isomp4/qtdemux.c:2580
+#: gst/isomp4/qtdemux.c:2623 gst/isomp4/qtdemux.c:4953
+#: gst/isomp4/qtdemux.c:4960 gst/isomp4/qtdemux.c:5598
+#: gst/isomp4/qtdemux.c:6026 gst/isomp4/qtdemux.c:6033
+#: gst/isomp4/qtdemux.c:7620
 msgid "This file is corrupt and cannot be played."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:2710
+#: gst/isomp4/qtdemux.c:2714
 msgid "Invalid atom size."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:2776
+#: gst/isomp4/qtdemux.c:2780
 msgid "This file is incomplete and cannot be played."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:5171
+#: gst/isomp4/qtdemux.c:5175
 msgid "The video in this file might not play correctly."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:7615
+#: gst/isomp4/qtdemux.c:7649
 #, c-format
 msgid "This file contains too many streams. Only playing first %d"
 msgstr ""
 
-#: gst/rtsp/gstrtspsrc.c:5388
+#: gst/rtsp/gstrtspsrc.c:5387
 msgid ""
 "No supported stream was found. You might need to install a GStreamer RTSP "
 "extension plugin for Real media streams."
 msgstr ""
 
-#: gst/rtsp/gstrtspsrc.c:5393
+#: gst/rtsp/gstrtspsrc.c:5392
 msgid ""
 "No supported stream was found. You might need to allow more transport "
 "protocols or may otherwise be missing the right GStreamer RTSP extension "

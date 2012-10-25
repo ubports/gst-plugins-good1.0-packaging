@@ -72,11 +72,12 @@ struct _GstMultiUDPSink {
   gboolean       external_socket;
 
   gboolean       auto_multicast;
+  gchar         *multi_iface;
   gint           ttl;
   gint           ttl_mc;
   gboolean       loop;
+  gboolean       force_ipv4;
   gint           qos_dscp;
-  GSocketFamily  family;
 
   gboolean       send_duplicates;
   gint           buffer_size;

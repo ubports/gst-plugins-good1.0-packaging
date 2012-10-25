@@ -77,6 +77,8 @@
   "<a class="link" href="gst-plugins-good-plugins-multiudpsink.html#GstMultiUDPSink--close-socket" title='The "close-socket" property'>close-socket</a>"             <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a>              : Read / Write
   "<a class="link" href="gst-plugins-good-plugins-multiudpsink.html#GstMultiUDPSink--socket" title='The "socket" property'>socket</a>"                   <a href="http://library.gnome.org/devel/gio/unstable/GSocket.html"><span class="type">GSocket</span></a>*              : Read / Write
   "<a class="link" href="gst-plugins-good-plugins-multiudpsink.html#GstMultiUDPSink--used-socket" title='The "used-socket" property'>used-socket</a>"              <a href="http://library.gnome.org/devel/gio/unstable/GSocket.html"><span class="type">GSocket</span></a>*              : Read
+  "<a class="link" href="gst-plugins-good-plugins-multiudpsink.html#GstMultiUDPSink--force-ipv4" title='The "force-ipv4" property'>force-ipv4</a>"               <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a>              : Read / Write
+  "<a class="link" href="gst-plugins-good-plugins-multiudpsink.html#GstMultiUDPSink--multicast-iface" title='The "multicast-iface" property'>multicast-iface</a>"          <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a>*                : Read / Write
 </pre>
 </div>
 <div class="refsect1">
@@ -100,7 +102,7 @@ It can be combined with rtp payload encoders to implement RTP streaming.
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp17784912"></a><h3>Element Information</h3>
+<a name="idp9022208"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -123,7 +125,7 @@ It can be combined with rtp payload encoders to implement RTP streaming.
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp16950624"></a><h3>Element Pads</h3>
+<a name="idp14628816"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -275,6 +277,20 @@ It can be combined with rtp payload encoders to implement RTP streaming.
 <a name="GstMultiUDPSink--used-socket"></a><h3>The <code class="literal">"used-socket"</code> property</h3>
 <pre class="programlisting">  "used-socket"              <a href="http://library.gnome.org/devel/gio/unstable/GSocket.html"><span class="type">GSocket</span></a>*              : Read</pre>
 <p>Socket currently in use for UDP sending. (NULL == no socket).</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstMultiUDPSink--force-ipv4"></a><h3>The <code class="literal">"force-ipv4"</code> property</h3>
+<pre class="programlisting">  "force-ipv4"               <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a>              : Read / Write</pre>
+<p>Forcing the use of an IPv4 socket.</p>
+<p>Default value: FALSE</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstMultiUDPSink--multicast-iface"></a><h3>The <code class="literal">"multicast-iface"</code> property</h3>
+<pre class="programlisting">  "multicast-iface"          <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a>*                : Read / Write</pre>
+<p>The network interface on which to join the multicast group.</p>
+<p>Default value: NULL</p>
 </div>
 </div>
 <div class="refsect1">
