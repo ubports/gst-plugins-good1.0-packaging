@@ -184,7 +184,7 @@ static GstStaticPadTemplate audiosink_templ =
     );
 
 static GstStaticPadTemplate subtitlesink_templ =
-    GST_STATIC_PAD_TEMPLATE ("subtitle_%d",
+    GST_STATIC_PAD_TEMPLATE ("subtitle_%u",
     GST_PAD_SINK,
     GST_PAD_REQUEST,
     GST_STATIC_CAPS ("subtitle/x-kate; "
@@ -990,8 +990,6 @@ skip_details:
     fstr = gst_structure_get_string (structure, "format");
     if (fstr && strlen (fstr) == 4)
       videocontext->fourcc = GST_STR_FOURCC (fstr);
-  } else if (!strcmp (mimetype, "image/jpeg")) {
-    gst_matroska_mux_set_codec_id (context, GST_MATROSKA_CODEC_ID_VIDEO_MJPEG);
   } else if (!strcmp (mimetype, "video/x-huffyuv")      /* MS/VfW compatibility cases */
       ||!strcmp (mimetype, "video/x-divx")
       || !strcmp (mimetype, "video/x-dv")

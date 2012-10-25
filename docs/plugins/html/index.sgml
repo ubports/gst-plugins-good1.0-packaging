@@ -1017,6 +1017,8 @@
 <ANCHOR id="GstMultiUDPSink--close-socket" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-multiudpsink.html#GstMultiUDPSink--close-socket">
 <ANCHOR id="GstMultiUDPSink--socket" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-multiudpsink.html#GstMultiUDPSink--socket">
 <ANCHOR id="GstMultiUDPSink--used-socket" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-multiudpsink.html#GstMultiUDPSink--used-socket">
+<ANCHOR id="GstMultiUDPSink--force-ipv4" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-multiudpsink.html#GstMultiUDPSink--force-ipv4">
+<ANCHOR id="GstMultiUDPSink--multicast-iface" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-multiudpsink.html#GstMultiUDPSink--multicast-iface">
 <ANCHOR id="gst-plugins-good-plugins-multiudpsink.signal-details" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-multiudpsink.html#gst-plugins-good-plugins-multiudpsink.signal-details">
 <ANCHOR id="GstMultiUDPSink-add" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-multiudpsink.html#GstMultiUDPSink-add">
 <ANCHOR id="GstMultiUDPSink-clear" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-multiudpsink.html#GstMultiUDPSink-clear">

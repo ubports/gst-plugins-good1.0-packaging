@@ -81,14 +81,15 @@ enum
 #define DEFAULT_CLOSE_SOCKET       TRUE
 #define DEFAULT_USED_SOCKET        NULL
 #define DEFAULT_CLIENTS            NULL
-#define DEFAULT_FAMILY             G_SOCKET_FAMILY_IPV6
 /* FIXME, this should be disabled by default, we don't need to join a multicast
  * group for sending, if this socket is also used for receiving, it should
  * be configured in the element that does the receive. */
 #define DEFAULT_AUTO_MULTICAST     TRUE
+#define DEFAULT_MULTICAST_IFACE    NULL
 #define DEFAULT_TTL                64
 #define DEFAULT_TTL_MC             1
 #define DEFAULT_LOOP               TRUE
+#define DEFAULT_FORCE_IPV4         FALSE
 #define DEFAULT_QOS_DSCP           -1
 #define DEFAULT_SEND_DUPLICATES    TRUE
 #define DEFAULT_BUFFER_SIZE        0
@@ -103,9 +104,11 @@ enum
   PROP_USED_SOCKET,
   PROP_CLIENTS,
   PROP_AUTO_MULTICAST,
+  PROP_MULTICAST_IFACE,
   PROP_TTL,
   PROP_TTL_MC,
   PROP_LOOP,
+  PROP_FORCE_IPV4,
   PROP_QOS_DSCP,
   PROP_SEND_DUPLICATES,
   PROP_BUFFER_SIZE,
@@ -275,6 +278,10 @@ gst_multiudpsink_class_init (GstMultiUDPSinkClass * klass)
           "Automatically join/leave the multicast groups, FALSE means user"
           " has to do it himself", DEFAULT_AUTO_MULTICAST,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+  g_object_class_install_property (gobject_class, PROP_MULTICAST_IFACE,
+      g_param_spec_string ("multicast-iface", "Multicast Interface",
+          "The network interface on which to join the multicast group",
+          DEFAULT_MULTICAST_IFACE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (gobject_class, PROP_TTL,
       g_param_spec_int ("ttl", "Unicast TTL",
           "Used for setting the unicast TTL parameter",
@@ -288,6 +295,18 @@ gst_multiudpsink_class_init (GstMultiUDPSinkClass * klass)
           "Used for setting the multicast loop parameter. TRUE = enable,"
           " FALSE = disable", DEFAULT_LOOP,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+  /**
+   * GstMultiUDPSink::force-ipv4
+   *
+   * Force the use of an IPv4 socket.
+   *
+   * Since: 1.0.2
+   */
+  g_object_class_install_property (gobject_class, PROP_FORCE_IPV4,
+      g_param_spec_boolean ("force-ipv4", "Force IPv4",
+          "Forcing the use of an IPv4 socket", DEFAULT_FORCE_IPV4,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
   g_object_class_install_property (G_OBJECT_CLASS (klass), PROP_QOS_DSCP,
       g_param_spec_int ("qos-dscp", "QoS diff srv code point",
           "Quality of Service, differentiated services code point (-1 default)",
@@ -346,9 +365,10 @@ gst_multiudpsink_init (GstMultiUDPSink * sink)
   sink->ttl = DEFAULT_TTL;
   sink->ttl_mc = DEFAULT_TTL_MC;
   sink->loop = DEFAULT_LOOP;
+  sink->force_ipv4 = DEFAULT_FORCE_IPV4;
   sink->qos_dscp = DEFAULT_QOS_DSCP;
-  sink->family = DEFAULT_FAMILY;
   sink->send_duplicates = DEFAULT_SEND_DUPLICATES;
+  sink->multi_iface = g_strdup (DEFAULT_MULTICAST_IFACE);
 
   sink->cancellable = g_cancellable_new ();
 }
@@ -440,6 +460,9 @@ gst_multiudpsink_finalize (GObject * object)
     g_object_unref (sink->cancellable);
   sink->cancellable = NULL;
 
+  g_free (sink->multi_iface);
+  sink->multi_iface = NULL;
+
   g_mutex_clear (&sink->client_lock);
 
   G_OBJECT_CLASS (parent_class)->finalize (object);
@@ -485,11 +508,6 @@ gst_multiudpsink_render (GstBaseSink * bsink, GstBuffer * buffer)
   g_mutex_lock (&sink->client_lock);
   GST_LOG_OBJECT (bsink, "about to send %" G_GSIZE_FORMAT " bytes", size);
 
-  if (size > UDP_MAX_SIZE) {
-    GST_WARNING_OBJECT (bsink, "Attempting to send a UDP packet larger than "
-        "maximum size (%" G_GSIZE_FORMAT " > %d)", size, UDP_MAX_SIZE);
-  }
-
   no_clients = 0;
   num = 0;
   for (clients = sink->clients; clients; clients = g_list_next (clients)) {
@@ -510,13 +528,29 @@ gst_multiudpsink_render (GstBaseSink * bsink, GstBuffer * buffer)
           g_socket_send_message (sink->used_socket, client->addr, vec, n_mem,
           NULL, 0, 0, sink->cancellable, &err);
 
-      if (ret < 0)
-        goto send_error;
+      if (G_UNLIKELY (ret < 0)) {
+        if (g_error_matches (err, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+          goto flushing;
 
-      num++;
-      client->bytes_sent += ret;
-      client->packets_sent++;
-      sink->bytes_served += ret;
+        /* we continue after posting a warning, next packets might be ok
+         * again */
+        if (size > UDP_MAX_SIZE) {
+          GST_ELEMENT_WARNING (sink, RESOURCE, WRITE,
+              ("Attempting to send a UDP packet larger than maximum size "
+                  "(%" G_GSIZE_FORMAT " > %d)", size, UDP_MAX_SIZE),
+              ("Reason: %s", err ? err->message : "unknown reason"));
+        } else {
+          GST_ELEMENT_WARNING (sink, RESOURCE, WRITE,
+              ("Error sending UDP packet"), ("Reason: %s",
+                  err ? err->message : "unknown reason"));
+        }
+        g_clear_error (&err);
+      } else {
+        num++;
+        client->bytes_sent += ret;
+        client->packets_sent++;
+        sink->bytes_served += ret;
+      }
     }
   }
   g_mutex_unlock (&sink->client_lock);
@@ -539,18 +573,13 @@ no_data:
   {
     return GST_FLOW_OK;
   }
-send_error:
+flushing:
   {
-    GstFlowReturn res = GST_FLOW_ERROR;
-
+    GST_DEBUG ("we are flushing");
     g_mutex_unlock (&sink->client_lock);
-    GST_DEBUG ("got send error %s", err->message);
-
-    if (g_error_matches (err, G_IO_ERROR, G_IO_ERROR_CANCELLED))
-      res = GST_FLOW_FLUSHING;
-
     g_clear_error (&err);
-    return res;
+
+    return GST_FLOW_FLUSHING;
   }
 }
 
@@ -681,6 +710,14 @@ gst_multiudpsink_set_property (GObject * object, guint prop_id,
     case PROP_AUTO_MULTICAST:
       udpsink->auto_multicast = g_value_get_boolean (value);
       break;
+    case PROP_MULTICAST_IFACE:
+      g_free (udpsink->multi_iface);
+
+      if (g_value_get_string (value) == NULL)
+        udpsink->multi_iface = g_strdup (DEFAULT_MULTICAST_IFACE);
+      else
+        udpsink->multi_iface = g_value_dup_string (value);
+      break;
     case PROP_TTL:
       udpsink->ttl = g_value_get_int (value);
       break;
@@ -689,6 +726,9 @@ gst_multiudpsink_set_property (GObject * object, guint prop_id,
       break;
     case PROP_LOOP:
       udpsink->loop = g_value_get_boolean (value);
+      break;
+    case PROP_FORCE_IPV4:
+      udpsink->force_ipv4 = g_value_get_boolean (value);
       break;
     case PROP_QOS_DSCP:
       udpsink->qos_dscp = g_value_get_int (value);
@@ -737,6 +777,9 @@ gst_multiudpsink_get_property (GObject * object, guint prop_id, GValue * value,
     case PROP_AUTO_MULTICAST:
       g_value_set_boolean (value, udpsink->auto_multicast);
       break;
+    case PROP_MULTICAST_IFACE:
+      g_value_set_string (value, udpsink->multi_iface);
+      break;
     case PROP_TTL:
       g_value_set_int (value, udpsink->ttl);
       break;
@@ -745,6 +788,9 @@ gst_multiudpsink_get_property (GObject * object, guint prop_id, GValue * value,
       break;
     case PROP_LOOP:
       g_value_set_boolean (value, udpsink->loop);
+      break;
+    case PROP_FORCE_IPV4:
+      g_value_set_boolean (value, udpsink->force_ipv4);
       break;
     case PROP_QOS_DSCP:
       g_value_set_int (value, udpsink->qos_dscp);
@@ -775,8 +821,8 @@ gst_multiudpsink_configure_client (GstMultiUDPSink * sink,
     GST_DEBUG_OBJECT (sink, "we have a multicast client %p", client);
     if (sink->auto_multicast) {
       GST_DEBUG_OBJECT (sink, "autojoining group");
-      if (!g_socket_join_multicast_group (sink->used_socket, addr, FALSE, NULL,
-              &err))
+      if (!g_socket_join_multicast_group (sink->used_socket, addr, FALSE,
+              sink->multi_iface, &err))
         goto join_group_failed;
     }
     GST_DEBUG_OBJECT (sink, "setting loop to %d", sink->loop);
@@ -815,11 +861,9 @@ gst_multiudpsink_start (GstBaseSink * bsink)
   if (sink->socket == NULL) {
     GST_DEBUG_OBJECT (sink, "creating sockets");
     /* create sender socket try IP6, fall back to IP4 */
-    sink->family = G_SOCKET_FAMILY_IPV6;
-    if ((sink->used_socket =
+    if (sink->force_ipv4 || (sink->used_socket =
             g_socket_new (G_SOCKET_FAMILY_IPV6,
                 G_SOCKET_TYPE_DATAGRAM, G_SOCKET_PROTOCOL_UDP, &err)) == NULL) {
-      sink->family = G_SOCKET_FAMILY_IPV4;
       if ((sink->used_socket = g_socket_new (G_SOCKET_FAMILY_IPV4,
                   G_SOCKET_TYPE_DATAGRAM, G_SOCKET_PROTOCOL_UDP, &err)) == NULL)
         goto no_socket;
@@ -831,7 +875,6 @@ gst_multiudpsink_start (GstBaseSink * bsink)
     GST_DEBUG_OBJECT (sink, "using configured socket");
     /* we use the configured socket */
     sink->used_socket = G_SOCKET (g_object_ref (sink->socket));
-    sink->family = g_socket_get_family (sink->used_socket);
     sink->external_socket = TRUE;
   }
 
@@ -1024,8 +1067,8 @@ gst_multiudpsink_remove (GstMultiUDPSink * sink, const gchar * host, gint port)
         && g_inet_address_get_is_multicast (addr)) {
       GError *err = NULL;
 
-      if (!g_socket_leave_multicast_group (sink->used_socket, addr, FALSE, NULL,
-              &err)) {
+      if (!g_socket_leave_multicast_group (sink->used_socket, addr, FALSE,
+              sink->multi_iface, &err)) {
         GST_DEBUG_OBJECT (sink, "Failed to leave multicast group: %s",
             err->message);
         g_clear_error (&err);

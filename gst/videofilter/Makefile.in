@@ -133,7 +133,8 @@ libgstvideofilter_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 am_libgstvideofilter_la_OBJECTS = libgstvideofilter_la-plugin.lo \
 	libgstvideofilter_la-gstvideoflip.lo \
 	libgstvideofilter_la-gstvideobalance.lo \
-	libgstvideofilter_la-gstgamma.lo
+	libgstvideofilter_la-gstgamma.lo \
+	libgstvideofilter_la-gstvideomedian.lo
 libgstvideofilter_la_OBJECTS = $(am_libgstvideofilter_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -506,13 +507,14 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 plugin_LTLIBRARIES = libgstvideofilter.la
-noinst_HEADERS = gstvideoflip.h gstvideobalance.h gstgamma.h
+noinst_HEADERS = gstvideoflip.h gstvideobalance.h gstgamma.h gstvideomedian.h
 EXTRA_DIST = gstvideotemplate.c make_filter
 CLEANFILES = gstvideoexample.c
 libgstvideofilter_la_SOURCES = plugin.c \
 			gstvideoflip.c \
 			gstvideobalance.c \
-			gstgamma.c
+			gstgamma.c \
+			gstvideomedian.c
 
 libgstvideofilter_la_CFLAGS = $(GST_CFLAGS) \
 			$(GST_BASE_CFLAGS) \
@@ -602,6 +604,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstvideofilter_la-gstgamma.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstvideofilter_la-gstvideobalance.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstvideofilter_la-gstvideoflip.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstvideofilter_la-gstvideomedian.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstvideofilter_la-plugin.Plo@am__quote@
 
 .c.o:
@@ -652,6 +655,13 @@ libgstvideofilter_la-gstgamma.lo: gstgamma.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstgamma.c' object='libgstvideofilter_la-gstgamma.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstvideofilter_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstvideofilter_la_CFLAGS) $(CFLAGS) -c -o libgstvideofilter_la-gstgamma.lo `test -f 'gstgamma.c' || echo '$(srcdir)/'`gstgamma.c
+
+libgstvideofilter_la-gstvideomedian.lo: gstvideomedian.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstvideofilter_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstvideofilter_la_CFLAGS) $(CFLAGS) -MT libgstvideofilter_la-gstvideomedian.lo -MD -MP -MF $(DEPDIR)/libgstvideofilter_la-gstvideomedian.Tpo -c -o libgstvideofilter_la-gstvideomedian.lo `test -f 'gstvideomedian.c' || echo '$(srcdir)/'`gstvideomedian.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstvideofilter_la-gstvideomedian.Tpo $(DEPDIR)/libgstvideofilter_la-gstvideomedian.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstvideomedian.c' object='libgstvideofilter_la-gstvideomedian.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstvideofilter_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstvideofilter_la_CFLAGS) $(CFLAGS) -c -o libgstvideofilter_la-gstvideomedian.lo `test -f 'gstvideomedian.c' || echo '$(srcdir)/'`gstvideomedian.c
 
 mostlyclean-libtool:
 	-rm -f *.lo

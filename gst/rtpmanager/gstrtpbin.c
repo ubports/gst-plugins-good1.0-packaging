@@ -939,7 +939,7 @@ get_current_times (GstRtpBin * bin, GstClockTime * running_time,
     clock_time = gst_clock_get_time (clock);
 
     if (bin->use_pipeline_clock) {
-      ntpns = clock_time;
+      ntpns = clock_time - base_time;
     } else {
       GTimeVal current;
 
@@ -968,7 +968,7 @@ get_current_times (GstRtpBin * bin, GstClockTime * running_time,
 
 static void
 stream_set_ts_offset (GstRtpBin * bin, GstRtpBinStream * stream,
-    gint64 ts_offset)
+    gint64 ts_offset, gboolean check)
 {
   gint64 prev_ts_offset;
 
@@ -984,18 +984,20 @@ stream_set_ts_offset (GstRtpBin * bin, GstRtpBinStream * stream,
         "ts-offset %" G_GINT64_FORMAT ", prev %" G_GINT64_FORMAT
         ", diff: %" G_GINT64_FORMAT, ts_offset, prev_ts_offset, diff);
 
-    /* only change diff when it changed more than 4 milliseconds. This
-     * compensates for rounding errors in NTP to RTP timestamp
-     * conversions */
-    if (ABS (diff) > 4 * GST_MSECOND) {
-      if (ABS (diff) < (3 * GST_SECOND)) {
-        g_object_set (stream->buffer, "ts-offset", ts_offset, NULL);
-      } else {
-        GST_WARNING_OBJECT (bin, "offset unusually large, ignoring");
+    if (check) {
+      /* only change diff when it changed more than 4 milliseconds. This
+       * compensates for rounding errors in NTP to RTP timestamp
+       * conversions */
+      if (ABS (diff) < 4 * GST_MSECOND) {
+        GST_DEBUG_OBJECT (bin, "offset too small, ignoring");
+        return;
       }
-    } else {
-      GST_DEBUG_OBJECT (bin, "offset too small, ignoring");
+      if (ABS (diff) > (3 * GST_SECOND)) {
+        GST_WARNING_OBJECT (bin, "offset unusually large, ignoring");
+        return;
+      }
     }
+    g_object_set (stream->buffer, "ts-offset", ts_offset, NULL);
   }
   GST_DEBUG_OBJECT (bin, "stream SSRC %08x, delta %" G_GINT64_FORMAT,
       stream->ssrc, ts_offset);
@@ -1112,7 +1114,7 @@ gst_rtp_bin_associate (GstRtpBin * bin, GstRtpBinStream * stream, guint8 len,
     /* combine to get the final diff to apply to the running_time */
     stream->rt_delta = rtdiff - ntpdiff;
 
-    stream_set_ts_offset (bin, stream, stream->rt_delta);
+    stream_set_ts_offset (bin, stream, stream->rt_delta, FALSE);
   } else {
     gint64 min, rtp_min, clock_base = stream->clock_base;
     gboolean all_sync, use_rtp;
@@ -1264,7 +1266,7 @@ gst_rtp_bin_associate (GstRtpBin * bin, GstRtpBinStream * stream, guint8 len,
       else
         ts_offset = ostream->rt_delta - min;
 
-      stream_set_ts_offset (bin, ostream, ts_offset);
+      stream_set_ts_offset (bin, ostream, ts_offset, TRUE);
     }
   }
   return;
@@ -1786,7 +1788,7 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
 
   g_object_class_install_property (gobject_class, PROP_USE_PIPELINE_CLOCK,
       g_param_spec_boolean ("use-pipeline-clock", "Use pipeline clock",
-          "Use the pipeline clock to set the NTP time in the RTCP SR messages",
+          "Use the pipeline running-time to set the NTP time in the RTCP SR messages",
           DEFAULT_USE_PIPELINE_CLOCK,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
   /**
@@ -1803,9 +1805,11 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
   /**
    * GstRtpBin::ntp-sync:
    *
-   * Synchronize received streams to the NTP clock. When the NTP clock is shared
-   * between the receivers and the senders (such as when using ntpd) this option
-   * can be used to synchronize receivers on multiple machines.
+   * Set the NTP time from the sender reports as the running-time on the
+   * buffers. When both the sender and receiver have sychronized
+   * running-time, i.e. when the clock and base-time is shared
+   * between the receivers and the and the senders, this option can be
+   * used to synchronize receivers on multiple machines.
    *
    * Since: 0.10.21
    */
