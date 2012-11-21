@@ -196,17 +196,11 @@ gst_image_freeze_sink_setcaps (GstImageFreeze * self, GstCaps * caps)
   intersection = othercaps = NULL;
 
   /* 3. Intersect with downstream peer caps */
-  othercaps = gst_pad_peer_query_caps (self->srcpad, NULL);
-  if (othercaps) {
-    intersection = gst_caps_intersect (caps, othercaps);
-    GST_DEBUG_OBJECT (pad, "Intersecting: %" GST_PTR_FORMAT, caps);
-    GST_DEBUG_OBJECT (pad, "with: %" GST_PTR_FORMAT, othercaps);
-    GST_DEBUG_OBJECT (pad, "gave: %" GST_PTR_FORMAT, intersection);
-    gst_caps_unref (othercaps);
-    gst_caps_unref (caps);
-    caps = intersection;
-    intersection = othercaps = NULL;
-  }
+  othercaps = gst_pad_peer_query_caps (self->srcpad, caps);
+  GST_DEBUG_OBJECT (pad, "Peer query resulted: %" GST_PTR_FORMAT, othercaps);
+  gst_caps_unref (caps);
+  caps = othercaps;
+  othercaps = NULL;
 
   /* 4. For every candidate check if it's accepted downstream
    * and fixate framerate to nearest 25/1 */
@@ -216,9 +210,9 @@ gst_image_freeze_sink_setcaps (GstImageFreeze * self, GstCaps * caps)
     GstStructure *s = gst_structure_copy (gst_caps_get_structure (caps, i));
 
     gst_caps_append_structure (candidate, s);
-    if (gst_pad_peer_query_accept_caps (self->srcpad, candidate)) {
-      if (gst_structure_has_field_typed (s, "framerate", GST_TYPE_FRACTION) ||
-          gst_structure_fixate_field_nearest_fraction (s, "framerate", 25, 1)) {
+    if (gst_structure_has_field_typed (s, "framerate", GST_TYPE_FRACTION) ||
+        gst_structure_fixate_field_nearest_fraction (s, "framerate", 25, 1)) {
+      if (gst_pad_peer_query_accept_caps (self->srcpad, candidate)) {
         gst_structure_get_fraction (s, "framerate", &fps_n, &fps_d);
         if (fps_d != 0) {
           g_mutex_lock (&self->lock);

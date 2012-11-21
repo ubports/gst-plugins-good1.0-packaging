@@ -253,7 +253,7 @@ blend_##format_name (GstVideoFrame * srcframe, gint xpos, gint ypos, \
   \
   info = srcframe->info.finfo; \
   dest_width = GST_VIDEO_FRAME_WIDTH (destframe); \
-  dest_height = GST_VIDEO_FRAME_WIDTH (destframe); \
+  dest_height = GST_VIDEO_FRAME_HEIGHT (destframe); \
   \
   xpos = x_round (xpos); \
   ypos = y_round (ypos); \
@@ -273,7 +273,7 @@ blend_##format_name (GstVideoFrame * srcframe, gint xpos, gint ypos, \
     ypos = 0; \
   } \
   /* If x or y offset are larger then the source it's outside of the picture */ \
-  if (xoffset > src_width || yoffset > src_width) { \
+  if (xoffset > src_width || yoffset > src_height) { \
     return; \
   } \
   \
@@ -498,7 +498,7 @@ blend_##format_name (GstVideoFrame * srcframe, gint xpos, gint ypos, \
   \
   info = srcframe->info.finfo; \
   dest_width = GST_VIDEO_FRAME_WIDTH (destframe); \
-  dest_height = GST_VIDEO_FRAME_WIDTH (destframe); \
+  dest_height = GST_VIDEO_FRAME_HEIGHT (destframe); \
   \
   xpos = GST_ROUND_UP_2 (xpos); \
   ypos = GST_ROUND_UP_2 (ypos); \
@@ -518,7 +518,7 @@ blend_##format_name (GstVideoFrame * srcframe, gint xpos, gint ypos, \
     ypos = 0; \
   } \
   /* If x or y offset are larger then the source it's outside of the picture */ \
-  if (xoffset > src_width || yoffset > src_width) { \
+  if (xoffset > src_width || yoffset > src_height) { \
     return; \
   } \
   \

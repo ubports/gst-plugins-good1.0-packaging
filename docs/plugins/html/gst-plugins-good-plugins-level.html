@@ -127,7 +127,7 @@ The message's structure contains these fields:
 <p>
 </p>
 <div class="refsect2">
-<a name="idp14777744"></a><h3>Example application</h3>
+<a name="idp15023536"></a><h3>Example application</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
@@ -260,7 +260,15 @@ The message's structure contains these fields:
 126
 127
 128
-129</pre></td>
+129
+130
+131
+132
+133
+134
+135
+136
+137</pre></td>
         <td class="listing_code"><pre class="programlisting"><span class="comment">/* GStreamer</span>
 <span class="comment"> * Copyright (C) 2000,2001,2002,2003,2005</span>
 <span class="comment"> *           Thomas Vander Stichele &lt;thomas at apestaart dot org&gt;</span>
@@ -284,6 +292,8 @@ The message's structure contains these fields:
 <span class="gtkdoc ppc">#include &lt;string.h&gt;</span>
 <span class="gtkdoc ppc">#include &lt;math.h&gt;</span>
 
+<span class="gtkdoc ppc">#define GLIB_DISABLE_DEPRECATION_WARNINGS</span>
+
 <span class="gtkdoc ppc">#include &lt;gst/gst.h&gt;</span>
 
 <span class="gtkdoc kwb">static</span> gboolean
@@ -299,8 +309,9 @@ The message's structure contains these fields:
       GstClockTime endtime<span class="gtkdoc opt">;</span>
       gdouble rms_dB<span class="gtkdoc opt">,</span> peak_dB<span class="gtkdoc opt">,</span> decay_dB<span class="gtkdoc opt">;</span>
       gdouble rms<span class="gtkdoc opt">;</span>
-      <span class="gtkdoc kwb">const</span> GValue <span class="gtkdoc opt">*</span>list<span class="gtkdoc opt">;</span>
+      <span class="gtkdoc kwb">const</span> GValue <span class="gtkdoc opt">*</span>array_val<span class="gtkdoc opt">;</span>
       <span class="gtkdoc kwb">const</span> GValue <span class="gtkdoc opt">*</span>value<span class="gtkdoc opt">;</span>
+      GValueArray <span class="gtkdoc opt">*</span>arr<span class="gtkdoc opt">;</span>
 
       gint i<span class="gtkdoc opt">;</span>
 
@@ -308,21 +319,26 @@ The message's structure contains these fields:
         <span class="function"><a href="http://library.gnome.org/devel/glib/unstable/glib-Message-Logging.html#g-warning">g_warning</a></span> <span class="gtkdoc opt">(</span><span class="string">&quot;Could not parse endtime&quot;</span><span class="gtkdoc opt">);</span>
       <span class="comment">/* we can get the number of channels as the length of any of the value</span>
 <span class="comment">       * lists */</span>
-      list <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstStructure.html#gst-structure-get-value">gst_structure_get_value</a></span> <span class="gtkdoc opt">(</span>s<span class="gtkdoc opt">,</span> <span class="string">&quot;rms&quot;</span><span class="gtkdoc opt">);</span>
-      channels <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstValue.html#gst-value-list-get-size">gst_value_list_get_size</a></span> <span class="gtkdoc opt">(</span>list<span class="gtkdoc opt">);</span>
+      array_val <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstStructure.html#gst-structure-get-value">gst_structure_get_value</a></span> <span class="gtkdoc opt">(</span>s<span class="gtkdoc opt">,</span> <span class="string">&quot;rms&quot;</span><span class="gtkdoc opt">);</span>
+      arr <span class="gtkdoc opt">= (</span>GValueArray <span class="gtkdoc opt">*)</span> <span class="function"><a href="http://library.gnome.org/devel/gobject/unstable/gobject-Standard-Parameter-and-Value-Types.html#g-value-get-boxed">g_value_get_boxed</a></span> <span class="gtkdoc opt">(</span>array_val<span class="gtkdoc opt">);</span>
+      channels <span class="gtkdoc opt">=</span> arr<span class="gtkdoc opt">-&gt;</span>n_values<span class="gtkdoc opt">;</span>
 
       <span class="function"><a href="http://library.gnome.org/devel/glib/unstable/glib-Warnings-and-Assertions.html#g-print">g_print</a></span> <span class="gtkdoc opt">(</span><span class="string">&quot;endtime: %&quot;</span> GST_TIME_FORMAT <span class="string">&quot;, channels: %d</span><span class="gtkdoc esc">\n</span><span class="string">&quot;</span><span class="gtkdoc opt">,</span>
           <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstInfo.html#GST-TIME-ARGS:CAPS">GST_TIME_ARGS</a></span> <span class="gtkdoc opt">(</span>endtime<span class="gtkdoc opt">),</span> channels<span class="gtkdoc opt">);</span>
       <span class="keyword">for</span> <span class="gtkdoc opt">(</span>i <span class="gtkdoc opt">=</span> <span class="number">0</span><span class="gtkdoc opt">;</span> i <span class="gtkdoc opt">&lt;</span> channels<span class="gtkdoc opt">; ++</span>i<span class="gtkdoc opt">) {</span>
+
         <span class="function"><a href="http://library.gnome.org/devel/glib/unstable/glib-Warnings-and-Assertions.html#g-print">g_print</a></span> <span class="gtkdoc opt">(</span><span class="string">&quot;channel %d</span><span class="gtkdoc esc">\n</span><span class="string">&quot;</span><span class="gtkdoc opt">,</span> i<span class="gtkdoc opt">);</span>
-        list <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstStructure.html#gst-structure-get-value">gst_structure_get_value</a></span> <span class="gtkdoc opt">(</span>s<span class="gtkdoc opt">,</span> <span class="string">&quot;rms&quot;</span><span class="gtkdoc opt">);</span>
-        value <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstValue.html#gst-value-list-get-value">gst_value_list_get_value</a></span> <span class="gtkdoc opt">(</span>list<span class="gtkdoc opt">,</span> i<span class="gtkdoc opt">);</span>
+        array_val <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstStructure.html#gst-structure-get-value">gst_structure_get_value</a></span> <span class="gtkdoc opt">(</span>s<span class="gtkdoc opt">,</span> <span class="string">&quot;rms&quot;</span><span class="gtkdoc opt">);</span>
+        arr <span class="gtkdoc opt">= (</span>GValueArray <span class="gtkdoc opt">*)</span> <span class="function"><a href="http://library.gnome.org/devel/gobject/unstable/gobject-Standard-Parameter-and-Value-Types.html#g-value-get-boxed">g_value_get_boxed</a></span> <span class="gtkdoc opt">(</span>array_val<span class="gtkdoc opt">);</span>
+        value <span class="gtkdoc opt">=</span> <span class="function"><a href="http://library.gnome.org/devel/gobject/unstable/gobject-Value-arrays.html#g-value-array-get-nth">g_value_array_get_nth</a></span> <span class="gtkdoc opt">(</span>arr<span class="gtkdoc opt">,</span> i<span class="gtkdoc opt">);</span>
         rms_dB <span class="gtkdoc opt">=</span> <span class="function"><a href="http://library.gnome.org/devel/gobject/unstable/gobject-Standard-Parameter-and-Value-Types.html#g-value-get-double">g_value_get_double</a></span> <span class="gtkdoc opt">(</span>value<span class="gtkdoc opt">);</span>
-        list <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstStructure.html#gst-structure-get-value">gst_structure_get_value</a></span> <span class="gtkdoc opt">(</span>s<span class="gtkdoc opt">,</span> <span class="string">&quot;peak&quot;</span><span class="gtkdoc opt">);</span>
-        value <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstValue.html#gst-value-list-get-value">gst_value_list_get_value</a></span> <span class="gtkdoc opt">(</span>list<span class="gtkdoc opt">,</span> i<span class="gtkdoc opt">);</span>
+        array_val <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstStructure.html#gst-structure-get-value">gst_structure_get_value</a></span> <span class="gtkdoc opt">(</span>s<span class="gtkdoc opt">,</span> <span class="string">&quot;peak&quot;</span><span class="gtkdoc opt">);</span>
+        arr <span class="gtkdoc opt">= (</span>GValueArray <span class="gtkdoc opt">*)</span> <span class="function"><a href="http://library.gnome.org/devel/gobject/unstable/gobject-Standard-Parameter-and-Value-Types.html#g-value-get-boxed">g_value_get_boxed</a></span> <span class="gtkdoc opt">(</span>array_val<span class="gtkdoc opt">);</span>
+        value <span class="gtkdoc opt">=</span> <span class="function"><a href="http://library.gnome.org/devel/gobject/unstable/gobject-Value-arrays.html#g-value-array-get-nth">g_value_array_get_nth</a></span> <span class="gtkdoc opt">(</span>arr<span class="gtkdoc opt">,</span> i<span class="gtkdoc opt">);</span>
         peak_dB <span class="gtkdoc opt">=</span> <span class="function"><a href="http://library.gnome.org/devel/gobject/unstable/gobject-Standard-Parameter-and-Value-Types.html#g-value-get-double">g_value_get_double</a></span> <span class="gtkdoc opt">(</span>value<span class="gtkdoc opt">);</span>
-        list <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstStructure.html#gst-structure-get-value">gst_structure_get_value</a></span> <span class="gtkdoc opt">(</span>s<span class="gtkdoc opt">,</span> <span class="string">&quot;decay&quot;</span><span class="gtkdoc opt">);</span>
-        value <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstValue.html#gst-value-list-get-value">gst_value_list_get_value</a></span> <span class="gtkdoc opt">(</span>list<span class="gtkdoc opt">,</span> i<span class="gtkdoc opt">);</span>
+        array_val <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstStructure.html#gst-structure-get-value">gst_structure_get_value</a></span> <span class="gtkdoc opt">(</span>s<span class="gtkdoc opt">,</span> <span class="string">&quot;decay&quot;</span><span class="gtkdoc opt">);</span>
+        arr <span class="gtkdoc opt">= (</span>GValueArray <span class="gtkdoc opt">*)</span> <span class="function"><a href="http://library.gnome.org/devel/gobject/unstable/gobject-Standard-Parameter-and-Value-Types.html#g-value-get-boxed">g_value_get_boxed</a></span> <span class="gtkdoc opt">(</span>array_val<span class="gtkdoc opt">);</span>
+        value <span class="gtkdoc opt">=</span> <span class="function"><a href="http://library.gnome.org/devel/gobject/unstable/gobject-Value-arrays.html#g-value-array-get-nth">g_value_array_get_nth</a></span> <span class="gtkdoc opt">(</span>arr<span class="gtkdoc opt">,</span> i<span class="gtkdoc opt">);</span>
         decay_dB <span class="gtkdoc opt">=</span> <span class="function"><a href="http://library.gnome.org/devel/gobject/unstable/gobject-Standard-Parameter-and-Value-Types.html#g-value-get-double">g_value_get_double</a></span> <span class="gtkdoc opt">(</span>value<span class="gtkdoc opt">);</span>
         <span class="function"><a href="http://library.gnome.org/devel/glib/unstable/glib-Warnings-and-Assertions.html#g-print">g_print</a></span> <span class="gtkdoc opt">(</span><span class="string">&quot;    RMS: %f dB, peak: %f dB, decay: %f dB</span><span class="gtkdoc esc">\n</span><span class="string">&quot;</span><span class="gtkdoc opt">,</span>
             rms_dB<span class="gtkdoc opt">,</span> peak_dB<span class="gtkdoc opt">,</span> decay_dB<span class="gtkdoc opt">);</span>
@@ -401,7 +417,7 @@ The message's structure contains these fields:
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp13199440"></a><h3>Element Information</h3>
+<a name="idp13716912"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -424,7 +440,7 @@ The message's structure contains these fields:
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp14223920"></a><h3>Element Pads</h3>
+<a name="idp11522544"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
