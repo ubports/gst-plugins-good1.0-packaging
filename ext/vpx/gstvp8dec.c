@@ -292,13 +292,16 @@ gst_vp8_dec_stop (GstVideoDecoder * base_video_decoder)
     gst_video_codec_state_unref (gst_vp8_dec->output_state);
     gst_vp8_dec->output_state = NULL;
   }
+
   if (gst_vp8_dec->input_state) {
     gst_video_codec_state_unref (gst_vp8_dec->input_state);
     gst_vp8_dec->input_state = NULL;
   }
+
   if (gst_vp8_dec->decoder_inited)
     vpx_codec_destroy (&gst_vp8_dec->decoder);
   gst_vp8_dec->decoder_inited = FALSE;
+
   return TRUE;
 }
 
@@ -308,6 +311,9 @@ gst_vp8_dec_set_format (GstVideoDecoder * decoder, GstVideoCodecState * state)
   GstVP8Dec *gst_vp8_dec = GST_VP8_DEC (decoder);
 
   GST_DEBUG_OBJECT (gst_vp8_dec, "set_format");
+
+  if (gst_vp8_dec->decoder_inited)
+    vpx_codec_destroy (&gst_vp8_dec->decoder);
   gst_vp8_dec->decoder_inited = FALSE;
 
   if (gst_vp8_dec->input_state)
@@ -330,10 +336,7 @@ gst_vp8_dec_reset (GstVideoDecoder * base_video_decoder, gboolean hard)
     gst_video_codec_state_unref (decoder->output_state);
     decoder->output_state = NULL;
   }
-  if (hard && decoder->input_state) {
-    gst_video_codec_state_unref (decoder->input_state);
-    decoder->input_state = NULL;
-  }
+
   if (decoder->decoder_inited)
     vpx_codec_destroy (&decoder->decoder);
   decoder->decoder_inited = FALSE;
@@ -415,7 +418,7 @@ open_codec (GstVP8Dec * dec, GstVideoCodecFrame * frame)
   if (status != VPX_CODEC_OK || !stream_info.is_kf) {
     GST_WARNING_OBJECT (dec, "No keyframe, skipping");
     gst_video_decoder_finish_frame (GST_VIDEO_DECODER (dec), frame);
-    return GST_FLOW_OK;
+    return GST_FLOW_CUSTOM_SUCCESS_1;
   }
 
   g_assert (dec->output_state == NULL);
@@ -483,8 +486,13 @@ gst_vp8_dec_handle_frame (GstVideoDecoder * decoder, GstVideoCodecFrame * frame)
 
   dec = GST_VP8_DEC (decoder);
 
-  if (!dec->decoder_inited)
+  if (!dec->decoder_inited) {
     ret = open_codec (dec, frame);
+    if (ret == GST_FLOW_CUSTOM_SUCCESS_1)
+      return GST_FLOW_OK;
+    else if (ret != GST_FLOW_OK)
+      return ret;
+  }
 
   deadline = gst_video_decoder_get_max_decode_time (decoder, frame);
   if (deadline < 0) {
@@ -506,9 +514,9 @@ gst_vp8_dec_handle_frame (GstVideoDecoder * decoder, GstVideoCodecFrame * frame)
   gst_buffer_unmap (frame->input_buffer, &minfo);
 
   if (status) {
-    GST_ELEMENT_ERROR (decoder, LIBRARY, ENCODE,
-        ("Failed to decode frame"), ("%s", gst_vpx_error_name (status)));
-    return GST_FLOW_ERROR;
+    GST_VIDEO_DECODER_ERROR (decoder, 1, LIBRARY, ENCODE,
+        ("Failed to decode frame"), ("%s", gst_vpx_error_name (status)), ret);
+    return ret;
   }
 
   img = vpx_codec_get_frame (&dec->decoder, &iter);

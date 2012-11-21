@@ -128,7 +128,8 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(plugindir)"
 LTLIBRARIES = $(plugin_LTLIBRARIES)
 am__DEPENDENCIES_1 =
-libgsty4menc_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+libgsty4menc_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_libgsty4menc_la_OBJECTS = libgsty4menc_la-gsty4mencode.lo
 libgsty4menc_la_OBJECTS = $(am_libgsty4menc_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -503,8 +504,8 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 plugin_LTLIBRARIES = libgsty4menc.la
 libgsty4menc_la_SOURCES = gsty4mencode.c
-libgsty4menc_la_CFLAGS = $(GST_CFLAGS) $(GST_PLUGINS_BASE_CFLAGS)
-libgsty4menc_la_LIBADD = $(GST_LIBS) -lgstvideo-$(GST_API_VERSION)
+libgsty4menc_la_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_CFLAGS)
+libgsty4menc_la_LIBADD = $(GST_PLUGINS_BASE_LIBS) -lgstvideo-$(GST_API_VERSION) $(GST_LIBS)
 libgsty4menc_la_LDFLAGS = $(GST_PLUGIN_LDFLAGS)
 libgsty4menc_la_LIBTOOLFLAGS = --tag=disable-static
 noinst_HEADERS = gsty4mencode.h

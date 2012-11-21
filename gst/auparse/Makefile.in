@@ -129,7 +129,7 @@ am__installdirs = "$(DESTDIR)$(plugindir)"
 LTLIBRARIES = $(plugin_LTLIBRARIES)
 am__DEPENDENCIES_1 =
 libgstauparse_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_libgstauparse_la_OBJECTS = libgstauparse_la-gstauparse.lo
 libgstauparse_la_OBJECTS = $(am_libgstauparse_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -505,7 +505,7 @@ top_srcdir = @top_srcdir@
 plugin_LTLIBRARIES = libgstauparse.la
 libgstauparse_la_SOURCES = gstauparse.c
 libgstauparse_la_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_BASE_CFLAGS) $(GST_CFLAGS)
-libgstauparse_la_LIBADD = $(GST_LIBS) $(GST_BASE_LIBS) -lgstaudio-$(GST_API_VERSION)
+libgstauparse_la_LIBADD = $(GST_PLUGINS_BASE_LIBS) -lgstaudio-$(GST_API_VERSION) $(GST_LIBS) $(GST_BASE_LIBS)
 libgstauparse_la_LDFLAGS = $(GST_PLUGIN_LDFLAGS)
 libgstauparse_la_LIBTOOLFLAGS = --tag=disable-static
 noinst_HEADERS = gstauparse.h

@@ -129,7 +129,7 @@ am__installdirs = "$(DESTDIR)$(plugindir)"
 LTLIBRARIES = $(plugin_LTLIBRARIES)
 am__DEPENDENCIES_1 =
 libgstlevel_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_libgstlevel_la_OBJECTS = libgstlevel_la-gstlevel.lo
 libgstlevel_la_OBJECTS = $(am_libgstlevel_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -505,7 +505,7 @@ top_srcdir = @top_srcdir@
 plugin_LTLIBRARIES = libgstlevel.la
 libgstlevel_la_SOURCES = gstlevel.c
 libgstlevel_la_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_BASE_CFLAGS) $(GST_CFLAGS)
-libgstlevel_la_LIBADD = $(GST_BASE_LIBS) $(LIBM) -lgstaudio-$(GST_API_VERSION)
+libgstlevel_la_LIBADD = $(GST_PLUGINS_BASE_LIBS) -lgstaudio-$(GST_API_VERSION) $(GST_BASE_LIBS) $(LIBM)
 libgstlevel_la_LDFLAGS = $(GST_PLUGIN_LDFLAGS)
 libgstlevel_la_LIBTOOLFLAGS = --tag=disable-static
 noinst_HEADERS = gstlevel.h

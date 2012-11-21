@@ -129,7 +129,8 @@ am__installdirs = "$(DESTDIR)$(plugindir)"
 LTLIBRARIES = $(plugin_LTLIBRARIES)
 am__DEPENDENCIES_1 =
 libgstcacasink_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_libgstcacasink_la_OBJECTS = libgstcacasink_la-gstcacasink.lo
 libgstcacasink_la_OBJECTS = $(am_libgstcacasink_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -511,6 +512,7 @@ libgstcacasink_la_CFLAGS = \
 	$(LIBCACA_CFLAGS)
 
 libgstcacasink_la_LIBADD = \
+	$(GST_PLUGINS_BASE_LIBS) \
 	-lgstvideo-$(GST_API_VERSION) \
 	$(GST_BASE_LIBS) \
 	$(GST_LIBS) \
