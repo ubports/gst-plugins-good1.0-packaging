@@ -5,7 +5,7 @@ dnl please read gstreamer/docs/random/autotools before changing this file
 dnl initialize autoconf
 dnl releases only do -Wall, git and prerelease does -Werror too
 dnl use a three digit version number for releases, and four for git/pre
-AC_INIT(GStreamer Good Plug-ins, 1.0.3,
+AC_INIT(GStreamer Good Plug-ins, 1.0.4,
     http://bugzilla.gnome.org/enter_bug.cgi?product=GStreamer,
     gst-plugins-good)
 
@@ -45,7 +45,7 @@ AC_DEFINE_UNQUOTED(GST_API_VERSION, "$GST_API_VERSION",
   [GStreamer API Version])
 
 AG_GST_LIBTOOL_PREPARE
-AS_LIBTOOL(GST, 3, 0, 3)
+AS_LIBTOOL(GST, 4, 0, 4)
 
 dnl *** required versions of GStreamer stuff ***
 GST_REQ=1.0.0
@@ -471,6 +471,8 @@ AG_GST_CHECK_FEATURE(GST_V4L2, [Video 4 Linux 2], v4l2src, [
 #ifdef __sun /* Solaris */
 #include <sys/types.h>
 #include <sys/videodev2.h>
+#elif __FreeBSD__
+#include <linux/videodev2.h>
 #else /* Linux */
 #include <linux/types.h>
 #define _LINUX_TIME_H
@@ -512,6 +514,8 @@ return 0;
 #ifdef __sun /* Solaris */
 #include <sys/types.h>
 #include <sys/videodev2.h>
+#elif __FreeBSD__
+#include <linux/videodev2.h>
 #else /* Linux */
 #include <linux/types.h>
 #define _LINUX_TIME_H
