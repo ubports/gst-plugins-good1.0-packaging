@@ -4,7 +4,7 @@
 %define gst_minver   0.11.0
 
 Name: 		%{gstreamer}-plugins-good
-Version: 	1.0.4
+Version: 	1.0.5
 Release: 	1.gst
 Summary: 	GStreamer plug-ins with good code and licensing
 
@@ -100,7 +100,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/gstreamer-%{majorminor}/libgstdebug.so
 %{_libdir}/gstreamer-%{majorminor}/libgstnavigationtest.so
 %{_libdir}/gstreamer-%{majorminor}/libgstalphacolor.so
-#%{_libdir}/gstreamer-%{majorminor}/libgstcairo.so
+%{_libdir}/gstreamer-%{majorminor}/libgstcairo.so
 %{_libdir}/gstreamer-%{majorminor}/libgstflxdec.so
 %{_libdir}/gstreamer-%{majorminor}/libgstmatroska.so
 %{_libdir}/gstreamer-%{majorminor}/libgstvideomixer.so
