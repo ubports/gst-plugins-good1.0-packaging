@@ -143,8 +143,6 @@ AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
 BZ2_LIBS = @BZ2_LIBS@
 CAIRO_CFLAGS = @CAIRO_CFLAGS@
-CAIRO_GOBJECT_CFLAGS = @CAIRO_GOBJECT_CFLAGS@
-CAIRO_GOBJECT_LIBS = @CAIRO_GOBJECT_LIBS@
 CAIRO_LIBS = @CAIRO_LIBS@
 CC = @CC@
 CCAS = @CCAS@
@@ -512,9 +510,6 @@ IGNORE_CFILES =
 # the registry won't have the element
 EXTRA_HFILES = \
 	$(top_srcdir)/ext/aalib/gstaasink.h \
-	$(top_srcdir)/ext/cairo/gsttextoverlay.h \
-	$(top_srcdir)/ext/cairo/gsttimeoverlay.h \
-	$(top_srcdir)/ext/cairo/gstcairorender.h \
 	$(top_srcdir)/ext/cairo/gstcairooverlay.h \
 	$(top_srcdir)/ext/dv/gstdvdec.h \
 	$(top_srcdir)/ext/dv/gstdvdemux.h \
