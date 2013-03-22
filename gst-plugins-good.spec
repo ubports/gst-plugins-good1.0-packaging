@@ -4,7 +4,7 @@
 %define gst_minver   0.11.0
 
 Name: 		%{gstreamer}-plugins-good
-Version: 	1.0.5
+Version: 	1.0.6
 Release: 	1.gst
 Summary: 	GStreamer plug-ins with good code and licensing
 

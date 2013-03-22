@@ -281,6 +281,9 @@ static gboolean gst_rtspsrc_push_event (GstRTSPSrc * src, GstEvent * event);
 #define CMD_RECONNECT	(1 << 5)
 #define CMD_LOOP	(1 << 6)
 
+/* mask for all commands */
+#define CMD_ALL         ((CMD_LOOP << 1) - 1)
+
 #define GST_ELEMENT_PROGRESS(el, type, code, text)      \
 G_STMT_START {                                          \
   gchar *__txt = _gst_element_error_printf text;        \
@@ -2230,6 +2233,9 @@ new_manager_pad (GstElement * manager, GstPad * pad, GstRTSPSrc * src)
   if (stream == NULL)
     goto unknown_stream;
 
+  /* save SSRC */
+  stream->ssrc = ssrc;
+
   /* we'll add it later see below */
   stream->added = TRUE;
 
@@ -2332,20 +2338,30 @@ static void
 on_bye_ssrc (GObject * session, GObject * source, GstRTSPStream * stream)
 {
   GstRTSPSrc *src = stream->parent;
+  guint ssrc;
 
-  GST_DEBUG_OBJECT (src, "source in session %u received BYE", stream->id);
+  g_object_get (source, "ssrc", &ssrc, NULL);
 
-  gst_rtspsrc_do_stream_eos (src, stream);
+  GST_DEBUG_OBJECT (src, "source %08x, stream %08x, session %u received BYE",
+      ssrc, stream->ssrc, stream->id);
+
+  if (ssrc == stream->ssrc)
+    gst_rtspsrc_do_stream_eos (src, stream);
 }
 
 static void
 on_timeout (GObject * session, GObject * source, GstRTSPStream * stream)
 {
   GstRTSPSrc *src = stream->parent;
+  guint ssrc;
 
-  GST_DEBUG_OBJECT (src, "source in session %u timed out", stream->id);
+  g_object_get (source, "ssrc", &ssrc, NULL);
 
-  gst_rtspsrc_do_stream_eos (src, stream);
+  GST_WARNING_OBJECT (src, "source %08x, stream %08x in session %u timed out",
+      ssrc, stream->ssrc, stream->id);
+
+  if (ssrc == stream->ssrc)
+    gst_rtspsrc_do_stream_eos (src, stream);
 }
 
 static void
@@ -6651,7 +6667,7 @@ gst_rtspsrc_stop (GstRTSPSrc * src)
   GST_DEBUG_OBJECT (src, "stopping");
 
   /* also cancels pending task */
-  gst_rtspsrc_loop_send_cmd (src, CMD_WAIT, CMD_CLOSE);
+  gst_rtspsrc_loop_send_cmd (src, CMD_WAIT, CMD_ALL);
 
   GST_OBJECT_LOCK (src);
   if ((task = src->task)) {
