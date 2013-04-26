@@ -5,7 +5,7 @@ dnl please read gstreamer/docs/random/autotools before changing this file
 dnl initialize autoconf
 dnl releases only do -Wall, git and prerelease does -Werror too
 dnl use a three digit version number for releases, and four for git/pre
-AC_INIT(GStreamer Good Plug-ins, 1.0.6,
+AC_INIT(GStreamer Good Plug-ins, 1.0.7,
     http://bugzilla.gnome.org/enter_bug.cgi?product=GStreamer,
     gst-plugins-good)
 
@@ -260,6 +260,28 @@ AG_GST_SET_PACKAGE_RELEASE_DATETIME_WITH_NANO([$PACKAGE_VERSION_NANO],
   ["${srcdir}/gst-plugins-good.doap"],
   [$PACKAGE_VERSION_MAJOR.$PACKAGE_VERSION_MINOR.$PACKAGE_VERSION_MICRO])
 
+dnl build static plugins or not
+AC_MSG_CHECKING([whether to build static plugins or not])
+AC_ARG_ENABLE(
+  static-plugins,
+  AC_HELP_STRING(
+    [--enable-static-plugins],
+    [build static plugins @<:@default=no@:>@]),
+  [AS_CASE(
+    [$enableval], [no], [], [yes], [],
+    [AC_MSG_ERROR([bad value "$enableval" for --enable-static-plugins])])],
+  [enable_static_plugins=no])
+AC_MSG_RESULT([$enable_static_plugins])
+if test "x$enable_static_plugins" = xyes; then
+  AC_DEFINE(GST_PLUGIN_BUILD_STATIC, 1,
+    [Define if static plugins should be built])
+  GST_PLUGIN_LIBTOOLFLAGS=""
+else
+  GST_PLUGIN_LIBTOOLFLAGS="--tag=disable-static"
+fi
+AC_SUBST(GST_PLUGIN_LIBTOOLFLAGS)
+AM_CONDITIONAL(GST_PLUGIN_BUILD_STATIC, test "x$enable_static_plugins" = "xyes")
+
 # set by AG_GST_PARSE_SUBSYSTEM_DISABLES above
 dnl make sure it doesn't complain about unused variables if debugging is disabled
 NO_WARNINGS=""
@@ -294,11 +316,6 @@ dnl used in examples
 AG_GST_DEFAULT_ELEMENTS
 
 dnl *** plug-ins to include ***
-
-dnl Non ported plugins (non-dependant, then dependant)
-dnl Make sure you have a space before and after all plugins
-GST_PLUGINS_NONPORTED="osx_audio "
-AC_SUBST(GST_PLUGINS_NONPORTED)
 
 dnl these are all the gst plug-ins, compilable without additional libs
 dnl videofilter is at the top because others depend on it
@@ -439,9 +456,24 @@ AG_GST_CHECK_FEATURE(SUNAUDIO, [Sun Audio], sunaudio, [
 
 dnl *** OSX Audio ***
 translit(dnm, m, l) AM_CONDITIONAL(USE_OSX_AUDIO, true)
+HAVE_IOS="no"
 AG_GST_CHECK_FEATURE(OSX_AUDIO, [OSX audio], osxaudio, [
-  AC_CHECK_HEADER(CoreAudio/CoreAudio.h, HAVE_OSX_AUDIO="yes", HAVE_OSX_AUDIO="no")
+  AC_CHECK_HEADER(CoreAudio/CoreAudio.h,
+    [HAVE_OSX_AUDIO="yes"],
+    [AC_CHECK_HEADER(CoreAudio/CoreAudioTypes.h,
+    [
+      HAVE_OSX_AUDIO="yes"
+      HAVE_IOS="yes"
+    ], [
+      HAVE_OSX_AUDIO="no"
+      HAVE_IOS="no"
+    ])]
+  )
 ])
+if test "x$HAVE_IOS" = "xyes"; then
+  AC_DEFINE(HAVE_IOS, 1, [building for iOS platofrm])
+fi
+AM_CONDITIONAL(HAVE_IOS, test "x$HAVE_IOS" = "xyes")
 
 dnl *** OS X video ***
 translit(dnm, m, l) AM_CONDITIONAL(USE_OSX_VIDEO, true)
@@ -1046,7 +1078,7 @@ AC_SUBST(GST_ALL_LDFLAGS)
 
 dnl this really should only contain flags, not libs - they get added before
 dnl whatevertarget_LIBS and -L flags here affect the rest of the linking
-GST_PLUGIN_LDFLAGS="-module -avoid-version -export-symbols-regex '^[_]*gst_plugin_desc.*' $GST_ALL_LDFLAGS"
+GST_PLUGIN_LDFLAGS="-module -avoid-version -export-symbols-regex '^[_]*gst_plugin_.*' $GST_ALL_LDFLAGS"
 AC_SUBST(GST_PLUGIN_LDFLAGS)
 
 dnl *** output files ***

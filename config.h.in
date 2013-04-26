@@ -55,6 +55,9 @@
 /* GStreamer package release date/time for plugins as YYYY-MM-DD */
 #undef GST_PACKAGE_RELEASE_DATETIME
 
+/* Define if static plugins should be built */
+#undef GST_PLUGIN_BUILD_STATIC
+
 /* struct v4l2_buffer missing */
 #undef GST_V4L2_MISSING_BUFDECL
 
@@ -187,6 +190,9 @@
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
+
+/* building for iOS platofrm */
+#undef HAVE_IOS
 
 /* Define if we have struct ip_mreqn */
 #undef HAVE_IP_MREQN

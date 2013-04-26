@@ -45,71 +45,54 @@
 #ifndef __GST_OSX_RING_BUFFER_H__
 #define __GST_OSX_RING_BUFFER_H__
 
-#include <gst/gst.h>
-#include <gst/audio/gstringbuffer.h>
-#include <CoreAudio/CoreAudio.h>
-#include <AudioToolbox/AudioToolbox.h>
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
 
-#include "gstosxaudioelement.h"
+#include <gst/gst.h>
+#include <gst/audio/audio.h>
+#include <gst/audio/gstaudioringbuffer.h>
+#include <gstosxcoreaudio.h>
+
 
 G_BEGIN_DECLS
 
-#define GST_TYPE_OSX_RING_BUFFER \
-  (gst_osx_ring_buffer_get_type())
-#define GST_OSX_RING_BUFFER(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_OSX_RING_BUFFER,GstOsxRingBuffer))
-#define GST_OSX_RING_BUFFER_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_OSX_RING_BUFFER,GstOsxRingBufferClass))
-#define GST_OSX_RING_BUFFER_GET_CLASS(obj) \
-  (G_TYPE_INSTANCE_GET_CLASS((obj),GST_TYPE_OSX_RING_BUFFER,GstOsxRingBufferClass))
-#define GST_IS_OSX_RING_BUFFER(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE((obj),GST_TYPE_OSX_RING_BUFFER))
-#define GST_IS_OSX_RING_BUFFER_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE((klass),GST_TYPE_OSX_RING_BUFFER))
+#define GST_TYPE_OSX_AUDIO_RING_BUFFER \
+  (gst_osx_audio_ring_buffer_get_type())
+#define GST_OSX_AUDIO_RING_BUFFER(obj) \
+  (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_OSX_AUDIO_RING_BUFFER,GstOsxAudioRingBuffer))
+#define GST_OSX_AUDIO_RING_BUFFER_CLASS(klass) \
+  (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_OSX_AUDIO_RING_BUFFER,GstOsxAudioRingBufferClass))
+#define GST_OSX_AUDIO_RING_BUFFER_GET_CLASS(obj) \
+  (G_TYPE_INSTANCE_GET_CLASS((obj),GST_TYPE_OSX_AUDIO_RING_BUFFER,GstOsxAudioRingBufferClass))
+#define GST_IS_OSX_AUDIO_RING_BUFFER(obj) \
+  (G_TYPE_CHECK_INSTANCE_TYPE((obj),GST_TYPE_OSX_AUDIO_RING_BUFFER))
+#define GST_IS_OSX_AUDIO_RING_BUFFER_CLASS(klass) \
+  (G_TYPE_CHECK_CLASS_TYPE((klass),GST_TYPE_OSX_AUDIO_RING_BUFFER))
 
-#define RINGBUFFER_IS_SPDIF(t) ((t) == GST_BUFTYPE_AC3 || (t) == GST_BUFTYPE_DTS)
+#define RINGBUFFER_IS_SPDIF(t) ((t) == GST_AUDIO_RING_BUFFER_FORMAT_TYPE_AC3 || (t) == GST_AUDIO_RING_BUFFER_FORMAT_TYPE_DTS)
 
-typedef struct _GstOsxRingBuffer GstOsxRingBuffer;
-typedef struct _GstOsxRingBufferClass GstOsxRingBufferClass;
+typedef struct _GstOsxAudioRingBuffer GstOsxAudioRingBuffer;
+typedef struct _GstOsxAudioRingBufferClass GstOsxAudioRingBufferClass;
 
-struct _GstOsxRingBuffer
+struct _GstOsxAudioRingBuffer
 {
-  GstRingBuffer object;
+  GstAudioRingBuffer object;
 
-  gboolean is_src;
-  gboolean is_passthrough;
-  gint stream_idx;
+  GstCoreAudio *core_audio;
 
-  AudioDeviceID device_id;
-  gboolean io_proc_active;
-  gboolean io_proc_needs_deactivation;
   guint buffer_len;
   guint segoffset;
-
-  GstOsxAudioElementInterface *element;
-
-  /* For LPCM in/out */
-  AudioUnit audiounit;
-  AudioBufferList *recBufferList;
-
-  /* For SPDIF out */
-  pid_t hog_pid;
-  gboolean disabled_mixing;
-  AudioStreamID stream_id;
-  gboolean revert_format;
-  AudioStreamBasicDescription stream_format;
-  AudioStreamBasicDescription original_format;
-  AudioDeviceIOProcID procID;
 };
 
-struct _GstOsxRingBufferClass
+struct _GstOsxAudioRingBufferClass
 {
-  GstRingBufferClass parent_class;
+  GstAudioRingBufferClass parent_class;
 };
 
-GType gst_osx_ring_buffer_get_type (void);
+GType gst_osx_audio_ring_buffer_get_type (void);
 
 G_END_DECLS
 
-#endif /* __GST_OSX_RING_BUFFER_H__ */
+#endif /* __GST_OSX_AUDIO_RING_BUFFER_H__ */
 

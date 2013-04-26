@@ -5,9 +5,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: gst-plugins-good 1.0.6\n"
+"Project-Id-Version: gst-plugins-good 1.0.7\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2013-03-22 13:29+0000\n"
+"POT-Creation-Date: 2013-04-26 12:50+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -30,32 +30,32 @@ msgstr ""
 msgid "Could not connect to server"
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:803
+#: ext/soup/gstsouphttpsrc.c:817
 msgid "Server does not support seeking."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1030
+#: ext/soup/gstsouphttpsrc.c:1044
 msgid "Could not resolve server name."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1036
+#: ext/soup/gstsouphttpsrc.c:1050
 msgid "Could not establish connection to server."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1041
+#: ext/soup/gstsouphttpsrc.c:1055
 msgid "Secure connection setup failed."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1046
+#: ext/soup/gstsouphttpsrc.c:1060
 msgid ""
 "A network error occured, or the server closed the connection unexpectedly."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1052
+#: ext/soup/gstsouphttpsrc.c:1066
 msgid "Server sent bad data."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1197
+#: ext/soup/gstsouphttpsrc.c:1213
 msgid "No URL set."
 msgstr ""
 
@@ -80,7 +80,7 @@ msgstr ""
 #: gst/isomp4/qtdemux.c:2623 gst/isomp4/qtdemux.c:4968
 #: gst/isomp4/qtdemux.c:4975 gst/isomp4/qtdemux.c:5613
 #: gst/isomp4/qtdemux.c:6041 gst/isomp4/qtdemux.c:6048
-#: gst/isomp4/qtdemux.c:7644
+#: gst/isomp4/qtdemux.c:7645
 msgid "This file is corrupt and cannot be played."
 msgstr ""
 
@@ -96,7 +96,7 @@ msgstr ""
 msgid "The video in this file might not play correctly."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:7673
+#: gst/isomp4/qtdemux.c:7674
 #, c-format
 msgid "This file contains too many streams. Only playing first %d"
 msgstr ""
@@ -114,7 +114,7 @@ msgid ""
 "plugin."
 msgstr ""
 
-#: gst/wavparse/gstwavparse.c:2385
+#: gst/wavparse/gstwavparse.c:2387
 msgid "Internal data flow error."
 msgstr ""
 
@@ -205,7 +205,7 @@ msgstr ""
 msgid "AUX 2 Out"
 msgstr ""
 
-#: sys/v4l2/gstv4l2bufferpool.c:1009
+#: sys/v4l2/gstv4l2bufferpool.c:1010
 #, c-format
 msgid "Error reading %d bytes from device '%s'."
 msgstr ""
@@ -215,51 +215,51 @@ msgstr ""
 msgid "Failed to enumerate possible video formats device '%s' can work with"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2186
+#: sys/v4l2/gstv4l2object.c:2187
 #, c-format
 msgid "Could not map buffers from device '%s'"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2194
+#: sys/v4l2/gstv4l2object.c:2195
 #, c-format
 msgid "The driver of device '%s' does not support the IO method %d"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2201
+#: sys/v4l2/gstv4l2object.c:2202
 #, c-format
 msgid "The driver of device '%s' does not support any known IO method."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2395
+#: sys/v4l2/gstv4l2object.c:2396
 #, c-format
 msgid "Device '%s' does not support video capture"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2404
+#: sys/v4l2/gstv4l2object.c:2405
 #, c-format
 msgid "Device '%s' is busy"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2410 sys/v4l2/gstv4l2object.c:2421
+#: sys/v4l2/gstv4l2object.c:2411 sys/v4l2/gstv4l2object.c:2422
 #, c-format
 msgid "Device '%s' cannot capture at %dx%d"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2430
+#: sys/v4l2/gstv4l2object.c:2431
 #, c-format
 msgid "Device '%s' cannot capture in the specified format"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2443
+#: sys/v4l2/gstv4l2object.c:2444
 #, c-format
 msgid "Could not get parameters on device '%s'"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2451
+#: sys/v4l2/gstv4l2object.c:2452
 msgid "Video device did not accept new frame rate setting."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2458
+#: sys/v4l2/gstv4l2object.c:2459
 msgid "Video device could not create buffer pool."
 msgstr ""
 
