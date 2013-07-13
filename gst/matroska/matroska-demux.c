@@ -2050,8 +2050,11 @@ next:
     gst_pad_pause_task (demux->common.sinkpad);
   }
   /* ouch */
-  if (!update)
+  if (!update) {
+    GST_PAD_STREAM_LOCK (demux->common.sinkpad);
+    pad_locked = TRUE;
     goto exit;
+  }
 
   /* now grab the stream lock so that streaming cannot continue, for
    * non flushing seeks when the element is in PAUSED this could block
@@ -5502,7 +5505,8 @@ gst_matroska_demux_audio_caps (GstMatroskaTrackAudioContext *
     if (priv) {
       caps = gst_caps_new_simple ("audio/mpeg",
           "mpegversion", G_TYPE_INT, mpegversion,
-          "framed", G_TYPE_BOOLEAN, TRUE, NULL);
+          "framed", G_TYPE_BOOLEAN, TRUE,
+          "stream-format", G_TYPE_STRING, "raw", NULL);
       gst_caps_set_simple (caps, "codec_data", GST_TYPE_BUFFER, priv, NULL);
       *codec_name = g_strdup_printf ("MPEG-%d AAC audio", mpegversion);
       gst_buffer_unref (priv);

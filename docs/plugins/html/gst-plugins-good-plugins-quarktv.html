@@ -65,32 +65,31 @@
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-quarktv.description"></a><h2>Description</h2>
 <p>
-RevTV acts like a video waveform monitor for each line of video
-processed. This creates a pseudo 3D effect based on the brightness
-of the video along each line.
+QuarkTV disolves moving objects. It picks up pixels from
+the last frames randomly.
 </p>
 <p>
 </p>
 <div class="refsect2">
-<a name="idp15814864"></a><h3>Example launch line</h3>
+<a name="idp16254704"></a><h3>Example launch line</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
       <tr>
         <td class="listing_lines" align="right"><pre>1</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> <span class="gtkdoc opt">-</span>v videotestsrc <span class="gtkdoc opt">!</span> revtv <span class="gtkdoc opt">!</span> videoconvert <span class="gtkdoc opt">!</span> autovideosink</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> <span class="gtkdoc opt">-</span>v videotestsrc <span class="gtkdoc opt">!</span> quarktv <span class="gtkdoc opt">!</span> videoconvert <span class="gtkdoc opt">!</span> autovideosink</pre></td>
       </tr>
     </tbody>
   </table>
 </div>
- This pipeline shows the effect of revtv on a test stream.
+ This pipeline shows the effect of quarktv on a test stream.
 </div>
 <p>
 </p>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp14220784"></a><h3>Element Information</h3>
+<a name="idp16649088"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -113,7 +112,7 @@ of the video along each line.
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp10961408"></a><h3>Element Pads</h3>
+<a name="idp13710144"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
