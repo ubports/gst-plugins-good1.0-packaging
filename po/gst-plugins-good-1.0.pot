@@ -5,9 +5,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: gst-plugins-good 1.0.7\n"
+"Project-Id-Version: gst-plugins-good 1.0.8\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2013-04-26 12:50+0200\n"
+"POT-Creation-Date: 2013-07-11 20:03+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,7 +22,7 @@ msgstr ""
 msgid "'%s' by '%s'"
 msgstr ""
 
-#: ext/jpeg/gstjpegdec.c:250
+#: ext/jpeg/gstjpegdec.c:251
 msgid "Failed to decode JPEG image"
 msgstr ""
 
@@ -59,7 +59,7 @@ msgstr ""
 msgid "No URL set."
 msgstr ""
 
-#: gst/avi/gstavidemux.c:5285
+#: gst/avi/gstavidemux.c:5289
 msgid "Internal data stream error."
 msgstr ""
 
@@ -71,16 +71,16 @@ msgstr ""
 msgid "This file contains no playable streams."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:596 gst/isomp4/qtdemux.c:4138
-#: gst/isomp4/qtdemux.c:4204 gst/isomp4/qtdemux.c:4359
+#: gst/isomp4/qtdemux.c:596 gst/isomp4/qtdemux.c:4142
+#: gst/isomp4/qtdemux.c:4208 gst/isomp4/qtdemux.c:4363
 msgid "This file is invalid and cannot be played."
 msgstr ""
 
 #: gst/isomp4/qtdemux.c:2504 gst/isomp4/qtdemux.c:2580
-#: gst/isomp4/qtdemux.c:2623 gst/isomp4/qtdemux.c:4968
-#: gst/isomp4/qtdemux.c:4975 gst/isomp4/qtdemux.c:5613
-#: gst/isomp4/qtdemux.c:6041 gst/isomp4/qtdemux.c:6048
-#: gst/isomp4/qtdemux.c:7645
+#: gst/isomp4/qtdemux.c:2623 gst/isomp4/qtdemux.c:4972
+#: gst/isomp4/qtdemux.c:4979 gst/isomp4/qtdemux.c:5617
+#: gst/isomp4/qtdemux.c:6045 gst/isomp4/qtdemux.c:6052
+#: gst/isomp4/qtdemux.c:7654
 msgid "This file is corrupt and cannot be played."
 msgstr ""
 
@@ -92,11 +92,11 @@ msgstr ""
 msgid "This file is incomplete and cannot be played."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:5190
+#: gst/isomp4/qtdemux.c:5194
 msgid "The video in this file might not play correctly."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:7674
+#: gst/isomp4/qtdemux.c:7683
 #, c-format
 msgid "This file contains too many streams. Only playing first %d"
 msgstr ""

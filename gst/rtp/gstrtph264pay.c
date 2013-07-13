@@ -556,10 +556,12 @@ gst_rtp_h264_pay_setcaps (GstRTPBasePayload * basepayload, GstCaps * caps)
       data += nal_size;
       size -= nal_size;
     }
-    gst_buffer_unmap (buffer, &map);
+
     /* and update the caps with the collected data */
     if (!gst_rtp_h264_pay_set_sps_pps (basepayload))
       goto set_sps_pps_failed;
+
+    gst_buffer_unmap (buffer, &map);
   } else {
     GST_DEBUG_OBJECT (rtph264pay, "have bytestream h264");
   }
@@ -1073,6 +1075,9 @@ gst_rtp_h264_pay_handle_buffer (GstRTPBasePayload * basepayload,
       gst_adapter_push (rtph264pay->adapter, buffer);
     }
     size = gst_adapter_available (rtph264pay->adapter);
+    /* Nothing to do here if the adapter is empty, e.g. on EOS */
+    if (size == 0)
+      return GST_FLOW_OK;
     data = gst_adapter_map (rtph264pay->adapter, size);
     GST_DEBUG_OBJECT (basepayload,
         "got %" G_GSIZE_FORMAT " bytes (%" G_GSIZE_FORMAT ")", size,

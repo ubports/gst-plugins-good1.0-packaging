@@ -53,6 +53,8 @@ extern  void _CFRunLoopSetCurrent(CFRunLoopRef rl);
 extern pthread_t _CFMainPThread;
 #endif
 
+
+
 static GstStaticPadTemplate gst_osx_video_sink_sink_template_factory =
 GST_STATIC_PAD_TEMPLATE ("sink",
     GST_PAD_SINK,
@@ -76,7 +78,10 @@ enum
 };
 
 static void gst_osx_video_sink_osxwindow_destroy (GstOSXVideoSink * osxvideosink);
-
+static GMutex _run_loop_check_mutex;
+static GMutex _run_loop_mutex;
+static GCond _run_loop_cond;
+static GstOSXVideoSinkClass *sink_class = NULL;
 static GstVideoSinkClass *parent_class = NULL;
 
 /* Helper to trigger calls from the main thread */
@@ -85,9 +90,16 @@ gst_osx_video_sink_call_from_main_thread(GstOSXVideoSink *osxvideosink,
     NSObject * object, SEL function, NSObject *data, BOOL waitUntilDone)
 {
 
+  NSThread *thread;
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 
-  [object performSelector:function onThread:osxvideosink->ns_app_thread
+  if (sink_class->ns_app_thread == NULL){
+    thread = [NSThread mainThread];
+  } else {
+    thread = sink_class->ns_app_thread;
+  }
+
+  [object performSelector:function onThread:thread
           withObject:data waitUntilDone:waitUntilDone];
   [pool release];
 }
@@ -121,9 +133,6 @@ gst_osx_videosink_check_main_run_loop (GstOSXVideoSink *sink)
   /* check if the main run loop is running */
   gboolean is_running;
 
-  if (sink->mrl_check_done) {
-    return;
-  }
   /* the easy way */
   is_running = [[NSRunLoop mainRunLoop] currentMode] != nil;
   if (is_running) {
@@ -137,15 +146,15 @@ gst_osx_videosink_check_main_run_loop (GstOSXVideoSink *sink)
     GstOSXVideoSinkObject * object = (GstOSXVideoSinkObject *) sink->osxvideosinkobject;
     gint64 abstime;
 
-    g_mutex_lock (&sink->mrl_check_lock);
+    g_mutex_lock (&_run_loop_mutex);
     [object performSelectorOnMainThread:
           @selector(checkMainRunLoop)
           withObject:nil waitUntilDone:NO];
     /* Wait 100 ms */
     abstime = g_get_monotonic_time () + 100 * 1000;
-    is_running = g_cond_wait_until (&sink->mrl_check_cond,
-        &sink->mrl_check_lock, abstime);
-    g_mutex_unlock (&sink->mrl_check_lock);
+    is_running = g_cond_wait_until (&_run_loop_cond,
+        &_run_loop_mutex, abstime);
+    g_mutex_unlock (&_run_loop_mutex);
 
     [pool release];
   }
@@ -154,8 +163,12 @@ exit:
   {
   GST_DEBUG_OBJECT(sink, "The main runloop %s is running",
       is_running ? "" : " not ");
-  sink->main_run_loop_running = is_running;
-  sink->mrl_check_done = TRUE;
+  if (is_running) {
+    sink_class->run_loop_state = GST_OSX_VIDEO_SINK_RUN_LOOP_STATE_RUNNING;
+    sink_class->ns_app_thread = [NSThread mainThread];
+  } else {
+    sink_class->run_loop_state = GST_OSX_VIDEO_SINK_RUN_LOOP_STATE_NOT_RUNNING;
+  }
   }
 }
 
@@ -168,13 +181,26 @@ gst_osx_video_sink_run_cocoa_loop (GstOSXVideoSink * sink )
    * Since the sink needs to create it's own Cocoa window when no
    * external NSView is passed to the sink through the GstVideoOverlay API,
    * we need to run the cocoa mainloop somehow.
+   * This run loop can only be started once, by the first sink needing it
    */
-  if (!sink->main_run_loop_running) {
+
+  g_mutex_lock (&_run_loop_check_mutex);
+
+  if (sink_class->run_loop_state == GST_OSX_VIDEO_SINK_RUN_LOOP_STATE_UNKNOWN) {
+    gst_osx_videosink_check_main_run_loop (sink);
+  }
+
+  if (sink_class->run_loop_state == GST_OSX_VIDEO_SINK_RUN_LOOP_STATE_RUNNING) {
+    g_mutex_unlock (&_run_loop_check_mutex);
+    return;
+  }
+
+  if (sink_class->ns_app_thread == NULL) {
 #ifdef RUN_NS_APP_THREAD
     /* run the main runloop in a separate thread */
 
     /* override [NSThread isMainThread] with our own implementation so that we can
-     * make it believe our dedicated thread is the main thread 
+     * make it believe our dedicated thread is the main thread
      */
     Method origIsMainThread = class_getClassMethod([NSThread class],
         NSSelectorFromString(@"isMainThread"));
@@ -183,30 +209,31 @@ gst_osx_video_sink_run_cocoa_loop (GstOSXVideoSink * sink )
 
     method_exchangeImplementations(origIsMainThread, ourIsMainThread);
 
-    sink->ns_app_thread = [[NSThread alloc]
+    sink_class->ns_app_thread = [[NSThread alloc]
         initWithTarget:sink->osxvideosinkobject
         selector:@selector(nsAppThread) object:nil];
-    [sink->ns_app_thread start];
+    [sink_class->ns_app_thread start];
 
-    g_mutex_lock (&sink->loop_thread_lock);
-    while (!sink->app_started)
-      g_cond_wait (&sink->loop_thread_cond, &sink->loop_thread_lock);
-    g_mutex_unlock (&sink->loop_thread_lock);
+    g_mutex_lock (&_run_loop_mutex);
+    g_cond_wait (&_run_loop_cond, &_run_loop_mutex);
+    g_mutex_unlock (&_run_loop_mutex);
 #else
   /* assume that there is a GMainLoop and iterate the main runloop from there
    */
-    sink->cocoa_timeout = g_timeout_add (10,
+    sink_class->cocoa_timeout = g_timeout_add (10,
         (GSourceFunc) run_ns_app_loop, NULL);
 #endif
   }
+
+  g_mutex_unlock (&_run_loop_check_mutex);
 }
 
 static void
 gst_osx_video_sink_stop_cocoa_loop (GstOSXVideoSink * osxvideosink)
 {
 #ifndef RUN_NS_APP_THREAD
-  if (osxvideosink->cocoa_timeout)
-    g_source_remove(osxvideosink->cocoa_timeout);
+  if (sink_class->cocoa_timeout)
+    g_source_remove(sink_klass->cocoa_timeout);
 #endif
 }
 
@@ -231,6 +258,7 @@ gst_osx_video_sink_osxwindow_create (GstOSXVideoSink * osxvideosink, gint width,
   osxwindow->width = width;
   osxwindow->height = height;
   osxwindow->closed = FALSE;
+  osxwindow->internal = FALSE;
 
   /* Allocate our GstGLView for the window, and then tell the application
    * about it (hopefully it's listening...) */
@@ -249,10 +277,8 @@ gst_osx_video_sink_osxwindow_create (GstOSXVideoSink * osxvideosink, gint width,
 
   GST_INFO_OBJECT (osxvideosink, "'have-ns-view' message sent");
 
-  osxvideosink->ns_app_thread = [NSThread mainThread];
-  gst_osx_videosink_check_main_run_loop (osxvideosink);
   gst_osx_video_sink_run_cocoa_loop (osxvideosink);
-  [osxwindow->gstview setMainThread:osxvideosink->ns_app_thread];
+  [osxwindow->gstview setMainThread:sink_class->ns_app_thread];
 
   /* check if have-ns-view was handled and osxwindow->gstview was added to a
    * superview
@@ -407,7 +433,6 @@ gst_osx_video_sink_change_state (GstElement * element,
     case GST_STATE_CHANGE_PAUSED_TO_READY:
       GST_VIDEO_SINK_WIDTH (osxvideosink) = 0;
       GST_VIDEO_SINK_HEIGHT (osxvideosink) = 0;
-      osxvideosink->app_started = FALSE;
       gst_osx_video_sink_osxwindow_destroy (osxvideosink);
       break;
     case GST_STATE_CHANGE_READY_TO_NULL:
@@ -504,15 +529,6 @@ gst_osx_video_sink_init (GstOSXVideoSink * sink)
   sink->osxwindow = NULL;
   sink->superview = NULL;
   sink->osxvideosinkobject = [[GstOSXVideoSinkObject alloc] initWithSink:sink];
-#ifdef RUN_NS_APP_THREAD
-  g_mutex_init (&sink->loop_thread_lock);
-  g_cond_init (&sink->loop_thread_cond);
-#endif
-  g_mutex_init (&sink->mrl_check_lock);
-  g_cond_init (&sink->mrl_check_cond);
-  sink->mrl_check_done = FALSE;
-  sink->main_run_loop_running = FALSE;
-  sink->app_started = FALSE;
   sink->keep_par = FALSE;
 }
 
@@ -540,9 +556,6 @@ gst_osx_video_sink_finalize (GObject *object)
   if (osxvideosink->osxvideosinkobject)
     [(GstOSXVideoSinkObject*)(osxvideosink->osxvideosinkobject) release];
 
-  g_mutex_clear (&osxvideosink->mrl_check_lock);
-  g_cond_clear (&osxvideosink->mrl_check_cond);
-
   G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 
@@ -557,8 +570,11 @@ gst_osx_video_sink_class_init (GstOSXVideoSinkClass * klass)
   gstelement_class = (GstElementClass *) klass;
   gstbasesink_class = (GstBaseSinkClass *) klass;
 
-
   parent_class = g_type_class_ref (GST_TYPE_VIDEO_SINK);
+  sink_class = klass;
+
+  klass->run_loop_state = GST_OSX_VIDEO_SINK_RUN_LOOP_STATE_UNKNOWN;
+  klass->ns_app_thread = NULL;
 
   gobject_class->set_property = gst_osx_video_sink_set_property;
   gobject_class->get_property = gst_osx_video_sink_get_property;
@@ -664,30 +680,11 @@ static void
 gst_osx_video_sink_set_window_handle (GstVideoOverlay * overlay, guintptr handle_id)
 {
   GstOSXVideoSink *osxvideosink = GST_OSX_VIDEO_SINK (overlay);
-  gulong window_id = (gulong) handle_id;
+  NSView *view = (NSView *) handle_id;
 
-  if (osxvideosink->superview) {
-    GST_INFO_OBJECT (osxvideosink, "old xwindow id %p", osxvideosink->superview);
-    if (osxvideosink->osxwindow) {
-      gst_osx_video_sink_call_from_main_thread(osxvideosink,
-          osxvideosink->osxwindow->gstview,
-          @selector(removeFromSuperview:), (id)nil, YES);
-    }
-    [osxvideosink->superview release];
-
-  }
-
-  GST_INFO_OBJECT (osxvideosink, "set xwindow id 0x%lx", window_id);
-  osxvideosink->superview = [((NSView *) window_id) retain];
-  if (osxvideosink->osxwindow) {
-      gst_osx_video_sink_call_from_main_thread(osxvideosink,
-        osxvideosink->osxwindow->gstview,
-        @selector(addToSuperview:), osxvideosink->superview, YES);
-  }
-
-  if (window_id) {
-    osxvideosink->osxwindow->internal = FALSE;
-  }
+  gst_osx_video_sink_call_from_main_thread(osxvideosink,
+      osxvideosink->osxvideosinkobject,
+      @selector(setView:), view, YES);
 }
 
 static void
@@ -762,6 +759,9 @@ gst_osx_video_sink_get_type (void)
 - (void)windowWillClose:(NSNotification *)notification {
   /* Only handle close events if the window was closed manually by the user
    * and not becuase of a state change state to READY */
+  if (osxvideosink->osxwindow == NULL) {
+    return;
+  }
   if (!osxvideosink->osxwindow->closed) {
     osxvideosink->osxwindow->closed = TRUE;
     GST_ELEMENT_ERROR (osxvideosink, RESOURCE, NOT_FOUND, ("Output window was closed"), (NULL));
@@ -813,12 +813,12 @@ gst_osx_video_sink_get_type (void)
       SetFrontProcess(&psn);
   }
 
-  osxwindow->win =[[GstOSXVideoSinkWindow alloc]
+  osxwindow->win =[[[GstOSXVideoSinkWindow alloc]
                        initWithContentNSRect: rect
                        styleMask: mask
                        backing: NSBackingStoreBuffered
                        defer: NO
-                       screen: nil];
+                       screen: nil] retain];
   GST_DEBUG("VideoSinkWindow created, %p", osxwindow->win);
   [osxwindow->win makeKeyAndOrderFront:NSApp];
   osxwindow->gstview =[osxwindow->win gstView];
@@ -834,6 +834,38 @@ gst_osx_video_sink_get_type (void)
   return YES;
 }
 #endif
+
+- (void) setView: (NSView*)view
+{
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+
+  if (osxvideosink->superview) {
+    GST_INFO_OBJECT (osxvideosink, "old xwindow id %p", osxvideosink->superview);
+    if (osxvideosink->osxwindow) {
+      [osxvideosink->osxwindow->gstview removeFromSuperview];
+    }
+    [osxvideosink->superview release];
+  }
+  if (osxvideosink->osxwindow != NULL && view != NULL) {
+    if (osxvideosink->osxwindow->internal) {
+      GST_INFO_OBJECT (osxvideosink, "closing internal window");
+      osxvideosink->osxwindow->closed = TRUE;
+      [osxvideosink->osxwindow->win close];
+      [osxvideosink->osxwindow->win release];
+    }
+  }
+
+  GST_INFO_OBJECT (osxvideosink, "set xwindow id %p", view);
+  osxvideosink->superview = [view retain];
+  if (osxvideosink->osxwindow) {
+    [osxvideosink->osxwindow->gstview addToSuperview: osxvideosink->superview];
+    if (view) {
+      osxvideosink->osxwindow->internal = FALSE;
+    }
+  }
+
+  [pool release];
+}
 
 - (void) resize
 {
@@ -861,14 +893,19 @@ gst_osx_video_sink_get_type (void)
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   GstBuffer *buf = object->buf;
 
-  if (!destroyed)
+  if (osxvideosink->osxwindow != NULL)
   {
     gst_buffer_map (buf, &info, GST_MAP_READ);
     viewdata = (guint8 *) [osxvideosink->osxwindow->gstview getTextureBuffer];
 
-    memcpy (viewdata, info.data, info.size);
-    [osxvideosink->osxwindow->gstview displayTexture];
-    gst_buffer_unmap (buf, &info);
+    if (G_UNLIKELY (viewdata == NULL)) {
+      GST_ELEMENT_ERROR (osxvideosink, RESOURCE, WRITE,
+        ("Could not get a texture buffer"), (NULL));
+    } else {
+      memcpy (viewdata, info.data, info.size);
+      [osxvideosink->osxwindow->gstview displayTexture];
+      gst_buffer_unmap (buf, &info);
+    }
   }
 
   [object release];
@@ -879,25 +916,26 @@ gst_osx_video_sink_get_type (void)
 -(void) destroy
 {
   NSAutoreleasePool *pool;
+  GstOSXWindow *osxwindow;
 
   pool = [[NSAutoreleasePool alloc] init];
 
-  destroyed = TRUE;
+  osxwindow = osxvideosink->osxwindow;
+  osxvideosink->osxwindow = NULL;
 
-  if (osxvideosink->osxwindow) {
+  if (osxwindow) {
     if (osxvideosink->superview) {
-      [osxvideosink->osxwindow->gstview removeFromSuperview];
+      [osxwindow->gstview removeFromSuperview];
     }
-    [osxvideosink->osxwindow->gstview release];
-    if (osxvideosink->osxwindow->internal) {
-      if (!osxvideosink->osxwindow->closed) {
-        osxvideosink->osxwindow->closed = TRUE;
-        [osxvideosink->osxwindow->win release];
+    [osxwindow->gstview release];
+    if (osxwindow->internal) {
+      if (!osxwindow->closed) {
+        osxwindow->closed = TRUE;
+        [osxwindow->win close];
+        [osxwindow->win release];
       }
     }
-
-    g_free (osxvideosink->osxwindow);
-    osxvideosink->osxwindow = NULL;
+    g_free (osxwindow);
   }
   [pool release];
 }
@@ -906,7 +944,6 @@ gst_osx_video_sink_get_type (void)
 -(void) nsAppThread
 {
   NSAutoreleasePool *pool;
-  GstOSXVideoSink *sink = osxvideosink;
 
   /* set the main runloop as the runloop for the current thread. This has the
    * effect that calling NSApp nextEventMatchingMask:untilDate:inMode:dequeue
@@ -924,10 +961,9 @@ gst_osx_video_sink_get_type (void)
   [NSApplication sharedApplication];
   [NSApp finishLaunching];
 
-  g_mutex_lock (&sink->loop_thread_lock);
-  sink->app_started = TRUE;
-  g_cond_signal (&sink->loop_thread_cond);
-  g_mutex_unlock (&sink->loop_thread_lock);
+  g_mutex_lock (&_run_loop_mutex);
+  g_cond_signal (&_run_loop_cond);
+  g_mutex_unlock (&_run_loop_mutex);
 
   /* run the loop */
   run_ns_app_loop ();
@@ -938,9 +974,9 @@ gst_osx_video_sink_get_type (void)
 
 -(void) checkMainRunLoop
 {
-  g_mutex_lock (&osxvideosink->mrl_check_lock);
-  g_cond_signal (&osxvideosink->mrl_check_cond);
-  g_mutex_unlock (&osxvideosink->mrl_check_lock);
+  g_mutex_lock (&_run_loop_mutex);
+  g_cond_signal (&_run_loop_cond);
+  g_mutex_unlock (&_run_loop_mutex);
 }
 
 @end

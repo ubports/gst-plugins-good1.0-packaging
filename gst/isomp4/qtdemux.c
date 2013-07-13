@@ -3674,6 +3674,8 @@ gst_qtdemux_decorate_and_push_buffer (GstQTDemux * qtdemux,
       GST_LOG_OBJECT (qtdemux, "marking discont buffer");
       GST_BUFFER_FLAG_SET (buffer, GST_BUFFER_FLAG_DISCONT);
       stream->discont = FALSE;
+    } else {
+      GST_BUFFER_FLAG_UNSET (buf, GST_BUFFER_FLAG_DISCONT);
     }
 
     gst_pad_push (stream->pad, buffer);
@@ -3726,6 +3728,8 @@ gst_qtdemux_decorate_and_push_buffer (GstQTDemux * qtdemux,
     GST_LOG_OBJECT (qtdemux, "marking discont buffer");
     GST_BUFFER_FLAG_SET (buf, GST_BUFFER_FLAG_DISCONT);
     stream->discont = FALSE;
+  } else {
+    GST_BUFFER_FLAG_UNSET (buf, GST_BUFFER_FLAG_DISCONT);
   }
 
   if (!keyframe)
@@ -7411,6 +7415,7 @@ qtdemux_parse_trak (GstQTDemux * qtdemux, GNode * trak)
               alac = qtdemux_tree_get_child_by_type (alac, FOURCC_alac);
           }
           if (alac) {
+            const guint8 *alac_data = alac->data;
             gint len = QT_UINT32 (alac->data);
             GstBuffer *buf;
 
@@ -7425,6 +7430,10 @@ qtdemux_parse_trak (GstQTDemux * qtdemux, GNode * trak)
               gst_caps_set_simple (stream->caps,
                   "codec_data", GST_TYPE_BUFFER, buf, NULL);
               gst_buffer_unref (buf);
+
+              stream->bytes_per_frame = QT_UINT32 (alac_data + 12);
+              stream->n_channels = QT_UINT8 (alac_data + 21);
+              stream->rate = QT_UINT32 (alac_data + 32);
             }
           }
           gst_caps_set_simple (stream->caps,
