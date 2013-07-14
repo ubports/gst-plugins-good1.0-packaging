@@ -1,3 +1,23 @@
+gst-plugins-good1.0 (1.1.2-1) experimental; urgency=low
+
+  * New upstream development snapshot:
+    + debian/rules,
+      debian/build-deps.in:
+      - Build depend on GStreamer and gst-plugins-base >= 1.1.2.
+      - Build depend on orc >= 0.4.17.
+      - Build depend on pulseaudio >= 2.0.
+      - Build depend on libsoup2.4-dev instead of libsoup-gnome2.4-dev.
+      - Build depend on libjack-jackd2-dev instead of libjack-dev.
+    + debian/gstreamer-plugins-good.install,
+      debian/control.in:
+      - Add dtmf plugin which moved from gst-plugins-bad.
+      - Add newly ported cairo plugin.
+  * debian/patches/0001-souphttpsrc-ignore-errors-from-HEAD-request.patch:
+    + Patch from upstream GIT to ignore errors that happened as a result
+      of the HEAD request. Only error out later if the GET request fails.
+
+ -- Sebastian Dröge <slomo@debian.org>  Sun, 14 Jul 2013 11:46:14 +0200
+
 gst-plugins-good1.0 (1.0.8-1) unstable; urgency=low
 
   * New upstream bugfix release.

@@ -11,9 +11,11 @@ debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstauparse.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstautodetect.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstavi.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstcacasink.so
+debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstcairo.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstcutter.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstdebug.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstdeinterlace.so
+debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstdtmf.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstdv.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgsteffectv.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstequalizer.so
