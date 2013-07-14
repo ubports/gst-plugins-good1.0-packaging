@@ -14,8 +14,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 #include <gst/check/gstcheck.h>
 #include <stdlib.h>
@@ -98,12 +98,13 @@ rtp_bus_callback (GstBus * bus, GstMessage * message, gpointer data)
 
       element_name = (message->src) ? gst_object_get_name (message->src) : NULL;
       gst_message_parse_error (message, &err, &debug);
-      /* FIXME: should we fail the test here? */
       g_print ("\nError from element %s: %s\n%s\n\n",
           GST_STR_NULL (element_name), err->message, (debug) ? debug : "");
       g_error_free (err);
       g_free (debug);
       g_free (element_name);
+
+      fail_if (GST_MESSAGE_TYPE (message) == GST_MESSAGE_ERROR);
 
       g_main_loop_quit (mainloop);
     }
@@ -783,6 +784,34 @@ GST_START_TEST (rtp_jpeg)
 }
 
 GST_END_TEST;
+
+GST_START_TEST (rtp_jpeg_width_greater_than_2040)
+{
+  rtp_pipeline_test (rtp_jpeg_frame_data, rtp_jpeg_frame_data_size,
+      rtp_jpeg_frame_count, "video/x-jpeg,height=2048,width=480", "rtpjpegpay",
+      "rtpjpegdepay", 0, 0, FALSE);
+}
+
+GST_END_TEST;
+
+GST_START_TEST (rtp_jpeg_height_greater_than_2040)
+{
+  rtp_pipeline_test (rtp_jpeg_frame_data, rtp_jpeg_frame_data_size,
+      rtp_jpeg_frame_count, "video/x-jpeg,height=640,width=2048", "rtpjpegpay",
+      "rtpjpegdepay", 0, 0, FALSE);
+}
+
+GST_END_TEST;
+
+GST_START_TEST (rtp_jpeg_width_and_height_greater_than_2040)
+{
+  rtp_pipeline_test (rtp_jpeg_frame_data, rtp_jpeg_frame_data_size,
+      rtp_jpeg_frame_count, "video/x-jpeg,height=2048,width=2048", "rtpjpegpay",
+      "rtpjpegdepay", 0, 0, FALSE);
+}
+
+GST_END_TEST;
+
 static const guint8 rtp_jpeg_list_frame_data[] =
     { /* SOF */ 0xFF, 0xC0, 0x00, 0x11, 0x08, 0x00, 0x08, 0x00, 0x08,
   0x03, 0x00, 0x21, 0x08, 0x01, 0x11, 0x08, 0x02, 0x11, 0x08,
@@ -812,6 +841,34 @@ GST_START_TEST (rtp_jpeg_list)
 }
 
 GST_END_TEST;
+
+GST_START_TEST (rtp_jpeg_list_width_greater_than_2040)
+{
+  rtp_pipeline_test (rtp_jpeg_list_frame_data, rtp_jpeg_list_frame_data_size,
+      rtp_jpeg_list_frame_count, "video/x-jpeg,height=2048,width=480",
+      "rtpjpegpay", "rtpjpegdepay", rtp_jpeg_list_bytes_sent, 0, TRUE);
+}
+
+GST_END_TEST;
+
+GST_START_TEST (rtp_jpeg_list_height_greater_than_2040)
+{
+  rtp_pipeline_test (rtp_jpeg_list_frame_data, rtp_jpeg_list_frame_data_size,
+      rtp_jpeg_list_frame_count, "video/x-jpeg,height=640,width=2048",
+      "rtpjpegpay", "rtpjpegdepay", rtp_jpeg_list_bytes_sent, 0, TRUE);
+}
+
+GST_END_TEST;
+
+GST_START_TEST (rtp_jpeg_list_width_and_height_greater_than_2040)
+{
+  rtp_pipeline_test (rtp_jpeg_list_frame_data, rtp_jpeg_list_frame_data_size,
+      rtp_jpeg_list_frame_count, "video/x-jpeg,height=2048,width=2048",
+      "rtpjpegpay", "rtpjpegdepay", rtp_jpeg_list_bytes_sent, 0, TRUE);
+}
+
+GST_END_TEST;
+
 static const guint8 rtp_g729_frame_data[] =
     { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
@@ -867,7 +924,13 @@ rtp_payloading_suite (void)
   tcase_add_test (tc_chain, rtp_theora);
   tcase_add_test (tc_chain, rtp_vorbis);
   tcase_add_test (tc_chain, rtp_jpeg);
+  tcase_add_test (tc_chain, rtp_jpeg_width_greater_than_2040);
+  tcase_add_test (tc_chain, rtp_jpeg_height_greater_than_2040);
+  tcase_add_test (tc_chain, rtp_jpeg_width_and_height_greater_than_2040);
   tcase_add_test (tc_chain, rtp_jpeg_list);
+  tcase_add_test (tc_chain, rtp_jpeg_list_width_greater_than_2040);
+  tcase_add_test (tc_chain, rtp_jpeg_list_height_greater_than_2040);
+  tcase_add_test (tc_chain, rtp_jpeg_list_width_and_height_greater_than_2040);
   tcase_add_test (tc_chain, rtp_g729);
   return s;
 }

@@ -2,33 +2,37 @@
 # Copyright (C) 2009 gst-plugins-good's COPYRIGHT HOLDER
 # This file is distributed under the same license as the gst-plugins-good package.
 # Fran Diéguez <frandieguez@ubuntu.com>, 2009, 2010, 2011.
-# Fran Dieguez <frandieguez@gnome.org>, 2012.
+#
 msgid ""
 msgstr ""
-"Project-Id-Version: gst-plugins-good 1.0.3\n"
+"Project-Id-Version: gst-plugins-good 0.10.26.2\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2013-07-11 20:03+0100\n"
-"PO-Revision-Date: 2012-12-15 03:46+0200\n"
-"Last-Translator: Fran Dieguez <frandieguez@ubuntu.com>\n"
+"POT-Creation-Date: 2013-07-11 15:56+0200\n"
+"PO-Revision-Date: 2011-01-09 21:20+0100\n"
+"Last-Translator: Fran Diéguez <frandieguez@ubuntu.com>\n"
 "Language-Team: Galician <proxecto@trasno.net>\n"
 "Language: gl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Virtaal 0.7.1\n"
-"X-Project-Style: gnome\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\n"
+
+msgid "Jack server not found"
+msgstr ""
+
+msgid "Failed to decode JPEG image"
+msgstr "Produciuse un erro ao descodificar a imaxe JPEG"
 
 #. TRANSLATORS: 'song title' by 'artist name'
 #, c-format
 msgid "'%s' by '%s'"
 msgstr "«%s» por «%s»"
 
-msgid "Failed to decode JPEG image"
-msgstr "Produciuse un erro ao descodificar a imaxe JPEG"
-
 msgid "Could not connect to server"
 msgstr "Non foi posíbel conectarse ao servidor"
+
+msgid "No URL set."
+msgstr "No existe un URL estabelecido."
 
 msgid "Server does not support seeking."
 msgstr "O servidor non admite a busca."
@@ -51,9 +55,6 @@ msgstr ""
 msgid "Server sent bad data."
 msgstr "O servidor enviou datos erróneos."
 
-msgid "No URL set."
-msgstr "No existe un URL estabelecido."
-
 msgid "Internal data stream error."
 msgstr "Produciuse un erro no fluxo de datos interno."
 
@@ -65,6 +66,9 @@ msgstr "Este ficheiro non contén ningún fluxo reproducíbel."
 
 msgid "This file is invalid and cannot be played."
 msgstr "Este ficheiro é incorrecto e non pode reproducirse."
+
+msgid "Cannot play stream because it is encrypted with PlayReady DRM."
+msgstr ""
 
 msgid "This file is corrupt and cannot be played."
 msgstr "Este ficheiro está danado e non pode reproducirse."
@@ -120,16 +124,6 @@ msgid "Could not open audio device for playback."
 msgstr "Non foi posíbel abrir o dispositivo de son para a reprodución."
 
 msgid ""
-"Could not open audio device for recording. You don't have permission to open "
-"the device."
-msgstr ""
-"Non foi posíbel abrir o dispositivo de son para a gravación. Vostede non ten "
-"permisos para abrir o dispositivo."
-
-msgid "Could not open audio device for recording."
-msgstr "Non foi posíbel abrir o dispositivo de son para a gravación."
-
-msgid ""
 "Could not open audio device for playback. This version of the Open Sound "
 "System is not supported by this element."
 msgstr ""
@@ -147,6 +141,45 @@ msgstr "Este dispositivo de son non admite a gravación."
 
 msgid "Error recording from audio device."
 msgstr "Erro ao gravar do dispositivo de son."
+
+msgid ""
+"Could not open audio device for recording. You don't have permission to open "
+"the device."
+msgstr ""
+"Non foi posíbel abrir o dispositivo de son para a gravación. Vostede non ten "
+"permisos para abrir o dispositivo."
+
+msgid "Could not open audio device for recording."
+msgstr "Non foi posíbel abrir o dispositivo de son para a gravación."
+
+msgid "Record Source"
+msgstr "Orixe da gravación"
+
+msgid "Microphone"
+msgstr "Micrófono"
+
+msgid "Line In"
+msgstr "Liña de entrada"
+
+msgid "Internal CD"
+msgstr "CD interno"
+
+msgid "SPDIF In"
+msgstr "Entrada SPDIF"
+
+msgid "AUX 1 In"
+msgstr "Entrada AUX 1"
+
+msgid "AUX 2 In"
+msgstr "Entrada AUX 2"
+
+#, fuzzy
+msgid "Codec Loopback"
+msgstr "Bucle local"
+
+#, fuzzy
+msgid "SunVTS Loopback"
+msgstr "Bucle local"
 
 msgid "Volume"
 msgstr "Volume"
@@ -182,75 +215,81 @@ msgstr "Produciuse un erro ao ler %d bytes desde o dispositivo «%s»."
 #, c-format
 msgid "Failed to enumerate possible video formats device '%s' can work with"
 msgstr ""
-"Produciuse un fallo ao enumerar os formatos de vídeo posíbeis cos que o "
-"dispositivo «%s» pode reproducir"
 
 #, c-format
 msgid "Could not map buffers from device '%s'"
 msgstr "Non foi posíbel mapear os búferes do dispositivo «%s»"
 
-#, c-format
+#, fuzzy, c-format
 msgid "The driver of device '%s' does not support the IO method %d"
-msgstr "O controlador do dispositivo «%s» non admite o método IO %d"
+msgstr ""
+"O controlador do dispositivo «%s» non admite ningún método de captura "
+"coñecido."
 
-#, c-format
+#, fuzzy, c-format
 msgid "The driver of device '%s' does not support any known IO method."
 msgstr ""
-"O controlador do dispositivo «%s» non admite calquera método IO coñecido."
+"O controlador do dispositivo «%s» non admite ningún método de captura "
+"coñecido."
 
-#, c-format
+#, fuzzy, c-format
 msgid "Device '%s' does not support video capture"
-msgstr "O dispositivo «%s» non admite a captura de vídeo."
+msgstr "O dispositivo «%s» non é un dispositivo de captura."
 
-#, c-format
+#, fuzzy, c-format
 msgid "Device '%s' is busy"
-msgstr "O dispositivo «%s» está ocupado"
+msgstr "O dispositivo «%s» non é un dispositivo de captura."
 
-#, c-format
+#, fuzzy, c-format
 msgid "Device '%s' cannot capture at %dx%d"
-msgstr "O dispositivo «%s» non pode capturar a %dx%d"
+msgstr "O dispositivo «%s» non é un dispositivo de captura."
 
-#, c-format
+#, fuzzy, c-format
 msgid "Device '%s' cannot capture in the specified format"
-msgstr "O dispositivo «%s» non pode capturar o formato especificado"
+msgstr "O dispositivo «%s» non é un dispositivo de captura."
 
 #, c-format
 msgid "Could not get parameters on device '%s'"
 msgstr "Non foi posíbel obter os parámetros para o dispositivo «%s»"
 
+#, fuzzy
 msgid "Video device did not accept new frame rate setting."
 msgstr ""
-"O dispositivo de vídeo non acepta a nova configuración de taxa de marcos."
+"O dispositivo de entrada de vídeo non aceptou o axuste da nova taxa de "
+"fotogramas."
 
 msgid "Video device could not create buffer pool."
-msgstr "O dispositivo de vídeo non pode crear un pool de búfer."
+msgstr ""
 
-#, c-format
+#, fuzzy, c-format
 msgid "Failed to get settings of tuner %d on device '%s'."
 msgstr ""
-"Produciuse un erro ao obter as configuracións do sintonizador %d no "
-"dispositivo «%s»."
+"Produciuse un erro ao configurar o sintonizador %d no dispositivo «%s»."
 
-#, c-format
+#, fuzzy, c-format
 msgid "Error getting capabilities for device '%s'."
-msgstr "Produciuse un erro ao ler as capacidades para o dispositivo «%s»."
+msgstr "Produciuse un erro ao ler %d bytes desde o dispositivo «%s»."
 
-#, c-format
+#, fuzzy, c-format
 msgid "Device '%s' is not a tuner."
-msgstr "O dispositivo «%s» non é un sintonizador."
+msgstr "O dispositivo «%s» non é un dispositivo de captura."
 
-#, c-format
+#, fuzzy, c-format
 msgid "Failed to get radio input on device '%s'. "
-msgstr "Produciuse un fallo ao obter a entrada do radio no dispositivo %s."
+msgstr "Produciuse un fallo ao estabelecer a entrada %d no dispositivo %s."
 
 #, c-format
 msgid "Failed to set input %d on device %s."
 msgstr "Produciuse un fallo ao estabelecer a entrada %d no dispositivo %s."
 
-#, c-format
+#, fuzzy, c-format
 msgid "Failed to change mute state for device '%s'."
 msgstr ""
-"Produciuse un erro ao cambiar o estado de enmudecido para o dispositivo «%s»."
+"Produciuse un erro ao obter a potencia do sinal para o dispositivo «%s»."
+
+#, c-format
+msgid "Cannot identify device '%s'."
+msgstr "Non foi posíbel identificar o dispositivo «%s»."
 
 #, c-format
 msgid ""
@@ -278,10 +317,6 @@ msgstr "Produciuse un erro ao consultar a norma no dispositivo «%s»."
 msgid "Failed getting controls attributes on device '%s'."
 msgstr ""
 "Produciuse un erro ao obter os atributos de control do dispositivo «%s»."
-
-#, c-format
-msgid "Cannot identify device '%s'."
-msgstr "Non foi posíbel identificar o dispositivo «%s»."
 
 #, c-format
 msgid "This isn't a device '%s'."
@@ -354,11 +389,17 @@ msgstr "Aínda non se admite o cambio de resolución durante a reprodución."
 msgid "Cannot operate without a clock"
 msgstr "Non é posíbel operar sen reloxo"
 
-#~ msgid "Could not establish connection to sound server"
-#~ msgstr "Non foi posíbel estabelecer a conexión co servidor de son"
+#~ msgid "Got unexpected frame size of %u instead of %u."
+#~ msgstr "Obtívose un tamaño de marco de %u non esperado no lugar de %u."
 
-#~ msgid "Failed to query sound server capabilities"
-#~ msgstr "Produciuse un erro ao consultar as capacidades do servidor de son"
+#~ msgid "Failed trying to get video frames from device '%s'."
+#~ msgstr ""
+#~ "Produciuse un fallo ao tentar obter cadros de vídeo do dispositivo «%s»."
+
+#~ msgid "Failed after %d tries. device %s. system error: %s"
+#~ msgstr ""
+#~ "Prouciuse un fallo despois de %d intentos. Dispositivo %s. Error do "
+#~ "sistema: %s"
 
 #~ msgid "Bass"
 #~ msgstr "Baixos"
@@ -377,9 +418,6 @@ msgstr "Non é posíbel operar sen reloxo"
 
 #~ msgid "Line-in"
 #~ msgstr "Liña de entrada"
-
-#~ msgid "Microphone"
-#~ msgstr "Micrófono"
 
 #~ msgid "CD"
 #~ msgstr "CD"
@@ -481,20 +519,8 @@ msgstr "Non é posíbel operar sen reloxo"
 #~ msgid "Telephone"
 #~ msgstr "Teléfono"
 
-#~ msgid "Line In"
-#~ msgstr "Liña de entrada"
-
-#~ msgid "Internal CD"
-#~ msgstr "CD interno"
-
 #~ msgid "Video In"
 #~ msgstr "Entrada de vídeo"
-
-#~ msgid "AUX 1 In"
-#~ msgstr "Entrada AUX 1"
-
-#~ msgid "AUX 2 In"
-#~ msgstr "Entrada AUX 2"
 
 #~ msgid "AUX In"
 #~ msgstr "Entrada AUX"
@@ -508,9 +534,6 @@ msgstr "Non é posíbel operar sen reloxo"
 #~ msgid "Microphone Boost"
 #~ msgstr "Aumento do micrófono"
 
-#~ msgid "Loopback"
-#~ msgstr "Bucle local"
-
 #~ msgid "Diagnostic"
 #~ msgstr "Diagnóstico"
 
@@ -522,9 +545,6 @@ msgstr "Non é posíbel operar sen reloxo"
 
 #~ msgid "Input"
 #~ msgstr "Entrada"
-
-#~ msgid "Record Source"
-#~ msgstr "Orixe da gravación"
 
 #~ msgid "Monitor Source"
 #~ msgstr "Monitor de orixe"
@@ -564,9 +584,6 @@ msgstr "Non é posíbel operar sen reloxo"
 
 #~ msgid "Input Mix"
 #~ msgstr "Misturador de entrada"
-
-#~ msgid "SPDIF In"
-#~ msgstr "Entrada SPDIF"
 
 #~ msgid "Microphone 1"
 #~ msgstr "Micrófono 1"
@@ -712,23 +729,17 @@ msgstr "Non é posíbel operar sen reloxo"
 #~ msgid "%s Function"
 #~ msgstr "Función %s"
 
-#~ msgid "Got unexpected frame size of %u instead of %u."
-#~ msgstr "Obtívose un tamaño de marco de %u non esperado no lugar de %u."
-
 #~ msgid "Error reading %d bytes on device '%s'."
 #~ msgstr "Produciuse un erro ao ler %d bytes do dispositivo «%s»."
 
 #~ msgid "Could not enqueue buffers in device '%s'."
 #~ msgstr "Non é posíbel meter na cola os búferes no dispositivo «%s»."
 
-#~ msgid "Failed trying to get video frames from device '%s'."
-#~ msgstr ""
-#~ "Produciuse un fallo ao tentar obter cadros de vídeo do dispositivo «%s»."
+#~ msgid "Could not establish connection to sound server"
+#~ msgstr "Non foi posíbel estabelecer a conexión co servidor de son"
 
-#~ msgid "Failed after %d tries. device %s. system error: %s"
-#~ msgstr ""
-#~ "Prouciuse un fallo despois de %d intentos. Dispositivo %s. Error do "
-#~ "sistema: %s"
+#~ msgid "Failed to query sound server capabilities"
+#~ msgstr "Produciuse un erro ao consultar as capacidades do servidor de son"
 
 #~ msgid "Describes the selected input element."
 #~ msgstr "Describe o elemento de entrada seleccionado."

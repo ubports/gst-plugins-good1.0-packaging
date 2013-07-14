@@ -16,8 +16,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #include <gst/check/gstcheck.h>
@@ -143,6 +143,7 @@ chain_rtp_packet (GstPad * pad, CleanupData * data)
 {
   GstFlowReturn res;
   static GstCaps *caps = NULL;
+  GstSegment segment;
   GstBuffer *buffer;
   GstMapInfo map;
 
@@ -153,7 +154,10 @@ chain_rtp_packet (GstPad * pad, CleanupData * data)
     data->seqnum = 0;
   }
 
-  gst_pad_set_caps (pad, caps);
+  gst_pad_send_event (pad, gst_event_new_stream_start (gst_pad_get_name (pad)));
+  gst_pad_send_event (pad, gst_event_new_caps (caps));
+  gst_segment_init (&segment, GST_FORMAT_TIME);
+  gst_pad_send_event (pad, gst_event_new_segment (&segment));
 
   buffer = gst_buffer_new_and_alloc (sizeof (rtp_packet));
   gst_buffer_map (buffer, &map, GST_MAP_WRITE);

@@ -14,7 +14,7 @@
  * PURPOSE.  See the GNU Library General Public License for more details.
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301,
  * USA.
  */
 
@@ -389,6 +389,7 @@ gst_v4l2_io_mode_get_type (void)
       {GST_V4L2_IO_RW, "GST_V4L2_IO_RW", "rw"},
       {GST_V4L2_IO_MMAP, "GST_V4L2_IO_MMAP", "mmap"},
       {GST_V4L2_IO_USERPTR, "GST_V4L2_IO_USERPTR", "userptr"},
+      {GST_V4L2_IO_DMABUF, "GST_V4L2_IO_DMABUF", "dmabuf"},
 
       {0, NULL, NULL}
     };
@@ -489,6 +490,47 @@ gst_v4l2_object_install_properties_helper (GObjectClass * gobject_class,
           "I/O mode",
           GST_TYPE_V4L2_IO_MODE, DEFAULT_PROP_IO_MODE,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+  /**
+   * GstV4l2Src:extra-controls
+   *
+   * Additional v4l2 controls for the device. The controls are identified
+   * by the control name (lowercase with '_' for any non-alphanumeric
+   * characters).
+   *
+   * Since: 1.2
+   */
+  g_object_class_install_property (gobject_class, PROP_EXTRA_CONTROLS,
+      g_param_spec_boxed ("extra-controls", "Extra Controls",
+          "Extra v4l2 controls (CIDs) for the device",
+          GST_TYPE_STRUCTURE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+  /**
+   * GstV4l2Src:pixel-aspect-ratio
+   *
+   * The pixel aspect ratio of the device. This overwrites the pixel aspect
+   * ratio queried from the device.
+   *
+   * Since: 1.2
+   */
+  g_object_class_install_property (gobject_class, PROP_PIXEL_ASPECT_RATIO,
+      g_param_spec_string ("pixel-aspect-ratio", "Pixel Aspect Ratio",
+          "Overwrite the pixel aspect ratio of the device", "1/1",
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+  /**
+   * GstV4l2Src:force-aspect-ratio
+   *
+   * When enabled, the pixel aspect ratio queried from the device or set
+   * with the pixel-aspect-ratio property will be enforced.
+   *
+   * Since: 1.2
+   */
+  g_object_class_install_property (gobject_class, PROP_FORCE_ASPECT_RATIO,
+      g_param_spec_boolean ("force-aspect-ratio", "Force aspect ratio",
+          "When enabled, the pixel aspect ratio will be enforced", TRUE,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
 }
 
 GstV4l2Object *
@@ -524,6 +566,8 @@ gst_v4l2_object_new (GstElement * element,
   v4l2object->colors = NULL;
 
   v4l2object->xwindow_id = 0;
+
+  v4l2object->keep_aspect = TRUE;
 
   return v4l2object;
 }
@@ -653,6 +697,32 @@ gst_v4l2_object_set_property_helper (GstV4l2Object * v4l2object,
     case PROP_IO_MODE:
       v4l2object->req_mode = g_value_get_enum (value);
       break;
+    case PROP_EXTRA_CONTROLS:{
+      const GstStructure *s = gst_value_get_structure (value);
+
+      if (v4l2object->extra_controls)
+        gst_structure_free (v4l2object->extra_controls);
+
+      v4l2object->extra_controls = s ? gst_structure_copy (s) : NULL;
+      if (GST_V4L2_IS_OPEN (v4l2object))
+        gst_v4l2_set_controls (v4l2object, v4l2object->extra_controls);
+      break;
+    }
+    case PROP_PIXEL_ASPECT_RATIO:
+      g_free (v4l2object->par);
+      v4l2object->par = g_new0 (GValue, 1);
+      g_value_init (v4l2object->par, GST_TYPE_FRACTION);
+      if (!g_value_transform (value, v4l2object->par)) {
+        g_warning ("Could not transform string to aspect ratio");
+        gst_value_set_fraction (v4l2object->par, 1, 1);
+      }
+      GST_DEBUG_OBJECT (v4l2object->element, "set PAR to %d/%d",
+          gst_value_get_fraction_numerator (v4l2object->par),
+          gst_value_get_fraction_denominator (v4l2object->par));
+      break;
+    case PROP_FORCE_ASPECT_RATIO:
+      v4l2object->keep_aspect = g_value_get_boolean (value);
+      break;
     default:
       return FALSE;
       break;
@@ -728,6 +798,16 @@ gst_v4l2_object_get_property_helper (GstV4l2Object * v4l2object,
       break;
     case PROP_IO_MODE:
       g_value_set_enum (value, v4l2object->req_mode);
+      break;
+    case PROP_EXTRA_CONTROLS:
+      gst_value_set_structure (value, v4l2object->extra_controls);
+      break;
+    case PROP_PIXEL_ASPECT_RATIO:
+      if (v4l2object->par)
+        g_value_transform (v4l2object->par, value);
+      break;
+    case PROP_FORCE_ASPECT_RATIO:
+      g_value_set_boolean (value, v4l2object->keep_aspect);
       break;
     default:
       return FALSE;
@@ -879,7 +959,13 @@ static const GstV4L2FormatDesc gst_v4l2_formats[] = {
 #endif
   {V4L2_PIX_FMT_DV, TRUE},
   {V4L2_PIX_FMT_MPEG, FALSE},
+#ifdef V4L2_PIX_FMT_MPEG4
+  {V4L2_PIX_FMT_MPEG4, TRUE},
+#endif
 
+#ifdef V4L2_PIX_FMT_H263
+  {V4L2_PIX_FMT_H263, TRUE},
+#endif
 #ifdef V4L2_PIX_FMT_H264
   {V4L2_PIX_FMT_H264, TRUE},
 #endif
@@ -1203,6 +1289,19 @@ gst_v4l2_object_v4l2fourcc_to_structure (guint32 fourcc)
     case V4L2_PIX_FMT_HI240:   /*  8  8-bit color   */
       /* FIXME: get correct fourccs here */
       break;
+#ifdef V4L2_PIX_FMT_MPEG4
+    case V4L2_PIX_FMT_MPEG4:
+      structure = gst_structure_new ("video/mpeg",
+          "mpegversion", G_TYPE_INT, 4, "systemstream",
+          G_TYPE_BOOLEAN, FALSE, NULL);
+      break;
+#endif
+#ifdef V4L2_PIX_FMT_H263
+    case V4L2_PIX_FMT_H263:
+      structure = gst_structure_new ("video/x-h263",
+          "variant", G_TYPE_STRING, "itu", NULL);
+      break;
+#endif
 #ifdef V4L2_PIX_FMT_H264
     case V4L2_PIX_FMT_H264:    /* H.264 */
       structure = gst_structure_new_empty ("video/x-h264");
@@ -1403,11 +1502,10 @@ gst_v4l2_object_get_caps_info (GstV4l2Object * v4l2object, GstCaps * caps,
 
   mimetype = gst_structure_get_name (structure);
 
-  if (g_str_equal (mimetype, "video/x-raw")) {
-    /* raw caps, parse into video info */
-    if (!gst_video_info_from_caps (info, caps))
-      goto invalid_format;
+  if (!gst_video_info_from_caps (info, caps))
+    goto invalid_format;
 
+  if (g_str_equal (mimetype, "video/x-raw")) {
     switch (GST_VIDEO_INFO_FORMAT (info)) {
       case GST_VIDEO_FORMAT_I420:
         fourcc = V4L2_PIX_FMT_YUV420;
@@ -1469,18 +1567,20 @@ gst_v4l2_object_get_caps_info (GstV4l2Object * v4l2object, GstCaps * caps,
         break;
     }
   } else {
-    gboolean dimensions = TRUE;
-
-    /* no video caps, construct videoinfo ourselves */
-    gst_video_info_init (info);
-
     if (g_str_equal (mimetype, "video/mpegts")) {
       fourcc = V4L2_PIX_FMT_MPEG;
-      dimensions = FALSE;
     } else if (g_str_equal (mimetype, "video/x-dv")) {
       fourcc = V4L2_PIX_FMT_DV;
     } else if (g_str_equal (mimetype, "image/jpeg")) {
       fourcc = V4L2_PIX_FMT_JPEG;
+#ifdef V4L2_PIX_FMT_MPEG4
+    } else if (g_str_equal (mimetype, "video/mpeg")) {
+      fourcc = V4L2_PIX_FMT_MPEG4;
+#endif
+#ifdef V4L2_PIX_FMT_H263
+    } else if (g_str_equal (mimetype, "video/x-h263")) {
+      fourcc = V4L2_PIX_FMT_H263;
+#endif
 #ifdef V4L2_PIX_FMT_H264
     } else if (g_str_equal (mimetype, "video/x-h264")) {
       fourcc = V4L2_PIX_FMT_H264;
@@ -1502,26 +1602,6 @@ gst_v4l2_object_get_caps_info (GstV4l2Object * v4l2object, GstCaps * caps,
       fourcc = V4L2_PIX_FMT_PWC2;
     }
 #endif
-
-    if (dimensions) {
-      const gchar *interlace_mode;
-
-      if (!gst_structure_get_int (structure, "width", &info->width))
-        goto no_width;
-
-      if (!gst_structure_get_int (structure, "height", &info->height))
-        goto no_height;
-
-      interlace_mode = gst_structure_get_string (structure, "interlace-mode");
-      if (g_str_equal (interlace_mode, "progressive")) {
-        info->interlace_mode = GST_VIDEO_INTERLACE_MODE_PROGRESSIVE;
-      } else {
-        info->interlace_mode = GST_VIDEO_INTERLACE_MODE_MIXED;
-      }
-      if (!gst_structure_get_fraction (structure, "framerate", &info->fps_n,
-              &info->fps_d))
-        goto no_framerate;
-    }
   }
 
   if (fourcc == 0)
@@ -1536,21 +1616,6 @@ gst_v4l2_object_get_caps_info (GstV4l2Object * v4l2object, GstCaps * caps,
   return TRUE;
 
   /* ERRORS */
-no_width:
-  {
-    GST_DEBUG_OBJECT (v4l2object, "no width");
-    return FALSE;
-  }
-no_height:
-  {
-    GST_DEBUG_OBJECT (v4l2object, "no height");
-    return FALSE;
-  }
-no_framerate:
-  {
-    GST_DEBUG_OBJECT (v4l2object, "no framerate");
-    return FALSE;
-  }
 invalid_format:
   {
     GST_DEBUG_OBJECT (v4l2object, "invalid format");
@@ -1572,6 +1637,43 @@ unsupported_format:
 static gboolean
 gst_v4l2_object_get_nearest_size (GstV4l2Object * v4l2object,
     guint32 pixelformat, gint * width, gint * height, gboolean * interlaced);
+
+static void
+gst_v4l2_object_add_aspect_ratio (GstV4l2Object * v4l2object, GstStructure * s)
+{
+  struct v4l2_cropcap cropcap;
+  int num = 1, den = 1;
+
+  if (!v4l2object->keep_aspect)
+    return;
+
+  if (v4l2object->par) {
+    num = gst_value_get_fraction_numerator (v4l2object->par);
+    den = gst_value_get_fraction_denominator (v4l2object->par);
+    goto done;
+  }
+
+  memset (&cropcap, 0, sizeof (cropcap));
+
+  cropcap.type = v4l2object->type;
+  if (v4l2_ioctl (v4l2object->video_fd, VIDIOC_CROPCAP, &cropcap) < 0)
+    goto cropcap_failed;
+
+  num = cropcap.pixelaspect.numerator;
+  den = cropcap.pixelaspect.denominator;
+
+done:
+  gst_structure_set (s, "pixel-aspect-ratio", GST_TYPE_FRACTION, num, den,
+      NULL);
+  return;
+
+cropcap_failed:
+  if (errno != ENOTTY)
+    GST_WARNING_OBJECT (v4l2object->element,
+        "Failed to probe pixel aspect ratio with VIDIOC_CROPCAP: %s",
+        g_strerror (errno));
+  goto done;
+}
 
 
 /* The frame interval enumeration code first appeared in Linux 2.6.19. */
@@ -1759,9 +1861,11 @@ gst_v4l2_object_probe_caps_for_format_and_size (GstV4l2Object * v4l2object,
 return_data:
   s = gst_structure_copy (template);
   gst_structure_set (s, "width", G_TYPE_INT, (gint) width,
-      "height", G_TYPE_INT, (gint) height,
-      "interlace-mode", G_TYPE_STRING, (interlaced ? "mixed" : "progressive"),
-      "pixel-aspect-ratio", GST_TYPE_FRACTION, 1, 1, NULL);
+      "height", G_TYPE_INT, (gint) height, NULL);
+  gst_v4l2_object_add_aspect_ratio (v4l2object, s);
+  if (g_str_equal (gst_structure_get_name (s), "video/x-raw"))
+    gst_structure_set (s, "interlace-mode", G_TYPE_STRING,
+        (interlaced ? "mixed" : "progressive"), NULL);
 
   if (G_IS_VALUE (&rates)) {
     /* only change the framerate on the template when we have a valid probed new
@@ -2021,10 +2125,10 @@ default_frame_sizes:
     else
       gst_structure_set (tmp, "height", GST_TYPE_INT_RANGE, min_h, max_h, NULL);
 
-    gst_structure_set (tmp, "interlace-mode", G_TYPE_STRING,
-        (interlaced ? "mixed" : "progressive"), NULL);
-    gst_structure_set (tmp, "pixel-aspect-ratio", GST_TYPE_FRACTION, 1, 1,
-        NULL);
+    if (g_str_equal (gst_structure_get_name (tmp), "video/x-raw"))
+      gst_structure_set (tmp, "interlace-mode", G_TYPE_STRING,
+          (interlaced ? "mixed" : "progressive"), NULL);
+    gst_v4l2_object_add_aspect_ratio (v4l2object, tmp);
 
     gst_caps_append_structure (ret, tmp);
 
@@ -2204,12 +2308,6 @@ no_supported_capture_method:
     return FALSE;
   }
 }
-
-
-/* Note about fraction simplification
- *  * n1/d1 == n2/d2  is also written as  n1 == ( n2 * d1 ) / d2
- *   */
-#define fractions_are_equal(n1,d1,n2,d2) ((n1) == gst_util_uint64_scale_int((n2), (d1), (d2)))
 
 gboolean
 gst_v4l2_object_set_format (GstV4l2Object * v4l2object, GstCaps * caps)
@@ -2439,7 +2537,7 @@ invalid_pixelformat:
 get_parm_failed:
   {
     /* it's possible that this call is not supported */
-    if (errno != EINVAL) {
+    if (errno != EINVAL && errno != ENOTTY) {
       GST_ELEMENT_WARNING (v4l2object->element, RESOURCE, SETTINGS,
           (_("Could not get parameters on device '%s'"),
               v4l2object->videodev), GST_ERROR_SYSTEM);
@@ -2459,6 +2557,21 @@ pool_failed:
         (_("Video device could not create buffer pool.")), GST_ERROR_SYSTEM);
     return FALSE;
   }
+}
+
+gboolean
+gst_v4l2_object_caps_equal (GstV4l2Object * v4l2object, GstCaps * caps)
+{
+  GstStructure *s;
+  GstCaps *oldcaps;
+
+  if (!v4l2object->pool)
+    return FALSE;
+
+  s = gst_buffer_pool_get_config (GST_BUFFER_POOL_CAST (v4l2object->pool));
+  gst_buffer_pool_config_get_params (s, &oldcaps, NULL, NULL, NULL);
+
+  return oldcaps && gst_caps_is_equal (caps, oldcaps);
 }
 
 gboolean
@@ -2506,7 +2619,10 @@ gboolean
 gst_v4l2_object_copy (GstV4l2Object * v4l2object, GstBuffer * dest,
     GstBuffer * src)
 {
-  if (v4l2object->info.finfo) {
+  const GstVideoFormatInfo *finfo = v4l2object->info.finfo;
+
+  if (finfo && (finfo->format != GST_VIDEO_FORMAT_UNKNOWN &&
+          finfo->format != GST_VIDEO_FORMAT_ENCODED)) {
     GstVideoFrame src_frame, dest_frame;
 
     GST_DEBUG_OBJECT (v4l2object->element, "copy video frame");
@@ -2530,8 +2646,9 @@ gst_v4l2_object_copy (GstV4l2Object * v4l2object, GstBuffer * dest,
 
     GST_DEBUG_OBJECT (v4l2object->element, "copy raw bytes");
     gst_buffer_map (src, &map, GST_MAP_READ);
-    gst_buffer_fill (dest, 0, map.data, map.size);
+    gst_buffer_fill (dest, 0, map.data, gst_buffer_get_size (src));
     gst_buffer_unmap (src, &map);
+    gst_buffer_resize (dest, 0, gst_buffer_get_size (src));
   }
   GST_CAT_LOG_OBJECT (GST_CAT_PERFORMANCE, v4l2object->element,
       "slow copy into buffer %p", dest);

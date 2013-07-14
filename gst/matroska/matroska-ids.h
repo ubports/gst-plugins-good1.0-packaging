@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #ifndef __GST_MATROSKA_IDS_H__
@@ -210,7 +210,7 @@
 #define GST_MATROSKA_ID_TARGETTYPEVALUE            0x68CA
 #define GST_MATROSKA_ID_TARGETTYPE                 0x63CA
 #define GST_MATROSKA_ID_TARGETTRACKUID             0x63C5
-#define GST_MATROSKA_ID_TARGETEDITIONUID           0x63C5
+#define GST_MATROSKA_ID_TARGETEDITIONUID           0x63C9
 #define GST_MATROSKA_ID_TARGETCHAPTERUID           0x63C4
 #define GST_MATROSKA_ID_TARGETATTACHMENTUID        0x63C6
 
@@ -345,6 +345,7 @@
 #define GST_MATROSKA_CODEC_ID_VIDEO_SNOW         "V_SNOW"
 #define GST_MATROSKA_CODEC_ID_VIDEO_DIRAC        "V_DIRAC"
 #define GST_MATROSKA_CODEC_ID_VIDEO_VP8          "V_VP8"
+#define GST_MATROSKA_CODEC_ID_VIDEO_VP9          "V_VP9"
 
 #define GST_MATROSKA_CODEC_ID_AUDIO_MPEG1_L1       "A_MPEG/L1"
 #define GST_MATROSKA_CODEC_ID_AUDIO_MPEG1_L2       "A_MPEG/L2"
@@ -399,10 +400,10 @@
 #define GST_MATROSKA_TAG_ID_ARTIST   "ARTIST"
 #define GST_MATROSKA_TAG_ID_ALBUM    "ALBUM"
 #define GST_MATROSKA_TAG_ID_COMMENTS "COMMENTS"
+#define GST_MATROSKA_TAG_ID_COMMENT  "COMMENT"
 #define GST_MATROSKA_TAG_ID_BITSPS   "BITSPS"
 #define GST_MATROSKA_TAG_ID_BPS      "BPS"
 #define GST_MATROSKA_TAG_ID_ENCODER  "ENCODER"
-#define GST_MATROSKA_TAG_ID_DATE     "DATE"
 #define GST_MATROSKA_TAG_ID_ISRC     "ISRC"
 #define GST_MATROSKA_TAG_ID_COPYRIGHT "COPYRIGHT"
 #define GST_MATROSKA_TAG_ID_BPM       "BPM"
@@ -411,6 +412,25 @@
 #define GST_MATROSKA_TAG_ID_COMPOSER  "COMPOSER"
 #define GST_MATROSKA_TAG_ID_LEAD_PERFORMER  "LEAD_PERFOMER"
 #define GST_MATROSKA_TAG_ID_GENRE     "GENRE"
+#define GST_MATROSKA_TAG_ID_TOTAL_PARTS "TOTAL_PARTS"
+#define GST_MATROSKA_TAG_ID_PART_NUMBER "PART_NUMBER"
+#define GST_MATROSKA_TAG_ID_SUBTITLE "SUBTITLE"
+#define GST_MATROSKA_TAG_ID_ACCOMPANIMENT "ACCOMPANIMENT"
+#define GST_MATROSKA_TAG_ID_LYRICS "LYRICS"
+#define GST_MATROSKA_TAG_ID_CONDUCTOR "CONDUCTOR"
+#define GST_MATROSKA_TAG_ID_ENCODED_BY "ENCODED_BY"
+#define GST_MATROSKA_TAG_ID_DESCRIPTION "DESCRIPTION"
+#define GST_MATROSKA_TAG_ID_KEYWORDS "KEYWORDS"
+#define GST_MATROSKA_TAG_ID_DATE_RELEASED "DATE_RELEASED"
+#define GST_MATROSKA_TAG_ID_DATE_RECORDED "DATE_RECORDED"
+#define GST_MATROSKA_TAG_ID_DATE_ENCODED "DATE_ENCODED"
+#define GST_MATROSKA_TAG_ID_DATE_TAGGED "DATE_TAGGED"
+#define GST_MATROSKA_TAG_ID_DATE_DIGITIZED "DATE_DIGITIZED"
+#define GST_MATROSKA_TAG_ID_DATE_WRITTEN "DATE_WRITTEN"
+#define GST_MATROSKA_TAG_ID_DATE_PURCHASED "DATE_PURCHASED"
+#define GST_MATROSKA_TAG_ID_RECORDING_LOCATION "RECORDING_LOCATION"
+#define GST_MATROSKA_TAG_ID_PRODUCTION_COPYRIGHT "PRODUCTION_COPYRIGHT"
+#define GST_MATROSKA_TAG_ID_LICENSE "LICENSE"
 
 /*
  * TODO: add this tag & mappings
@@ -492,7 +512,7 @@ struct _GstMatroskaTrackContext {
   gpointer      codec_state;
   gsize         codec_state_size;
   GstMatroskaTrackType type;
-  guint         uid, num;
+  guint64       uid, num;
   GstMatroskaTrackFlags flags;
   guint64       default_duration;
   guint64       pos;
@@ -500,20 +520,9 @@ struct _GstMatroskaTrackContext {
 
   gboolean      set_discont; /* TRUE = set DISCONT flag on next buffer */
 
-  /* Special flag for Vorbis and Theora, for which we need to send
-   * codec_priv first before sending any data, and just testing
-   * for time == 0 is not enough to detect that. Used by demuxer */
-  gboolean      send_xiph_headers;
-
-  /* Special flag for Flac, for which we need to reconstruct the header
-   * buffer from the codec_priv data before sending any data, and just
-   * testing for time == 0 is not enough to detect that. Used by demuxer */
-  gboolean      send_flac_headers;
-
-  /* Special flag for Speex, for which we need to reconstruct the header
-   * buffer from the codec_priv data before sending any data, and just
-   * testing for time == 0 is not enough to detect that. Used by demuxer */
-  gboolean      send_speex_headers;
+  /* Stream header buffer, to put into caps and send before any other buffers */
+  GstBufferList * stream_headers;
+  gboolean        send_stream_headers;
 
   /* Special flag for VobSub, for which we have to send colour table info
    * (if available) first before sending any data, and just testing
@@ -623,5 +632,14 @@ gboolean gst_matroska_track_init_audio_context    (GstMatroskaTrackContext ** p_
 gboolean gst_matroska_track_init_subtitle_context (GstMatroskaTrackContext ** p_context);
 
 void gst_matroska_register_tags (void);
+
+GstBufferList * gst_matroska_parse_xiph_stream_headers  (gpointer codec_data,
+                                                         gsize codec_data_size);
+
+GstBufferList * gst_matroska_parse_speex_stream_headers (gpointer codec_data,
+                                                         gsize codec_data_size);
+
+GstBufferList * gst_matroska_parse_flac_stream_headers  (gpointer codec_data,
+                                                         gsize codec_data_size);
 
 #endif /* __GST_MATROSKA_IDS_H__ */

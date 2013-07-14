@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>audioiirfilter</title>
-<meta name="generator" content="DocBook XSL Stylesheets V1.76.1">
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
 <link rel="home" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-audiofirfilter.html" title="audiofirfilter">
@@ -91,7 +91,7 @@ IIR filters as they're depending on the sampling rate.
 <p>
 </p>
 <div class="refsect2">
-<a name="idp4910688"></a><h3>Example application</h3>
+<a name="idp6404928"></a><h3>Example application</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
@@ -252,8 +252,8 @@ IIR filters as they're depending on the sampling rate.
 <span class="comment"> *</span>
 <span class="comment"> * You should have received a copy of the GNU Library General Public</span>
 <span class="comment"> * License along with this library; if not, write to the</span>
-<span class="comment"> * Free Software Foundation, Inc., 59 Temple Place - Suite 330,</span>
-<span class="comment"> * Boston, MA 02111-1307, USA.</span>
+<span class="comment"> * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,</span>
+<span class="comment"> * Boston, MA 02110-1301, USA.</span>
 <span class="comment"> */</span>
 
 <span class="comment">/* This small sample application creates a lowpass IIR filter</span>
@@ -389,9 +389,12 @@ gint
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp10393392"></a><h3>Element Information</h3>
-<div class="variablelist"><table border="0">
+<a name="idp8145488"></a><h3>Element Information</h3>
+<div class="variablelist"><table border="0" class="variablelist">
+<colgroup>
 <col align="left" valign="top">
+<col>
+</colgroup>
 <tbody>
 <tr>
 <td><p><span class="term">plugin</span></p></td>
@@ -412,9 +415,12 @@ gint
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp5693552"></a><h3>Element Pads</h3>
-<div class="variablelist"><table border="0">
+<a name="idp9189216"></a><h3>Element Pads</h3>
+<div class="variablelist"><table border="0" class="variablelist">
+<colgroup>
 <col align="left" valign="top">
+<col>
+</colgroup>
 <tbody>
 <tr>
 <td><p><span class="term">name</span></p></td>
@@ -434,8 +440,11 @@ gint
 </tr>
 </tbody>
 </table></div>
-<div class="variablelist"><table border="0">
+<div class="variablelist"><table border="0" class="variablelist">
+<colgroup>
 <col align="left" valign="top">
+<col>
+</colgroup>
 <tbody>
 <tr>
 <td><p><span class="term">name</span></p></td>
@@ -496,8 +505,11 @@ Will be emitted when the sampling rate changes. The callbacks
 will be called from the streaming thread and processing will
 stop until the event is handled.
 </p>
-<div class="variablelist"><table border="0">
+<div class="variablelist"><table border="0" class="variablelist">
+<colgroup>
 <col align="left" valign="top">
+<col>
+</colgroup>
 <tbody>
 <tr>
 <td><p><span class="term"><em class="parameter"><code>filter</code></em> :</span></p></td>

@@ -8,7 +8,6 @@ xv_source =
 xv_libs =
 endif
 
-
 # variables used for enum/marshal generation
 glib_enum_headers = tuner.h tunernorm.h	tunerchannel.h
 glib_enum_define = GST_INTERFACES
@@ -56,15 +55,15 @@ libgstvideo4linux2_la_CFLAGS =   $(GST_PLUGINS_BASE_CFLAGS) \
 
 libgstvideo4linux2_la_LDFLAGS = $(GST_PLUGIN_LDFLAGS)
 libgstvideo4linux2_la_LIBTOOLFLAGS = $(GST_PLUGIN_LIBTOOLFLAGS)
-
 libgstvideo4linux2_la_LIBADD =   $(GST_PLUGINS_BASE_LIBS) \
-				 $(GST_BASE_LIBS) \
-				 $(GST_PLUGINS_BASE_LIBS) \
+				 -lgstallocators-$(GST_API_VERSION) \
 				 -lgstvideo-$(GST_API_VERSION) \
+				 $(GST_BASE_LIBS) \
 				 $(GST_LIBS) \
 				 $(xv_libs) \
 				 $(LIBV4L2_LIBS) \
-				 $(GUDEV_LIBS)
+				 $(GUDEV_LIBS) \
+				 $(LIBRT)
 
 noinst_HEADERS = \
 	gstv4l2bufferpool.h \

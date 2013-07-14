@@ -14,8 +14,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #include <gst/check/gstcheck.h>
@@ -55,7 +55,7 @@ setup_vp8enc (const gchar * src_caps_str)
   sinkpad = gst_check_setup_sink_pad (vp8enc, &sinktemplate);
   gst_pad_set_active (srcpad, TRUE);
   gst_pad_set_active (sinkpad, TRUE);
-  fail_unless (gst_pad_set_caps (srcpad, srccaps));
+  gst_check_setup_events (srcpad, vp8enc, srccaps, GST_FORMAT_TIME);
 
   bus = gst_bus_new ();
   gst_element_set_bus (vp8enc, bus);

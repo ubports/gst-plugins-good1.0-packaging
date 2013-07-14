@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -46,10 +46,9 @@ static GstStaticPadTemplate gst_rtp_pcma_depay_sink_template =
     GST_STATIC_CAPS ("application/x-rtp, "
         "media = (string) \"audio\", "
         "payload = (int) " GST_RTP_PAYLOAD_PCMA_STRING ", "
-        "clock-rate = (int) 8000, encoding-name = (string) \"PCMA\";"
+        "clock-rate = (int) 8000;"
         "application/x-rtp, "
         "media = (string) \"audio\", "
-        "payload = (int) " GST_RTP_PAYLOAD_DYNAMIC_STRING ", "
         "clock-rate = (int) [1, MAX ], encoding-name = (string) \"PCMA\"")
     );
 
@@ -149,8 +148,8 @@ gst_rtp_pcma_depay_process (GstRTPBaseDepayload * depayload, GstBuffer * buf)
         gst_util_uint64_scale_int (len, GST_SECOND, depayload->clock_rate);
 
     if (marker) {
-      /* mark start of talkspurt with DISCONT */
-      GST_BUFFER_FLAG_SET (outbuf, GST_BUFFER_FLAG_DISCONT);
+      /* mark start of talkspurt with RESYNC */
+      GST_BUFFER_FLAG_SET (outbuf, GST_BUFFER_FLAG_RESYNC);
     }
   }
 

@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 /* Element-Checklist-Version: 5 */
 
@@ -57,7 +57,7 @@
 
 #define DIV_ROUND_UP(s,v) (((s) + ((v)-1)) / (v))
 
-#define GST_AVI_KEYFRAME 1
+#define GST_AVI_KEYFRAME (1 << 0)
 #define ENTRY_IS_KEYFRAME(e) ((e)->flags == GST_AVI_KEYFRAME)
 #define ENTRY_SET_KEYFRAME(e) ((e)->flags = GST_AVI_KEYFRAME)
 #define ENTRY_UNSET_KEYFRAME(e) ((e)->flags = 0)
@@ -456,14 +456,14 @@ gst_avi_demux_handle_src_query (GstPad * pad, GstObject * parent,
       if (stream->strh->type == GST_RIFF_FCC_auds) {
         if (stream->is_vbr) {
           /* VBR */
-          pos = gst_util_uint64_scale ((gint64) stream->current_entry *
-              stream->strh->scale, GST_SECOND, (guint64) stream->strh->rate);
+          pos = avi_stream_convert_frames_to_time_unchecked (stream,
+              stream->current_total);
           GST_DEBUG_OBJECT (avi, "VBR convert frame %u, time %"
               GST_TIME_FORMAT, stream->current_entry, GST_TIME_ARGS (pos));
         } else if (stream->strf.auds->av_bps != 0) {
           /* CBR */
-          pos = gst_util_uint64_scale (stream->current_total, GST_SECOND,
-              (guint64) stream->strf.auds->av_bps);
+          pos = avi_stream_convert_bytes_to_time_unchecked (stream,
+              stream->current_total);
           GST_DEBUG_OBJECT (avi,
               "CBR convert bytes %u, time %" GST_TIME_FORMAT,
               stream->current_total, GST_TIME_ARGS (pos));
@@ -510,7 +510,8 @@ gst_avi_demux_handle_src_query (GstPad * pad, GstObject * parent,
 
       /* only act on audio or video streams */
       if (stream->strh->type != GST_RIFF_FCC_auds &&
-          stream->strh->type != GST_RIFF_FCC_vids) {
+          stream->strh->type != GST_RIFF_FCC_vids &&
+          stream->strh->type != GST_RIFF_FCC_iavs) {
         res = FALSE;
         break;
       }
@@ -1370,9 +1371,13 @@ gst_avi_demux_get_buffer_info (GstAviDemux * avi, GstAviStream * stream,
       if (timestamp)
         *timestamp =
             avi_stream_convert_frames_to_time_unchecked (stream, entry->total);
-      if (ts_end)
+      if (ts_end) {
+        gint size = 1;
+        if (G_LIKELY (entry_n + 1 < stream->idx_n))
+          size = stream->index[entry_n + 1].total - entry->total;
         *ts_end = avi_stream_convert_frames_to_time_unchecked (stream,
-            entry->total + 1);
+            entry->total + size);
+      }
     } else {
       if (timestamp)
         *timestamp =
@@ -2355,7 +2360,7 @@ gst_avi_demux_parse_stream (GstAviDemux * avi, GstBuffer * buf)
 
   gst_pad_set_active (pad, TRUE);
   stream_id =
-      gst_pad_create_stream_id_printf (pad, GST_ELEMENT_CAST (avi), "%u",
+      gst_pad_create_stream_id_printf (pad, GST_ELEMENT_CAST (avi), "%03u",
       avi->num_streams);
   gst_pad_push_event (pad, gst_event_new_stream_start (stream_id));
   g_free (stream_id);
@@ -2587,7 +2592,9 @@ gst_avi_demux_stream_for_id (GstAviDemux * avi, guint32 id)
   /* get the stream for this entry */
   stream_nr = CHUNKID_TO_STREAMNR (id);
   if (G_UNLIKELY (stream_nr >= avi->num_streams)) {
-    GST_WARNING_OBJECT (avi, "invalid stream nr %d", stream_nr);
+    GST_WARNING_OBJECT (avi,
+        "invalid stream nr %d (0x%08x, %" GST_FOURCC_FORMAT ")", stream_nr, id,
+        GST_FOURCC_ARGS (id));
     return NULL;
   }
   stream = &avi->stream[stream_nr];
@@ -4538,6 +4545,10 @@ gst_avi_demux_invert (GstAviStream * stream, GstBuffer * buf)
     return buf;                 /* Ignore non DIB buffers */
   }
 
+  /* raw rgb data is stored topdown, but instead of inverting the buffer, */
+  /* some tools just negate the height field in the header (e.g. ffmpeg) */
+  if (((gint32) stream->strf.vids->height) < 0)
+    return buf;
 
   h = stream->strf.vids->height;
   w = stream->strf.vids->width;
@@ -5102,7 +5113,18 @@ gst_avi_demux_stream_data (GstAviDemux * avi)
 
         /* increment our positions */
         stream->current_entry++;
-        stream->current_total += size;
+        /* as in pull mode, 'total' is either bytes (CBR) or frames (VBR) */
+        if (stream->strh->type == GST_RIFF_FCC_auds && stream->is_vbr) {
+          gint blockalign = stream->strf.auds->blockalign;
+          if (blockalign > 0)
+            stream->current_total += DIV_ROUND_UP (size, blockalign);
+          else
+            stream->current_total++;
+        } else {
+          stream->current_total += size;
+        }
+        GST_LOG_OBJECT (avi, "current entry %u, total %u",
+            stream->current_entry, stream->current_total);
 
         /* update current position in the segment */
         avi->segment.position = next_ts;

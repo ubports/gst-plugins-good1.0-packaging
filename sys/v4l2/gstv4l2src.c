@@ -17,8 +17,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 /**
@@ -128,7 +128,6 @@ static gboolean gst_v4l2src_decide_allocation (GstBaseSrc * src,
     GstQuery * query);
 static GstFlowReturn gst_v4l2src_fill (GstPushSrc * src, GstBuffer * out);
 static GstCaps *gst_v4l2src_fixate (GstBaseSrc * basesrc, GstCaps * caps);
-static gboolean gst_v4l2src_event (GstBaseSrc * src, GstEvent * event);
 static gboolean gst_v4l2src_negotiate (GstBaseSrc * basesrc);
 
 static void gst_v4l2src_set_property (GObject * object, guint prop_id,
@@ -163,9 +162,7 @@ gst_v4l2src_class_init (GstV4l2SrcClass * klass)
    * GstV4l2Src::prepare-format:
    * @v4l2src: the v4l2src instance
    * @fd: the file descriptor of the current device
-   * @fourcc: the fourcc of the format being set
-   * @width: The width of the video
-   * @height: The height of the video
+   * @caps: the caps of the format being set
    *
    * This signal gets emitted before calling the v4l2 VIDIOC_S_FMT ioctl
    * (set format). This allows for any custom configuration of the device to
@@ -178,9 +175,7 @@ gst_v4l2src_class_init (GstV4l2SrcClass * klass)
   gst_v4l2_signals[SIGNAL_PRE_SET_FORMAT] = g_signal_new ("prepare-format",
       G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST,
-      0,
-      NULL, NULL,
-      NULL, G_TYPE_NONE, 4, G_TYPE_INT, G_TYPE_UINT, G_TYPE_UINT, G_TYPE_UINT);
+      0, NULL, NULL, NULL, G_TYPE_NONE, 2, G_TYPE_INT, GST_TYPE_CAPS);
 
   gst_element_class_set_static_metadata (element_class,
       "Video (video4linux2) Source", "Source/Video",
@@ -201,7 +196,6 @@ gst_v4l2src_class_init (GstV4l2SrcClass * klass)
   basesrc_class->stop = GST_DEBUG_FUNCPTR (gst_v4l2src_stop);
   basesrc_class->query = GST_DEBUG_FUNCPTR (gst_v4l2src_query);
   basesrc_class->fixate = GST_DEBUG_FUNCPTR (gst_v4l2src_fixate);
-  basesrc_class->event = GST_DEBUG_FUNCPTR (gst_v4l2src_event);
   basesrc_class->negotiate = GST_DEBUG_FUNCPTR (gst_v4l2src_negotiate);
   basesrc_class->decide_allocation =
       GST_DEBUG_FUNCPTR (gst_v4l2src_decide_allocation);
@@ -311,28 +305,21 @@ gst_v4l2src_fixate (GstBaseSrc * basesrc, GstCaps * caps)
 
 
 static gboolean
-gst_v4l2src_event (GstBaseSrc * src, GstEvent * event)
-{
-  GST_DEBUG_OBJECT (src, "handle event %" GST_PTR_FORMAT, event);
-
-  switch (GST_EVENT_TYPE (event)) {
-    case GST_EVENT_RECONFIGURE:
-      gst_pad_check_reconfigure (GST_BASE_SRC_PAD (src));
-      break;
-    default:
-      break;
-  }
-  return GST_BASE_SRC_CLASS (parent_class)->event (src, event);
-}
-
-
-static gboolean
 gst_v4l2src_negotiate (GstBaseSrc * basesrc)
 {
+  GstV4l2Src *v4l2src;
+  GstV4l2Object *obj;
   GstCaps *thiscaps;
   GstCaps *caps = NULL;
   GstCaps *peercaps = NULL;
   gboolean result = FALSE;
+
+  v4l2src = GST_V4L2SRC (basesrc);
+  obj = v4l2src->v4l2object;
+
+  /* We don't allow renegotiation, just return TRUE in that case */
+  if (GST_V4L2_IS_ACTIVE (obj))
+    return TRUE;
 
   /* first see what is possible on our source pad */
   thiscaps = gst_pad_query_caps (GST_BASE_SRC_PAD (basesrc), NULL);
@@ -343,8 +330,8 @@ gst_v4l2src_negotiate (GstBaseSrc * basesrc)
   if (thiscaps == NULL || gst_caps_is_any (thiscaps))
     goto no_nego_needed;
 
-  /* get the peer caps */
-  peercaps = gst_pad_peer_query_caps (GST_BASE_SRC_PAD (basesrc), thiscaps);
+  /* get the peer caps without a filter as we'll filter ourselves later on */
+  peercaps = gst_pad_peer_query_caps (GST_BASE_SRC_PAD (basesrc), NULL);
   GST_DEBUG_OBJECT (basesrc, "caps of peer: %" GST_PTR_FORMAT, peercaps);
   LOG_CAPS (basesrc, peercaps);
   if (peercaps && !gst_caps_is_any (peercaps)) {
@@ -507,9 +494,16 @@ gst_v4l2src_set_caps (GstBaseSrc * src, GstCaps * caps)
   v4l2src = GST_V4L2SRC (src);
   obj = v4l2src->v4l2object;
 
+  /* make sure the caps changed before doing anything */
+  if (gst_v4l2_object_caps_equal (obj, caps))
+    return TRUE;
+
   /* make sure we stop capturing and dealloc buffers */
   if (!gst_v4l2_object_stop (obj))
     return FALSE;
+
+  g_signal_emit (v4l2src, gst_v4l2_signals[SIGNAL_PRE_SET_FORMAT], 0,
+      v4l2src->v4l2object->video_fd, caps);
 
   if (!gst_v4l2_object_set_format (obj, caps))
     /* error already posted */
@@ -572,6 +566,7 @@ gst_v4l2src_decide_allocation (GstBaseSrc * bsrc, GstQuery * query)
       break;
     case GST_V4L2_IO_MMAP:
     case GST_V4L2_IO_USERPTR:
+    case GST_V4L2_IO_DMABUF:
       /* in streaming mode, prefer our own pool */
       pool = GST_BUFFER_POOL_CAST (obj->pool);
       size = obj->sizeimage;

@@ -13,8 +13,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 /* FIXME 0.11: suppress warnings for deprecated API such as GValueArray
@@ -471,7 +471,6 @@ rtp_session_init (RTPSession * sess)
         g_hash_table_new_full (NULL, NULL, NULL,
         (GDestroyNotify) g_object_unref);
   }
-  sess->cnames = g_hash_table_new_full (NULL, NULL, g_free, NULL);
 
   rtp_stats_init_defaults (&sess->stats);
 
@@ -540,7 +539,6 @@ rtp_session_finalize (GObject * object)
 
   g_free (sess->bye_reason);
 
-  g_hash_table_destroy (sess->cnames);
   g_object_unref (sess->source);
 
   G_OBJECT_CLASS (rtp_session_parent_class)->finalize (object);
@@ -1225,9 +1223,7 @@ check_collision (RTPSession * sess, RTPSource * source,
     GSocketAddress *from;
 
     /* This is not our local source, but lets check if two remote
-     * source collide
-     */
-
+     * source collide */
     if (rtp) {
       from = source->rtp_from;
     } else {
@@ -1296,25 +1292,6 @@ check_collision (RTPSession * sess, RTPSource * source,
      * Maybe should be done in upper layer, only the SDES can tell us
      * if its a collision or a loop
      */
-
-    /* If the source has been inactive for some time, we assume that it has
-     * simply changed its transport source address. Hence, there is no true
-     * third-party collision - only a simulated one. */
-    if (arrival->current_time > source->last_activity) {
-      GstClockTime inactivity_period =
-          arrival->current_time - source->last_activity;
-      if (inactivity_period > 1 * GST_SECOND) {
-        /* Use new network address */
-        if (rtp) {
-          g_assert (source->rtp_from);
-          rtp_source_set_rtp_from (source, arrival->address);
-        } else {
-          g_assert (source->rtcp_from);
-          rtp_source_set_rtcp_from (source, arrival->address);
-        }
-        return FALSE;
-      }
-    }
   } else {
     /* This is sending with our ssrc, is it an address we already know */
 
@@ -1574,33 +1551,6 @@ rtp_session_get_source_by_ssrc (RTPSession * sess, guint32 ssrc)
   RTP_SESSION_LOCK (sess);
   result =
       g_hash_table_lookup (sess->ssrcs[sess->mask_idx], GINT_TO_POINTER (ssrc));
-  if (result)
-    g_object_ref (result);
-  RTP_SESSION_UNLOCK (sess);
-
-  return result;
-}
-
-/**
- * rtp_session_get_source_by_cname:
- * @sess: a #RTPSession
- * @cname: an CNAME
- *
- * Find the source with @cname in @sess.
- *
- * Returns: a #RTPSource with CNAME @cname or NULL if the source was not found.
- * g_object_unref() after usage.
- */
-RTPSource *
-rtp_session_get_source_by_cname (RTPSession * sess, const gchar * cname)
-{
-  RTPSource *result;
-
-  g_return_val_if_fail (RTP_IS_SESSION (sess), NULL);
-  g_return_val_if_fail (cname != NULL, NULL);
-
-  RTP_SESSION_LOCK (sess);
-  result = g_hash_table_lookup (sess->cnames, cname);
   if (result)
     g_object_ref (result);
   RTP_SESSION_UNLOCK (sess);
@@ -2544,7 +2494,8 @@ calculate_rtcp_interval (RTPSession * sess, gboolean deterministic,
       /* If it is <= 0, then try to estimate the actual bandwidth */
       bandwidth = sess->source->bitrate;
 
-      g_hash_table_foreach (sess->cnames, (GHFunc) add_bitrates, &bandwidth);
+      g_hash_table_foreach (sess->ssrcs[sess->mask_idx],
+          (GHFunc) add_bitrates, &bandwidth);
       bandwidth /= 8.0;
     }
     if (bandwidth < 8000)
@@ -2673,7 +2624,8 @@ rtp_session_next_timeout (RTPSession * sess, GstClockTime current_time)
 
   result = sess->next_rtcp_check_time;
 
-  GST_DEBUG ("current time: %" GST_TIME_FORMAT ", next :%" GST_TIME_FORMAT,
+  GST_DEBUG ("current time: %" GST_TIME_FORMAT
+      ", next time: %" GST_TIME_FORMAT,
       GST_TIME_ARGS (current_time), GST_TIME_ARGS (result));
 
   if (result < current_time) {
@@ -3114,8 +3066,9 @@ rtp_session_on_timeout (RTPSession * sess, GstClockTime current_time,
 
   g_return_val_if_fail (RTP_IS_SESSION (sess), GST_FLOW_ERROR);
 
-  GST_DEBUG ("reporting at %" GST_TIME_FORMAT ", NTP time %" GST_TIME_FORMAT,
-      GST_TIME_ARGS (current_time), GST_TIME_ARGS (ntpnstime));
+  GST_DEBUG ("reporting at %" GST_TIME_FORMAT ", NTP time %" GST_TIME_FORMAT
+      ", running-time %" GST_TIME_FORMAT, GST_TIME_ARGS (current_time),
+      GST_TIME_ARGS (ntpnstime), GST_TIME_ARGS (running_time));
 
   data.sess = sess;
   data.rtcp = NULL;

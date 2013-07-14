@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  *
  */
 /**
@@ -415,7 +415,13 @@ open_codec (GstVP8Dec * dec, GstVideoCodecFrame * frame)
 
   gst_buffer_unmap (frame->input_buffer, &minfo);
 
-  if (status != VPX_CODEC_OK || !stream_info.is_kf) {
+  if (status != VPX_CODEC_OK) {
+    GST_WARNING_OBJECT (dec, "VPX preprocessing error: %s",
+        gst_vpx_error_name (status));
+    gst_video_decoder_finish_frame (GST_VIDEO_DECODER (dec), frame);
+    return GST_FLOW_CUSTOM_SUCCESS_1;
+  }
+  if (!stream_info.is_kf) {
     GST_WARNING_OBJECT (dec, "No keyframe, skipping");
     gst_video_decoder_finish_frame (GST_VIDEO_DECODER (dec), frame);
     return GST_FLOW_CUSTOM_SUCCESS_1;
@@ -521,6 +527,14 @@ gst_vp8_dec_handle_frame (GstVideoDecoder * decoder, GstVideoCodecFrame * frame)
 
   img = vpx_codec_get_frame (&dec->decoder, &iter);
   if (img) {
+    if (img->fmt != VPX_IMG_FMT_I420) {
+      vpx_img_free (img);
+      GST_ELEMENT_ERROR (decoder, LIBRARY, ENCODE,
+          ("Failed to decode frame"), ("Unsupported color format %d",
+              img->fmt));
+      return GST_FLOW_ERROR;
+    }
+
     if (deadline < 0) {
       GST_LOG_OBJECT (dec, "Skipping late frame (%f s past deadline)",
           (double) -deadline / GST_SECOND);

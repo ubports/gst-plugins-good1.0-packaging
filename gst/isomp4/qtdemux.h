@@ -13,8 +13,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 
@@ -101,6 +101,7 @@ struct _GstQTDemux {
   /* configured playback region */
   GstSegment segment;
   GstEvent *pending_newsegment;
+  gboolean upstream_newsegment;
 
 #if 0
   /* gst index support */
@@ -113,6 +114,13 @@ struct _GstQTDemux {
 
   gboolean upstream_seekable;
   gint64 upstream_size;
+
+  /* MSS streams have a single media that is unspecified at the atoms, so
+   * upstream provides it at the caps */
+  GstCaps *media_caps;
+  gboolean exposed;
+  gboolean mss_mode; /* flag to indicate that we're working with a smoothstreaming fragment */
+  guint64 fragment_start;
 };
 
 struct _GstQTDemuxClass {

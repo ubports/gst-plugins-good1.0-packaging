@@ -3,7 +3,7 @@
   <description>Parsers for various audio formats</description>
   <filename>../../gst/audioparsers/.libs/libgstaudioparsers.so</filename>
   <basename>libgstaudioparsers.so</basename>
-  <version>1.0.8</version>
+  <version>1.1.2</version>
   <license>LGPL</license>
   <source>gst-plugins-good</source>
   <package>GStreamer Good Plug-ins source release</package>
@@ -41,7 +41,7 @@
           <name>sink</name>
           <direction>sink</direction>
           <presence>always</presence>
-          <details>audio/x-ac3; audio/x-eac3; audio/ac3</details>
+          <details>audio/x-ac3; audio/x-eac3; audio/ac3; audio/x-private1-ac3</details>
         </caps>
         <caps>
           <name>src</name>
@@ -83,7 +83,7 @@
           <name>sink</name>
           <direction>sink</direction>
           <presence>always</presence>
-          <details>audio/x-dts</details>
+          <details>audio/x-dts; audio/x-private1-dts</details>
         </caps>
         <caps>
           <name>src</name>
@@ -132,6 +132,27 @@
           <direction>source</direction>
           <presence>always</presence>
           <details>audio/mpeg, mpegversion=(int)1, layer=(int)[ 1, 3 ], mpegaudioversion=(int)[ 1, 3 ], rate=(int)[ 8000, 48000 ], channels=(int)[ 1, 2 ], parsed=(boolean)true</details>
+        </caps>
+      </pads>
+    </element>
+    <element>
+      <name>sbcparse</name>
+      <longname>SBC audio parser</longname>
+      <class>Codec/Parser/Audio</class>
+      <description>Parses an SBC bluetooth audio stream</description>
+      <author>Tim-Philipp Müller &lt;tim.muller@collabora.co.uk&gt;</author>
+      <pads>
+        <caps>
+          <name>sink</name>
+          <direction>sink</direction>
+          <presence>always</presence>
+          <details>audio/x-sbc</details>
+        </caps>
+        <caps>
+          <name>src</name>
+          <direction>source</direction>
+          <presence>always</presence>
+          <details>audio/x-sbc, parsed=(boolean)true, channels=(int)[ 1, 2 ], rate=(int){ 16000, 32000, 44100, 48000 }</details>
         </caps>
       </pads>
     </element>

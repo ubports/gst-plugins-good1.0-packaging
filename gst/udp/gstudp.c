@@ -13,8 +13,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -31,6 +31,12 @@
 static gboolean
 plugin_init (GstPlugin * plugin)
 {
+  /* not using GLIB_CHECK_VERSION on purpose, run-time version matters */
+  if (glib_check_version (2, 36, 0) != NULL) {
+    GST_WARNING ("Your GLib version is < 2.36, UDP multicasting support may "
+        "be broken, see https://bugzilla.gnome.org/show_bug.cgi?id=688378");
+  }
+
   /* register info of the netaddress metadata so that we can use it from
    * multiple threads right away. Note that the plugin loading is always
    * serialized */

@@ -14,8 +14,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 /**
@@ -203,18 +203,6 @@ gst_auto_video_sink_factory_filter (GstPluginFeature * feature, gpointer data)
   return TRUE;
 }
 
-static gint
-gst_auto_video_sink_compare_ranks (GstPluginFeature * f1, GstPluginFeature * f2)
-{
-  gint diff;
-
-  diff = gst_plugin_feature_get_rank (f2) - gst_plugin_feature_get_rank (f1);
-  if (diff != 0)
-    return diff;
-  return strcmp (gst_plugin_feature_get_name (f2),
-      gst_plugin_feature_get_name (f1));
-}
-
 static GstElement *
 gst_auto_video_sink_create_element_with_pretty_name (GstAutoVideoSink * sink,
     GstElementFactory * factory)
@@ -250,7 +238,8 @@ gst_auto_video_sink_find_best (GstAutoVideoSink * sink)
 
   list = gst_registry_feature_filter (gst_registry_get (),
       (GstPluginFeatureFilter) gst_auto_video_sink_factory_filter, FALSE, sink);
-  list = g_list_sort (list, (GCompareFunc) gst_auto_video_sink_compare_ranks);
+  list =
+      g_list_sort (list, (GCompareFunc) gst_plugin_feature_rank_compare_func);
 
   GST_LOG_OBJECT (sink, "Trying to find usable video devices ...");
 

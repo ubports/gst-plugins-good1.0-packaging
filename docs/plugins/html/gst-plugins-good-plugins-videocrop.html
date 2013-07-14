@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>videocrop</title>
-<meta name="generator" content="DocBook XSL Stylesheets V1.76.1">
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
 <link rel="home" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-videobox.html" title="videobox">
@@ -92,7 +92,7 @@ most use cases, but it might matter for yours.
 <p>
 </p>
 <div class="refsect2">
-<a name="idp18893904"></a><h3>Example launch line</h3>
+<a name="idp20648320"></a><h3>Example launch line</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
@@ -110,9 +110,12 @@ most use cases, but it might matter for yours.
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp15231424"></a><h3>Element Information</h3>
-<div class="variablelist"><table border="0">
+<a name="idp23616976"></a><h3>Element Information</h3>
+<div class="variablelist"><table border="0" class="variablelist">
+<colgroup>
 <col align="left" valign="top">
+<col>
+</colgroup>
 <tbody>
 <tr>
 <td><p><span class="term">plugin</span></p></td>
@@ -133,9 +136,12 @@ most use cases, but it might matter for yours.
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp18384720"></a><h3>Element Pads</h3>
-<div class="variablelist"><table border="0">
+<a name="idp18971696"></a><h3>Element Pads</h3>
+<div class="variablelist"><table border="0" class="variablelist">
+<colgroup>
 <col align="left" valign="top">
+<col>
+</colgroup>
 <tbody>
 <tr>
 <td><p><span class="term">name</span></p></td>
@@ -151,12 +157,15 @@ most use cases, but it might matter for yours.
 </tr>
 <tr>
 <td><p><span class="term">details</span></p></td>
-<td>video/x-raw, format=(string){ RGBx, xRGB, BGRx, xBGR, RGBA, ARGB, BGRA, ABGR, RGB, BGR, AYUV, YUY2, YVYU, UYVY, I420, RGB16, RGB15, GRAY8 }, width=(int)[ 1, 2147483647 ], height=(int)[ 1, 2147483647 ], framerate=(fraction)[ 0/1, 2147483647/1 ]</td>
+<td>video/x-raw, format=(string){ RGBx, xRGB, BGRx, xBGR, RGBA, ARGB, BGRA, ABGR, RGB, BGR, AYUV, YUY2, YVYU, UYVY, I420, YV12, RGB16, RGB15, GRAY8, NV12, NV21, GRAY16_LE, GRAY16_BE }, width=(int)[ 1, 2147483647 ], height=(int)[ 1, 2147483647 ], framerate=(fraction)[ 0/1, 2147483647/1 ]</td>
 </tr>
 </tbody>
 </table></div>
-<div class="variablelist"><table border="0">
+<div class="variablelist"><table border="0" class="variablelist">
+<colgroup>
 <col align="left" valign="top">
+<col>
+</colgroup>
 <tbody>
 <tr>
 <td><p><span class="term">name</span></p></td>
@@ -172,7 +181,7 @@ most use cases, but it might matter for yours.
 </tr>
 <tr>
 <td><p><span class="term">details</span></p></td>
-<td>video/x-raw, format=(string){ RGBx, xRGB, BGRx, xBGR, RGBA, ARGB, BGRA, ABGR, RGB, BGR, AYUV, YUY2, YVYU, UYVY, I420, RGB16, RGB15, GRAY8 }, width=(int)[ 1, 2147483647 ], height=(int)[ 1, 2147483647 ], framerate=(fraction)[ 0/1, 2147483647/1 ]</td>
+<td>video/x-raw, format=(string){ RGBx, xRGB, BGRx, xBGR, RGBA, ARGB, BGRA, ABGR, RGB, BGR, AYUV, YUY2, YVYU, UYVY, I420, YV12, RGB16, RGB15, GRAY8, NV12, NV21, GRAY16_LE, GRAY16_BE }, width=(int)[ 1, 2147483647 ], height=(int)[ 1, 2147483647 ], framerate=(fraction)[ 0/1, 2147483647/1 ]</td>
 </tr>
 </tbody>
 </table></div>
@@ -195,32 +204,32 @@ most use cases, but it might matter for yours.
 <div class="refsect2">
 <a name="GstVideoCrop--bottom"></a><h3>The <code class="literal">"bottom"</code> property</h3>
 <pre class="programlisting">  "bottom"                   <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a>                  : Read / Write</pre>
-<p>Pixels to crop at bottom.</p>
-<p>Allowed values: &gt;= 0</p>
+<p>Pixels to crop at bottom (-1 to auto-crop).</p>
+<p>Allowed values: &gt;= G_MAXULONG</p>
 <p>Default value: 0</p>
 </div>
 <hr>
 <div class="refsect2">
 <a name="GstVideoCrop--left"></a><h3>The <code class="literal">"left"</code> property</h3>
 <pre class="programlisting">  "left"                     <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a>                  : Read / Write</pre>
-<p>Pixels to crop at left.</p>
-<p>Allowed values: &gt;= 0</p>
+<p>Pixels to crop at left (-1 to auto-crop).</p>
+<p>Allowed values: &gt;= G_MAXULONG</p>
 <p>Default value: 0</p>
 </div>
 <hr>
 <div class="refsect2">
 <a name="GstVideoCrop--right"></a><h3>The <code class="literal">"right"</code> property</h3>
 <pre class="programlisting">  "right"                    <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a>                  : Read / Write</pre>
-<p>Pixels to crop at right.</p>
-<p>Allowed values: &gt;= 0</p>
+<p>Pixels to crop at right (-1 to auto-crop).</p>
+<p>Allowed values: &gt;= G_MAXULONG</p>
 <p>Default value: 0</p>
 </div>
 <hr>
 <div class="refsect2">
 <a name="GstVideoCrop--top"></a><h3>The <code class="literal">"top"</code> property</h3>
 <pre class="programlisting">  "top"                      <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a>                  : Read / Write</pre>
-<p>Pixels to crop at top.</p>
-<p>Allowed values: &gt;= 0</p>
+<p>Pixels to crop at top (-1 to auto-crop).</p>
+<p>Allowed values: &gt;= G_MAXULONG</p>
 <p>Default value: 0</p>
 </div>
 </div>

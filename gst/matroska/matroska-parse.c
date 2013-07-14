@@ -18,8 +18,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 /* TODO: check CRC32 if present
@@ -342,7 +342,7 @@ gst_matroska_parse_reset (GstElement * element)
   parse->next_cluster_offset = 0;
   parse->index_offset = 0;
   parse->seekable = FALSE;
-  parse->need_newsegment = FALSE;
+  parse->need_newsegment = TRUE;
   parse->building_index = FALSE;
   if (parse->seek_event) {
     gst_event_unref (parse->seek_event);
@@ -2545,6 +2545,12 @@ gst_matroska_parse_output (GstMatroskaParse * parse, GstBuffer * buffer,
     g_value_unset (&streamheader);
     //gst_caps_replace (parse->caps, caps);
     gst_pad_set_caps (parse->srcpad, caps);
+
+    if (parse->need_newsegment) {
+      gst_pad_push_event (parse->srcpad,
+          gst_event_new_segment (&parse->common.segment));
+      parse->need_newsegment = FALSE;
+    }
 
     buf = gst_buffer_copy (parse->streamheader);
     gst_caps_unref (caps);

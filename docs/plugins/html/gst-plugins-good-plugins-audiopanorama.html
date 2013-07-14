@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>audiopanorama</title>
-<meta name="generator" content="DocBook XSL Stylesheets V1.76.1">
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
 <link rel="home" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-audioinvert.html" title="audioinvert">
@@ -71,7 +71,7 @@ which keeps the same perceived loudness, and a simple panning method that just c
 <p>
 </p>
 <div class="refsect2">
-<a name="idp8410144"></a><h3>Example launch line</h3>
+<a name="idm11888"></a><h3>Example launch line</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
@@ -95,9 +95,12 @@ gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp5566016"></a><h3>Element Information</h3>
-<div class="variablelist"><table border="0">
+<a name="idp2876928"></a><h3>Element Information</h3>
+<div class="variablelist"><table border="0" class="variablelist">
+<colgroup>
 <col align="left" valign="top">
+<col>
+</colgroup>
 <tbody>
 <tr>
 <td><p><span class="term">plugin</span></p></td>
@@ -118,9 +121,12 @@ gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp6929344"></a><h3>Element Pads</h3>
-<div class="variablelist"><table border="0">
+<a name="idp11457312"></a><h3>Element Pads</h3>
+<div class="variablelist"><table border="0" class="variablelist">
+<colgroup>
 <col align="left" valign="top">
+<col>
+</colgroup>
 <tbody>
 <tr>
 <td><p><span class="term">name</span></p></td>
@@ -136,16 +142,15 @@ gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span
 </tr>
 <tr>
 <td><p><span class="term">details</span></p></td>
-<td>audio/x-raw, format=(string){ F32LE, S16LE }, rate=(int)[ 1, 2147483647 ], channels=(int)1, layout=(string)interleaved</td>
-</tr>
-<tr>
-<td><p><span class="term"></span></p></td>
-<td> audio/x-raw, format=(string){ F32LE, S16LE }, rate=(int)[ 1, 2147483647 ], channels=(int)2, layout=(string)interleaved, channel-mask=(bitmask)0x0000000000000003</td>
+<td>audio/x-raw, format=(string){ F32LE, S16LE }, rate=(int)[ 1, 2147483647 ], channels=(int)[ 1, 2 ], layout=(string)interleaved</td>
 </tr>
 </tbody>
 </table></div>
-<div class="variablelist"><table border="0">
+<div class="variablelist"><table border="0" class="variablelist">
+<colgroup>
 <col align="left" valign="top">
+<col>
+</colgroup>
 <tbody>
 <tr>
 <td><p><span class="term">name</span></p></td>
@@ -161,7 +166,7 @@ gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span
 </tr>
 <tr>
 <td><p><span class="term">details</span></p></td>
-<td>audio/x-raw, format=(string){ S32LE, S16LE }, rate=(int)[ 1, 2147483647 ], channels=(int)2, layout=(string)interleaved, channel-mask=(bitmask)0x0000000000000003</td>
+<td>audio/x-raw, format=(string){ F32LE, S16LE }, rate=(int)[ 1, 2147483647 ], channels=(int)2, layout=(string)interleaved</td>
 </tr>
 </tbody>
 </table></div>
