@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>pulsesrc</title>
-<meta name="generator" content="DocBook XSL Stylesheets V1.76.1">
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
 <link rel="home" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-pulsesink.html" title="pulsesink">
@@ -64,7 +64,7 @@
 <a name="gst-plugins-good-plugins-pulsesrc.implemented-interfaces"></a><h2>Implemented Interfaces</h2>
 <p>
 GstPulseSrc implements
- <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gst-plugins-base-libs/html/gst-plugins-base-libs-gststreamvolume.html#GstStreamVolume">GstStreamVolume</a>,  GstImplementsInterface,  GstMixer and  GstPropertyProbe.</p>
+ <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gst-plugins-base-libs/html/gst-plugins-base-libs-gststreamvolume.html#GstStreamVolume">GstStreamVolume</a>,  <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstImplementsInterface.html">GstImplementsInterface</a>,  <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gst-plugins-base-libs/html/gst-plugins-base-libs-gstmixer.html#GstMixer">GstMixer</a> and  <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gst-plugins-base-libs/html/gst-plugins-base-libs-gstpropertyprobe.html#GstPropertyProbe">GstPropertyProbe</a>.</p>
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-pulsesrc.properties"></a><h2>Properties</h2>
@@ -85,9 +85,12 @@ GstPulseSrc implements
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp13810464"></a><h3>Element Information</h3>
-<div class="variablelist"><table border="0">
+<a name="idp11232992"></a><h3>Element Information</h3>
+<div class="variablelist"><table border="0" class="variablelist">
+<colgroup>
 <col align="left" valign="top">
+<col>
+</colgroup>
 <tbody>
 <tr>
 <td><p><span class="term">plugin</span></p></td>
@@ -108,9 +111,12 @@ GstPulseSrc implements
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp12221552"></a><h3>Element Pads</h3>
-<div class="variablelist"><table border="0">
+<a name="idp15340320"></a><h3>Element Pads</h3>
+<div class="variablelist"><table border="0" class="variablelist">
+<colgroup>
 <col align="left" valign="top">
+<col>
+</colgroup>
 <tbody>
 <tr>
 <td><p><span class="term">name</span></p></td>
@@ -214,7 +220,7 @@ GstPulseSrc implements
 <a name="GstPulseSrc--client-name"></a><h3>The <code class="literal">"client-name"</code> property</h3>
 <pre class="programlisting">  "client-name"              <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a>*                : Read / Write</pre>
 <p>The PulseAudio client_name_to_use.</p>
-<p>Default value: "lt-gst-plugins-good-plugins-scan"</p>
+<p>Default value: "gst-plugins-good-plugins-scan"</p>
 </div>
 </div>
 </div>

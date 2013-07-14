@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with gst-pulse; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
  *  USA.
  */
 
@@ -35,6 +35,7 @@ gboolean gst_pulse_fill_sample_spec (GstAudioRingBufferSpec * spec,
     pa_sample_spec * ss);
 gboolean gst_pulse_fill_format_info (GstAudioRingBufferSpec * spec,
     pa_format_info ** f, guint * channels);
+const char * gst_pulse_sample_format_to_caps_format (pa_sample_format_t sf);
 
 gchar *gst_pulse_client_name (void);
 

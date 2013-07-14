@@ -14,8 +14,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  *
  */
 
@@ -27,6 +27,8 @@
 
 #include "gstvp8dec.h"
 #include "gstvp8enc.h"
+#include "gstvp9dec.h"
+#include "gstvp9enc.h"
 
 static gboolean
 plugin_init (GstPlugin * plugin)
@@ -39,6 +41,16 @@ plugin_init (GstPlugin * plugin)
 #ifdef HAVE_VP8_ENCODER
   gst_element_register (plugin, "vp8enc", GST_RANK_PRIMARY,
       gst_vp8_enc_get_type ());
+#endif
+
+#ifdef HAVE_VP9_DECODER
+  gst_element_register (plugin, "vp9dec", GST_RANK_PRIMARY,
+      gst_vp9_dec_get_type ());
+#endif
+
+#ifdef HAVE_VP9_ENCODER
+  gst_element_register (plugin, "vp9enc", GST_RANK_PRIMARY,
+      gst_vp9_enc_get_type ());
 #endif
 
   return TRUE;

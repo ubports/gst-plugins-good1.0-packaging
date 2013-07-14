@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>vp8enc</title>
-<meta name="generator" content="DocBook XSL Stylesheets V1.76.1">
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
 <link rel="home" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-vp8dec.html" title="vp8dec">
@@ -124,6 +124,7 @@ GstVP8Enc implements
   "<a class="link" href="gst-plugins-good-plugins-vp8enc.html#GstVP8Enc--twopass-vbr-minsection" title='The "twopass-vbr-minsection" property'>twopass-vbr-minsection</a>"   <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a>                  : Read / Write
   "<a class="link" href="gst-plugins-good-plugins-vp8enc.html#GstVP8Enc--undershoot" title='The "undershoot" property'>undershoot</a>"               <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a>                  : Read / Write
   "<a class="link" href="gst-plugins-good-plugins-vp8enc.html#GstVP8Enc--vertical-scaling-mode" title='The "vertical-scaling-mode" property'>vertical-scaling-mode</a>"    <span class="type">GstVP8EncScalingMode</span>  : Read / Write
+  "<a class="link" href="gst-plugins-good-plugins-vp8enc.html#GstVP8Enc--timebase" title='The "timebase" property'>timebase</a>"                 <span class="type">GstFraction</span>           : Read / Write
 </pre>
 </div>
 <div class="refsect1">
@@ -131,9 +132,12 @@ GstVP8Enc implements
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp23900400"></a><h3>Element Information</h3>
-<div class="variablelist"><table border="0">
+<a name="idp25147936"></a><h3>Element Information</h3>
+<div class="variablelist"><table border="0" class="variablelist">
+<colgroup>
 <col align="left" valign="top">
+<col>
+</colgroup>
 <tbody>
 <tr>
 <td><p><span class="term">plugin</span></p></td>
@@ -154,9 +158,12 @@ GstVP8Enc implements
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp23907808"></a><h3>Element Pads</h3>
-<div class="variablelist"><table border="0">
+<a name="idp25155344"></a><h3>Element Pads</h3>
+<div class="variablelist"><table border="0" class="variablelist">
+<colgroup>
 <col align="left" valign="top">
+<col>
+</colgroup>
 <tbody>
 <tr>
 <td><p><span class="term">name</span></p></td>
@@ -176,8 +183,11 @@ GstVP8Enc implements
 </tr>
 </tbody>
 </table></div>
-<div class="variablelist"><table border="0">
+<div class="variablelist"><table border="0" class="variablelist">
+<colgroup>
 <col align="left" valign="top">
+<col>
+</colgroup>
 <tbody>
 <tr>
 <td><p><span class="term">name</span></p></td>
@@ -648,6 +658,12 @@ GstVP8Enc implements
 <pre class="programlisting">  "vertical-scaling-mode"    <span class="type">GstVP8EncScalingMode</span>  : Read / Write</pre>
 <p>Vertical scaling mode.</p>
 <p>Default value: Normal</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstVP8Enc--timebase"></a><h3>The <code class="literal">"timebase"</code> property</h3>
+<pre class="programlisting">  "timebase"                 <span class="type">GstFraction</span>           : Read / Write</pre>
+<p>Fraction of one second that is the shortest interframe time - normally left as zero which will default to the framerate.</p>
 </div>
 </div>
 </div>

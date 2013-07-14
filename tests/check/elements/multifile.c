@@ -14,8 +14,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -144,6 +144,7 @@ GST_START_TEST (test_multifilesink_key_unit)
   gchar *mfs_pattern;
   GstBuffer *buf;
   GstPad *sink;
+  GstSegment segment;
 
   tmpdir = g_get_tmp_dir ();
   template = g_build_filename (tmpdir, "multifile-test-XXXXXX", NULL);
@@ -158,6 +159,11 @@ GST_START_TEST (test_multifilesink_key_unit)
           GST_STATE_PLAYING) == GST_STATE_CHANGE_FAILURE);
 
   sink = gst_element_get_static_pad (mfs, "sink");
+
+  gst_pad_send_event (sink, gst_event_new_stream_start ("test"));
+  gst_segment_init (&segment, GST_FORMAT_TIME);
+  gst_pad_send_event (sink, gst_event_new_segment (&segment));
+
   buf = gst_buffer_new_and_alloc (4);
 
   gst_buffer_fill (buf, 0, "foo", 4);
@@ -250,8 +256,57 @@ GST_START_TEST (test_multifilesrc)
 
 GST_END_TEST;
 
+static GstStaticPadTemplate sinktemplate = GST_STATIC_PAD_TEMPLATE ("sink",
+    GST_PAD_SINK,
+    GST_PAD_ALWAYS,
+    GST_STATIC_CAPS_ANY);
+
+/* make sure stop_index is honoured even if the next target file exists */
+GST_START_TEST (test_multifilesrc_stop_index)
+{
+  GstElement *src;
+  GstEvent *event;
+  GstPad *sinkpad;
+  gchar *fn;
+
+  src = gst_check_setup_element ("multifilesrc");
+  fail_unless (src != NULL);
+
+  fn = g_build_filename (GST_TEST_FILES_PATH, "image.jpg", NULL);
+  g_object_set (src, "location", fn, NULL);
+  g_free (fn);
+
+  g_object_set (src, "stop-index", 5, NULL);
+
+  sinkpad = gst_check_setup_sink_pad_by_name (src, &sinktemplate, "src");
+  fail_unless (sinkpad != NULL);
+  gst_pad_set_active (sinkpad, TRUE);
+
+  gst_element_set_state (src, GST_STATE_PLAYING);
+
+  gst_element_get_state (src, NULL, NULL, -1);
+
+  /* busy-loop for EOS */
+  do {
+    g_usleep (G_USEC_PER_SEC / 10);
+    event = gst_pad_get_sticky_event (sinkpad, GST_EVENT_EOS, 0);
+  } while (event == NULL);
+  gst_event_unref (event);
+
+  /* Range appears to be [ start, stop ] */
+  fail_unless_equals_int (g_list_length (buffers), 5 + 1);
+
+  gst_element_set_state (src, GST_STATE_NULL);
+
+  gst_check_teardown_pad_by_name (src, "src");
+  gst_check_teardown_element (src);
+}
+
+GST_END_TEST;
+
+
 static Suite *
-libvisual_suite (void)
+multifile_suite (void)
 {
   Suite *s = suite_create ("multifile");
   TCase *tc_chain = tcase_create ("general");
@@ -262,8 +317,9 @@ libvisual_suite (void)
   tcase_add_test (tc_chain, test_multifilesink_max_files);
   tcase_add_test (tc_chain, test_multifilesink_key_unit);
   tcase_add_test (tc_chain, test_multifilesrc);
+  tcase_add_test (tc_chain, test_multifilesrc_stop_index);
 
   return s;
 }
 
-GST_CHECK_MAIN (libvisual);
+GST_CHECK_MAIN (multifile);

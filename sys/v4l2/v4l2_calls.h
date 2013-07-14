@@ -17,8 +17,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #ifndef __V4L2_CALLS_H__
@@ -125,6 +125,9 @@ gboolean	gst_v4l2_get_attribute		(GstV4l2Object *v4l2object,
 gboolean	gst_v4l2_set_attribute		(GstV4l2Object *v4l2object,
 						 int             attribute,
 						 const int       value);
+
+gboolean	gst_v4l2_set_controls		(GstV4l2Object * v4l2object,
+						 GstStructure * controls);
 
 gboolean        gst_v4l2_get_capabilities       (GstV4l2Object * v4l2object);
 

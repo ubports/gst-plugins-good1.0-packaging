@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  *
  */
 /**
@@ -60,12 +60,11 @@
 #define GLIB_DISABLE_DEPRECATION_WARNINGS
 
 #include <gst/tag/tag.h>
+#include <gst/video/video.h>
 #include <string.h>
 
 #include "gstvp8utils.h"
 #include "gstvp8enc.h"
-
-#include <gst/video/gstvideometa.h>
 
 GST_DEBUG_CATEGORY_STATIC (gst_vp8enc_debug);
 #define GST_CAT_DEFAULT gst_vp8enc_debug
@@ -147,6 +146,8 @@ gst_vp8_enc_user_data_free (GstVP8EncUserData * user_data)
 #define DEFAULT_TUNING VP8_TUNE_PSNR
 #define DEFAULT_CQ_LEVEL 10
 #define DEFAULT_MAX_INTRA_BITRATE_PCT 0
+#define DEFAULT_TIMEBASE_N 0
+#define DEFAULT_TIMEBASE_D 1
 
 enum
 {
@@ -193,7 +194,8 @@ enum
   PROP_ARNR_TYPE,
   PROP_TUNING,
   PROP_CQ_LEVEL,
-  PROP_MAX_INTRA_BITRATE_PCT
+  PROP_MAX_INTRA_BITRATE_PCT,
+  PROP_TIMEBASE
 };
 
 #define GST_VP8_ENC_END_USAGE_TYPE (gst_vp8_enc_end_usage_get_type())
@@ -394,8 +396,7 @@ GST_STATIC_PAD_TEMPLATE ("src",
 #define parent_class gst_vp8_enc_parent_class
 G_DEFINE_TYPE_WITH_CODE (GstVP8Enc, gst_vp8_enc, GST_TYPE_VIDEO_ENCODER,
     G_IMPLEMENT_INTERFACE (GST_TYPE_TAG_SETTER, NULL);
-    G_IMPLEMENT_INTERFACE (GST_TYPE_PRESET, NULL);
-    );
+    G_IMPLEMENT_INTERFACE (GST_TYPE_PRESET, NULL););
 
 static void
 gst_vp8_enc_class_init (GstVP8EncClass * klass)
@@ -701,6 +702,12 @@ gst_vp8_enc_class_init (GstVP8EncClass * klass)
           0, G_MAXINT, DEFAULT_MAX_INTRA_BITRATE_PCT,
           (GParamFlags) (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS)));
 
+  g_object_class_install_property (gobject_class, PROP_TIMEBASE,
+      gst_param_spec_fraction ("timebase", "Shortest interframe time",
+          "Fraction of one second that is the shortest interframe time - normally left as zero which will default to the framerate",
+          0, 1, G_MAXINT, 1, DEFAULT_TIMEBASE_N, DEFAULT_TIMEBASE_D,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
   GST_DEBUG_CATEGORY_INIT (gst_vp8enc_debug, "vp8enc", 0, "VP8 Encoder");
 }
 
@@ -769,6 +776,8 @@ gst_vp8_enc_init (GstVP8Enc * gst_vp8_enc)
   gst_vp8_enc->tuning = DEFAULT_TUNING;
   gst_vp8_enc->cq_level = DEFAULT_CQ_LEVEL;
   gst_vp8_enc->max_intra_bitrate_pct = DEFAULT_MAX_INTRA_BITRATE_PCT;
+  gst_vp8_enc->timebase_n = DEFAULT_TIMEBASE_N;
+  gst_vp8_enc->timebase_d = DEFAULT_TIMEBASE_D;
 
   gst_vp8_enc->cfg.g_profile = DEFAULT_PROFILE;
 
@@ -1163,6 +1172,10 @@ gst_vp8_enc_set_property (GObject * object, guint prop_id,
         }
       }
       break;
+    case PROP_TIMEBASE:
+      gst_vp8_enc->timebase_n = gst_value_get_fraction_numerator (value);
+      gst_vp8_enc->timebase_d = gst_value_get_fraction_denominator (value);
+      break;
     default:
       break;
   }
@@ -1380,6 +1393,10 @@ gst_vp8_enc_get_property (GObject * object, guint prop_id, GValue * value,
     case PROP_MAX_INTRA_BITRATE_PCT:
       g_value_set_int (value, gst_vp8_enc->max_intra_bitrate_pct);
       break;
+    case PROP_TIMEBASE:
+      gst_value_set_fraction (value, gst_vp8_enc->timebase_n,
+          gst_vp8_enc->timebase_d);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -1509,16 +1526,29 @@ gst_vp8_enc_set_format (GstVideoEncoder * video_encoder,
 
   encoder->cfg.g_w = GST_VIDEO_INFO_WIDTH (info);
   encoder->cfg.g_h = GST_VIDEO_INFO_HEIGHT (info);
-  if (GST_VIDEO_INFO_FPS_D (info) == 0 || GST_VIDEO_INFO_FPS_N (info) == 0) {
-    /* Zero framerate but still need to setup the timebase so we
-     * presume this is RTP - VP8 payload draft states clock rate of 90000
-     * see specification http://tools.ietf.org/html/draft-ietf-payload-vp8-01
-     * section 6.3.1 */
-    encoder->cfg.g_timebase.num = 1;
-    encoder->cfg.g_timebase.den = 90000;
-  } else {
+
+  if (encoder->timebase_n != 0 && encoder->timebase_d != 0) {
+    GST_DEBUG_OBJECT (video_encoder, "Using timebase configuration");
+    encoder->cfg.g_timebase.num = encoder->timebase_n;
+    encoder->cfg.g_timebase.den = encoder->timebase_d;
+  } else if (GST_VIDEO_INFO_FPS_D (info) != 0
+      && GST_VIDEO_INFO_FPS_N (info) != 0) {
+    /* GstVideoInfo holds either the framerate or max-framerate (if framerate
+     * is 0) in FPS so this will be used if max-framerate or framerate
+     * is set */
+    GST_DEBUG_OBJECT (video_encoder, "Setting timebase from framerate");
     encoder->cfg.g_timebase.num = GST_VIDEO_INFO_FPS_D (info);
     encoder->cfg.g_timebase.den = GST_VIDEO_INFO_FPS_N (info);
+  } else {
+    /* Zero framerate and max-framerate but still need to setup the timebase to avoid
+     * a divide by zero error. Presuming the lowest common denominator will be RTP -
+     * VP8 payload draft states clock rate of 90000 which should work for anyone where
+     * FPS < 90000 (shouldn't be too many cases where it's higher) though wouldn't be optimal. RTP specification
+     * http://tools.ietf.org/html/draft-ietf-payload-vp8-01 section 6.3.1 */
+    GST_WARNING_OBJECT (encoder,
+        "No timebase and zero framerate setting timebase to 1/90000");
+    encoder->cfg.g_timebase.num = 1;
+    encoder->cfg.g_timebase.den = 90000;
   }
 
   if (encoder->cfg.g_pass == VPX_RC_FIRST_PASS) {

@@ -13,8 +13,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #ifndef __GST_RTP_VORBIS_PAY_H__
@@ -58,6 +58,13 @@ struct _GstRtpVorbisPay
   guint         payload_pkts;
   GstClockTime  payload_timestamp;
   GstClockTime  payload_duration;
+
+  /* config (re-sending) */
+  guint8       *config_data;
+  guint         config_size;
+  guint         config_extra_len;
+  guint         config_interval;
+  GstClockTime  last_config;
 
   gint          rate;
   gint          channels;

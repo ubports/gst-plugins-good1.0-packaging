@@ -1,5 +1,5 @@
 
-Release notes for GStreamer Good Plugins 1.0.8
+Release notes for GStreamer Good Plugins 1.1.2
 
 
 The GStreamer team is proud to announce a new bug-fix release
@@ -57,33 +57,34 @@ contains a set of codecs plugins based on libav (formerly gst-ffmpeg)
 
 Features of this release
     
-      * pngenc: fix massive memory leak
-      * pngdec: parse incoming data into frames before decoding
-      * osvideo: many osxvideosink fixes
-      * udpsink, multiudpsink, dynudpsink: bind socket before using it, fixes sending udp on windows
 
 Bugs fixed in this release
      
-      * 682110 : qtdemux: discont flag set on multiple buffers in push mode
-      * 692400 : udpsrc: fix socket options not getting set on windows, resulting in packet drop in high bitrate movie
-      * 693727 : rtpvrawpay/depay negotiation broken
-      * 699260 : pngenc: unmap source frame when done
-      * 699303 : matroskademux: stream-format=raw missing from aac caps
-      * 699314 : rtph264pay: CRITICAL **: gst_adapter_map: assertion `size > 0' failed
-      * 700047 : pngdec: make decoding work without png parser
-      * 700382 : qtdemux: handle 96kHz/24 bits ALAC audio
-      * 700514 : rtpmp4apay: clear config buffer before using it
-      * 700878 : udpsink: Not sending anything on Windows
-      * 701586 : rtspsrc memleak
-      * 702167 : matroskademux: missing mutex unlock leading to wrong STREAM_LOCK count
-      * 702457 : rtpmp2tdepay: unable to depay MPEG2-TS RTP streams from GStreamer 0.10
-      * 702705 : rtspsrc does not pause properly (race condition)
-      * 702732 : v4l2: Does not link statically on linux
-      * 703076 : flvdemux: Add flvversion 1 to flash-video caps
-      * 703100 : osxvideosink: deadlock on re-use
-      * 703171 : rtph264pay: segfault because of double buffer unmap on error
-      * 703729 : osxvideosink doesn't display video anymore if once set to READY
-      * 691419 : osxvideosink: doesn't close internal window in case of window-id assignment
+      * 612406 : [PATCH] rtspsrc: Race condition
+      * 632207 : [rtspsrc] GET_PARAMETER / SET_PARAMETER support
+      * 651434 : rtspsrc: don't discard data in interleaved mode
+      * 657079 : JPEG RTP Payloader Change to support FaceVsion Webcams
+      * 664312 : rtpvorbispay does not handle headers in caps
+      * 686459 : pulsesink: playbin uri=x.mp3 audio-sink='identity ! pulsesink' = > not-negotiated flow error
+      * 700799 : matroskademux: Got data flow before segment event
+      * 701385 : videomixer: Incorrect timestamp calculations for non trivial segments
+      * 701519 : videomixer: pushes an incorrect segment event when all its sink pads are EOS
+      * 701650 : v4l2: make sure the element is not deleted before the pool
+      * 701856 : qtdemux: Does allocation queries before setting caps on all pads
+      * 702046 : rtspsrc doesn't produce buffers
+      * 702625 : avidemux: duration query returns " zero " for the DV containter format in a AVI file
+      * 702638 : v4l2:  Optimize negotiation by removing the query filter
+      * 702819 : udpsink multicast-iface does not seem to work correctly
+      * 702826 : gdkpixbufoverlay: image overlay doesn't work for -ve offset
+      * 703114 : deinterleave: deadlock while pushing pending events on all source pads
+      * 703182 : multipartmux does not push new segment after flushing seek
+      * 703312 : matroskademux: missing profile field in caps for aac audio
+      * 703350 : qtdemux: Reports wrong framerate
+      * 703399 : v4l2: don't extract data from caps twice
+      * 703426 : Fix doc and comment references to gstrtpbin element
+      * 703685 : POTFILES.in is out of date
+      * 703743 : videomixer: Handling of variable fps streams broken
+      * 703764 : v4l2: bufferpool: don't forget to release buffer on error
 
 ==== Download ====
 
@@ -121,18 +122,27 @@ subscribe to the gstreamer-devel list.
 Contributors to this release
     
       * Alban Browaeys
+      * Alex Ashley
       * Andoni Morales Alastruey
-      * Arnaud Vrac
+      * Arun Raghavan
+      * Brendan Long
       * Bruno Gonzalez
-      * David Schleef
       * David Svensson Fors
+      * J. Rick Ramstetter
       * Jens Georg
       * Jonas Holmberg
+      * Kishore Arepalli
+      * Matej Knopp
+      * Mathieu Duponchelle
       * Michael Olbrich
-      * Nicolas Dufresne
       * Ognyan Tonchev
+      * Olivier Crête
+      * Piotr Drąg
       * Sebastian Dröge
+      * Sjoerd Simons
+      * Stefan Sauer
       * Thiago Santos
       * Tim-Philipp Müller
       * Wim Taymans
+      * Youness Alaoui
  

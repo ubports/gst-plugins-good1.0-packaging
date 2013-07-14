@@ -13,8 +13,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #ifndef __GST_QTDEMUX_FOURCC_H__
@@ -65,6 +65,7 @@ G_BEGIN_DECLS
 #define FOURCC_vide     GST_MAKE_FOURCC('v','i','d','e')
 #define FOURCC_soun     GST_MAKE_FOURCC('s','o','u','n')
 #define FOURCC_subp     GST_MAKE_FOURCC('s','u','b','p')
+#define FOURCC_sbtl     GST_MAKE_FOURCC('s','b','t','l')
 #define FOURCC_strm     GST_MAKE_FOURCC('s','t','r','m')
 #define FOURCC_rtsp     GST_MAKE_FOURCC('r','t','s','p')
 #define FOURCC_co64     GST_MAKE_FOURCC('c','o','6','4')

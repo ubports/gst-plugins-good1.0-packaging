@@ -1,32 +1,38 @@
-# translation of gst-plugins-good-1.0.3.nl.po to Dutch
+# translation of gst-plugins-good-0.10.28.2.nl.po to Dutch
 # This file is put in the public domain.
 #
-# Freek de Kruijf <f.de.kruijf@gmail.com>, 2007, 2008, 2009, 2010, 2011, 2012.
+# Freek de Kruijf <f.de.kruijf@gmail.com>, 2007, 2008, 2009, 2010, 2011.
 msgid ""
 msgstr ""
-"Project-Id-Version: gst-plugins-good 1.0.3\n"
+"Project-Id-Version: gst-plugins-good 0.10.28.2\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2013-07-11 20:03+0100\n"
-"PO-Revision-Date: 2012-11-29 22:30+0100\n"
+"POT-Creation-Date: 2013-07-11 15:56+0200\n"
+"PO-Revision-Date: 2011-04-27 00:05+0200\n"
 "Last-Translator: Freek de Kruijf <f.de.kruijf@gmail.com>\n"
 "Language-Team: Dutch <vertaling@vrijschrift.org>\n"
 "Language: nl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Lokalize 1.5\n"
+"X-Generator: Lokalize 1.1\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
+
+msgid "Jack server not found"
+msgstr ""
+
+msgid "Failed to decode JPEG image"
+msgstr "Kan de JPEG-afbeelding niet decoderen"
 
 #. TRANSLATORS: 'song title' by 'artist name'
 #, c-format
 msgid "'%s' by '%s'"
 msgstr "'%s' door '%s'"
 
-msgid "Failed to decode JPEG image"
-msgstr "Kan de JPEG-afbeelding niet decoderen"
-
 msgid "Could not connect to server"
 msgstr "Kan geen verbinding maken met server"
+
+msgid "No URL set."
+msgstr "Geen URL ingesteld."
 
 msgid "Server does not support seeking."
 msgstr "Zoeken wordt door de server niet ondersteund."
@@ -49,9 +55,6 @@ msgstr ""
 msgid "Server sent bad data."
 msgstr "De server stuurde onjuiste gegevens."
 
-msgid "No URL set."
-msgstr "Geen URL ingesteld."
-
 msgid "Internal data stream error."
 msgstr "Interne fout in gegevensstroom."
 
@@ -63,6 +66,9 @@ msgstr "Dit bestand bevat geen afspeelbare stromen."
 
 msgid "This file is invalid and cannot be played."
 msgstr "Dit bestand is ongeldig en kan niet afgespeeld worden."
+
+msgid "Cannot play stream because it is encrypted with PlayReady DRM."
+msgstr ""
 
 msgid "This file is corrupt and cannot be played."
 msgstr "Dit bestand is beschadigd en kan niet afgespeeld worden."
@@ -118,16 +124,6 @@ msgid "Could not open audio device for playback."
 msgstr "Kan het audio-apparaat niet openen voor afspelen."
 
 msgid ""
-"Could not open audio device for recording. You don't have permission to open "
-"the device."
-msgstr ""
-"Kan het audio-apparaat niet openen voor opnemen. U hebt geen toestemming om "
-"het apparaat te openen."
-
-msgid "Could not open audio device for recording."
-msgstr "Kan het audio-apparaat niet openen voor opnemen."
-
-msgid ""
 "Could not open audio device for playback. This version of the Open Sound "
 "System is not supported by this element."
 msgstr ""
@@ -145,6 +141,45 @@ msgstr "Opnemen wordt niet ondersteund door dit audio-apparaat"
 
 msgid "Error recording from audio device."
 msgstr "Fout bij opnemen vanaf audio-apparaat."
+
+msgid ""
+"Could not open audio device for recording. You don't have permission to open "
+"the device."
+msgstr ""
+"Kan het audio-apparaat niet openen voor opnemen. U hebt geen toestemming om "
+"het apparaat te openen."
+
+msgid "Could not open audio device for recording."
+msgstr "Kan het audio-apparaat niet openen voor opnemen."
+
+msgid "Record Source"
+msgstr "Opnamebron"
+
+msgid "Microphone"
+msgstr "Microfoon"
+
+msgid "Line In"
+msgstr "Lijn-in"
+
+msgid "Internal CD"
+msgstr "Interne cd"
+
+msgid "SPDIF In"
+msgstr "SPDIF-in"
+
+msgid "AUX 1 In"
+msgstr "AUX 1-in"
+
+msgid "AUX 2 In"
+msgstr "AUX 2-in"
+
+#, fuzzy
+msgid "Codec Loopback"
+msgstr "Loopback"
+
+#, fuzzy
+msgid "SunVTS Loopback"
+msgstr "Loopback"
 
 msgid "Volume"
 msgstr "Volume"
@@ -179,70 +214,77 @@ msgstr "Fout bij het lezen van %d bytes van apparaat '%s'."
 
 #, c-format
 msgid "Failed to enumerate possible video formats device '%s' can work with"
-msgstr "Opnoemen van videoformaten waarmee apparaat '%s' kan werken is mislukt"
+msgstr ""
 
 #, c-format
 msgid "Could not map buffers from device '%s'"
 msgstr "Kan de buffers van apparaat '%s' niet vinden"
 
-#, c-format
+#, fuzzy, c-format
 msgid "The driver of device '%s' does not support the IO method %d"
-msgstr "Het stuurprogramma van apparaat '%s' ondersteunt de IO-methode %d niet"
+msgstr ""
+"Het stuurprogramma van apparaat '%s' ondersteunt geen  bekende opnamemethode."
 
-#, c-format
+#, fuzzy, c-format
 msgid "The driver of device '%s' does not support any known IO method."
 msgstr ""
-"Het stuurprogramma van apparaat '%s' ondersteunt geen bekende IO-methode."
+"Het stuurprogramma van apparaat '%s' ondersteunt geen  bekende opnamemethode."
 
-#, c-format
+#, fuzzy, c-format
 msgid "Device '%s' does not support video capture"
-msgstr "Apparaat '%s' ondersteunt het opnemen van video niet"
+msgstr "Apparaat '%s' is geen uitvoerapparaat."
 
-#, c-format
+#, fuzzy, c-format
 msgid "Device '%s' is busy"
-msgstr "Apparaat '%s' is bezet"
+msgstr "Apparaat '%s' is geen uitvoerapparaat."
 
-#, c-format
+#, fuzzy, c-format
 msgid "Device '%s' cannot capture at %dx%d"
-msgstr "Apparaat '%s' kan geen opname maken met %dx%d"
+msgstr "Apparaat '%s' is geen opnameapparaat."
 
-#, c-format
+#, fuzzy, c-format
 msgid "Device '%s' cannot capture in the specified format"
-msgstr "Apparaat '%s' kan geen opname maken in het gespecificeerde formaat"
+msgstr "Apparaat '%s' is geen opnameapparaat."
 
 #, c-format
 msgid "Could not get parameters on device '%s'"
 msgstr "Kan de parameters op apparaat '%s' niet verkrijgen"
 
+#, fuzzy
 msgid "Video device did not accept new frame rate setting."
-msgstr "Videoapparaat heeft de nieuwe frame-snelheid niet geaccepteerd."
+msgstr ""
+"Invoerapparaat voor video heeft de nieuwe frame-snelheid niet geaccepteerd."
 
 msgid "Video device could not create buffer pool."
-msgstr "Videoapparaat kon geen bufferpool aanmaken."
+msgstr ""
 
-#, c-format
+#, fuzzy, c-format
 msgid "Failed to get settings of tuner %d on device '%s'."
-msgstr "Instellingen van tuner %d op apparaat '%s' ophalen is mislukt."
+msgstr "Kan de instelling van tuner %d op apparaat '%s' niet verkrijgen."
 
-#, c-format
+#, fuzzy, c-format
 msgid "Error getting capabilities for device '%s'."
-msgstr "Fout bij het ophalen de mogelijkheden van apparaat '%s'."
+msgstr "Fout bij het lezen van %d bytes van apparaat '%s'."
 
-#, c-format
+#, fuzzy, c-format
 msgid "Device '%s' is not a tuner."
-msgstr "Apparaat '%s' is geen tuner."
+msgstr "Apparaat '%s' is geen uitvoerapparaat."
 
-#, c-format
+#, fuzzy, c-format
 msgid "Failed to get radio input on device '%s'. "
-msgstr "Radio-invoer van apparaat '%s' ophalen is mislukt."
+msgstr "Kan invoer %d op apparaat '%s' niet instellen."
 
 #, c-format
 msgid "Failed to set input %d on device %s."
 msgstr "Kan invoer %d op apparaat '%s' niet instellen."
 
-#, c-format
+#, fuzzy, c-format
 msgid "Failed to change mute state for device '%s'."
-msgstr "De gedempte status van apparaat '%s' wijzigen is mislukt."
+msgstr "Kan de signaalsterkte van apparaat '%s' niet verkrijgen."
+
+#, c-format
+msgid "Cannot identify device '%s'."
+msgstr "Kan apparaat '%s' niet identificeren."
 
 #, c-format
 msgid ""
@@ -267,10 +309,6 @@ msgstr "Kan de norm op apparaat '%s' niet opvragen."
 #, c-format
 msgid "Failed getting controls attributes on device '%s'."
 msgstr "Kan de knopeigenschappen op apparaat '%s' niet verkrijgen."
-
-#, c-format
-msgid "Cannot identify device '%s'."
-msgstr "Kan apparaat '%s' niet identificeren."
 
 #, c-format
 msgid "This isn't a device '%s'."
@@ -336,11 +374,14 @@ msgstr "Tijdens het draaien kan de resolutie nog niet gewijzigd worden."
 msgid "Cannot operate without a clock"
 msgstr "Kan niet werken zonder een klok."
 
-#~ msgid "Could not establish connection to sound server"
-#~ msgstr "Kan geen verbinding maken met de geluidsserver"
+#~ msgid "Got unexpected frame size of %u instead of %u."
+#~ msgstr "Onverwachte framegrootte, %u in plaats van %u."
 
-#~ msgid "Failed to query sound server capabilities"
-#~ msgstr "Kan de eigenschappen van de geluidsserver niet opvragen"
+#~ msgid "Failed trying to get video frames from device '%s'."
+#~ msgstr "Kan geen videoframes verkrijgen van apparaat '%s'."
+
+#~ msgid "Failed after %d tries. device %s. system error: %s"
+#~ msgstr "Fout na %d pogingen. Apparaat %s. Systeemfout: %s"
 
 #~ msgid "Bass"
 #~ msgstr "Lage tonen"
@@ -359,9 +400,6 @@ msgstr "Kan niet werken zonder een klok."
 
 #~ msgid "Line-in"
 #~ msgstr "Lijn-in"
-
-#~ msgid "Microphone"
-#~ msgstr "Microfoon"
 
 #~ msgid "CD"
 #~ msgstr "CD"
@@ -460,20 +498,8 @@ msgstr "Kan niet werken zonder een klok."
 #~ msgid "Telephone"
 #~ msgstr "Telefoon"
 
-#~ msgid "Line In"
-#~ msgstr "Lijn-in"
-
-#~ msgid "Internal CD"
-#~ msgstr "Interne cd"
-
 #~ msgid "Video In"
 #~ msgstr "Video-in"
-
-#~ msgid "AUX 1 In"
-#~ msgstr "AUX 1-in"
-
-#~ msgid "AUX 2 In"
-#~ msgstr "AUX 2-in"
 
 #~ msgid "AUX In"
 #~ msgstr "AUX-in"
@@ -487,9 +513,6 @@ msgstr "Kan niet werken zonder een klok."
 #~ msgid "Microphone Boost"
 #~ msgstr "Microfoon-boost"
 
-#~ msgid "Loopback"
-#~ msgstr "Loopback"
-
 #~ msgid "Diagnostic"
 #~ msgstr "Diagnose"
 
@@ -501,9 +524,6 @@ msgstr "Kan niet werken zonder een klok."
 
 #~ msgid "Input"
 #~ msgstr "Invoer"
-
-#~ msgid "Record Source"
-#~ msgstr "Opnamebron"
 
 #~ msgid "Monitor Source"
 #~ msgstr "Monitorbron"
@@ -543,9 +563,6 @@ msgstr "Kan niet werken zonder een klok."
 
 #~ msgid "Input Mix"
 #~ msgstr "Invoer-mix"
-
-#~ msgid "SPDIF In"
-#~ msgstr "SPDIF-in"
 
 #~ msgid "Microphone 1"
 #~ msgstr "Microfoon-1"
@@ -691,17 +708,14 @@ msgstr "Kan niet werken zonder een klok."
 #~ msgid "%s Function"
 #~ msgstr "%s-function"
 
-#~ msgid "Got unexpected frame size of %u instead of %u."
-#~ msgstr "Onverwachte framegrootte, %u in plaats van %u."
-
 #~ msgid "Error reading %d bytes on device '%s'."
 #~ msgstr "Fout bij het lezen van %d bytes van apparaat '%s'."
 
 #~ msgid "Could not enqueue buffers in device '%s'."
 #~ msgstr "Kan geen buffers toekennen in apparaat '%s'."
 
-#~ msgid "Failed trying to get video frames from device '%s'."
-#~ msgstr "Kan geen videoframes verkrijgen van apparaat '%s'."
+#~ msgid "Could not establish connection to sound server"
+#~ msgstr "Kan geen verbinding maken met de geluidsserver"
 
-#~ msgid "Failed after %d tries. device %s. system error: %s"
-#~ msgstr "Fout na %d pogingen. Apparaat %s. Systeemfout: %s"
+#~ msgid "Failed to query sound server capabilities"
+#~ msgstr "Kan de eigenschappen van de geluidsserver niet opvragen"

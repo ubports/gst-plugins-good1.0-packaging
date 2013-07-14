@@ -13,8 +13,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 
@@ -46,12 +46,21 @@ struct _GstWavEnc {
   GstPad    *sinkpad;
   GstPad    *srcpad;
 
+  GstTagList *tags;
+  GstToc    *toc;
+  GList     *cues;
+  GList     *labls;
+  GList     *notes;
+
   /* useful audio data */
   guint16    format;
   guint      width;
   guint      rate;
   guint      channels;
-  guint32    length;
+  
+  /* data sizes */
+  guint32    audio_length;
+  guint32    meta_length;
 
   gboolean   sent_header;
   gboolean   finished_properly;

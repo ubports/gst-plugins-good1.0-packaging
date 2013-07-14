@@ -14,8 +14,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 /**
@@ -541,7 +541,7 @@ gst_goom_chain (GstPad * pad, GstObject * parent, GstBuffer * buffer)
     GST_DEBUG_OBJECT (goom, "processing buffer");
 
     /* get timestamp of the current adapter byte */
-    timestamp = gst_adapter_prev_timestamp (goom->adapter, &dist);
+    timestamp = gst_adapter_prev_pts (goom->adapter, &dist);
     if (GST_CLOCK_TIME_IS_VALID (timestamp)) {
       /* convert bytes to time */
       dist /= goom->bps;

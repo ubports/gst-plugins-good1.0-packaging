@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>gst-plugins-good Elements</title>
-<meta name="generator" content="DocBook XSL Stylesheets V1.76.1">
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
 <link rel="home" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
 <link rel="up" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
 <link rel="prev" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
@@ -20,9 +20,9 @@
 <td><a accesskey="n" href="gst-plugins-good-plugins-3gppmux.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td>
 </tr></table>
 <div class="chapter">
-<div class="titlepage"><div><div><h2 class="title">
-<a name="idp2211408"></a>gst-plugins-good Elements</h2></div></div></div>
-<div class="toc"><dl>
+<div class="titlepage"><div><div><h1 class="title">
+<a name="idp3810112"></a>gst-plugins-good Elements</h1></div></div></div>
+<div class="toc"><dl class="toc">
 <dt>
 <span class="refentrytitle"><a href="gst-plugins-good-plugins-3gppmux.html">3gppmux</a></span><span class="refpurpose"> — Muxer for 3GPP (.3gp) files</span>
 </dt>
@@ -150,6 +150,9 @@
 <span class="refentrytitle"><a href="gst-plugins-good-plugins-directsoundsink.html">directsoundsink</a></span><span class="refpurpose"> — DirectSound audio sink</span>
 </dt>
 <dt>
+<span class="refentrytitle"><a href="gst-plugins-good-plugins-dtmfsrc.html">dtmfsrc</a></span><span class="refpurpose"> — Generates DTMF tones</span>
+</dt>
+<dt>
 <span class="refentrytitle"><a href="gst-plugins-good-plugins-dv1394src.html">dv1394src</a></span><span class="refpurpose"> — Source for DV video data from firewire port</span>
 </dt>
 <dt>
@@ -193,9 +196,6 @@
 </dt>
 <dt>
 <span class="refentrytitle"><a href="gst-plugins-good-plugins-gamma.html">gamma</a></span><span class="refpurpose"> — Adjusts gamma on a video stream</span>
-</dt>
-<dt>
-<span class="refentrytitle"><a href="gst-plugins-good-plugins-gdkpixbufoverlay.html">gdkpixbufoverlay</a></span><span class="refpurpose"> — Overlay an image onto a video stream</span>
 </dt>
 <dt>
 <span class="refentrytitle"><a href="gst-plugins-good-plugins-gdkpixbufsink.html">gdkpixbufsink</a></span><span class="refpurpose"> — Output images as GdkPixbuf objects in bus messages</span>
@@ -354,10 +354,37 @@
 <span class="refentrytitle"><a href="gst-plugins-good-plugins-rtpdec.html">rtpdec</a></span><span class="refpurpose"> — Accepts raw RTP and RTCP packets and sends them forward</span>
 </dt>
 <dt>
+<span class="refentrytitle"><a href="gst-plugins-good-plugins-rtpac3depay.html">rtpac3depay</a></span><span class="refpurpose"> — Extracts AC3 audio from RTP packets (RFC 4184)</span>
+</dt>
+<dt>
+<span class="refentrytitle"><a href="gst-plugins-good-plugins-rtpac3pay.html">rtpac3pay</a></span><span class="refpurpose"> — Payload AC3 audio as RTP packets (RFC 4184)</span>
+</dt>
+<dt>
+<span class="refentrytitle"><a href="gst-plugins-good-plugins-rtpamrdepay.html">rtpamrdepay</a></span><span class="refpurpose"> — Extracts AMR or AMR-WB audio from RTP packets (RFC 3267)</span>
+</dt>
+<dt>
+<span class="refentrytitle"><a href="gst-plugins-good-plugins-rtpamrpay.html">rtpamrpay</a></span><span class="refpurpose"> — Payload-encode AMR or AMR-WB audio into RTP packets (RFC 3267)</span>
+</dt>
+<dt>
+<span class="refentrytitle"><a href="gst-plugins-good-plugins-rtpbvdepay.html">rtpbvdepay</a></span><span class="refpurpose"> — Extracts BroadcomVoice audio from RTP packets (RFC 4298)</span>
+</dt>
+<dt>
+<span class="refentrytitle"><a href="gst-plugins-good-plugins-rtpbvpay.html">rtpbvpay</a></span><span class="refpurpose"> — Packetize BroadcomVoice audio streams into RTP packets (RFC 4298)</span>
+</dt>
+<dt>
+<span class="refentrytitle"><a href="gst-plugins-good-plugins-rtpL16depay.html">rtpL16depay</a></span><span class="refpurpose"> — Extracts raw audio from RTP packets</span>
+</dt>
+<dt>
+<span class="refentrytitle"><a href="gst-plugins-good-plugins-rtpL16pay.html">rtpL16pay</a></span><span class="refpurpose"> — Payload-encode Raw audio into RTP packets (RFC 3551)</span>
+</dt>
+<dt>
 <span class="refentrytitle"><a href="gst-plugins-good-plugins-rtpj2kpay.html">rtpj2kpay</a></span><span class="refpurpose"> — Payload-encodes JPEG 2000 pictures into RTP packets (RFC 5371)</span>
 </dt>
 <dt>
 <span class="refentrytitle"><a href="gst-plugins-good-plugins-rtpjpegpay.html">rtpjpegpay</a></span><span class="refpurpose"> — Payload-encodes JPEG pictures into RTP packets (RFC 2435)</span>
+</dt>
+<dt>
+<span class="refentrytitle"><a href="gst-plugins-good-plugins-rtpsbcpay.html">rtpsbcpay</a></span><span class="refpurpose"> — Payload SBC audio as RTP packets</span>
 </dt>
 <dt>
 <span class="refentrytitle"><a href="gst-plugins-good-plugins-rtspsrc.html">rtspsrc</a></span><span class="refpurpose"> — Receive data over the network via RTSP (RFC 2326)</span>
@@ -366,7 +393,16 @@
 <span class="refentrytitle"><a href="gst-plugins-good-plugins-rtpbin.html">rtpbin</a></span><span class="refpurpose"> — Real-Time Transport Protocol bin</span>
 </dt>
 <dt>
+<span class="refentrytitle"><a href="gst-plugins-good-plugins-rtpdtmfmux.html">rtpdtmfmux</a></span><span class="refpurpose"> — mixes RTP DTMF streams into other RTP streams</span>
+</dt>
+<dt>
+<span class="refentrytitle"><a href="gst-plugins-good-plugins-rtpdtmfsrc.html">rtpdtmfsrc</a></span><span class="refpurpose"> — Generates RTP DTMF packets</span>
+</dt>
+<dt>
 <span class="refentrytitle"><a href="gst-plugins-good-plugins-rtpjitterbuffer.html">rtpjitterbuffer</a></span><span class="refpurpose"> — A buffer that deals with network jitter and other transmission faults</span>
+</dt>
+<dt>
+<span class="refentrytitle"><a href="gst-plugins-good-plugins-rtpmux.html">rtpmux</a></span><span class="refpurpose"> — multiplex N rtp streams into one</span>
 </dt>
 <dt>
 <span class="refentrytitle"><a href="gst-plugins-good-plugins-rtpptdemux.html">rtpptdemux</a></span><span class="refpurpose"> — Parses codec streams transmitted in the same RTP session</span>
@@ -376,6 +412,12 @@
 </dt>
 <dt>
 <span class="refentrytitle"><a href="gst-plugins-good-plugins-rtpssrcdemux.html">rtpssrcdemux</a></span><span class="refpurpose"> — Splits RTP streams based on the SSRC</span>
+</dt>
+<dt>
+<span class="refentrytitle"><a href="gst-plugins-good-plugins-sbcparse.html">sbcparse</a></span><span class="refpurpose"> — Parses an SBC bluetooth audio stream</span>
+</dt>
+<dt>
+<span class="refentrytitle"><a href="gst-plugins-good-plugins-scaletempo.html">scaletempo</a></span><span class="refpurpose"> — Sync audio tempo with playback rate</span>
 </dt>
 <dt>
 <span class="refentrytitle"><a href="gst-plugins-good-plugins-shagadelictv.html">shagadelictv</a></span><span class="refpurpose"> — Oh behave, ShagedelicTV makes images shagadelic!</span>

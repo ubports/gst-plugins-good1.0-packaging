@@ -13,8 +13,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -276,8 +276,13 @@ static void
 deinterlace_set_caps_and_check (GstCaps * input, gboolean must_deinterlace)
 {
   GstCaps *othercaps = NULL;
+  GstSegment segment;
 
+  gst_pad_send_event (sinkpad, gst_event_new_stream_start ("test"));
   fail_unless (gst_pad_set_caps (sinkpad, input));
+  gst_segment_init (&segment, GST_FORMAT_TIME);
+  gst_pad_send_event (sinkpad, gst_event_new_segment (&segment));
+
   g_object_get (srcpad, "caps", &othercaps, NULL);
 
   if (must_deinterlace) {

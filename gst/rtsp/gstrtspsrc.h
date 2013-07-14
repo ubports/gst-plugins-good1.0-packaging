@@ -14,8 +14,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 /*
  * Unless otherwise indicated, Source Code is licensed under MIT license.
@@ -87,6 +87,7 @@ struct _GstRTSPConnInfo {
   gchar              *url_str;
   GstRTSPConnection  *connection;
   gboolean            connected;
+  gboolean            flushing;
 };
 
 typedef struct _GstRTSPStream GstRTSPStream;
@@ -208,8 +209,10 @@ struct _GstRTSPSrc {
   gboolean          do_rtsp_keep_alive;
   gchar            *proxy_host;
   guint             proxy_port;
-  gchar            *proxy_user;
-  gchar            *proxy_passwd;
+  gchar            *proxy_user;        /* from url or property */
+  gchar            *proxy_passwd;      /* from url or property */
+  gchar            *prop_proxy_id;     /* set via property */
+  gchar            *prop_proxy_pw;     /* set via property */
   guint             rtp_blocksize;
   gchar            *user_id;
   gchar            *user_pw;
@@ -218,6 +221,10 @@ struct _GstRTSPSrc {
   gint              udp_buffer_size;
   gboolean          short_header;
   guint             probation;
+  gboolean          udp_reconnect;
+  gchar            *multi_iface;
+  gboolean          ntp_sync;
+  gboolean          use_pipeline_clock;
 
   /* state */
   GstRTSPState       state;
@@ -229,6 +236,7 @@ struct _GstRTSPSrc {
   GstRTSPTimeRange  *range;
   gchar             *control;
   guint              next_port_num;
+  GstClock          *provided_clock;
 
   /* supported methods */
   gint               methods;

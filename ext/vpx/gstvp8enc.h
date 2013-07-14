@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  *
  */
 #ifndef __GST_VP8_ENC_H__
@@ -87,6 +87,9 @@ struct _GstVP8Enc
   vp8e_tuning tuning;
   unsigned int cq_level;
   unsigned int max_intra_bitrate_pct;
+  /* Timebase - a value of 0 will use the framerate */
+  unsigned int timebase_n;
+  unsigned int timebase_d;
 
   /* state */
   gboolean inited;

@@ -4,12 +4,12 @@ CHECK_REGISTRY = $(top_builddir)/tests/check/test-registry.reg
 TEST_FILES_DIRECTORY = $(top_srcdir)/tests/files
 
 REGISTRY_ENVIRONMENT = \
-	GST_REGISTRY=$(CHECK_REGISTRY)
+	GST_REGISTRY_1_0=$(CHECK_REGISTRY)
 
 TESTS_ENVIRONMENT = \
 	$(REGISTRY_ENVIRONMENT)					\
-	GST_PLUGIN_SYSTEM_PATH=					\
-	GST_PLUGIN_PATH=$(top_builddir)/gst:$(top_builddir)/ext:$(top_builddir)/sys:$(GSTPB_PLUGINS_DIR):$(GST_PLUGINS_DIR)			\
+	GST_PLUGIN_SYSTEM_PATH_1_0=				\
+	GST_PLUGIN_PATH_1_0=$(top_builddir)/gst:$(top_builddir)/ext:$(top_builddir)/sys:$(GSTPB_PLUGINS_DIR):$(GST_PLUGINS_DIR)			\
 	GST_PLUGIN_LOADING_WHITELIST="gstreamer@$(GST_PLUGINS_DIR):gst-plugins-base@$(GSTPB_PLUGINS_DIR):gst-plugins-good@$(top_builddir)"	\
 	GST_STATE_IGNORE_ELEMENTS="aasink autoaudiosrc autoaudiosink autovideosrc autovideosink \
 		cacasink cairotextoverlay \
@@ -121,6 +121,7 @@ check_PROGRAMS = \
 	elements/capssetter \
 	elements/deinterlace \
 	elements/deinterleave \
+	elements/dtmf \
 	elements/equalizer \
 	elements/flacparse \
 	elements/flvdemux \
@@ -133,6 +134,8 @@ check_PROGRAMS = \
 	elements/matroskamux \
 	elements/matroskaparse \
 	elements/mpegaudioparse \
+	elements/mulawdec \
+	elements/mulawenc \
 	elements/multifile \
 	elements/qtmux \
 	elements/rganalysis \
@@ -142,6 +145,7 @@ check_PROGRAMS = \
 	elements/rtpbin \
 	elements/rtpbin_buffer_list \
 	elements/rtpjitterbuffer \
+	elements/rtpmux \
 	elements/shapewipe \
 	elements/spectrum \
 	elements/udpsink \
@@ -149,7 +153,9 @@ check_PROGRAMS = \
 	elements/videocrop \
 	elements/videofilter \
 	elements/wavpackparse \
+	elements/wavparse \
 	elements/y4menc \
+	elements/videomixer \
 	pipelines/simple-launch-lines \
 	pipelines/effectv \
 	pipelines/tagschecking \
@@ -252,6 +258,11 @@ elements_alphacolor_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
 elements_deinterlace_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
 elements_deinterlace_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstvideo-$(GST_API_VERSION) $(LDADD)
 
+elements_dtmf_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) \
+	$(GST_BASE_CFLAGS) $(GST_CFLAGS) $(AM_CFLAGS)
+elements_dtmf_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstrtp-@GST_API_VERSION@ \
+    $(GST_BASE_LIBS) $(GST_LIBS) $(LDADD)
+
 elements_deinterleave_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
 elements_deinterleave_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstaudio-$(GST_API_VERSION) $(LDADD)
 elements_interleave_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
@@ -285,6 +296,9 @@ elements_rtpbin_buffer_list_LDADD = $(GST_PLUGINS_BASE_LIBS) \
              $(GST_BASE_LIBS) $(GST_LIBS) $(GST_CHECK_LIBS)
 elements_rtpbin_buffer_list_SOURCES = elements/rtpbin_buffer_list.c
 
+elements_rtpmux_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_BASE_CFLAGS) $(AM_CFLAGS)
+elements_rtpmux_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstrtp-$(GST_API_VERSION) $(GST_BASE_LIBS) $(LDADD)
+
 elements_souphttpsrc_CFLAGS = $(SOUP_CFLAGS) $(AM_CFLAGS)
 elements_souphttpsrc_LDADD = $(SOUP_LIBS) $(LDADD)
 
@@ -311,6 +325,8 @@ elements_gdkpixbufsink_CFLAGS = \
 elements_gdkpixbufsink_LDADD = \
 	$(LDADD) $(GDK_PIXBUF_LIBS)
 
+elements_videomixer_LDADD = $(LDADD)  $(GST_BASE_LIBS)
+elements_videomixer_CFLAGS = $(GST_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
 
 pipelines_flacdec_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
 pipelines_flacdec_LDADD  = $(GST_PLUGINS_BASE_LIBS) -lgstaudio-$(GST_API_VERSION) $(LDADD)

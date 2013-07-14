@@ -16,8 +16,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #include <unistd.h>
@@ -99,7 +99,7 @@ GST_START_TEST (test_y4m)
   /* makes valgrind's memcheck happier */
   gst_buffer_memset (inbuffer, 0, 0, size);
   caps = gst_caps_from_string (VIDEO_CAPS_STRING);
-  fail_unless (gst_pad_set_caps (mysrcpad, caps));
+  gst_check_setup_events (mysrcpad, y4menc, caps, GST_FORMAT_TIME);
   gst_caps_unref (caps);
   GST_BUFFER_TIMESTAMP (inbuffer) = 0;
   ASSERT_BUFFER_REFCOUNT (inbuffer, "inbuffer", 1);

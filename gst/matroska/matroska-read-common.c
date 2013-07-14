@@ -18,8 +18,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -59,6 +59,15 @@ GST_DEBUG_CATEGORY (matroskareadcommon_debug);
 #define GST_MATROSKA_TOC_UID_CHAPTER "chapter"
 #define GST_MATROSKA_TOC_UID_EDITION "edition"
 #define GST_MATROSKA_TOC_UID_EMPTY "empty"
+
+typedef struct
+{
+  GstTagList *result;
+  guint64 target_type_value;
+  gchar *target_type;
+  gboolean audio_only;
+} TargetTypeContext;
+
 
 static gboolean
 gst_matroska_decompress_data (GstMatroskaTrackEncoding * enc,
@@ -763,13 +772,19 @@ gst_matroska_read_common_parse_toc_tag (GstTocEntry * entry,
 
 static GstFlowReturn
 gst_matroska_read_common_parse_metadata_targets (GstMatroskaReadCommon * common,
-    GstEbmlRead * ebml, GArray * edition_targets, GArray * chapter_targets)
+    GstEbmlRead * ebml, GArray * edition_targets, GArray * chapter_targets,
+    GArray * track_targets, guint64 * target_type_value, gchar ** target_type)
 {
   GstFlowReturn ret = GST_FLOW_OK;
   guint32 id;
   guint64 uid;
+  guint64 tmp;
+  gchar *str;
 
   DEBUG_ELEMENT_START (common, ebml, "TagTargets");
+
+  *target_type_value = 50;
+  *target_type = NULL;
 
   if ((ret = gst_ebml_read_master (ebml, &id)) != GST_FLOW_OK) {
     DEBUG_ELEMENT_STOP (common, ebml, "TagTargets", ret);
@@ -789,6 +804,24 @@ gst_matroska_read_common_parse_metadata_targets (GstMatroskaReadCommon * common,
       case GST_MATROSKA_ID_TARGETEDITIONUID:
         if ((ret = gst_ebml_read_uint (ebml, &id, &uid)) == GST_FLOW_OK)
           g_array_append_val (edition_targets, uid);
+        break;
+
+      case GST_MATROSKA_ID_TARGETTRACKUID:
+        if ((ret = gst_ebml_read_uint (ebml, &id, &uid)) == GST_FLOW_OK)
+          g_array_append_val (track_targets, uid);
+        break;
+
+      case GST_MATROSKA_ID_TARGETTYPEVALUE:
+        if ((ret = gst_ebml_read_uint (ebml, &id, &tmp)) == GST_FLOW_OK)
+          *target_type_value = tmp;
+        break;
+
+      case GST_MATROSKA_ID_TARGETTYPE:
+        if ((ret = gst_ebml_read_ascii (ebml, &id, &str)) == GST_FLOW_OK) {
+          if (*target_type != NULL)
+            g_free (*target_type);
+          *target_type = str;
+        }
         break;
 
       default:
@@ -1746,7 +1779,7 @@ gst_matroska_read_common_parse_info (GstMatroskaReadCommon * common,
 
 static GstFlowReturn
 gst_matroska_read_common_parse_metadata_id_simple_tag (GstMatroskaReadCommon *
-    common, GstEbmlRead * ebml, GstTagList ** p_taglist)
+    common, GstEbmlRead * ebml, GstTagList ** p_taglist, gchar * parent)
 {
   /* FIXME: check if there are more useful mappings */
   static const struct
@@ -1756,27 +1789,165 @@ gst_matroska_read_common_parse_metadata_id_simple_tag (GstMatroskaReadCommon *
   }
   tag_conv[] = {
     {
+      /* The following list has the _same_ order as the one in Matroska spec. Please, don't mess it up. */
+      /* TODO: Nesting information:
+         ORIGINAL A special tag that is meant to have other tags inside (using nested tags) to describe the original work of art that this item is based on. All tags in this list can be used "under" the ORIGINAL tag like LYRICIST, PERFORMER, etc.
+         SAMPLE A tag that contains other tags to describe a sample used in the targeted item taken from another work of art. All tags in this list can be used "under" the SAMPLE tag like TITLE, ARTIST, DATE_RELEASED, etc.
+         COUNTRY The name of the country (biblio ISO-639-2) that is meant to have other tags inside (using nested tags) to country specific information about the item. All tags in this list can be used "under" the COUNTRY_SPECIFIC tag like LABEL, PUBLISH_RATING, etc.
+       */
+
+      /* Organizational Information */
+    GST_MATROSKA_TAG_ID_TOTAL_PARTS, GST_TAG_TRACK_COUNT}, {
+    GST_MATROSKA_TAG_ID_PART_NUMBER, GST_TAG_TRACK_NUMBER}, {
+      /* TODO: PART_OFFSET A number to add to PART_NUMBER when the parts at that level don't start at 1. (e.g. if TargetType is TRACK, the track number of the second audio CD) */
+
+      /* Titles */
+    GST_MATROSKA_TAG_ID_SUBTITLE, GST_TAG_TITLE}, {     /* Sub Title of the entity. Since we're concat'ing all title-like entities anyway, might as well add the sub-title. */
     GST_MATROSKA_TAG_ID_TITLE, GST_TAG_TITLE}, {
+    GST_MATROSKA_TAG_ID_ALBUM, GST_TAG_ALBUM}, {        /* Matroska spec does NOT have this tag! Dunno what it was doing here, probably for compatibility. */
+
+      /* TODO: Nested Information:
+         URL URL corresponding to the tag it's included in.
+         SORT_WITH A child element to indicate what alternative value the parent tag can have to be sorted, for example "Pet Shop Boys" instead of "The Pet Shop Boys". Or "Marley Bob" and "Marley Ziggy" (no comma needed).
+         INSTRUMENTS The instruments that are being used/played, separated by a comma. It should be a child of the following tags: ARTIST, LEAD_PERFORMER or ACCOMPANIMENT.
+         EMAIL Email corresponding to the tag it's included in.
+         ADDRESS The physical address of the entity. The address should include a country code. It can be useful for a recording label.
+         FAX The fax number corresponding to the tag it's included in. It can be useful for a recording label.
+         PHONE The phone number corresponding to the tag it's included in. It can be useful for a recording label.
+       */
+
+      /* Entities */
     GST_MATROSKA_TAG_ID_ARTIST, GST_TAG_ARTIST}, {
-    GST_MATROSKA_TAG_ID_AUTHOR, GST_TAG_ARTIST}, {
-    GST_MATROSKA_TAG_ID_ALBUM, GST_TAG_ALBUM}, {
-    GST_MATROSKA_TAG_ID_COMMENTS, GST_TAG_COMMENT}, {
-    GST_MATROSKA_TAG_ID_BITSPS, GST_TAG_BITRATE}, {
-    GST_MATROSKA_TAG_ID_BPS, GST_TAG_BITRATE}, {
-    GST_MATROSKA_TAG_ID_ENCODER, GST_TAG_ENCODER}, {
-    GST_MATROSKA_TAG_ID_DATE, GST_TAG_DATE}, {
-    GST_MATROSKA_TAG_ID_ISRC, GST_TAG_ISRC}, {
-    GST_MATROSKA_TAG_ID_COPYRIGHT, GST_TAG_COPYRIGHT}, {
-    GST_MATROSKA_TAG_ID_BPM, GST_TAG_BEATS_PER_MINUTE}, {
-    GST_MATROSKA_TAG_ID_TERMS_OF_USE, GST_TAG_LICENSE}, {
-    GST_MATROSKA_TAG_ID_COMPOSER, GST_TAG_COMPOSER}, {
     GST_MATROSKA_TAG_ID_LEAD_PERFORMER, GST_TAG_PERFORMER}, {
-    GST_MATROSKA_TAG_ID_GENRE, GST_TAG_GENRE}
+    GST_MATROSKA_TAG_ID_ACCOMPANIMENT, GST_TAG_PERFORMER}, {    /* Band/orchestra/accompaniment/musician. This is akin to the TPE2 tag in ID3. */
+    GST_MATROSKA_TAG_ID_COMPOSER, GST_TAG_COMPOSER}, {
+      /* ARRANGER The person who arranged the piece, e.g., Ravel. */
+    GST_MATROSKA_TAG_ID_LYRICS, GST_TAG_LYRICS}, {      /* The lyrics corresponding to a song (in case audio synchronization is not known or as a doublon to a subtitle track). Editing this value when subtitles are found should also result in editing the subtitle track for more consistency. */
+      /* LYRICIST The person who wrote the lyrics for a musical item. This is akin to the TEXT tag in ID3. */
+    GST_MATROSKA_TAG_ID_CONDUCTOR, GST_TAG_PERFORMER}, {        /* Conductor/performer refinement. This is akin to the TPE3 tag in ID3. */
+      /* DIRECTOR This is akin to the IART tag in RIFF. */
+    GST_MATROSKA_TAG_ID_AUTHOR, GST_TAG_ARTIST}, {
+      /* ASSISTANT_DIRECTOR The name of the assistant director. */
+      /* DIRECTOR_OF_PHOTOGRAPHY The name of the director of photography, also known as cinematographer. This is akin to the ICNM tag in Extended RIFF. */
+      /* SOUND_ENGINEER The name of the sound engineer or sound recordist. */
+      /* ART_DIRECTOR The person who oversees the artists and craftspeople who build the sets. */
+      /* PRODUCTION_DESIGNER Artist responsible for designing the overall visual appearance of a movie. */
+      /* CHOREGRAPHER The name of the choregrapher */
+      /* COSTUME_DESIGNER The name of the costume designer */
+      /* ACTOR An actor or actress playing a role in this movie. This is the person's real name, not the character's name the person is playing. */
+      /* CHARACTER The name of the character an actor or actress plays in this movie. This should be a sub-tag of an ACTOR tag in order not to cause ambiguities. */
+      /* WRITTEN_BY The author of the story or script (used for movies and TV shows). */
+      /* SCREENPLAY_BY The author of the screenplay or scenario (used for movies and TV shows). */
+      /* EDITED_BY This is akin to the IEDT tag in Extended RIFF. */
+      /* PRODUCER Produced by. This is akin to the IPRO tag in Extended RIFF. */
+      /* COPRODUCER The name of a co-producer. */
+      /* EXECUTIVE_PRODUCER The name of an executive producer. */
+      /* DISTRIBUTED_BY This is akin to the IDST tag in Extended RIFF. */
+      /* MASTERED_BY The engineer who mastered the content for a physical medium or for digital distribution. */
+    GST_MATROSKA_TAG_ID_ENCODED_BY, GST_TAG_ENCODED_BY}, {      /* This is akin to the TENC tag in ID3. */
+      /* MIXED_BY DJ mix by the artist specified */
+      /* REMIXED_BY Interpreted, remixed, or otherwise modified by. This is akin to the TPE4 tag in ID3. */
+      /* PRODUCTION_STUDIO This is akin to the ISTD tag in Extended RIFF. */
+      /* THANKS_TO A very general tag for everyone else that wants to be listed. */
+      /* PUBLISHER This is akin to the TPUB tag in ID3. */
+      /* LABEL The record label or imprint on the disc. */
+      /* Search / Classification */
+    GST_MATROSKA_TAG_ID_GENRE, GST_TAG_GENRE}, {
+      /* MOOD Intended to reflect the mood of the item with a few keywords, e.g. "Romantic", "Sad" or "Uplifting". The format follows that of the TMOO tag in ID3. */
+      /* ORIGINAL_MEDIA_TYPE Describes the original type of the media, such as, "DVD", "CD", "computer image," "drawing," "lithograph," and so forth. This is akin to the TMED tag in ID3. */
+      /* CONTENT_TYPE The type of the item. e.g. Documentary, Feature Film, Cartoon, Music Video, Music, Sound FX, ... */
+      /* SUBJECT Describes the topic of the file, such as "Aerial view of Seattle." */
+    GST_MATROSKA_TAG_ID_DESCRIPTION, GST_TAG_DESCRIPTION}, {    /* A short description of the content, such as "Two birds flying." */
+    GST_MATROSKA_TAG_ID_KEYWORDS, GST_TAG_KEYWORDS}, {  /* Keywords to the item separated by a comma, used for searching. */
+      /* SUMMARY A plot outline or a summary of the story. */
+      /* SYNOPSIS A description of the story line of the item. */
+      /* INITIAL_KEY The initial key that a musical track starts in. The format is identical to ID3. */
+      /* PERIOD Describes the period that the piece is from or about. For example, "Renaissance". */
+      /* LAW_RATING Depending on the country it's the format of the rating of a movie (P, R, X in the USA, an age in other countries or a URI defining a logo). */
+      /* ICRA The ICRA content rating for parental control. (Previously RSACi) */
+
+      /* Temporal Information */
+    GST_MATROSKA_TAG_ID_DATE_RELEASED, GST_TAG_DATE}, { /* The time that the item was originaly released. This is akin to the TDRL tag in ID3. */
+    GST_MATROSKA_TAG_ID_DATE_RECORDED, GST_TAG_DATE}, { /* The time that the recording began. This is akin to the TDRC tag in ID3. */
+    GST_MATROSKA_TAG_ID_DATE_ENCODED, GST_TAG_DATE}, {  /* The time that the encoding of this item was completed began. This is akin to the TDEN tag in ID3. */
+    GST_MATROSKA_TAG_ID_DATE_TAGGED, GST_TAG_DATE}, {   /* The time that the tags were done for this item. This is akin to the TDTG tag in ID3. */
+    GST_MATROSKA_TAG_ID_DATE_DIGITIZED, GST_TAG_DATE}, {        /* The time that the item was tranfered to a digital medium. This is akin to the IDIT tag in RIFF. */
+    GST_MATROSKA_TAG_ID_DATE_WRITTEN, GST_TAG_DATE}, {  /* The time that the writing of the music/script began. */
+    GST_MATROSKA_TAG_ID_DATE_PURCHASED, GST_TAG_DATE}, {        /* Information on when the file was purchased (see also purchase tags). */
+    GST_MATROSKA_TAG_ID_DATE, GST_TAG_DATE}, {  /* Matroska spec does NOT have this tag! Dunno what it was doing here, probably for compatibility. */
+
+      /* Spacial Information */
+    GST_MATROSKA_TAG_ID_RECORDING_LOCATION, GST_TAG_GEO_LOCATION_NAME}, {       /* The location where the item was recorded. The countries corresponding to the string, same 2 octets as in Internet domains, or possibly ISO-3166. This code is followed by a comma, then more detailed information such as state/province, another comma, and then city. For example, "US, Texas, Austin". This will allow for easy sorting. It is okay to only store the country, or the country and the state/province. More detailed information can be added after the city through the use of additional commas. In cases where the province/state is unknown, but you want to store the city, simply leave a space between the two commas. For example, "US, , Austin". */
+      /* COMPOSITION_LOCATION Location that the item was originaly designed/written. The countries corresponding to the string, same 2 octets as in Internet domains, or possibly ISO-3166. This code is followed by a comma, then more detailed information such as state/province, another comma, and then city. For example, "US, Texas, Austin". This will allow for easy sorting. It is okay to only store the country, or the country and the state/province. More detailed information can be added after the city through the use of additional commas. In cases where the province/state is unknown, but you want to store the city, simply leave a space between the two commas. For example, "US, , Austin". */
+      /* COMPOSER_NATIONALITY Nationality of the main composer of the item, mostly for classical music. The countries corresponding to the string, same 2 octets as in Internet domains, or possibly ISO-3166. */
+
+      /* Personal */
+    GST_MATROSKA_TAG_ID_COMMENT, GST_TAG_COMMENT}, {    /* Any comment related to the content. */
+    GST_MATROSKA_TAG_ID_COMMENTS, GST_TAG_COMMENT}, {   /* Matroska spec does NOT have this tag! Dunno what it was doing here, probably for compatibility. */
+      /* PLAY_COUNTER The number of time the item has been played. */
+      /* TODO: RATING A numeric value defining how much a person likes the song/movie. The number is between 0 and 5 with decimal values possible (e.g. 2.7), 5(.0) being the highest possible rating. Other rating systems with different ranges will have to be scaled. */
+
+      /* Technical Information */
+    GST_MATROSKA_TAG_ID_ENCODER, GST_TAG_ENCODER}, {
+      /* ENCODER_SETTINGS A list of the settings used for encoding this item. No specific format. */
+    GST_MATROSKA_TAG_ID_BPS, GST_TAG_BITRATE}, {
+    GST_MATROSKA_TAG_ID_BITSPS, GST_TAG_BITRATE}, {     /* Matroska spec does NOT have this tag! Dunno what it was doing here, probably for compatibility. */
+      /* WONTFIX (already handled in another way): FPS The average frames per second of the specified item. This is typically the average number of Blocks per second. In the event that lacing is used, each laced chunk is to be counted as a seperate frame. */
+    GST_MATROSKA_TAG_ID_BPM, GST_TAG_BEATS_PER_MINUTE}, {
+      /* MEASURE In music, a measure is a unit of time in Western music like "4/4". It represents a regular grouping of beats, a meter, as indicated in musical notation by the time signature.. The majority of the contemporary rock and pop music you hear on the radio these days is written in the 4/4 time signature. */
+      /* TUNING It is saved as a frequency in hertz to allow near-perfect tuning of instruments to the same tone as the musical piece (e.g. "441.34" in Hertz). The default value is 440.0 Hz. */
+      /* TODO: REPLAYGAIN_GAIN The gain to apply to reach 89dB SPL on playback. This is based on the Replay Gain standard. Note that ReplayGain information can be found at all TargetType levels (track, album, etc). */
+      /* TODO: REPLAYGAIN_PEAK The maximum absolute peak value of the item. This is based on the Replay Gain standard. */
+
+      /* Identifiers */
+    GST_MATROSKA_TAG_ID_ISRC, GST_TAG_ISRC}, {
+      /* MCDI This is a binary dump of the TOC of the CDROM that this item was taken from. This holds the same information as the MCDI in ID3. */
+      /* ISBN International Standard Book Number */
+      /* BARCODE EAN-13 (European Article Numbering) or UPC-A (Universal Product Code) bar code identifier */
+      /* CATALOG_NUMBER A label-specific string used to identify the release (TIC 01 for example). */
+      /* LABEL_CODE A 4-digit or 5-digit number to identify the record label, typically printed as (LC) xxxx or (LC) 0xxxx on CDs medias or covers (only the number is stored). */
+      /* LCCN Library of Congress Control Number */
+
+      /* Commercial */
+      /* PURCHASE_ITEM URL to purchase this file. This is akin to the WPAY tag in ID3. */
+      /* PURCHASE_INFO Information on where to purchase this album. This is akin to the WCOM tag in ID3. */
+      /* PURCHASE_OWNER Information on the person who purchased the file. This is akin to the TOWN tag in ID3. */
+      /* PURCHASE_PRICE The amount paid for entity. There should only be a numeric value in here. Only numbers, no letters or symbols other than ".". For instance, you would store "15.59" instead of "$15.59USD". */
+      /* PURCHASE_CURRENCY The currency type used to pay for the entity. Use ISO-4217 for the 3 letter currency code. */
+
+      /* Legal */
+    GST_MATROSKA_TAG_ID_COPYRIGHT, GST_TAG_COPYRIGHT}, {
+    GST_MATROSKA_TAG_ID_PRODUCTION_COPYRIGHT, GST_TAG_COPYRIGHT}, {     /* The copyright information as per the production copyright holder. This is akin to the TPRO tag in ID3. */
+    GST_MATROSKA_TAG_ID_LICENSE, GST_TAG_LICENSE}, {    /* The license applied to the content (like Creative Commons variants). */
+    GST_MATROSKA_TAG_ID_TERMS_OF_USE, GST_TAG_LICENSE}
+  };
+  static const struct
+  {
+    const gchar *matroska_tagname;
+    const gchar *gstreamer_tagname;
+  }
+  child_tag_conv[] = {
+    {
+    "TITLE/SORT_WITH=", GST_TAG_TITLE_SORTNAME}, {
+    "ARTIST/SORT_WITH=", GST_TAG_ARTIST_SORTNAME}, {
+      /* ALBUM-stuff is handled elsewhere */
+    "COMPOSER/SORT_WITH=", GST_TAG_TITLE_SORTNAME}, {
+    "ORIGINAL/URL=", GST_TAG_LOCATION}, {
+      /* EMAIL, PHONE, FAX all can be mapped to GST_TAG_CONTACT, there is special
+       * code for that later.
+       */
+    "TITLE/URL=", GST_TAG_HOMEPAGE}, {
+    "ARTIST/URL=", GST_TAG_HOMEPAGE}, {
+    "COPYRIGHT/URL=", GST_TAG_COPYRIGHT_URI}, {
+    "LICENSE/URL=", GST_TAG_LICENSE_URI}, {
+    "LICENSE/URL=", GST_TAG_LICENSE_URI}
   };
   GstFlowReturn ret;
   guint32 id;
   gchar *value = NULL;
   gchar *tag = NULL;
+  gchar *name_with_parent = NULL;
+  GstTagList *child_taglist = NULL;
 
   DEBUG_ELEMENT_START (common, ebml, "SimpleTag");
 
@@ -1784,6 +1955,11 @@ gst_matroska_read_common_parse_metadata_id_simple_tag (GstMatroskaReadCommon *
     DEBUG_ELEMENT_STOP (common, ebml, "SimpleTag", ret);
     return ret;
   }
+
+  if (parent)
+    child_taglist = *p_taglist;
+  else
+    child_taglist = gst_tag_list_new_empty ();
 
   while (ret == GST_FLOW_OK && gst_ebml_read_has_remaining (ebml, 1, TRUE)) {
     /* read all sub-entries */
@@ -1797,6 +1973,11 @@ gst_matroska_read_common_parse_metadata_id_simple_tag (GstMatroskaReadCommon *
         tag = NULL;
         ret = gst_ebml_read_ascii (ebml, &id, &tag);
         GST_DEBUG_OBJECT (common, "TagName: %s", GST_STR_NULL (tag));
+        g_free (name_with_parent);
+        if (parent != NULL)
+          name_with_parent = g_strdup_printf ("%s/%s", parent, tag);
+        else
+          name_with_parent = g_strdup (tag);
         break;
 
       case GST_MATROSKA_ID_TAGSTRING:
@@ -1806,11 +1987,23 @@ gst_matroska_read_common_parse_metadata_id_simple_tag (GstMatroskaReadCommon *
         GST_DEBUG_OBJECT (common, "TagString: %s", GST_STR_NULL (value));
         break;
 
+      case GST_MATROSKA_ID_SIMPLETAG:
+        /* Recursive SimpleTag */
+        /* This implementation requires tag name of _this_ tag to be known
+         * in order to read its children. It's not in the spec, just the way
+         * the code is written.
+         */
+        if (name_with_parent != NULL) {
+          ret = gst_matroska_read_common_parse_metadata_id_simple_tag (common,
+              ebml, &child_taglist, name_with_parent);
+          break;
+        }
+        /* fall-through */
+
       default:
         ret = gst_matroska_read_common_parse_skip (common, ebml, "SimpleTag",
             id);
         break;
-        /* fall-through */
 
       case GST_MATROSKA_ID_TAGLANGUAGE:
       case GST_MATROSKA_ID_TAGDEFAULT:
@@ -1822,10 +2015,18 @@ gst_matroska_read_common_parse_metadata_id_simple_tag (GstMatroskaReadCommon *
 
   DEBUG_ELEMENT_STOP (common, ebml, "SimpleTag", ret);
 
-  if (tag && value) {
+  if (parent && tag && value && *value != '\0') {
+    /* Don't bother mapping children tags - parent will do that */
+    gchar *key_val;
+    /* TODO: read LANGUAGE sub-tag, and use "key[lc]=val" form */
+    key_val = g_strdup_printf ("%s=%s", name_with_parent, value);
+    gst_tag_list_add (*p_taglist, GST_TAG_MERGE_APPEND,
+        GST_TAG_EXTENDED_COMMENT, key_val, NULL);
+  } else if (tag && value && *value != '\0') {
+    gboolean matched = FALSE;
     guint i;
 
-    for (i = 0; i < G_N_ELEMENTS (tag_conv); i++) {
+    for (i = 0; !matched && i < G_N_ELEMENTS (tag_conv); i++) {
       const gchar *tagname_gst = tag_conv[i].gstreamer_tagname;
 
       const gchar *tagname_mkv = tag_conv[i].matroska_tagname;
@@ -1856,16 +2057,238 @@ gst_matroska_read_common_parse_metadata_id_simple_tag (GstMatroskaReadCommon *
               g_type_name (dest_type));
         }
         g_value_unset (&dest);
-        break;
+        matched = TRUE;
       }
     }
+    if (!matched) {
+      gchar *key_val;
+      /* TODO: read LANGUAGE sub-tag, and use "key[lc]=val" form */
+      key_val = g_strdup_printf ("%s=%s", tag, value);
+      gst_tag_list_add (*p_taglist, GST_TAG_MERGE_APPEND,
+          GST_TAG_EXTENDED_COMMENT, key_val, NULL);
+    }
+  }
+
+  if (!parent) {
+    /* Map children tags. This only supports top-anchored mapping. That is,
+     * we start at toplevel tag (this tag), and see how its combinations
+     * with its children can be mapped. Which means that grandchildren
+     * are also combined here, with _this_ tag taken into consideration.
+     * If grandchildren can be combined only with children, that combination
+     * will not happen.
+     */
+    gint child_tags_n = gst_tag_list_n_tags (child_taglist);
+    if (child_tags_n > 0) {
+      gint i;
+      for (i = 0; i < child_tags_n; i++) {
+        gint j;
+        const gchar *child_name = gst_tag_list_nth_tag_name (child_taglist, i);
+        guint taglen = gst_tag_list_get_tag_size (child_taglist, child_name);
+        for (j = 0; j < taglen; j++) {
+          gchar *val;
+          gboolean matched = FALSE;
+          gchar *val_pre, *val_post;
+          gint k;
+
+          if (!gst_tag_list_get_string_index (child_taglist, child_name,
+                  j, &val))
+            continue;
+          if (!strchr (val, '=')) {
+            g_free (val);
+            continue;
+          }
+          val_post = g_strdup (strchr (val, '=') + 1);
+          val_pre = g_strdup (val);
+          *(strchr (val_pre, '=') + 1) = '\0';
+
+          for (k = 0; !matched && k < G_N_ELEMENTS (child_tag_conv); k++) {
+            const gchar *tagname_gst = child_tag_conv[k].gstreamer_tagname;
+
+            const gchar *tagname_mkv = child_tag_conv[k].matroska_tagname;
+
+            /* TODO: Once "key[lc]=value" form support is implemented,
+             * strip [lc] here. It can't be used in combined tags.
+             * If a tag is not combined, leave [lc] as it is.
+             */
+            if (strcmp (tagname_mkv, val_pre) == 0) {
+              GValue dest = { 0, };
+              GType dest_type = gst_tag_get_type (tagname_gst);
+
+              g_value_init (&dest, dest_type);
+              if (gst_value_deserialize (&dest, val_post)) {
+                gst_tag_list_add_values (*p_taglist, GST_TAG_MERGE_APPEND,
+                    tagname_gst, &dest, NULL);
+              } else {
+                GST_WARNING_OBJECT (common, "Can't transform complex tag '%s' "
+                    "to target type '%s'", val, g_type_name (dest_type));
+              }
+              g_value_unset (&dest);
+              matched = TRUE;
+            }
+          }
+          if (!matched) {
+            gchar *last_slash = strrchr (val_pre, '/');
+            if (last_slash) {
+              last_slash++;
+              if (strcmp (last_slash, "EMAIL=") == 0 ||
+                  strcmp (last_slash, "PHONE=") == 0 ||
+                  strcmp (last_slash, "ADDRESS=") == 0 ||
+                  strcmp (last_slash, "FAX=") == 0) {
+                gst_tag_list_add (*p_taglist, GST_TAG_MERGE_APPEND,
+                    GST_TAG_CONTACT, val_post, NULL);
+                matched = TRUE;
+              }
+            }
+          }
+          if (!matched)
+            gst_tag_list_add (*p_taglist, GST_TAG_MERGE_APPEND,
+                GST_TAG_EXTENDED_COMMENT, val, NULL);
+          g_free (val_post);
+          g_free (val_pre);
+          g_free (val);
+        }
+      }
+    }
+    gst_tag_list_unref (child_taglist);
   }
 
   g_free (tag);
   g_free (value);
+  g_free (name_with_parent);
 
   return ret;
 }
+
+
+static void
+gst_matroska_read_common_count_streams (GstMatroskaReadCommon * common,
+    gint * a, gint * v, gint * s)
+{
+  gint i;
+  gint video_streams = 0, audio_streams = 0, subtitle_streams = 0;
+
+  for (i = 0; i < common->src->len; i++) {
+    GstMatroskaTrackContext *stream;
+
+    stream = g_ptr_array_index (common->src, i);
+    if (stream->type == GST_MATROSKA_TRACK_TYPE_VIDEO)
+      video_streams += 1;
+    else if (stream->type == GST_MATROSKA_TRACK_TYPE_AUDIO)
+      audio_streams += 1;
+    else if (stream->type == GST_MATROSKA_TRACK_TYPE_SUBTITLE)
+      subtitle_streams += 1;
+  }
+  *v = video_streams;
+  *a = audio_streams;
+  *v = subtitle_streams;
+}
+
+
+static void
+gst_matroska_read_common_apply_target_type_foreach (const GstTagList * list,
+    const gchar * tag, gpointer user_data)
+{
+  guint vallen;
+  guint i;
+  TargetTypeContext *ctx = (TargetTypeContext *) user_data;
+
+  vallen = gst_tag_list_get_tag_size (list, tag);
+  if (vallen == 0)
+    return;
+
+  for (i = 0; i < vallen; i++) {
+    GValue val = { 0 };
+    const GValue *val_ref;
+
+    val_ref = gst_tag_list_get_value_index (list, tag, i);
+    if (val_ref == NULL)
+      continue;
+    g_value_init (&val, G_VALUE_TYPE (val_ref));
+    g_value_copy (val_ref, &val);
+
+    /* TODO: use the optional ctx->target_type somehow */
+    if (strcmp (tag, GST_TAG_TITLE) == 0) {
+      if (ctx->target_type_value >= 70 && !ctx->audio_only) {
+        gst_tag_list_add_value (ctx->result, GST_TAG_MERGE_APPEND,
+            GST_TAG_SHOW_NAME, &val);
+        continue;
+      } else if (ctx->target_type_value >= 50) {
+        gst_tag_list_add_value (ctx->result, GST_TAG_MERGE_APPEND,
+            GST_TAG_ALBUM, &val);
+        continue;
+      }
+    } else if (strcmp (tag, GST_TAG_TITLE_SORTNAME) == 0) {
+      if (ctx->target_type_value >= 70 && !ctx->audio_only) {
+        gst_tag_list_add_value (ctx->result, GST_TAG_MERGE_APPEND,
+            GST_TAG_SHOW_SORTNAME, &val);
+        continue;
+      } else if (ctx->target_type_value >= 50) {
+        gst_tag_list_add_value (ctx->result, GST_TAG_MERGE_APPEND,
+            GST_TAG_ALBUM_SORTNAME, &val);
+        continue;
+      }
+    } else if (strcmp (tag, GST_TAG_ARTIST) == 0) {
+      if (ctx->target_type_value >= 50) {
+        gst_tag_list_add_value (ctx->result, GST_TAG_MERGE_APPEND,
+            GST_TAG_ALBUM_ARTIST, &val);
+        continue;
+      }
+    } else if (strcmp (tag, GST_TAG_ARTIST_SORTNAME) == 0) {
+      if (ctx->target_type_value >= 50) {
+        gst_tag_list_add_value (ctx->result, GST_TAG_MERGE_APPEND,
+            GST_TAG_ALBUM_ARTIST_SORTNAME, &val);
+        continue;
+      }
+    } else if (strcmp (tag, GST_TAG_TRACK_COUNT) == 0) {
+      if (ctx->target_type_value >= 60) {
+        gst_tag_list_add_value (ctx->result, GST_TAG_MERGE_APPEND,
+            GST_TAG_ALBUM_VOLUME_COUNT, &val);
+        continue;
+      }
+    } else if (strcmp (tag, GST_TAG_TRACK_NUMBER) == 0) {
+      if (ctx->target_type_value >= 60 && !ctx->audio_only) {
+        gst_tag_list_add_value (ctx->result, GST_TAG_MERGE_APPEND,
+            GST_TAG_SHOW_SEASON_NUMBER, &val);
+        continue;
+      } else if (ctx->target_type_value >= 50 && !ctx->audio_only) {
+        gst_tag_list_add_value (ctx->result, GST_TAG_MERGE_APPEND,
+            GST_TAG_SHOW_EPISODE_NUMBER, &val);
+        continue;
+      } else if (ctx->target_type_value >= 50) {
+        gst_tag_list_add_value (ctx->result, GST_TAG_MERGE_APPEND,
+            GST_TAG_ALBUM_VOLUME_NUMBER, &val);
+        continue;
+      }
+    }
+    gst_tag_list_add_value (ctx->result, GST_TAG_MERGE_APPEND, tag, &val);
+    g_value_unset (&val);
+  }
+}
+
+
+static GstTagList *
+gst_matroska_read_common_apply_target_type (GstMatroskaReadCommon * common,
+    GstTagList * taglist, guint64 target_type_value, gchar * target_type)
+{
+  TargetTypeContext ctx;
+  gint a = 0;
+  gint v = 0;
+  gint s = 0;
+
+  gst_matroska_read_common_count_streams (common, &a, &v, &s);
+
+  ctx.audio_only = (a > 0 && v == 0 && s == 0);
+  ctx.result = gst_tag_list_new_empty ();
+  ctx.target_type_value = target_type_value;
+  ctx.target_type = target_type;
+
+  gst_tag_list_foreach (taglist,
+      gst_matroska_read_common_apply_target_type_foreach, &ctx);
+
+  gst_tag_list_unref (taglist);
+  return ctx.result;
+}
+
 
 static GstFlowReturn
 gst_matroska_read_common_parse_metadata_id_tag (GstMatroskaReadCommon * common,
@@ -1873,9 +2296,11 @@ gst_matroska_read_common_parse_metadata_id_tag (GstMatroskaReadCommon * common,
 {
   guint32 id;
   GstFlowReturn ret;
-  GArray *chapter_targets, *edition_targets;
+  GArray *chapter_targets, *edition_targets, *track_targets;
   GstTagList *taglist;
   GList *cur;
+  guint64 target_type_value = 50;
+  gchar *target_type = NULL;
 
   DEBUG_ELEMENT_START (common, ebml, "Tag");
 
@@ -1886,7 +2311,9 @@ gst_matroska_read_common_parse_metadata_id_tag (GstMatroskaReadCommon * common,
 
   edition_targets = g_array_new (FALSE, FALSE, sizeof (guint64));
   chapter_targets = g_array_new (FALSE, FALSE, sizeof (guint64));
+  track_targets = g_array_new (FALSE, FALSE, sizeof (guint64));
   taglist = gst_tag_list_new_empty ();
+  target_type = NULL;
 
   while (ret == GST_FLOW_OK && gst_ebml_read_has_remaining (ebml, 1, TRUE)) {
     /* read all sub-entries */
@@ -1897,13 +2324,16 @@ gst_matroska_read_common_parse_metadata_id_tag (GstMatroskaReadCommon * common,
     switch (id) {
       case GST_MATROSKA_ID_SIMPLETAG:
         ret = gst_matroska_read_common_parse_metadata_id_simple_tag (common,
-            ebml, &taglist);
+            ebml, &taglist, NULL);
         break;
 
       case GST_MATROSKA_ID_TARGETS:
-        ret =
-            gst_matroska_read_common_parse_metadata_targets (common, ebml,
-            edition_targets, chapter_targets);
+        g_free (target_type);
+        target_type = NULL;
+        target_type_value = 50;
+        ret = gst_matroska_read_common_parse_metadata_targets (common, ebml,
+            edition_targets, chapter_targets, track_targets,
+            &target_type_value, &target_type);
         break;
 
       default:
@@ -1914,19 +2344,47 @@ gst_matroska_read_common_parse_metadata_id_tag (GstMatroskaReadCommon * common,
 
   DEBUG_ELEMENT_STOP (common, ebml, "Tag", ret);
 
+  taglist = gst_matroska_read_common_apply_target_type (common, taglist,
+      target_type_value, target_type);
+  g_free (target_type);
+
   /* if tag is chapter/edition specific - try to find that entry */
-  if (G_UNLIKELY (chapter_targets->len > 0 || edition_targets->len > 0)) {
-    if (common->toc == NULL)
-      GST_WARNING_OBJECT (common,
-          "Found chapter/edition specific tag, but TOC doesn't present");
-    else {
-      cur = gst_toc_get_entries (common->toc);
-      while (cur != NULL) {
-        gst_matroska_read_common_parse_toc_tag (cur->data, edition_targets,
-            chapter_targets, taglist);
-        cur = cur->next;
+  if (G_UNLIKELY (chapter_targets->len > 0 || edition_targets->len > 0 ||
+          track_targets->len > 0)) {
+    gint i;
+    if (chapter_targets->len > 0 || edition_targets->len > 0) {
+      if (common->toc == NULL)
+        GST_WARNING_OBJECT (common,
+            "Found chapter/edition specific tag, but TOC is not present");
+      else {
+        cur = gst_toc_get_entries (common->toc);
+        while (cur != NULL) {
+          gst_matroska_read_common_parse_toc_tag (cur->data, edition_targets,
+              chapter_targets, taglist);
+          cur = cur->next;
+        }
+        common->toc_updated = TRUE;
       }
-      common->toc_updated = TRUE;
+    }
+    for (i = 0; i < track_targets->len; i++) {
+      gint j;
+      gboolean found = FALSE;
+      guint64 tgt = g_array_index (track_targets, guint64, i);
+
+      for (j = 0; j < common->src->len; j++) {
+        GstMatroskaTrackContext *stream = g_ptr_array_index (common->src, j);
+
+        if (stream->uid == tgt) {
+          gst_tag_list_insert (stream->pending_tags, taglist,
+              GST_TAG_MERGE_REPLACE);
+          found = TRUE;
+        }
+      }
+      if (!found) {
+        GST_WARNING_OBJECT (common,
+            "Found track-specific tag(s), but track %" G_GUINT64_FORMAT
+            " is not known (yet?)", tgt);
+      }
     }
   } else
     gst_tag_list_insert (*p_taglist, taglist, GST_TAG_MERGE_APPEND);
@@ -1934,6 +2392,7 @@ gst_matroska_read_common_parse_metadata_id_tag (GstMatroskaReadCommon * common,
   gst_tag_list_unref (taglist);
   g_array_unref (chapter_targets);
   g_array_unref (edition_targets);
+  g_array_unref (track_targets);
 
   return ret;
 }
@@ -2182,7 +2641,7 @@ gst_matroska_read_common_read_track_encoding (GstMatroskaReadCommon * common,
         if (!gst_matroska_read_common_encoding_order_unique (context->encodings,
                 num)) {
           GST_ERROR_OBJECT (common, "ContentEncodingOrder %" G_GUINT64_FORMAT
-              "is not unique for track %d", num, context->num);
+              "is not unique for track %" G_GUINT64_FORMAT, num, context->num);
           ret = GST_FLOW_ERROR;
           break;
         }

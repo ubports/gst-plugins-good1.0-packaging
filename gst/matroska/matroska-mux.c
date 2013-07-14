@@ -18,8 +18,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 /* TODO: - check everywhere that we don't write invalid values
@@ -34,7 +34,7 @@
  * <refsect2>
  * <title>Example launch line</title>
  * |[
- * gst-launch-1.0 -v filesrc location=/path/to/mp3 ! mp3parse ! matroskamux name=mux ! filesink location=test.mkv  filesrc location=/path/to/theora.ogg ! oggdemux ! theoraparse ! mux.
+ * gst-launch-1.0 -v filesrc location=/path/to/mp3 ! mpegaudioparse ! matroskamux name=mux ! filesink location=test.mkv  filesrc location=/path/to/theora.ogg ! oggdemux ! theoraparse ! mux.
  * ]| This pipeline muxes an MP3 file and a Ogg Theora video into a Matroska file.
  * |[
  * gst-launch-1.0 -v audiotestsrc num-buffers=100 ! audioconvert ! vorbisenc ! matroskamux ! filesink location=test.mka
@@ -961,7 +961,8 @@ gst_matroska_mux_video_pad_setcaps (GstPad * pad, GstCaps * caps)
 
   /* set vp8 defaults or let user override it */
   if (GST_MATROSKAMUX_PAD_CAST (pad)->frame_duration_user == FALSE
-      && (!strcmp (mimetype, "video/x-vp8")))
+      && (!strcmp (mimetype, "video/x-vp8")
+          || !strcmp (mimetype, "video/x-vp9")))
     GST_MATROSKAMUX_PAD_CAST (pad)->frame_duration =
         DEFAULT_PAD_FRAME_DURATION_VP8;
 
@@ -1136,6 +1137,8 @@ skip_details:
     gst_matroska_mux_set_codec_id (context, GST_MATROSKA_CODEC_ID_VIDEO_DIRAC);
   } else if (!strcmp (mimetype, "video/x-vp8")) {
     gst_matroska_mux_set_codec_id (context, GST_MATROSKA_CODEC_ID_VIDEO_VP8);
+  } else if (!strcmp (mimetype, "video/x-vp9")) {
+    gst_matroska_mux_set_codec_id (context, GST_MATROSKA_CODEC_ID_VIDEO_VP9);
   } else if (!strcmp (mimetype, "video/mpeg")) {
     gint mpegversion;
 
@@ -3218,7 +3221,9 @@ gst_matroska_mux_write_data (GstMatroskaMux * mux, GstMatroskaPad * collect_pad,
   gint64 relative_timestamp64;
   guint64 block_duration;
   gboolean is_video_keyframe = FALSE;
+  gboolean is_video_invisible = FALSE;
   GstMatroskamuxPad *pad;
+  gint flags = 0;
 
   /* write data */
   pad = GST_MATROSKAMUX_PAD_CAST (collect_pad->collect.pad);
@@ -3254,11 +3259,20 @@ gst_matroska_mux_write_data (GstMatroskaMux * mux, GstMatroskaPad * collect_pad,
   /* set the timestamp for outgoing buffers */
   ebml->timestamp = GST_BUFFER_TIMESTAMP (buf);
 
-  if (collect_pad->track->type == GST_MATROSKA_TRACK_TYPE_VIDEO &&
-      !GST_BUFFER_FLAG_IS_SET (buf, GST_BUFFER_FLAG_DELTA_UNIT)) {
-    GST_LOG_OBJECT (mux, "have video keyframe, ts=%" GST_TIME_FORMAT,
-        GST_TIME_ARGS (GST_BUFFER_TIMESTAMP (buf)));
-    is_video_keyframe = TRUE;
+  if (collect_pad->track->type == GST_MATROSKA_TRACK_TYPE_VIDEO) {
+    if (!GST_BUFFER_FLAG_IS_SET (buf, GST_BUFFER_FLAG_DELTA_UNIT)) {
+      GST_LOG_OBJECT (mux, "have video keyframe, ts=%" GST_TIME_FORMAT,
+          GST_TIME_ARGS (GST_BUFFER_TIMESTAMP (buf)));
+      is_video_keyframe = TRUE;
+    } else if (GST_BUFFER_FLAG_IS_SET (buf, GST_BUFFER_FLAG_DECODE_ONLY) &&
+        (!strcmp (collect_pad->track->codec_id, GST_MATROSKA_CODEC_ID_VIDEO_VP8)
+            || !strcmp (collect_pad->track->codec_id,
+                GST_MATROSKA_CODEC_ID_VIDEO_VP9))) {
+      GST_LOG_OBJECT (mux,
+          "have VP8 video invisible frame, " "ts=%" GST_TIME_FORMAT,
+          GST_TIME_ARGS (GST_BUFFER_TIMESTAMP (buf)));
+      is_video_invisible = TRUE;
+    }
   }
 
   if (mux->cluster) {
@@ -3373,9 +3387,13 @@ gst_matroska_mux_write_data (GstMatroskaMux * mux, GstMatroskaPad * collect_pad,
   }
   relative_timestamp = gst_util_uint64_scale (relative_timestamp64, 1,
       mux->time_scale);
+
+  if (is_video_invisible)
+    flags |= 0x08;
+
   if (mux->doctype_version > 1 && !write_duration) {
-    int flags =
-        GST_BUFFER_FLAG_IS_SET (buf, GST_BUFFER_FLAG_DELTA_UNIT) ? 0 : 0x80;
+    if (is_video_keyframe)
+      flags |= 0x80;
 
     hdr =
         gst_matroska_mux_create_buffer_header (collect_pad->track,
@@ -3395,7 +3413,7 @@ gst_matroska_mux_write_data (GstMatroskaMux * mux, GstMatroskaPad * collect_pad,
     blockgroup = gst_ebml_write_master_start (ebml, GST_MATROSKA_ID_BLOCKGROUP);
     hdr =
         gst_matroska_mux_create_buffer_header (collect_pad->track,
-        relative_timestamp, 0);
+        relative_timestamp, flags);
     if (write_duration)
       gst_ebml_write_uint (ebml, GST_MATROSKA_ID_BLOCKDURATION, block_duration);
     gst_ebml_write_buffer_header (ebml, GST_MATROSKA_ID_BLOCK,

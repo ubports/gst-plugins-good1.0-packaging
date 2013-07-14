@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 /**
  * SECTION:element-multifilesrc
@@ -119,7 +119,7 @@ gst_multi_file_src_class_init (GstMultiFileSrcClass * klass)
           0, INT_MAX, DEFAULT_INDEX,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (gobject_class, ARG_STOP_INDEX,
-      g_param_spec_int ("stop-index", "Start Index",
+      g_param_spec_int ("stop-index", "Stop Index",
           "Stop value of index.  The special value -1 means no stop.",
           -1, INT_MAX, DEFAULT_INDEX,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
@@ -340,6 +340,15 @@ gst_multi_file_src_create (GstPushSrc * src, GstBuffer ** buffer)
   if (multifilesrc->index < multifilesrc->start_index) {
     multifilesrc->index = multifilesrc->start_index;
   }
+
+  if (multifilesrc->stop_index != -1 &&
+      multifilesrc->index > multifilesrc->stop_index) {
+    if (multifilesrc->loop)
+      multifilesrc->index = multifilesrc->start_index;
+    else
+      return GST_FLOW_EOS;
+  }
+
   filename = gst_multi_file_src_get_filename (multifilesrc);
 
   GST_DEBUG_OBJECT (multifilesrc, "reading from file \"%s\".", filename);
@@ -376,10 +385,6 @@ gst_multi_file_src_create (GstPushSrc * src, GstBuffer ** buffer)
 
   multifilesrc->successful_read = TRUE;
   multifilesrc->index++;
-  if (multifilesrc->stop_index != -1 &&
-      multifilesrc->index >= multifilesrc->stop_index) {
-    multifilesrc->index = multifilesrc->start_index;
-  }
 
   buf = gst_buffer_new ();
   gst_buffer_append_memory (buf,

@@ -16,8 +16,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 /**
@@ -1406,7 +1406,7 @@ gst_jpeg_dec_start (GstVideoDecoder * bdec)
   dec->parse_entropy_len = 0;
   dec->parse_resync = FALSE;
 
-  gst_video_decoder_set_packetized (dec, FALSE);
+  gst_video_decoder_set_packetized (bdec, FALSE);
 
   return TRUE;
 }

@@ -14,18 +14,12 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#if 0
-#include <gsttimeoverlay.h>
-#include <gsttextoverlay.h>
-#include <gstcairorender.h>
 #endif
 
 #include <gstcairooverlay.h>
@@ -38,16 +32,6 @@ GST_DEBUG_CATEGORY (cairo_debug);
 static gboolean
 plugin_init (GstPlugin * plugin)
 {
-#if 0
-  /* we probably don't want to port these */
-  gst_element_register (plugin, "cairotextoverlay", GST_RANK_NONE,
-      GST_TYPE_CAIRO_TEXT_OVERLAY);
-  gst_element_register (plugin, "cairotimeoverlay", GST_RANK_NONE,
-      GST_TYPE_CAIRO_TIME_OVERLAY);
-  gst_element_register (plugin, "cairorender", GST_RANK_SECONDARY,
-      GST_TYPE_CAIRO_RENDER);
-#endif
-
   gst_element_register (plugin, "cairooverlay", GST_RANK_NONE,
       GST_TYPE_CAIRO_OVERLAY);
 

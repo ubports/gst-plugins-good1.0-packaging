@@ -13,8 +13,26 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
+ */
+
+/**
+ * SECTION:element-rtpL16depay
+ * @see_also: rtpL16pay
+ *
+ * Extract raw audio from RTP packets according to RFC 3551.
+ * For detailed information see: http://www.rfc-editor.org/rfc/rfc3551.txt
+ *
+ * <refsect2>
+ * <title>Example pipeline</title>
+ * |[
+ * gst-launch udpsrc caps='application/x-rtp, media=(string)audio, clock-rate=(int)44100, encoding-name=(string)L16, encoding-params=(string)1, channels=(int)1, payload=(int)96' ! rtpL16depay ! pulsesink
+ * ]| This example pipeline will depayload an RTP raw audio stream. Refer to
+ * the rtpL16pay example to create the RTP stream.
+ * </refsect2>
+ *
+ * Last reviewed on 2013-04-25 (1.1.0)
  */
 
 #ifdef HAVE_CONFIG_H
@@ -47,9 +65,7 @@ static GstStaticPadTemplate gst_rtp_L16_depay_sink_template =
     GST_PAD_SINK,
     GST_PAD_ALWAYS,
     GST_STATIC_CAPS ("application/x-rtp, "
-        "media = (string) \"audio\", "
-        "payload = (int) " GST_RTP_PAYLOAD_DYNAMIC_STRING ", "
-        "clock-rate = (int) [ 1, MAX ], "
+        "media = (string) \"audio\", " "clock-rate = (int) [ 1, MAX ], "
         /* "channels = (int) [1, MAX]"  */
         /* "emphasis = (string) ANY" */
         /* "channel-order = (string) ANY" */
@@ -233,8 +249,8 @@ gst_rtp_L16_depay_process (GstRTPBaseDepayload * depayload, GstBuffer * buf)
   marker = gst_rtp_buffer_get_marker (&rtp);
 
   if (marker) {
-    /* mark talk spurt with DISCONT */
-    GST_BUFFER_FLAG_SET (outbuf, GST_BUFFER_FLAG_DISCONT);
+    /* mark talk spurt with RESYNC */
+    GST_BUFFER_FLAG_SET (outbuf, GST_BUFFER_FLAG_RESYNC);
   }
 
   outbuf = gst_buffer_make_writable (outbuf);

@@ -13,8 +13,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #ifndef __RTP_SESSION_H__
@@ -172,7 +172,6 @@ typedef struct {
  * @lock: lock to protect the session
  * @source: the source of this session
  * @ssrcs: Hashtable of sources indexed by SSRC
- * @cnames: Hashtable of sources indexed by CNAME
  * @num_sources: the number of sources
  * @activecount: the number of active sources
  * @callbacks: callbacks
@@ -205,7 +204,6 @@ struct _RTPSession {
   guint32       mask_idx;
   guint32       mask;
   GHashTable   *ssrcs[32];
-  GHashTable   *cnames;
   guint         total_sources;
 
   GstClockTime  next_rtcp_check_time;
@@ -321,7 +319,6 @@ gboolean        rtp_session_add_source             (RTPSession *sess, RTPSource 
 guint           rtp_session_get_num_sources        (RTPSession *sess);
 guint           rtp_session_get_num_active_sources (RTPSession *sess);
 RTPSource*      rtp_session_get_source_by_ssrc     (RTPSession *sess, guint32 ssrc);
-RTPSource*      rtp_session_get_source_by_cname    (RTPSession *sess, const gchar *cname);
 RTPSource*      rtp_session_create_source          (RTPSession *sess);
 
 /* processing packets from receivers */

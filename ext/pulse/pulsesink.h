@@ -17,7 +17,7 @@
  *
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with gst-pulse; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
  *  USA.
  */
 
@@ -29,6 +29,7 @@
 #endif
 
 #include <gst/gst.h>
+#include <gst/audio/audio.h>
 #include <gst/audio/gstaudiosink.h>
 
 #include <pulse/pulseaudio.h>
@@ -54,12 +55,17 @@ G_BEGIN_DECLS
 typedef struct _GstPulseSink GstPulseSink;
 typedef struct _GstPulseSinkClass GstPulseSinkClass;
 
+typedef struct _GstPulseDeviceInfo {
+  gchar *description;
+  GList *formats;
+} GstPulseDeviceInfo;
+
 struct _GstPulseSink
 {
   GstAudioBaseSink sink;
 
   gchar *server, *device, *stream_name, *client_name;
-  gchar *device_description;
+  GstPulseDeviceInfo device_info;
 
   GstPulseProbe *probe;
 
@@ -77,8 +83,6 @@ struct _GstPulseSink
   GstStructure *properties;
   pa_proplist *proplist;
 
-  GMutex sink_formats_lock;
-  GList *sink_formats;
   volatile gint format_lost;
   GstClockTime format_lost_time;
 };
@@ -98,32 +102,41 @@ GType gst_pulsesink_get_type (void);
                      "S24BE, S24LE, S24_32BE, S24_32LE, U8 }"
 #endif
 
-#define _PULSE_SINK_CAPS_COMMON \
+#define _PULSE_SINK_CAPS_LINEAR \
     "audio/x-raw, " \
       "format = (string) " FORMATS ", " \
       "layout = (string) interleaved, " \
       "rate = (int) [ 1, MAX ], " \
-      "channels = (int) [ 1, 32 ];" \
+      "channels = (int) [ 1, 32 ]; "
+#define _PULSE_SINK_CAPS_ALAW \
     "audio/x-alaw, " \
       "layout = (string) interleaved, " \
       "rate = (int) [ 1, MAX], " \
-      "channels = (int) [ 1, 32 ];" \
+      "channels = (int) [ 1, 32 ]; "
+#define _PULSE_SINK_CAPS_MULAW \
     "audio/x-mulaw, " \
       "layout = (string) interleaved, " \
       "rate = (int) [ 1, MAX], " \
-      "channels = (int) [ 1, 32 ];"
+      "channels = (int) [ 1, 32 ]; "
 
-#define _PULSE_SINK_CAPS_1_0 \
-    "audio/x-ac3, framed = (boolean) true;" \
-    "audio/x-eac3, framed = (boolean) true; " \
-    "audio/x-dts, framed = (boolean) true, " \
-      "block-size = (int) { 512, 1024, 2048 }; " \
-    "audio/mpeg, mpegversion = (int) 1, " \
-      "mpegaudioversion = (int) [ 1, 2 ], parsed = (boolean) true;"
+#define _PULSE_SINK_CAPS_AC3 "audio/x-ac3, framed = (boolean) true; "
+#define _PULSE_SINK_CAPS_EAC3 "audio/x-eac3, framed = (boolean) true; "
+#define _PULSE_SINK_CAPS_DTS "audio/x-dts, framed = (boolean) true, " \
+    "block-size = (int) { 512, 1024, 2048 }; "
+#define _PULSE_SINK_CAPS_MP3 "audio/mpeg, mpegversion = (int) 1, " \
+    "mpegaudioversion = (int) [ 1, 2 ], parsed = (boolean) true;"
+
+#define _PULSE_SINK_CAPS_PCM \
+  _PULSE_SINK_CAPS_LINEAR \
+  _PULSE_SINK_CAPS_ALAW \
+  _PULSE_SINK_CAPS_MULAW
 
 #define PULSE_SINK_TEMPLATE_CAPS \
-  _PULSE_SINK_CAPS_COMMON \
-  _PULSE_SINK_CAPS_1_0
+  _PULSE_SINK_CAPS_PCM \
+  _PULSE_SINK_CAPS_AC3 \
+  _PULSE_SINK_CAPS_EAC3 \
+  _PULSE_SINK_CAPS_DTS \
+  _PULSE_SINK_CAPS_MP3
 
 G_END_DECLS
 

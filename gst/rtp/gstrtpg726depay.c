@@ -16,8 +16,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -60,7 +60,6 @@ static GstStaticPadTemplate gst_rtp_g726_depay_sink_template =
     GST_PAD_ALWAYS,
     GST_STATIC_CAPS ("application/x-rtp, "
         "media = (string) \"audio\", "
-        "payload = (int) " GST_RTP_PAYLOAD_DYNAMIC_STRING ", "
         "encoding-name = (string) { \"G726\", \"G726-16\", \"G726-24\", \"G726-32\", \"G726-40\", "
         "\"AAL2-G726-16\", \"AAL2-G726-24\", \"AAL2-G726-32\", \"AAL2-G726-40\" }, "
         "clock-rate = (int) 8000;")
@@ -330,8 +329,8 @@ gst_rtp_g726_depay_process (GstRTPBaseDepayload * depayload, GstBuffer * buf)
   }
 
   if (marker) {
-    /* mark start of talkspurt with discont */
-    GST_BUFFER_FLAG_SET (outbuf, GST_BUFFER_FLAG_DISCONT);
+    /* mark start of talkspurt with RESYNC */
+    GST_BUFFER_FLAG_SET (outbuf, GST_BUFFER_FLAG_RESYNC);
   }
 
   return outbuf;

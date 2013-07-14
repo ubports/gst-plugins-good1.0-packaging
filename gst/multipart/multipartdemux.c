@@ -16,8 +16,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 /**
@@ -40,7 +40,7 @@
  * <refsect2>
  * <title>Sample pipelines</title>
  * |[
- * gst-launch-1.0 filesrc location=/tmp/test.multipart ! multipartdemux ! jpegdec ! videoconvert ! ximagesink
+ * gst-launch-1.0 filesrc location=/tmp/test.multipart ! multipartdemux ! image/jpeg,framerate=\(fraction\)5/1 ! jpegparse ! jpegdec ! videoconvert ! autovideosink
  * ]| a simple pipeline to demux a multipart file muxed with #GstMultipartMux
  * containing JPEG frames.
  * </refsect2>

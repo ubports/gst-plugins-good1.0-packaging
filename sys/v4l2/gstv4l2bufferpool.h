@@ -18,8 +18,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #ifndef __GST_V4L2_BUFFER_POOL_H__
@@ -55,6 +55,7 @@ struct _GstV4l2BufferPool
   GstAllocationParams params;
   guint size;
   gboolean add_videometa;
+  gboolean can_alloc;        /* if extra buffers can be allocated */
 
   guint num_buffers;         /* number of buffers we use */
   guint num_allocated;       /* number of buffers allocated by the driver */

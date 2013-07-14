@@ -14,8 +14,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #ifndef __GST_DEINTERLACE_METHOD_H__
@@ -68,12 +68,6 @@ struct _GstDeinterlaceMethod {
   GstObject parent;
 
   GstVideoInfo *vinfo;
-  // FIXME - the stuff below can use vinfo and macros
-  gint width[4];
-  gint height[4];
-  gint offset[4];
-  gint row_stride[4];
-  gint pixel_stride[4];
 
   GstDeinterlaceMethodDeinterlaceFunction deinterlace_frame;
 };
@@ -166,7 +160,7 @@ struct _GstDeinterlaceScanlineData {
  * All other values are NULL.
  */
 
-typedef void (*GstDeinterlaceSimpleMethodFunction) (GstDeinterlaceSimpleMethod *self, guint8 *out, const GstDeinterlaceScanlineData *scanlines);
+typedef void (*GstDeinterlaceSimpleMethodFunction) (GstDeinterlaceSimpleMethod *self, guint8 *out, const GstDeinterlaceScanlineData *scanlines, guint size);
 
 struct _GstDeinterlaceSimpleMethod {
   GstDeinterlaceMethod parent;

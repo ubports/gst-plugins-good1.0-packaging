@@ -16,8 +16,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 /**
@@ -36,7 +36,6 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include "gstudp-marshal.h"
 #include "gstmultiudpsink.h"
 
 #include <string.h>
@@ -93,6 +92,8 @@ enum
 #define DEFAULT_QOS_DSCP           -1
 #define DEFAULT_SEND_DUPLICATES    TRUE
 #define DEFAULT_BUFFER_SIZE        0
+#define DEFAULT_BIND_ADDRESS       NULL
+#define DEFAULT_BIND_PORT          0
 
 enum
 {
@@ -100,8 +101,10 @@ enum
   PROP_BYTES_TO_SERVE,
   PROP_BYTES_SERVED,
   PROP_SOCKET,
+  PROP_SOCKET_V6,
   PROP_CLOSE_SOCKET,
   PROP_USED_SOCKET,
+  PROP_USED_SOCKET_V6,
   PROP_CLIENTS,
   PROP_AUTO_MULTICAST,
   PROP_MULTICAST_IFACE,
@@ -112,6 +115,8 @@ enum
   PROP_QOS_DSCP,
   PROP_SEND_DUPLICATES,
   PROP_BUFFER_SIZE,
+  PROP_BIND_ADDRESS,
+  PROP_BIND_PORT,
   PROP_LAST
 };
 
@@ -174,7 +179,7 @@ gst_multiudpsink_class_init (GstMultiUDPSinkClass * klass)
       g_signal_new ("add", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST | G_SIGNAL_ACTION,
       G_STRUCT_OFFSET (GstMultiUDPSinkClass, add),
-      NULL, NULL, gst_udp_marshal_VOID__STRING_INT, G_TYPE_NONE, 2,
+      NULL, NULL, g_cclosure_marshal_generic, G_TYPE_NONE, 2,
       G_TYPE_STRING, G_TYPE_INT);
   /**
    * GstMultiUDPSink::remove:
@@ -189,7 +194,7 @@ gst_multiudpsink_class_init (GstMultiUDPSinkClass * klass)
       g_signal_new ("remove", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST | G_SIGNAL_ACTION,
       G_STRUCT_OFFSET (GstMultiUDPSinkClass, remove),
-      NULL, NULL, gst_udp_marshal_VOID__STRING_INT, G_TYPE_NONE, 2,
+      NULL, NULL, g_cclosure_marshal_generic, G_TYPE_NONE, 2,
       G_TYPE_STRING, G_TYPE_INT);
   /**
    * GstMultiUDPSink::clear:
@@ -201,7 +206,7 @@ gst_multiudpsink_class_init (GstMultiUDPSinkClass * klass)
       g_signal_new ("clear", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST | G_SIGNAL_ACTION,
       G_STRUCT_OFFSET (GstMultiUDPSinkClass, clear),
-      NULL, NULL, g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
+      NULL, NULL, g_cclosure_marshal_generic, G_TYPE_NONE, 0);
   /**
    * GstMultiUDPSink::get-stats:
    * @gstmultiudpsink: the sink on which the signal is emitted
@@ -217,7 +222,7 @@ gst_multiudpsink_class_init (GstMultiUDPSinkClass * klass)
       g_signal_new ("get-stats", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST | G_SIGNAL_ACTION,
       G_STRUCT_OFFSET (GstMultiUDPSinkClass, get_stats),
-      NULL, NULL, gst_udp_marshal_BOXED__STRING_INT, GST_TYPE_STRUCTURE, 2,
+      NULL, NULL, g_cclosure_marshal_generic, GST_TYPE_STRUCTURE, 2,
       G_TYPE_STRING, G_TYPE_INT);
   /**
    * GstMultiUDPSink::client-added:
@@ -231,7 +236,7 @@ gst_multiudpsink_class_init (GstMultiUDPSinkClass * klass)
   gst_multiudpsink_signals[SIGNAL_CLIENT_ADDED] =
       g_signal_new ("client-added", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST, G_STRUCT_OFFSET (GstMultiUDPSinkClass, client_added),
-      NULL, NULL, gst_udp_marshal_VOID__STRING_INT, G_TYPE_NONE, 2,
+      NULL, NULL, g_cclosure_marshal_generic, G_TYPE_NONE, 2,
       G_TYPE_STRING, G_TYPE_INT);
   /**
    * GstMultiUDPSink::client-removed:
@@ -245,7 +250,7 @@ gst_multiudpsink_class_init (GstMultiUDPSinkClass * klass)
   gst_multiudpsink_signals[SIGNAL_CLIENT_REMOVED] =
       g_signal_new ("client-removed", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST, G_STRUCT_OFFSET (GstMultiUDPSinkClass,
-          client_removed), NULL, NULL, gst_udp_marshal_VOID__STRING_INT,
+          client_removed), NULL, NULL, g_cclosure_marshal_generic,
       G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_INT);
 
   g_object_class_install_property (G_OBJECT_CLASS (klass), PROP_BYTES_TO_SERVE,
@@ -260,6 +265,10 @@ gst_multiudpsink_class_init (GstMultiUDPSinkClass * klass)
       g_param_spec_object ("socket", "Socket Handle",
           "Socket to use for UDP sending. (NULL == allocate)",
           G_TYPE_SOCKET, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+  g_object_class_install_property (gobject_class, PROP_SOCKET_V6,
+      g_param_spec_object ("socket-v6", "Socket Handle IPv6",
+          "Socket to use for UDPv6 sending. (NULL == allocate)",
+          G_TYPE_SOCKET, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (gobject_class, PROP_CLOSE_SOCKET,
       g_param_spec_boolean ("close-socket", "Close socket",
           "Close socket if passed as property on state change",
@@ -267,6 +276,10 @@ gst_multiudpsink_class_init (GstMultiUDPSinkClass * klass)
   g_object_class_install_property (gobject_class, PROP_USED_SOCKET,
       g_param_spec_object ("used-socket", "Used Socket Handle",
           "Socket currently in use for UDP sending. (NULL == no socket)",
+          G_TYPE_SOCKET, G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
+  g_object_class_install_property (gobject_class, PROP_USED_SOCKET_V6,
+      g_param_spec_object ("used-socket-v6", "Used Socket Handle IPv6",
+          "Socket currently in use for UDPv6 sending. (NULL == no socket)",
           G_TYPE_SOCKET, G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (gobject_class, PROP_CLIENTS,
       g_param_spec_string ("clients", "Clients",
@@ -304,8 +317,8 @@ gst_multiudpsink_class_init (GstMultiUDPSinkClass * klass)
    */
   g_object_class_install_property (gobject_class, PROP_FORCE_IPV4,
       g_param_spec_boolean ("force-ipv4", "Force IPv4",
-          "Forcing the use of an IPv4 socket", DEFAULT_FORCE_IPV4,
-          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+          "Forcing the use of an IPv4 socket (DEPRECATED, has no effect anymore)",
+          DEFAULT_FORCE_IPV4, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   g_object_class_install_property (G_OBJECT_CLASS (klass), PROP_QOS_DSCP,
       g_param_spec_int ("qos-dscp", "QoS diff srv code point",
@@ -330,6 +343,15 @@ gst_multiudpsink_class_init (GstMultiUDPSinkClass * klass)
       g_param_spec_int ("buffer-size", "Buffer Size",
           "Size of the kernel send buffer in bytes, 0=default", 0, G_MAXINT,
           DEFAULT_BUFFER_SIZE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+  g_object_class_install_property (gobject_class, PROP_BIND_ADDRESS,
+      g_param_spec_string ("bind-address", "Bind Address",
+          "Address to bind the socket to", DEFAULT_BIND_ADDRESS,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+  g_object_class_install_property (gobject_class, PROP_BIND_PORT,
+      g_param_spec_int ("bind-port", "Bind Port",
+          "Port to bind the socket to", 0, G_MAXUINT16,
+          DEFAULT_BIND_PORT, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   gst_element_class_add_pad_template (gstelement_class,
       gst_static_pad_template_get (&sink_template));
@@ -356,9 +378,13 @@ gst_multiudpsink_class_init (GstMultiUDPSinkClass * klass)
 static void
 gst_multiudpsink_init (GstMultiUDPSink * sink)
 {
+  guint max_mem;
+
   g_mutex_init (&sink->client_lock);
   sink->socket = DEFAULT_SOCKET;
+  sink->socket_v6 = DEFAULT_SOCKET;
   sink->used_socket = DEFAULT_USED_SOCKET;
+  sink->used_socket_v6 = DEFAULT_USED_SOCKET;
   sink->close_socket = DEFAULT_CLOSE_SOCKET;
   sink->external_socket = (sink->socket != NULL);
   sink->auto_multicast = DEFAULT_AUTO_MULTICAST;
@@ -371,6 +397,14 @@ gst_multiudpsink_init (GstMultiUDPSink * sink)
   sink->multi_iface = g_strdup (DEFAULT_MULTICAST_IFACE);
 
   sink->cancellable = g_cancellable_new ();
+
+  /* allocate OutputVector and MapInfo for use in the render function, buffers can
+   * hold up to a maximum amount of memory so we can create a maximally sized
+   * array for them.  */
+  max_mem = gst_buffer_get_max_memory ();
+
+  sink->vec = g_new (GOutputVector, max_mem);
+  sink->map = g_new (GstMapInfo, max_mem);
 }
 
 static GstUDPClient *
@@ -452,9 +486,17 @@ gst_multiudpsink_finalize (GObject * object)
     g_object_unref (sink->socket);
   sink->socket = NULL;
 
+  if (sink->socket_v6)
+    g_object_unref (sink->socket_v6);
+  sink->socket_v6 = NULL;
+
   if (sink->used_socket)
     g_object_unref (sink->used_socket);
   sink->used_socket = NULL;
+
+  if (sink->used_socket_v6)
+    g_object_unref (sink->used_socket_v6);
+  sink->used_socket_v6 = NULL;
 
   if (sink->cancellable)
     g_object_unref (sink->cancellable);
@@ -462,6 +504,14 @@ gst_multiudpsink_finalize (GObject * object)
 
   g_free (sink->multi_iface);
   sink->multi_iface = NULL;
+
+  g_free (sink->vec);
+  sink->vec = NULL;
+  g_free (sink->map);
+  sink->map = NULL;
+
+  g_free (sink->bind_address);
+  sink->bind_address = NULL;
 
   g_mutex_clear (&sink->client_lock);
 
@@ -487,8 +537,10 @@ gst_multiudpsink_render (GstBaseSink * bsink, GstBuffer * buffer)
   if (n_mem == 0)
     goto no_data;
 
-  vec = g_new (GOutputVector, n_mem);
-  map = g_new (GstMapInfo, n_mem);
+  /* allocated on the stack, the max number of memory blocks is limited so this
+   * should not cause stack overflows */
+  vec = sink->vec;
+  map = sink->map;
 
   size = 0;
   for (i = 0; i < n_mem; i++) {
@@ -506,12 +558,15 @@ gst_multiudpsink_render (GstBaseSink * bsink, GstBuffer * buffer)
   /* grab lock while iterating and sending to clients, this should be
    * fast as UDP never blocks */
   g_mutex_lock (&sink->client_lock);
-  GST_LOG_OBJECT (bsink, "about to send %" G_GSIZE_FORMAT " bytes", size);
+  GST_LOG_OBJECT (bsink, "about to send %" G_GSIZE_FORMAT " bytes in %u blocks",
+      size, n_mem);
 
   no_clients = 0;
   num = 0;
   for (clients = sink->clients; clients; clients = g_list_next (clients)) {
     GstUDPClient *client;
+    GSocket *socket;
+    GSocketFamily family;
     gint count;
 
     client = (GstUDPClient *) clients->data;
@@ -519,13 +574,20 @@ gst_multiudpsink_render (GstBaseSink * bsink, GstBuffer * buffer)
     GST_LOG_OBJECT (sink, "sending %" G_GSIZE_FORMAT " bytes to client %p",
         size, client);
 
+    family = g_socket_address_get_family (G_SOCKET_ADDRESS (client->addr));
+    /* Select socket to send from for this address */
+    if (family == G_SOCKET_FAMILY_IPV6 || !sink->used_socket)
+      socket = sink->used_socket_v6;
+    else
+      socket = sink->used_socket;
+
     count = sink->send_duplicates ? client->refcount : 1;
 
     while (count--) {
       gssize ret;
 
       ret =
-          g_socket_send_message (sink->used_socket, client->addr, vec, n_mem,
+          g_socket_send_message (socket, client->addr, vec, n_mem,
           NULL, 0, 0, sink->cancellable, &err);
 
       if (G_UNLIKELY (ret < 0)) {
@@ -560,9 +622,6 @@ gst_multiudpsink_render (GstBaseSink * bsink, GstBuffer * buffer)
     gst_memory_unmap (map[i].memory, &map[i]);
     gst_memory_unref (map[i].memory);
   }
-
-  g_free (vec);
-  g_free (map);
 
   GST_LOG_OBJECT (sink, "sent %" G_GSIZE_FORMAT " bytes to %d (of %d) clients",
       size, num, no_clients);
@@ -643,13 +702,13 @@ gst_multiudpsink_get_clients_string (GstMultiUDPSink * sink)
 }
 
 static void
-gst_multiudpsink_setup_qos_dscp (GstMultiUDPSink * sink)
+gst_multiudpsink_setup_qos_dscp (GstMultiUDPSink * sink, GSocket * socket)
 {
   /* don't touch on -1 */
   if (sink->qos_dscp < 0)
     return;
 
-  if (sink->used_socket == NULL)
+  if (socket == NULL)
     return;
 
 #ifdef IP_TOS
@@ -657,7 +716,7 @@ gst_multiudpsink_setup_qos_dscp (GstMultiUDPSink * sink)
     gint tos;
     gint fd;
 
-    fd = g_socket_get_fd (sink->used_socket);
+    fd = g_socket_get_fd (socket);
 
     GST_DEBUG_OBJECT (sink, "setting TOS to %d", sink->qos_dscp);
 
@@ -701,6 +760,23 @@ gst_multiudpsink_set_property (GObject * object, guint prop_id,
       udpsink->socket = g_value_dup_object (value);
       GST_DEBUG_OBJECT (udpsink, "setting socket to %p", udpsink->socket);
       break;
+    case PROP_SOCKET_V6:
+      if (udpsink->socket_v6 != NULL
+          && udpsink->socket_v6 != udpsink->used_socket_v6
+          && udpsink->close_socket) {
+        GError *err = NULL;
+
+        if (!g_socket_close (udpsink->socket_v6, &err)) {
+          GST_ERROR ("failed to close socket %p: %s", udpsink->socket_v6,
+              err->message);
+          g_clear_error (&err);
+        }
+      }
+      if (udpsink->socket_v6)
+        g_object_unref (udpsink->socket_v6);
+      udpsink->socket_v6 = g_value_dup_object (value);
+      GST_DEBUG_OBJECT (udpsink, "setting socket to %p", udpsink->socket_v6);
+      break;
     case PROP_CLOSE_SOCKET:
       udpsink->close_socket = g_value_get_boolean (value);
       break;
@@ -732,13 +808,21 @@ gst_multiudpsink_set_property (GObject * object, guint prop_id,
       break;
     case PROP_QOS_DSCP:
       udpsink->qos_dscp = g_value_get_int (value);
-      gst_multiudpsink_setup_qos_dscp (udpsink);
+      gst_multiudpsink_setup_qos_dscp (udpsink, udpsink->used_socket);
+      gst_multiudpsink_setup_qos_dscp (udpsink, udpsink->used_socket_v6);
       break;
     case PROP_SEND_DUPLICATES:
       udpsink->send_duplicates = g_value_get_boolean (value);
       break;
     case PROP_BUFFER_SIZE:
       udpsink->buffer_size = g_value_get_int (value);
+      break;
+    case PROP_BIND_ADDRESS:
+      g_free (udpsink->bind_address);
+      udpsink->bind_address = g_value_dup_string (value);
+      break;
+    case PROP_BIND_PORT:
+      udpsink->bind_port = g_value_get_int (value);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -764,11 +848,17 @@ gst_multiudpsink_get_property (GObject * object, guint prop_id, GValue * value,
     case PROP_SOCKET:
       g_value_set_object (value, udpsink->socket);
       break;
+    case PROP_SOCKET_V6:
+      g_value_set_object (value, udpsink->socket_v6);
+      break;
     case PROP_CLOSE_SOCKET:
       g_value_set_boolean (value, udpsink->close_socket);
       break;
     case PROP_USED_SOCKET:
       g_value_set_object (value, udpsink->used_socket);
+      break;
+    case PROP_USED_SOCKET_V6:
+      g_value_set_object (value, udpsink->used_socket_v6);
       break;
     case PROP_CLIENTS:
       g_value_take_string (value,
@@ -801,6 +891,12 @@ gst_multiudpsink_get_property (GObject * object, guint prop_id, GValue * value,
     case PROP_BUFFER_SIZE:
       g_value_set_int (value, udpsink->buffer_size);
       break;
+    case PROP_BIND_ADDRESS:
+      g_value_set_string (value, udpsink->bind_address);
+      break;
+    case PROP_BIND_PORT:
+      g_value_set_int (value, udpsink->bind_port);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -813,25 +909,36 @@ gst_multiudpsink_configure_client (GstMultiUDPSink * sink,
 {
   GInetSocketAddress *saddr = G_INET_SOCKET_ADDRESS (client->addr);
   GInetAddress *addr = g_inet_socket_address_get_address (saddr);
+  GSocketFamily family = g_socket_address_get_family (G_SOCKET_ADDRESS (saddr));
+  GSocket *socket;
   GError *err = NULL;
 
   GST_DEBUG_OBJECT (sink, "configuring client %p", client);
+
+  if (family == G_SOCKET_FAMILY_IPV6 && !sink->used_socket_v6)
+    goto invalid_family;
+
+  /* Select socket to send from for this address */
+  if (family == G_SOCKET_FAMILY_IPV6 || !sink->used_socket)
+    socket = sink->used_socket_v6;
+  else
+    socket = sink->used_socket;
 
   if (g_inet_address_get_is_multicast (addr)) {
     GST_DEBUG_OBJECT (sink, "we have a multicast client %p", client);
     if (sink->auto_multicast) {
       GST_DEBUG_OBJECT (sink, "autojoining group");
-      if (!g_socket_join_multicast_group (sink->used_socket, addr, FALSE,
+      if (!g_socket_join_multicast_group (socket, addr, FALSE,
               sink->multi_iface, &err))
         goto join_group_failed;
     }
     GST_DEBUG_OBJECT (sink, "setting loop to %d", sink->loop);
-    g_socket_set_multicast_loopback (sink->used_socket, sink->loop);
+    g_socket_set_multicast_loopback (socket, sink->loop);
     GST_DEBUG_OBJECT (sink, "setting ttl to %d", sink->ttl_mc);
-    g_socket_set_multicast_ttl (sink->used_socket, sink->ttl_mc);
+    g_socket_set_multicast_ttl (socket, sink->ttl_mc);
   } else {
     GST_DEBUG_OBJECT (sink, "setting unicast ttl to %d", sink->ttl);
-    g_socket_set_ttl (sink->used_socket, sink->ttl);
+    g_socket_set_ttl (socket, sink->ttl);
   }
   return TRUE;
 
@@ -843,6 +950,13 @@ join_group_failed:
         ("Could not join multicast group: %s",
             err ? err->message : "unknown reason"));
     g_clear_error (&err);
+    return FALSE;
+  }
+invalid_family:
+  {
+    gst_multiudpsink_stop (GST_BASE_SINK (sink));
+    GST_ELEMENT_ERROR (sink, RESOURCE, SETTINGS, (NULL),
+        ("Invalid address family (got %d)", family));
     return FALSE;
   }
 }
@@ -858,40 +972,104 @@ gst_multiudpsink_start (GstBaseSink * bsink)
 
   sink = GST_MULTIUDPSINK (bsink);
 
-  if (sink->socket == NULL) {
-    GSocketAddress *bind_addr;
-    GInetAddress *bind_iaddr;
-    GSocketFamily family = G_SOCKET_FAMILY_IPV6;
+  sink->external_socket = FALSE;
 
-    GST_DEBUG_OBJECT (sink, "creating sockets");
-    /* create sender socket try IP6, fall back to IP4 */
-    if (sink->force_ipv4 || (sink->used_socket =
-            g_socket_new (G_SOCKET_FAMILY_IPV6,
-                G_SOCKET_TYPE_DATAGRAM, G_SOCKET_PROTOCOL_UDP, &err)) == NULL) {
-      if ((sink->used_socket = g_socket_new (G_SOCKET_FAMILY_IPV4,
-                  G_SOCKET_TYPE_DATAGRAM, G_SOCKET_PROTOCOL_UDP, &err)) == NULL)
-        goto no_socket;
-      else
-        family = G_SOCKET_FAMILY_IPV4;
+  if (sink->socket) {
+    GST_DEBUG_OBJECT (sink, "using configured socket");
+    if (g_socket_get_family (sink->socket) == G_SOCKET_FAMILY_IPV6) {
+      sink->used_socket_v6 = G_SOCKET (g_object_ref (sink->socket));
+      sink->external_socket = TRUE;
+    } else {
+      sink->used_socket = G_SOCKET (g_object_ref (sink->socket));
+      sink->external_socket = TRUE;
+    }
+  }
+
+  if (sink->socket_v6) {
+    GST_DEBUG_OBJECT (sink, "using configured IPv6 socket");
+    g_return_val_if_fail (g_socket_get_family (sink->socket) !=
+        G_SOCKET_FAMILY_IPV6, FALSE);
+
+    if (sink->used_socket_v6 && sink->used_socket_v6 != sink->socket_v6) {
+      GST_ERROR_OBJECT (sink,
+          "Provided different IPv6 sockets in socket and socket-v6 properties");
+      return FALSE;
     }
 
-    bind_iaddr = g_inet_address_new_any (family);
-    bind_addr = g_inet_socket_address_new (bind_iaddr, 0);
-    g_socket_bind (sink->used_socket, bind_addr, TRUE, &err);
-    g_object_unref (bind_addr);
-    g_object_unref (bind_iaddr);
-    if (err != NULL)
-      goto bind_error;
-
-    GST_DEBUG_OBJECT (sink, "have socket");
-    sink->external_socket = FALSE;
-  } else {
-    GST_DEBUG_OBJECT (sink, "using configured socket");
-    /* we use the configured socket */
-    sink->used_socket = G_SOCKET (g_object_ref (sink->socket));
+    sink->used_socket_v6 = G_SOCKET (g_object_ref (sink->socket_v6));
     sink->external_socket = TRUE;
   }
 
+  if (!sink->used_socket && !sink->used_socket_v6) {
+    GSocketAddress *bind_addr;
+    GInetAddress *bind_iaddr;
+
+    if (sink->bind_address) {
+      GSocketFamily family;
+
+      bind_iaddr = g_inet_address_new_from_string (sink->bind_address);
+      if (!bind_iaddr) {
+        GList *results;
+        GResolver *resolver;
+
+        resolver = g_resolver_get_default ();
+        results =
+            g_resolver_lookup_by_name (resolver, sink->bind_address,
+            sink->cancellable, &err);
+        if (!results) {
+          g_object_unref (resolver);
+          goto name_resolve;
+        }
+        bind_iaddr = G_INET_ADDRESS (g_object_ref (results->data));
+        g_resolver_free_addresses (results);
+        g_object_unref (resolver);
+      }
+
+      bind_addr = g_inet_socket_address_new (bind_iaddr, sink->bind_port);
+      g_object_unref (bind_iaddr);
+      family = g_socket_address_get_family (G_SOCKET_ADDRESS (bind_addr));
+
+      if ((sink->used_socket =
+              g_socket_new (family, G_SOCKET_TYPE_DATAGRAM,
+                  G_SOCKET_PROTOCOL_UDP, &err)) == NULL) {
+        g_object_unref (bind_addr);
+        goto no_socket;
+      }
+
+      g_socket_bind (sink->used_socket, bind_addr, TRUE, &err);
+      if (err != NULL)
+        goto bind_error;
+    } else {
+      /* create sender sockets if none available */
+      if ((sink->used_socket = g_socket_new (G_SOCKET_FAMILY_IPV4,
+                  G_SOCKET_TYPE_DATAGRAM, G_SOCKET_PROTOCOL_UDP, &err)) == NULL)
+        goto no_socket;
+
+      bind_iaddr = g_inet_address_new_any (G_SOCKET_FAMILY_IPV4);
+      bind_addr = g_inet_socket_address_new (bind_iaddr, 0);
+      g_socket_bind (sink->used_socket, bind_addr, TRUE, &err);
+      g_object_unref (bind_addr);
+      g_object_unref (bind_iaddr);
+      if (err != NULL)
+        goto bind_error;
+
+      if ((sink->used_socket_v6 = g_socket_new (G_SOCKET_FAMILY_IPV6,
+                  G_SOCKET_TYPE_DATAGRAM, G_SOCKET_PROTOCOL_UDP,
+                  &err)) == NULL) {
+        GST_INFO_OBJECT (sink, "Failed to create IPv6 socket: %s",
+            err->message);
+        g_clear_error (&err);
+      } else {
+        bind_iaddr = g_inet_address_new_any (G_SOCKET_FAMILY_IPV6);
+        bind_addr = g_inet_socket_address_new (bind_iaddr, 0);
+        g_socket_bind (sink->used_socket_v6, bind_addr, TRUE, &err);
+        g_object_unref (bind_addr);
+        g_object_unref (bind_iaddr);
+        if (err != NULL)
+          goto bind_error;
+      }
+    }
+  }
 #ifdef SO_SNDBUF
   {
     socklen_t len;
@@ -905,35 +1083,78 @@ gst_multiudpsink_start (GstBaseSink * bsink)
       /* set buffer size, Note that on Linux this is typically limited to a
        * maximum of around 100K. Also a minimum of 128 bytes is required on
        * Linux. */
-      ret =
-          setsockopt (g_socket_get_fd (sink->used_socket), SOL_SOCKET,
-          SO_SNDBUF, (void *) &sndsize, len);
-      if (ret != 0) {
-        GST_ELEMENT_WARNING (sink, RESOURCE, SETTINGS, (NULL),
-            ("Could not create a buffer of requested %d bytes, %d: %s",
-                sndsize, ret, g_strerror (errno)));
+
+      if (sink->used_socket) {
+        ret =
+            setsockopt (g_socket_get_fd (sink->used_socket), SOL_SOCKET,
+            SO_SNDBUF, (void *) &sndsize, len);
+        if (ret != 0) {
+          GST_ELEMENT_WARNING (sink, RESOURCE, SETTINGS, (NULL),
+              ("Could not create a buffer of requested %d bytes, %d: %s",
+                  sndsize, ret, g_strerror (errno)));
+        }
+      }
+
+      if (sink->used_socket_v6) {
+        ret =
+            setsockopt (g_socket_get_fd (sink->used_socket_v6), SOL_SOCKET,
+            SO_SNDBUF, (void *) &sndsize, len);
+        if (ret != 0) {
+          GST_ELEMENT_WARNING (sink, RESOURCE, SETTINGS, (NULL),
+              ("Could not create a buffer of requested %d bytes, %d: %s",
+                  sndsize, ret, g_strerror (errno)));
+        }
       }
     }
 
     /* read the value of the receive buffer. Note that on linux this returns 2x the
      * value we set because the kernel allocates extra memory for metadata.
      * The default on Linux is about 100K (which is about 50K without metadata) */
-    ret =
-        getsockopt (g_socket_get_fd (sink->used_socket), SOL_SOCKET, SO_SNDBUF,
-        (void *) &sndsize, &len);
-    if (ret == 0)
-      GST_DEBUG_OBJECT (sink, "have udp buffer of %d bytes", sndsize);
-    else
-      GST_DEBUG_OBJECT (sink, "could not get udp buffer size");
+    if (sink->used_socket) {
+      ret =
+          getsockopt (g_socket_get_fd (sink->used_socket), SOL_SOCKET,
+          SO_SNDBUF, (void *) &sndsize, &len);
+      if (ret == 0)
+        GST_DEBUG_OBJECT (sink, "have UDP buffer of %d bytes", sndsize);
+      else
+        GST_DEBUG_OBJECT (sink, "could not get UDP buffer size");
+    }
+
+    if (sink->used_socket_v6) {
+      ret =
+          getsockopt (g_socket_get_fd (sink->used_socket_v6), SOL_SOCKET,
+          SO_SNDBUF, (void *) &sndsize, &len);
+      if (ret == 0)
+        GST_DEBUG_OBJECT (sink, "have UDPv6 buffer of %d bytes", sndsize);
+      else
+        GST_DEBUG_OBJECT (sink, "could not get UDPv6 buffer size");
+    }
   }
 #endif
 
-  g_socket_set_broadcast (sink->used_socket, TRUE);
+#ifdef SO_BINDTODEVICE
+  if (sink->multi_iface) {
+    if (sink->used_socket) {
+      setsockopt (g_socket_get_fd (sink->used_socket), SOL_SOCKET,
+          SO_BINDTODEVICE, sink->multi_iface, strlen (sink->multi_iface));
+    }
+    if (sink->used_socket_v6) {
+      setsockopt (g_socket_get_fd (sink->used_socket_v6), SOL_SOCKET,
+          SO_BINDTODEVICE, sink->multi_iface, strlen (sink->multi_iface));
+    }
+  }
+#endif
+
+  if (sink->used_socket)
+    g_socket_set_broadcast (sink->used_socket, TRUE);
+  if (sink->used_socket_v6)
+    g_socket_set_broadcast (sink->used_socket_v6, TRUE);
 
   sink->bytes_to_serve = 0;
   sink->bytes_served = 0;
 
-  gst_multiudpsink_setup_qos_dscp (sink);
+  gst_multiudpsink_setup_qos_dscp (sink, sink->used_socket);
+  gst_multiudpsink_setup_qos_dscp (sink, sink->used_socket_v6);
 
   /* look for multicast clients and join multicast groups appropriately
      set also ttl and multicast loopback delivery appropriately  */
@@ -960,6 +1181,14 @@ bind_error:
     g_clear_error (&err);
     return FALSE;
   }
+name_resolve:
+  {
+    GST_ELEMENT_ERROR (sink, RESOURCE, FAILED, (NULL),
+        ("Failed to resolve bind address %s: %s", sink->bind_address,
+            err->message));
+    g_clear_error (&err);
+    return FALSE;
+  }
 }
 
 static gboolean
@@ -981,6 +1210,20 @@ gst_multiudpsink_stop (GstBaseSink * bsink)
 
     g_object_unref (udpsink->used_socket);
     udpsink->used_socket = NULL;
+  }
+
+  if (udpsink->used_socket_v6) {
+    if (udpsink->close_socket || !udpsink->external_socket) {
+      GError *err = NULL;
+
+      if (!g_socket_close (udpsink->used_socket_v6, &err)) {
+        GST_ERROR_OBJECT (udpsink, "Failed to close socket: %s", err->message);
+        g_clear_error (&err);
+      }
+    }
+
+    g_object_unref (udpsink->used_socket_v6);
+    udpsink->used_socket_v6 = NULL;
   }
 
   return TRUE;
@@ -1078,17 +1321,26 @@ gst_multiudpsink_remove (GstMultiUDPSink * sink, const gchar * host, gint port)
   if (client->refcount == 0) {
     GInetSocketAddress *saddr = G_INET_SOCKET_ADDRESS (client->addr);
     GInetAddress *addr = g_inet_socket_address_get_address (saddr);
+    GSocketFamily family =
+        g_socket_address_get_family (G_SOCKET_ADDRESS (saddr));
+    GSocket *socket;
+
+    /* Select socket to send from for this address */
+    if (family == G_SOCKET_FAMILY_IPV6 || !sink->used_socket)
+      socket = sink->used_socket_v6;
+    else
+      socket = sink->used_socket;
 
     GST_DEBUG_OBJECT (sink, "remove client with host %s, port %d", host, port);
 
     g_get_current_time (&now);
     client->disconnect_time = GST_TIMEVAL_TO_TIME (now);
 
-    if (sink->used_socket && sink->auto_multicast
+    if (socket && sink->auto_multicast
         && g_inet_address_get_is_multicast (addr)) {
       GError *err = NULL;
 
-      if (!g_socket_leave_multicast_group (sink->used_socket, addr, FALSE,
+      if (!g_socket_leave_multicast_group (socket, addr, FALSE,
               sink->multi_iface, &err)) {
         GST_DEBUG_OBJECT (sink, "Failed to leave multicast group: %s",
             err->message);

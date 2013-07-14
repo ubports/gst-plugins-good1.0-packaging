@@ -14,8 +14,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -44,13 +44,11 @@ static GstStaticPadTemplate gst_rtp_mpa_robust_depay_sink_template =
     GST_PAD_ALWAYS,
     GST_STATIC_CAPS ("application/x-rtp, "
         "media = (string) \"audio\", "
-        "payload = (int) " GST_RTP_PAYLOAD_DYNAMIC_STRING ", "
         "clock-rate = (int) 90000, "
         "encoding-name = (string) \"MPA-ROBUST\" " "; "
         /* draft versions appear still in use out there */
         "application/x-rtp, "
         "media = (string) \"audio\", "
-        "payload = (int) " GST_RTP_PAYLOAD_DYNAMIC_STRING ", "
         "clock-rate = (int) [1, MAX], "
         "encoding-name = (string) { \"X-MP3-DRAFT-00\", \"X-MP3-DRAFT-01\", "
         " \"X-MP3-DRAFT-02\", \"X-MP3-DRAFT-03\", \"X-MP3-DRAFT-04\", "
@@ -716,7 +714,7 @@ gst_rtp_mpa_robust_depay_process (GstRTPBaseDepayload * depayload,
         av += gst_buffer_get_size (buf);
         gst_adapter_push (rtpmpadepay->adapter, buf);
         if (av == size) {
-          timestamp = gst_adapter_prev_timestamp (rtpmpadepay->adapter, NULL);
+          timestamp = gst_adapter_prev_pts (rtpmpadepay->adapter, NULL);
           buf = gst_adapter_take_buffer (rtpmpadepay->adapter, size);
           GST_BUFFER_TIMESTAMP (buf) = timestamp;
           gst_rtp_mpa_robust_depay_submit_adu (rtpmpadepay, buf);
