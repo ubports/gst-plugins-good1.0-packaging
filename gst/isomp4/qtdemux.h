@@ -64,6 +64,9 @@ struct _GstQTDemux {
   gint     n_audio_streams;
   gint     n_sub_streams;
 
+  gboolean have_group_id;
+  guint group_id;
+
   guint  major_brand;
   GstBuffer *comp_brands;
   GNode *moov_node;
@@ -121,6 +124,10 @@ struct _GstQTDemux {
   gboolean exposed;
   gboolean mss_mode; /* flag to indicate that we're working with a smoothstreaming fragment */
   guint64 fragment_start;
+    
+  gint64 chapters_track_id;
+
+  GstClockTime min_elst_offset;
 };
 
 struct _GstQTDemuxClass {

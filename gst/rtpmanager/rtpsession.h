@@ -85,7 +85,6 @@ typedef GstFlowReturn (*RTPSessionSendRTCP) (RTPSession *sess, RTPSource *src, G
 /**
  * RTPSessionSyncRTCP:
  * @sess: an #RTPSession
- * @src: the #RTPSource
  * @buffer: the RTCP buffer ready for synchronisation
  * @user_data: user data specified when registering
  *
@@ -94,7 +93,7 @@ typedef GstFlowReturn (*RTPSessionSendRTCP) (RTPSession *sess, RTPSource *src, G
  *
  * Returns: a #GstFlowReturn.
  */
-typedef GstFlowReturn (*RTPSessionSyncRTCP) (RTPSession *sess, RTPSource *src, GstBuffer *buffer, gpointer user_data);
+typedef GstFlowReturn (*RTPSessionSyncRTCP) (RTPSession *sess, GstBuffer *buffer, gpointer user_data);
 
 /**
  * RTPSessionClockRate:
@@ -188,6 +187,8 @@ struct _RTPSession {
   guint         header_len;
   guint         mtu;
 
+  GstStructure *sdes;
+
   guint         probation;
 
   /* bandwidths */
@@ -197,7 +198,7 @@ struct _RTPSession {
   guint        rtcp_rr_bandwidth;
   guint        rtcp_rs_bandwidth;
 
-  RTPSource    *source;
+  guint32       suggested_ssrc;
 
   /* for sender/receiver counting */
   guint32       key;
@@ -206,6 +207,7 @@ struct _RTPSession {
   GHashTable   *ssrcs[32];
   guint         total_sources;
 
+  guint16       generation;
   GstClockTime  next_rtcp_check_time;
   GstClockTime  last_rtcp_send_time;
   GstClockTime  start_time;
@@ -214,8 +216,7 @@ struct _RTPSession {
 
   GstClockTime  next_early_rtcp_time;
 
-  gchar        *bye_reason;
-  gboolean      sent_bye;
+  gboolean      scheduled_bye;
 
   RTPSessionCallbacks   callbacks;
   gpointer              process_rtp_user_data;
@@ -229,7 +230,6 @@ struct _RTPSession {
 
   RTPSessionStats stats;
 
-  gboolean      change_ssrc;
   gboolean      favor_new;
   GstClockTime  rtcp_feedback_retention_window;
   guint         rtcp_immediate_feedback_threshold;
@@ -302,18 +302,11 @@ gdouble         rtp_session_get_bandwidth          (RTPSession *sess);
 void            rtp_session_set_rtcp_fraction      (RTPSession *sess, gdouble fraction);
 gdouble         rtp_session_get_rtcp_fraction      (RTPSession *sess);
 
-gboolean        rtp_session_set_sdes_string        (RTPSession *sess, GstRTCPSDESType type,
-                                                    const gchar *cname);
-gchar*          rtp_session_get_sdes_string        (RTPSession *sess, GstRTCPSDESType type);
-
 GstStructure *  rtp_session_get_sdes_struct        (RTPSession *sess);
 void            rtp_session_set_sdes_struct        (RTPSession *sess, const GstStructure *sdes);
 
 /* handling sources */
-RTPSource*      rtp_session_get_internal_source    (RTPSession *sess);
-
-void            rtp_session_set_internal_ssrc      (RTPSession *sess, guint32 ssrc);
-guint32         rtp_session_get_internal_ssrc      (RTPSession *sess);
+guint32         rtp_session_suggest_ssrc           (RTPSession *sess);
 
 gboolean        rtp_session_add_source             (RTPSession *sess, RTPSource *src);
 guint           rtp_session_get_num_sources        (RTPSession *sess);
@@ -334,9 +327,9 @@ void            rtp_session_update_send_caps       (RTPSession *sess, GstCaps *c
 GstFlowReturn   rtp_session_send_rtp               (RTPSession *sess, gpointer data, gboolean is_list,
                                                     GstClockTime current_time, GstClockTime running_time);
 
-/* stopping the session */
-GstFlowReturn   rtp_session_schedule_bye           (RTPSession *sess, const gchar *reason,
-                                                    GstClockTime current_time);
+/* scheduling bye */
+void            rtp_session_mark_all_bye           (RTPSession *sess, const gchar *reason);
+GstFlowReturn   rtp_session_schedule_bye           (RTPSession *sess, GstClockTime current_time);
 
 /* get interval for next RTCP interval */
 GstClockTime    rtp_session_next_timeout           (RTPSession *sess, GstClockTime current_time);

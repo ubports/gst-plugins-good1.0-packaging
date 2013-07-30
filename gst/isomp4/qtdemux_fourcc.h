@@ -139,11 +139,14 @@ G_BEGIN_DECLS
 #define FOURCC_qtim     GST_MAKE_FOURCC('q','t','i','m')
 #define FOURCC_drms     GST_MAKE_FOURCC('d','r','m','s')
 #define FOURCC_drmi     GST_MAKE_FOURCC('d','r','m','i')
+#define FOURCC_H264     GST_MAKE_FOURCC('H','2','6','4')
+#define FOURCC_strf     GST_MAKE_FOURCC('s','t','r','f')
 #define FOURCC_avc1     GST_MAKE_FOURCC('a','v','c','1')
 #define FOURCC_avcC     GST_MAKE_FOURCC('a','v','c','C')
 #define FOURCC_btrt     GST_MAKE_FOURCC('b','t','r','t')
 #define FOURCC_VP31     GST_MAKE_FOURCC('V','P','3','1')
 #define FOURCC_rle_     GST_MAKE_FOURCC('r','l','e',' ')
+#define FOURCC_WRLE     GST_MAKE_FOURCC('W','R','L','E')
 #define FOURCC_MAC6     GST_MAKE_FOURCC('M','A','C','6')
 #define FOURCC_MAC3     GST_MAKE_FOURCC('M','A','C','3')
 #define FOURCC_ima4     GST_MAKE_FOURCC('i','m','a','4')
@@ -180,6 +183,7 @@ G_BEGIN_DECLS
 #define FOURCC_apco     GST_MAKE_FOURCC('a','p','c','o')
 #define FOURCC_ap4h     GST_MAKE_FOURCC('a','p','4','h')
 #define FOURCC_m1v      GST_MAKE_FOURCC('m','1','v',' ')
+#define FOURCC_vivo     GST_MAKE_FOURCC('v','i','v','o')
 
 /* SVQ3 fourcc */
 #define FOURCC_SEQH     GST_MAKE_FOURCC('S','E','Q','H')
@@ -239,6 +243,9 @@ G_BEGIN_DECLS
 
 /* MPEG DASH */
 #define FOURCC_tfdt     GST_MAKE_FOURCC('t','f','d','t')
+
+/* Chapters reference */
+#define FOURCC_chap     GST_MAKE_FOURCC('c','h','a','p')
 
 G_END_DECLS
 

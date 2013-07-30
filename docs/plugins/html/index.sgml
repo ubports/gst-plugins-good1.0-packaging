@@ -1483,6 +1483,7 @@
 <ANCHOR id="GstRtpBin--rtcp-sync" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbin.html#GstRtpBin--rtcp-sync">
 <ANCHOR id="GstRtpBin--rtcp-sync-interval" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbin.html#GstRtpBin--rtcp-sync-interval">
 <ANCHOR id="GstRtpBin--drop-on-latency" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbin.html#GstRtpBin--drop-on-latency">
+<ANCHOR id="GstRtpBin--do-sync-event" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbin.html#GstRtpBin--do-sync-event">
 <ANCHOR id="gst-plugins-good-plugins-rtpbin.signal-details" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbin.html#gst-plugins-good-plugins-rtpbin.signal-details">
 <ANCHOR id="GstRtpBin-clear-pt-map" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbin.html#GstRtpBin-clear-pt-map">
 <ANCHOR id="GstRtpBin-get-internal-session" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbin.html#GstRtpBin-get-internal-session">
