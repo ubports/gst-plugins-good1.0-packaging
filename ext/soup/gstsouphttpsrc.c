@@ -937,10 +937,15 @@ gst_soup_http_src_finished_cb (SoupMessage * msg, GstSoupHTTPSrc * src)
     src->ret = GST_FLOW_CUSTOM_ERROR;
   } else if (G_UNLIKELY (src->session_io_status !=
           GST_SOUP_HTTP_SRC_SESSION_IO_STATUS_RUNNING)) {
-    /* FIXME: reason_phrase is not translated, add proper error message */
-    GST_ELEMENT_ERROR (src, RESOURCE, NOT_FOUND,
-        ("%s", msg->reason_phrase),
-        ("libsoup status code %d", msg->status_code));
+    if (msg->method == SOUP_METHOD_HEAD) {
+      GST_DEBUG_OBJECT (src, "Ignoring error %d:%s during HEAD request",
+          msg->status_code, msg->reason_phrase);
+    } else {
+      /* FIXME: reason_phrase is not translated, add proper error message */
+      GST_ELEMENT_ERROR (src, RESOURCE, NOT_FOUND,
+          ("%s", msg->reason_phrase),
+          ("libsoup status code %d", msg->status_code));
+    }
   }
   if (src->loop)
     g_main_loop_quit (src->loop);
@@ -1111,7 +1116,11 @@ gst_soup_http_src_response_cb (SoupSession * session, SoupMessage * msg,
 static void
 gst_soup_http_src_parse_status (SoupMessage * msg, GstSoupHTTPSrc * src)
 {
-  if (SOUP_STATUS_IS_TRANSPORT_ERROR (msg->status_code)) {
+  if (msg->method == SOUP_METHOD_HEAD) {
+    if (!SOUP_STATUS_IS_SUCCESSFUL (msg->status_code))
+      GST_DEBUG_OBJECT (src, "Ignoring error %d during HEAD request",
+          msg->status_code);
+  } else if (SOUP_STATUS_IS_TRANSPORT_ERROR (msg->status_code)) {
     switch (msg->status_code) {
       case SOUP_STATUS_CANT_RESOLVE:
       case SOUP_STATUS_CANT_RESOLVE_PROXY:

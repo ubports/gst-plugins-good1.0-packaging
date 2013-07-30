@@ -126,7 +126,7 @@ rtp_source_class_init (RTPSourceClass * klass)
    * name application/x-rtp-source-stats with the following fields:
    *
    *  "ssrc"         G_TYPE_UINT     The SSRC of this source
-   *  "internal"     G_TYPE_BOOLEAN  If this source is the source of the session
+   *  "internal"     G_TYPE_BOOLEAN  If this source is a source of the session
    *  "validated"    G_TYPE_BOOLEAN  If the source is validated
    *  "received-bye" G_TYPE_BOOLEAN  If we received a BYE from this source
    *  "is-csrc"      G_TYPE_BOOLEAN  If this source was found as CSRC
@@ -219,13 +219,23 @@ rtp_source_class_init (RTPSourceClass * klass)
 void
 rtp_source_reset (RTPSource * src)
 {
-  src->received_bye = FALSE;
+  src->marked_bye = FALSE;
+  if (src->bye_reason)
+    g_free (src->bye_reason);
+  src->bye_reason = NULL;
+  src->sent_bye = FALSE;
 
   src->stats.cycles = -1;
   src->stats.jitter = 0;
   src->stats.transit = -1;
   src->stats.curr_sr = 0;
+  src->stats.sr[0].is_valid = FALSE;
   src->stats.curr_rr = 0;
+  src->stats.rr[0].is_valid = FALSE;
+  src->stats.prev_rtptime = GST_CLOCK_TIME_NONE;
+  src->stats.prev_rtcptime = GST_CLOCK_TIME_NONE;
+  src->stats.last_rtptime = GST_CLOCK_TIME_NONE;
+  src->stats.last_rtcptime = GST_CLOCK_TIME_NONE;
 }
 
 static void
@@ -321,7 +331,7 @@ rtp_source_create_stats (RTPSource * src)
       "ssrc", G_TYPE_UINT, (guint) src->ssrc,
       "internal", G_TYPE_BOOLEAN, internal,
       "validated", G_TYPE_BOOLEAN, src->validated,
-      "received-bye", G_TYPE_BOOLEAN, src->received_bye,
+      "received-bye", G_TYPE_BOOLEAN, src->marked_bye,
       "is-csrc", G_TYPE_BOOLEAN, src->is_csrc,
       "is-sender", G_TYPE_BOOLEAN, is_sender,
       "seqnum-base", G_TYPE_INT, src->seqnum_base,
@@ -426,7 +436,7 @@ sdes_struct_compare_func (GQuark field_id, const GValue * value,
 }
 
 /**
- * rtp_source_set_sdes:
+ * rtp_source_set_sdes_struct:
  * @src: an #RTPSource
  * @sdes: the SDES structure
  *
@@ -454,7 +464,6 @@ rtp_source_set_sdes_struct (RTPSource * src, GstStructure * sdes)
   } else {
     gst_structure_free (sdes);
   }
-
   return changed;
 }
 
@@ -670,21 +679,21 @@ rtp_source_is_sender (RTPSource * src)
 }
 
 /**
- * rtp_source_received_bye:
+ * rtp_source_is_marked_bye:
  * @src: an #RTPSource
  *
- * Check if @src has receoved a BYE packet.
+ * Check if @src is marked as leaving the session with a BYE packet.
  *
- * Returns: %TRUE if @src has received a BYE packet.
+ * Returns: %TRUE if @src has been marked BYE.
  */
 gboolean
-rtp_source_received_bye (RTPSource * src)
+rtp_source_is_marked_bye (RTPSource * src)
 {
   gboolean result;
 
   g_return_val_if_fail (RTP_IS_SOURCE (src), FALSE);
 
-  result = src->received_bye;
+  result = RTP_SOURCE_IS_MARKED_BYE (src);
 
   return result;
 }
@@ -694,11 +703,11 @@ rtp_source_received_bye (RTPSource * src)
  * rtp_source_get_bye_reason:
  * @src: an #RTPSource
  *
- * Get the BYE reason for @src. Check if the source receoved a BYE message first
- * with rtp_source_received_bye().
+ * Get the BYE reason for @src. Check if the source is marked as leaving the
+ * session with a BYE message first with rtp_source_is_marked_bye().
  *
- * Returns: The BYE reason or NULL when no reason was given or the source did
- * not receive a BYE message yet. g_fee() after usage.
+ * Returns: The BYE reason or NULL when no reason was given or the source was
+ * not marked BYE yet. g_free() after usage.
  */
 gchar *
 rtp_source_get_bye_reason (RTPSource * src)
@@ -753,75 +762,6 @@ rtp_source_update_caps (RTPSource * src, GstCaps * caps)
   GST_DEBUG ("got seqnum-base %" G_GINT32_FORMAT, src->seqnum_base);
 
   gst_caps_replace (&src->caps, caps);
-}
-
-/**
- * rtp_source_set_sdes_string:
- * @src: an #RTPSource
- * @type: the type of the SDES item
- * @data: the SDES data
- *
- * Store an SDES item of @type in @src.
- *
- * Returns: %FALSE if the SDES item was unchanged or @type is unknown.
- */
-gboolean
-rtp_source_set_sdes_string (RTPSource * src, GstRTCPSDESType type,
-    const gchar * data)
-{
-  const gchar *old;
-  const gchar *field;
-
-  field = gst_rtcp_sdes_type_to_name (type);
-
-  if (gst_structure_has_field (src->sdes, field))
-    old = gst_structure_get_string (src->sdes, field);
-  else
-    old = NULL;
-
-  if (old == NULL && data == NULL)
-    return FALSE;
-
-  if (old != NULL && data != NULL && strcmp (old, data) == 0)
-    return FALSE;
-
-  if (data == NULL)
-    gst_structure_remove_field (src->sdes, field);
-  else
-    gst_structure_set (src->sdes, field, G_TYPE_STRING, data, NULL);
-
-  return TRUE;
-}
-
-/**
- * rtp_source_get_sdes_string:
- * @src: an #RTPSource
- * @type: the type of the SDES item
- *
- * Get the SDES item of @type from @src.
- *
- * Returns: a null-terminated copy of the SDES item or NULL when @type was not
- * valid or the SDES item was unset. g_free() after usage.
- */
-gchar *
-rtp_source_get_sdes_string (RTPSource * src, GstRTCPSDESType type)
-{
-  gchar *result;
-  const gchar *type_name;
-
-  g_return_val_if_fail (RTP_IS_SOURCE (src), NULL);
-
-  if (type < 0 || type > GST_RTCP_SDES_PRIV - 1)
-    return NULL;
-
-  type_name = gst_rtcp_sdes_type_to_name (type);
-
-  if (!gst_structure_has_field (src->sdes, type_name))
-    return NULL;
-
-  result = g_strdup (gst_structure_get_string (src->sdes, type_name));
-
-  return result;
 }
 
 /**
@@ -1187,38 +1127,27 @@ probation_seqnum:
 }
 
 /**
- * rtp_source_process_bye:
+ * rtp_source_mark_bye:
  * @src: an #RTPSource
  * @reason: the reason for leaving
  *
- * Notify @src that a BYE packet has been received. This will make the source
- * inactive.
+ * Mark @src in the BYE state. This can happen when the source wants to
+ * leave the sesssion or when a BYE packets has been received.
+ *
+ * This will make the source inactive.
  */
 void
-rtp_source_process_bye (RTPSource * src, const gchar * reason)
+rtp_source_mark_bye (RTPSource * src, const gchar * reason)
 {
   g_return_if_fail (RTP_IS_SOURCE (src));
 
   GST_DEBUG ("marking SSRC %08x as BYE, reason: %s", src->ssrc,
       GST_STR_NULL (reason));
 
-  /* copy the reason and mark as received_bye */
+  /* copy the reason and mark as bye */
   g_free (src->bye_reason);
   src->bye_reason = g_strdup (reason);
-  src->received_bye = TRUE;
-}
-
-static gboolean
-set_ssrc (GstBuffer ** buffer, guint idx, RTPSource * src)
-{
-  GstRTPBuffer rtp = { NULL };
-
-  *buffer = gst_buffer_make_writable (*buffer);
-  if (gst_rtp_buffer_map (*buffer, GST_MAP_WRITE, &rtp)) {
-    gst_rtp_buffer_set_ssrc (&rtp, src->ssrc);
-    gst_rtp_buffer_unmap (&rtp);
-  }
-  return TRUE;
+  src->marked_bye = TRUE;
 }
 
 /**
@@ -1246,7 +1175,6 @@ rtp_source_send_rtp (RTPSource * src, gpointer data, gboolean is_list,
   GstBufferList *list = NULL;
   GstBuffer *buffer = NULL;
   guint packets;
-  guint32 ssrc;
   GstRTPBuffer rtp = { NULL };
 
   g_return_val_if_fail (RTP_IS_SOURCE (src), GST_FLOW_ERROR);
@@ -1325,28 +1253,8 @@ rtp_source_send_rtp (RTPSource * src, gpointer data, gboolean is_list,
     gst_rtp_buffer_unmap (&rtp);
     goto no_callback;
   }
-
-  ssrc = gst_rtp_buffer_get_ssrc (&rtp);
   gst_rtp_buffer_unmap (&rtp);
 
-  if (ssrc != src->ssrc) {
-    /* the SSRC of the packet is not correct, make a writable buffer and
-     * update the SSRC. This could involve a complete copy of the packet when
-     * it is not writable. Usually the payloader will use caps negotiation to
-     * get the correct SSRC from the session manager before pushing anything. */
-
-    /* FIXME, we don't want to warn yet because we can't inform any payloader
-     * of the changes SSRC yet because we don't implement pad-alloc. */
-    GST_LOG ("updating SSRC from %08x to %08x, fix the payloader", ssrc,
-        src->ssrc);
-
-    if (is_list) {
-      list = gst_buffer_list_make_writable (list);
-      gst_buffer_list_foreach (list, (GstBufferListFunc) set_ssrc, src);
-    } else {
-      set_ssrc (&buffer, 0, src);
-    }
-  }
   GST_LOG ("pushing RTP %s %" G_GUINT64_FORMAT, is_list ? "list" : "packet",
       src->stats.packets_sent);
 

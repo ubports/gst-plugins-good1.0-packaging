@@ -1011,6 +1011,9 @@ gst_rtp_jitter_buffer_src_event (GstPad * pad, GstObject * parent,
 
       gst_event_parse_latency (event, &latency);
 
+      GST_DEBUG_OBJECT (jitterbuffer,
+          "configuring latency of %" GST_TIME_FORMAT, GST_TIME_ARGS (latency));
+
       JBUF_LOCK (priv);
       /* adjust the overall buffer delay to the total pipeline latency in
        * buffering mode because if downstream consumes too fast (because of
@@ -1788,6 +1791,12 @@ again:
 
     ret = gst_clock_id_wait (id, &clock_jitter);
 
+    JBUF_LOCK (priv);
+    GST_DEBUG_OBJECT (jitterbuffer, "sync done");
+    /* and free the entry */
+    gst_clock_id_unref (id);
+    priv->clock_id = NULL;
+
     if (ret == GST_CLOCK_EARLY && gap > 0
         && clock_jitter > (priv->latency_ns + priv->peer_latency)) {
       GstClockTimeDiff total_duration;
@@ -1811,11 +1820,6 @@ again:
       duration = total_duration;
       lost_packets_late = TRUE;
     }
-
-    JBUF_LOCK (priv);
-    /* and free the entry */
-    gst_clock_id_unref (id);
-    priv->clock_id = NULL;
 
     /* at this point, the clock could have been unlocked by a timeout, a new
      * tail element was added to the queue or because we are shutting down. Check

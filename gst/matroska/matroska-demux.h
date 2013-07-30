@@ -55,6 +55,9 @@ typedef struct _GstMatroskaDemux {
   guint                    num_a_streams;
   guint                    num_t_streams;
 
+  guint                    group_id;
+  gboolean                 have_group_id;
+
   /* state */
   gboolean                 streaming;
   guint                    level_up;
@@ -90,6 +93,7 @@ typedef struct _GstMatroskaDemux {
   guint64                  index_offset;
   GstEvent                *seek_event;
   gboolean                 need_segment;
+  guint32                  segment_seqnum;
 
   /* reverse playback */
   GArray                  *seek_index;

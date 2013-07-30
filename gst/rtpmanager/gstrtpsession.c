@@ -260,7 +260,7 @@ static GstFlowReturn gst_rtp_session_send_rtp (RTPSession * sess,
 static GstFlowReturn gst_rtp_session_send_rtcp (RTPSession * sess,
     RTPSource * src, GstBuffer * buffer, gboolean eos, gpointer user_data);
 static GstFlowReturn gst_rtp_session_sync_rtcp (RTPSession * sess,
-    RTPSource * src, GstBuffer * buffer, gpointer user_data);
+    GstBuffer * buffer, gpointer user_data);
 static gint gst_rtp_session_clock_rate (RTPSession * sess, guint8 payload,
     gpointer user_data);
 static void gst_rtp_session_reconsider (RTPSession * sess, gpointer user_data);
@@ -313,8 +313,20 @@ on_new_ssrc (RTPSession * session, RTPSource * src, GstRtpSession * sess)
 static void
 on_ssrc_collision (RTPSession * session, RTPSource * src, GstRtpSession * sess)
 {
+  GstPad *recv_rtp_sink;
+
   g_signal_emit (sess, gst_rtp_session_signals[SIGNAL_ON_SSRC_COLLISION], 0,
       src->ssrc);
+
+  GST_RTP_SESSION_LOCK (sess);
+  if ((recv_rtp_sink = sess->recv_rtp_sink))
+    gst_object_ref (recv_rtp_sink);
+  GST_RTP_SESSION_UNLOCK (sess);
+
+  if (recv_rtp_sink) {
+    gst_pad_push_event (recv_rtp_sink, gst_event_new_reconfigure ());
+    gst_object_unref (recv_rtp_sink);
+  }
 }
 
 static void
@@ -1108,12 +1120,37 @@ do_rtcp_events (GstRtpSession * rtpsession, GstPad * srcpad)
   GstSegment seg;
   GstEvent *event;
   gchar *stream_id;
+  gboolean have_group_id;
+  guint group_id;
 
   stream_id =
       g_strdup_printf ("%08x%08x%08x%08x", g_random_int (), g_random_int (),
       g_random_int (), g_random_int ());
 
+  GST_RTP_SESSION_LOCK (rtpsession);
+  if (rtpsession->recv_rtp_sink) {
+    event =
+        gst_pad_get_sticky_event (rtpsession->recv_rtp_sink,
+        GST_EVENT_STREAM_START, 0);
+    if (event) {
+      if (gst_event_parse_group_id (event, &group_id))
+        have_group_id = TRUE;
+      else
+        have_group_id = FALSE;
+      gst_event_unref (event);
+    } else {
+      have_group_id = TRUE;
+      group_id = gst_util_group_id_next ();
+    }
+  } else {
+    have_group_id = TRUE;
+    group_id = gst_util_group_id_next ();
+  }
+  GST_RTP_SESSION_UNLOCK (rtpsession);
+
   event = gst_event_new_stream_start (stream_id);
+  if (have_group_id)
+    gst_event_set_group_id (event, group_id);
   gst_pad_push_event (srcpad, event);
   g_free (stream_id);
 
@@ -1182,7 +1219,7 @@ stopping:
 /* called when the session manager has an SR RTCP packet ready for handling
  * inter stream synchronisation */
 static GstFlowReturn
-gst_rtp_session_sync_rtcp (RTPSession * sess, RTPSource * src,
+gst_rtp_session_sync_rtcp (RTPSession * sess,
     GstBuffer * buffer, gpointer user_data)
 {
   GstFlowReturn result;
@@ -1737,9 +1774,10 @@ gst_rtp_session_event_send_rtp_sink (GstPad * pad, GstObject * parent,
        * because we stop sending. */
       ret = gst_pad_push_event (rtpsession->send_rtp_src, event);
       current_time = gst_clock_get_time (rtpsession->priv->sysclock);
+
       GST_DEBUG_OBJECT (rtpsession, "scheduling BYE message");
-      rtp_session_schedule_bye (rtpsession->priv->session, "End of stream",
-          current_time);
+      rtp_session_mark_all_bye (rtpsession->priv->session, "End Of Stream");
+      rtp_session_schedule_bye (rtpsession->priv->session, current_time);
       break;
     }
     default:{
@@ -1801,7 +1839,7 @@ gst_rtp_session_getcaps_send_rtp (GstPad * pad, GstRtpSession * rtpsession,
 
   priv = rtpsession->priv;
 
-  ssrc = rtp_session_get_internal_ssrc (priv->session);
+  ssrc = rtp_session_suggest_ssrc (priv->session);
 
   /* we can basically accept anything but we prefer to receive packets with our
    * internal SSRC so that we don't have to patch it. Create a structure with
@@ -1857,15 +1895,9 @@ gst_rtp_session_setcaps_send_rtp (GstPad * pad, GstRtpSession * rtpsession,
     GstCaps * caps)
 {
   GstRtpSessionPrivate *priv;
-  GstStructure *s = gst_caps_get_structure (caps, 0);
-  guint ssrc;
 
   priv = rtpsession->priv;
 
-  if (gst_structure_get_uint (s, "ssrc", &ssrc)) {
-    GST_DEBUG_OBJECT (rtpsession, "setting internal SSRC to %08x", ssrc);
-    rtp_session_set_internal_ssrc (priv->session, ssrc);
-  }
   rtp_session_update_send_caps (priv->session, caps);
 
   return TRUE;
