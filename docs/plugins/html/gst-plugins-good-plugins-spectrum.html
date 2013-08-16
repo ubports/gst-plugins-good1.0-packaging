@@ -132,7 +132,7 @@ channels and the second dimension are the values.
 <p>
 </p>
 <div class="refsect2">
-<a name="idp18246400"></a><h3>Example application</h3>
+<a name="idp22535456"></a><h3>Example application</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
@@ -351,7 +351,7 @@ channels and the second dimension are the values.
 
   spectrum <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstElementFactory.html#gst-element-factory-make">gst_element_factory_make</a></span> <span class="gtkdoc opt">(</span><span class="string">&quot;spectrum&quot;</span><span class="gtkdoc opt">,</span> <span class="string">&quot;spectrum&quot;</span><span class="gtkdoc opt">);</span>
   <span class="function"><a href="http://library.gnome.org/devel/gobject/unstable/gobject-The-Base-Object-Type.html#g-object-set">g_object_set</a></span> <span class="gtkdoc opt">(</span><span class="function"><a href="http://library.gnome.org/devel/gobject/unstable/gobject-The-Base-Object-Type.html#G-OBJECT:CAPS">G_OBJECT</a></span> <span class="gtkdoc opt">(</span>spectrum<span class="gtkdoc opt">),</span> <span class="string">&quot;bands&quot;</span><span class="gtkdoc opt">,</span> spect_bands<span class="gtkdoc opt">,</span> <span class="string">&quot;threshold&quot;</span><span class="gtkdoc opt">, -</span><span class="number">80</span><span class="gtkdoc opt">,</span>
-      <span class="string">&quot;message&quot;</span><span class="gtkdoc opt">,</span> TRUE<span class="gtkdoc opt">,</span> <span class="string">&quot;message-phase&quot;</span><span class="gtkdoc opt">,</span> TRUE<span class="gtkdoc opt">,</span> NULL<span class="gtkdoc opt">);</span>
+      <span class="string">&quot;post-messages&quot;</span><span class="gtkdoc opt">,</span> TRUE<span class="gtkdoc opt">,</span> <span class="string">&quot;message-phase&quot;</span><span class="gtkdoc opt">,</span> TRUE<span class="gtkdoc opt">,</span> NULL<span class="gtkdoc opt">);</span>
 
   sink <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstElementFactory.html#gst-element-factory-make">gst_element_factory_make</a></span> <span class="gtkdoc opt">(</span><span class="string">&quot;fakesink&quot;</span><span class="gtkdoc opt">,</span> <span class="string">&quot;sink&quot;</span><span class="gtkdoc opt">);</span>
   <span class="function"><a href="http://library.gnome.org/devel/gobject/unstable/gobject-The-Base-Object-Type.html#g-object-set">g_object_set</a></span> <span class="gtkdoc opt">(</span><span class="function"><a href="http://library.gnome.org/devel/gobject/unstable/gobject-The-Base-Object-Type.html#G-OBJECT:CAPS">G_OBJECT</a></span> <span class="gtkdoc opt">(</span>sink<span class="gtkdoc opt">),</span> <span class="string">&quot;sync&quot;</span><span class="gtkdoc opt">,</span> TRUE<span class="gtkdoc opt">,</span> NULL<span class="gtkdoc opt">);</span>
@@ -399,7 +399,7 @@ Last reviewed on 2011-03-10 (0.10.29)
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp18942304"></a><h3>Element Information</h3>
+<a name="idp18695776"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>
@@ -422,7 +422,7 @@ Last reviewed on 2011-03-10 (0.10.29)
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp20858976"></a><h3>Element Pads</h3>
+<a name="idp22632912"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0">
 <col align="left" valign="top">
 <tbody>

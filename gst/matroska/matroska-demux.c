@@ -2567,6 +2567,8 @@ gst_matroska_demux_push_hdr_buf (GstMatroskaDemux * demux,
   if (stream->set_discont) {
     GST_BUFFER_FLAG_SET (header_buf, GST_BUFFER_FLAG_DISCONT);
     stream->set_discont = FALSE;
+  } else {
+    GST_BUFFER_FLAG_UNSET (header_buf, GST_BUFFER_FLAG_DISCONT);
   }
 
   ret = gst_pad_push (stream->pad, header_buf);
@@ -3023,6 +3025,7 @@ gst_matroska_demux_check_subtitle_buffer (GstElement * element,
   GstBuffer *newbuf;
   gchar *utf8;
   GstMapInfo map;
+  gboolean needs_unmap = TRUE;
 
   sub_stream = (GstMatroskaTrackSubtitleContext *) stream;
 
@@ -3072,10 +3075,10 @@ gst_matroska_demux_check_subtitle_buffer (GstElement * element,
     utf8 = g_strdup ("invalid subtitle");
 
   newbuf = gst_buffer_new_wrapped (utf8, strlen (utf8));
+  gst_buffer_unmap (*buf, &map);
   gst_buffer_copy_into (newbuf, *buf,
       GST_BUFFER_COPY_TIMESTAMPS | GST_BUFFER_COPY_FLAGS | GST_BUFFER_COPY_META,
       0, -1);
-  gst_buffer_unmap (*buf, &map);
   gst_buffer_unref (*buf);
 
   *buf = newbuf;
@@ -3092,15 +3095,19 @@ next:
       utf8 = g_markup_escape_text ((gchar *) map.data, map.size);
 
       newbuf = gst_buffer_new_wrapped (utf8, strlen (utf8));
+      gst_buffer_unmap (*buf, &map);
       gst_buffer_copy_into (newbuf, *buf,
           GST_BUFFER_COPY_TIMESTAMPS | GST_BUFFER_COPY_FLAGS |
           GST_BUFFER_COPY_META, 0, -1);
-      gst_buffer_unmap (*buf, &map);
       gst_buffer_unref (*buf);
 
       *buf = newbuf;
+      needs_unmap = FALSE;
     }
   }
+
+  if (needs_unmap)
+    gst_buffer_unmap (*buf, &map);
 
   return GST_FLOW_OK;
 }
@@ -3693,6 +3700,8 @@ gst_matroska_demux_parse_blockgroup_or_simpleblock (GstMatroskaDemux * demux,
         GST_DEBUG_OBJECT (demux, "marking DISCONT");
         GST_BUFFER_FLAG_SET (sub, GST_BUFFER_FLAG_DISCONT);
         stream->set_discont = FALSE;
+      } else {
+        GST_BUFFER_FLAG_UNSET (sub, GST_BUFFER_FLAG_DISCONT);
       }
 
       /* reverse playback book-keeping */

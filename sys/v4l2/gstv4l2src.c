@@ -128,7 +128,6 @@ static gboolean gst_v4l2src_decide_allocation (GstBaseSrc * src,
     GstQuery * query);
 static GstFlowReturn gst_v4l2src_fill (GstPushSrc * src, GstBuffer * out);
 static GstCaps *gst_v4l2src_fixate (GstBaseSrc * basesrc, GstCaps * caps);
-static gboolean gst_v4l2src_event (GstBaseSrc * src, GstEvent * event);
 static gboolean gst_v4l2src_negotiate (GstBaseSrc * basesrc);
 
 static void gst_v4l2src_set_property (GObject * object, guint prop_id,
@@ -201,7 +200,6 @@ gst_v4l2src_class_init (GstV4l2SrcClass * klass)
   basesrc_class->stop = GST_DEBUG_FUNCPTR (gst_v4l2src_stop);
   basesrc_class->query = GST_DEBUG_FUNCPTR (gst_v4l2src_query);
   basesrc_class->fixate = GST_DEBUG_FUNCPTR (gst_v4l2src_fixate);
-  basesrc_class->event = GST_DEBUG_FUNCPTR (gst_v4l2src_event);
   basesrc_class->negotiate = GST_DEBUG_FUNCPTR (gst_v4l2src_negotiate);
   basesrc_class->decide_allocation =
       GST_DEBUG_FUNCPTR (gst_v4l2src_decide_allocation);
@@ -311,28 +309,21 @@ gst_v4l2src_fixate (GstBaseSrc * basesrc, GstCaps * caps)
 
 
 static gboolean
-gst_v4l2src_event (GstBaseSrc * src, GstEvent * event)
-{
-  GST_DEBUG_OBJECT (src, "handle event %" GST_PTR_FORMAT, event);
-
-  switch (GST_EVENT_TYPE (event)) {
-    case GST_EVENT_RECONFIGURE:
-      gst_pad_check_reconfigure (GST_BASE_SRC_PAD (src));
-      break;
-    default:
-      break;
-  }
-  return GST_BASE_SRC_CLASS (parent_class)->event (src, event);
-}
-
-
-static gboolean
 gst_v4l2src_negotiate (GstBaseSrc * basesrc)
 {
+  GstV4l2Src *v4l2src;
+  GstV4l2Object *obj;
   GstCaps *thiscaps;
   GstCaps *caps = NULL;
   GstCaps *peercaps = NULL;
   gboolean result = FALSE;
+
+  v4l2src = GST_V4L2SRC (basesrc);
+  obj = v4l2src->v4l2object;
+
+  /* We don't allow renegotiation, just return TRUE in that case */
+  if (GST_V4L2_IS_ACTIVE (obj))
+    return TRUE;
 
   /* first see what is possible on our source pad */
   thiscaps = gst_pad_query_caps (GST_BASE_SRC_PAD (basesrc), NULL);
