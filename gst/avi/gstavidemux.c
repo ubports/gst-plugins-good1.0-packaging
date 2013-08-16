@@ -3713,6 +3713,7 @@ gst_avi_demux_stream_header_pull (GstAviDemux * avi)
 
         switch (GST_READ_UINT32_LE (map.data)) {
           case GST_RIFF_LIST_strl:
+            gst_buffer_unmap (sub, &map);
             if (!(gst_avi_demux_parse_stream (avi, sub))) {
               GST_ELEMENT_WARNING (avi, STREAM, DEMUX, (NULL),
                   ("failed to parse stream, ignoring"));
@@ -3721,10 +3722,12 @@ gst_avi_demux_stream_header_pull (GstAviDemux * avi)
             sub = NULL;
             goto next;
           case GST_RIFF_LIST_odml:
+            gst_buffer_unmap (sub, &map);
             gst_avi_demux_parse_odml (avi, sub);
             sub = NULL;
             break;
           case GST_RIFF_LIST_INFO:
+            gst_buffer_unmap (sub, &map);
             gst_buffer_resize (sub, 4, -1);
             gst_riff_parse_info (element, sub, &tags);
             if (tags) {
@@ -3736,6 +3739,8 @@ gst_avi_demux_stream_header_pull (GstAviDemux * avi)
               }
             }
             tags = NULL;
+            gst_buffer_unref (sub);
+            sub = NULL;
             break;
           default:
             GST_WARNING_OBJECT (avi,

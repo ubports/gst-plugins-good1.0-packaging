@@ -1,9 +1,341 @@
+=== release 1.0.9 ===
+
+2013-07-30 11:35:33 +0100  Tim-Philipp Müller <tim@centricular.net>
+
+	* ChangeLog:
+	* NEWS:
+	* RELEASE:
+	* configure.ac:
+	* docs/plugins/inspect/plugin-1394.xml:
+	* docs/plugins/inspect/plugin-aasink.xml:
+	* docs/plugins/inspect/plugin-alaw.xml:
+	* docs/plugins/inspect/plugin-alpha.xml:
+	* docs/plugins/inspect/plugin-alphacolor.xml:
+	* docs/plugins/inspect/plugin-apetag.xml:
+	* docs/plugins/inspect/plugin-audiofx.xml:
+	* docs/plugins/inspect/plugin-audioparsers.xml:
+	* docs/plugins/inspect/plugin-auparse.xml:
+	* docs/plugins/inspect/plugin-autodetect.xml:
+	* docs/plugins/inspect/plugin-avi.xml:
+	* docs/plugins/inspect/plugin-cacasink.xml:
+	* docs/plugins/inspect/plugin-cairo.xml:
+	* docs/plugins/inspect/plugin-cutter.xml:
+	* docs/plugins/inspect/plugin-debug.xml:
+	* docs/plugins/inspect/plugin-deinterlace.xml:
+	* docs/plugins/inspect/plugin-dv.xml:
+	* docs/plugins/inspect/plugin-effectv.xml:
+	* docs/plugins/inspect/plugin-equalizer.xml:
+	* docs/plugins/inspect/plugin-flac.xml:
+	* docs/plugins/inspect/plugin-flv.xml:
+	* docs/plugins/inspect/plugin-flxdec.xml:
+	* docs/plugins/inspect/plugin-gdkpixbuf.xml:
+	* docs/plugins/inspect/plugin-goom.xml:
+	* docs/plugins/inspect/plugin-goom2k1.xml:
+	* docs/plugins/inspect/plugin-icydemux.xml:
+	* docs/plugins/inspect/plugin-id3demux.xml:
+	* docs/plugins/inspect/plugin-imagefreeze.xml:
+	* docs/plugins/inspect/plugin-interleave.xml:
+	* docs/plugins/inspect/plugin-isomp4.xml:
+	* docs/plugins/inspect/plugin-jack.xml:
+	* docs/plugins/inspect/plugin-jpeg.xml:
+	* docs/plugins/inspect/plugin-level.xml:
+	* docs/plugins/inspect/plugin-matroska.xml:
+	* docs/plugins/inspect/plugin-mulaw.xml:
+	* docs/plugins/inspect/plugin-multifile.xml:
+	* docs/plugins/inspect/plugin-multipart.xml:
+	* docs/plugins/inspect/plugin-navigationtest.xml:
+	* docs/plugins/inspect/plugin-oss4.xml:
+	* docs/plugins/inspect/plugin-ossaudio.xml:
+	* docs/plugins/inspect/plugin-png.xml:
+	* docs/plugins/inspect/plugin-pulseaudio.xml:
+	* docs/plugins/inspect/plugin-replaygain.xml:
+	* docs/plugins/inspect/plugin-rtp.xml:
+	* docs/plugins/inspect/plugin-rtpmanager.xml:
+	* docs/plugins/inspect/plugin-rtsp.xml:
+	* docs/plugins/inspect/plugin-shapewipe.xml:
+	* docs/plugins/inspect/plugin-shout2send.xml:
+	* docs/plugins/inspect/plugin-smpte.xml:
+	* docs/plugins/inspect/plugin-soup.xml:
+	* docs/plugins/inspect/plugin-spectrum.xml:
+	* docs/plugins/inspect/plugin-speex.xml:
+	* docs/plugins/inspect/plugin-taglib.xml:
+	* docs/plugins/inspect/plugin-udp.xml:
+	* docs/plugins/inspect/plugin-video4linux2.xml:
+	* docs/plugins/inspect/plugin-videobox.xml:
+	* docs/plugins/inspect/plugin-videocrop.xml:
+	* docs/plugins/inspect/plugin-videofilter.xml:
+	* docs/plugins/inspect/plugin-videomixer.xml:
+	* docs/plugins/inspect/plugin-vpx.xml:
+	* docs/plugins/inspect/plugin-wavenc.xml:
+	* docs/plugins/inspect/plugin-wavpack.xml:
+	* docs/plugins/inspect/plugin-wavparse.xml:
+	* docs/plugins/inspect/plugin-ximagesrc.xml:
+	* docs/plugins/inspect/plugin-y4menc.xml:
+	* gst-plugins-good.doap:
+	* win32/common/config.h:
+	  Release 1.0.9
+
+2013-07-28 17:32:27 +0200  Sebastian Dröge <slomo@circular-chaos.org>
+
+	* gst/avi/gstavidemux.c:
+	  avidemux: Don't forget unmapping and unreffing buffer
+
+2013-07-26 21:06:17 +0200  Matej Knopp <matej.knopp@gmail.com>
+
+	* gst/avi/gstavidemux.c:
+	  avidemux: unmap buffer
+	  https://bugzilla.gnome.org/show_bug.cgi?id=704951
+
+2013-07-26 16:02:01 +0200  Matej Knopp <matej.knopp@gmail.com>
+
+	* gst/matroska/matroska-demux.c:
+	  matroskademux: fix memory leak in check_subtitle_buffer
+	  https://bugzilla.gnome.org/show_bug.cgi?id=704921
+
+2013-06-20 11:31:22 +0200  Wim Taymans <wim.taymans@collabora.co.uk>
+
+	* gst/isomp4/qtdemux.c:
+	  qtdemux: handle SEGMENT query
+
+2013-07-28 18:09:33 +0200  Sebastian Dröge <slomo@circular-chaos.org>
+
+	* ext/flac/gstflacenc.c:
+	  flacenc: Fix handling of image tags
+	  The caps should be used to get the mimetype and there is
+	  only an info structure for the GstSample if the image-type
+	  is not NONE.
+
+2013-07-28 18:04:32 +0200  Sebastian Dröge <slomo@circular-chaos.org>
+
+	* ext/flac/gstflacenc.c:
+	  flacenc: Don't crash if there is no image tag information
+	  https://bugzilla.gnome.org/show_bug.cgi?id=705018
+
+2013-04-15 19:53:28 -0400  Olivier Crête <olivier.crete@collabora.com>
+
+	* sys/v4l2/gstv4l2src.c:
+	  v4l2src: Disable renegotiation in the negotiate method
+	  This way, we don't block the initial negotiation.
+	  Thanks to Jeremy Whiting for doing all the testing.
+	  https://bugzilla.gnome.org/show_bug.cgi?id=695981
+
+2013-04-15 19:46:12 -0400  Olivier Crête <olivier.crete@collabora.com>
+
+	* sys/v4l2/gstv4l2src.c:
+	  Revert "v4l2: disable renegotiation"
+	  This reverts commit d1b26e1d594ab2b63324e43a36330475e98cdf18.
+	  This causes the initial negotiation to never happen if a reconfigure
+	  event is received after gst_base_src_start_complete() but before the loop
+	  starts.
+	  https://bugzilla.gnome.org/show_bug.cgi?id=695981
+
+2013-07-22 18:00:16 +0100  Tim-Philipp Müller <tim.muller@collabora.co.uk>
+
+	* gst/deinterlace/gstdeinterlace.c:
+	  deinterlace: fix on-the-fly changing of "mode" and "fields" properties
+	  We call setcaps() to reconfigure ourselves, but we need to pass
+	  the current *sink* caps, not the source caps then. Also fix a
+	  caps leak.
+	  https://bugzilla.gnome.org/show_bug.cgi?id=641599
+
+2013-07-19 15:24:08 +0200  Peter Korsgaard <jacmet@sunsite.dk>
+
+	* gst/udp/gstdynudpsink.c:
+	* gst/udp/gstmultiudpsink.c:
+	  (dyn|multi)udpsink: unbreak on !IPv6 systems after 130268bc (Bind socket before using it)
+	  The g_socket functions only touch the error argument on errors, so clear
+	  err back to NULL in case g_socket_new (G_SOCKET_FAMILY_IPV6) failed, as
+	  we check for err != NULL later on to know if g_socket_bind() failed,
+	  otherwise we errously fail on systems without IPv6 support.
+	  https://bugzilla.gnome.org/show_bug.cgi?id=704553
+
+2013-01-28 12:23:41 +0100  Marc Leeman <marc.leeman@gmail.com>
+
+	* gst/rtp/gstrtph263depay.c:
+	* gst/rtp/gstrtph263pdepay.c:
+	* gst/rtp/gstrtph264depay.c:
+	* gst/rtp/gstrtpmp4vdepay.c:
+	  rtp: remove payload requirements from selected depayloaders
+	  encoding name is required in the caps and is a better fit for autoplugging than
+	  the pt value. Hardware manufacturers have a bad habit of skimming through RFCs
+	  and in this case; use unassigned numbers for encoders instead of dynamic
+	  numbers.
+	  In essence, this patch will add support for a lot of Bosch hardware encoders
+	  without breaking autoplugging.
+	  Fixes https://bugzilla.gnome.org/show_bug.cgi?id=639292
+
+2013-01-28 12:41:04 +0100  Wim Taymans <wim.taymans@collabora.co.uk>
+
+	* gst/rtp/gstrtpL16depay.c:
+	* gst/rtp/gstrtpac3depay.c:
+	* gst/rtp/gstrtpamrdepay.c:
+	* gst/rtp/gstrtpbvdepay.c:
+	* gst/rtp/gstrtpceltdepay.c:
+	* gst/rtp/gstrtpdvdepay.c:
+	* gst/rtp/gstrtpg722depay.c:
+	* gst/rtp/gstrtpg723depay.c:
+	* gst/rtp/gstrtpg726depay.c:
+	* gst/rtp/gstrtpg729depay.c:
+	* gst/rtp/gstrtpgsmdepay.c:
+	* gst/rtp/gstrtpgstdepay.c:
+	* gst/rtp/gstrtph263depay.c:
+	* gst/rtp/gstrtpilbcdepay.c:
+	* gst/rtp/gstrtpj2kdepay.c:
+	* gst/rtp/gstrtpjpegdepay.c:
+	* gst/rtp/gstrtpmp1sdepay.c:
+	* gst/rtp/gstrtpmp2tdepay.c:
+	* gst/rtp/gstrtpmp4adepay.c:
+	* gst/rtp/gstrtpmp4gdepay.c:
+	* gst/rtp/gstrtpmpadepay.c:
+	* gst/rtp/gstrtpmparobustdepay.c:
+	* gst/rtp/gstrtpmpvdepay.c:
+	* gst/rtp/gstrtppcmadepay.c:
+	* gst/rtp/gstrtppcmudepay.c:
+	* gst/rtp/gstrtpqcelpdepay.c:
+	* gst/rtp/gstrtpqdmdepay.c:
+	* gst/rtp/gstrtpsirendepay.c:
+	* gst/rtp/gstrtpspeexdepay.c:
+	* gst/rtp/gstrtpsv3vdepay.c:
+	* gst/rtp/gstrtptheoradepay.c:
+	* gst/rtp/gstrtpvorbisdepay.c:
+	* gst/rtp/gstrtpvrawdepay.c:
+	  rtpdepay: remove payload type restrictions
+	  Remove the pt restrictions for all the depayloaders that have an
+	  encoding-name. We can use this to autoplug decoders.
+	  Remove the encoding-name for all the payloaders with a fixed payload
+	  type.
+	  We now either have an encoding-name or a pt in the sinkpad caps of
+	  a depayloader.
+	  See https://bugzilla.gnome.org/show_bug.cgi?id=639292
+	  Conflicts:
+	  gst/rtp/gstrtpmp2tdepay.c
+	  gst/rtp/gstrtpvp8depay.c
+
+2013-07-17 17:11:44 +0200  Arnaud Vrac <avrac@freebox.fr>
+
+	* gst/matroska/matroska-demux.c:
+	  mastrokademux: do not push discont buffers if they aren't discont
+	  Unset the discont flag instead of posssibly pushing a buffer with
+	  a flag that's still set.
+	  https://bugzilla.gnome.org/show_bug.cgi?id=682110
+
+2013-07-14 12:50:13 +1200  Douglas Bagnall <douglas@halo.gen.nz>
+
+	* tests/examples/spectrum/spectrum-example.c:
+	  level: Fix the spectrum example for 1.0
+	  The "message" property has been replaced by "post-messages".
+	  Pre-patch output:
+	  (test_spectrum:23101): GLib-GObject-WARNING **: g_object_set_valist:
+	  object class `GstSpectrum' has no property named `message'
+	  New spectrum message, endtime 0:00:00.100000000
+	  (test_spectrum:23101): GStreamer-CRITICAL **:
+	  gst_value_list_get_value: assertion `GST_VALUE_HOLDS_LIST (value)' failed
+	  [...]
+	  Post-patch:
+	  New spectrum message, endtime 0:00:00.100000000
+	  band 0 (freq 400): magnitude -65.988777 dB phase 1.533397
+	  band 1 (freq 1200): magnitude -65.545563 dB phase -0.780900
+	  band 2 (freq 2000): magnitude -64.791946 dB phase -0.799611
+	  band 3 (freq 2800): magnitude -64.556175 dB phase -0.063615
+	  [...]
+	  https://bugzilla.gnome.org/show_bug.cgi?id=704179
+
+2013-07-13 20:56:26 +0200  Matej Knopp <matej.knopp@gmail.com>
+
+	* gst/audioparsers/gstaacparse.c:
+	  aacparse: be less verbose when parsing LOAS streams
+	  https://bugzilla.gnome.org/show_bug.cgi?id=704162
+
+2013-07-12 12:31:39 +0200  Wim Taymans <wim.taymans@collabora.co.uk>
+
+	* ext/pulse/pulsesink.h:
+	  sink: alaw/mulaw caps don't have a layout property
+
+2013-07-12 12:27:53 +0200  Wim Taymans <wim.taymans@collabora.co.uk>
+
+	* ext/pulse/pulseutil.c:
+	  pulse: relax mulaw and alaw format checks
+	  The audio library considers them as encoded formats and does not fill in the
+	  sample width. The audio ringbuffers identifies the format as alaw/mulaw and that
+	  is always 8 bits.
+
 === release 1.0.8 ===
 
-2013-07-12  Tim-Philipp Müller <tim@centricular.net>
+2013-07-12 11:14:06 +0100  Tim-Philipp Müller <tim@centricular.net>
 
+	* ChangeLog:
+	* NEWS:
+	* RELEASE:
 	* configure.ac:
-	  releasing 1.0.8
+	* docs/plugins/gst-plugins-good-plugins.args:
+	* docs/plugins/inspect/plugin-1394.xml:
+	* docs/plugins/inspect/plugin-aasink.xml:
+	* docs/plugins/inspect/plugin-alaw.xml:
+	* docs/plugins/inspect/plugin-alpha.xml:
+	* docs/plugins/inspect/plugin-alphacolor.xml:
+	* docs/plugins/inspect/plugin-apetag.xml:
+	* docs/plugins/inspect/plugin-audiofx.xml:
+	* docs/plugins/inspect/plugin-audioparsers.xml:
+	* docs/plugins/inspect/plugin-auparse.xml:
+	* docs/plugins/inspect/plugin-autodetect.xml:
+	* docs/plugins/inspect/plugin-avi.xml:
+	* docs/plugins/inspect/plugin-cacasink.xml:
+	* docs/plugins/inspect/plugin-cairo.xml:
+	* docs/plugins/inspect/plugin-cutter.xml:
+	* docs/plugins/inspect/plugin-debug.xml:
+	* docs/plugins/inspect/plugin-deinterlace.xml:
+	* docs/plugins/inspect/plugin-dv.xml:
+	* docs/plugins/inspect/plugin-effectv.xml:
+	* docs/plugins/inspect/plugin-equalizer.xml:
+	* docs/plugins/inspect/plugin-flac.xml:
+	* docs/plugins/inspect/plugin-flv.xml:
+	* docs/plugins/inspect/plugin-flxdec.xml:
+	* docs/plugins/inspect/plugin-gdkpixbuf.xml:
+	* docs/plugins/inspect/plugin-goom.xml:
+	* docs/plugins/inspect/plugin-goom2k1.xml:
+	* docs/plugins/inspect/plugin-icydemux.xml:
+	* docs/plugins/inspect/plugin-id3demux.xml:
+	* docs/plugins/inspect/plugin-imagefreeze.xml:
+	* docs/plugins/inspect/plugin-interleave.xml:
+	* docs/plugins/inspect/plugin-isomp4.xml:
+	* docs/plugins/inspect/plugin-jack.xml:
+	* docs/plugins/inspect/plugin-jpeg.xml:
+	* docs/plugins/inspect/plugin-level.xml:
+	* docs/plugins/inspect/plugin-matroska.xml:
+	* docs/plugins/inspect/plugin-mulaw.xml:
+	* docs/plugins/inspect/plugin-multifile.xml:
+	* docs/plugins/inspect/plugin-multipart.xml:
+	* docs/plugins/inspect/plugin-navigationtest.xml:
+	* docs/plugins/inspect/plugin-oss4.xml:
+	* docs/plugins/inspect/plugin-ossaudio.xml:
+	* docs/plugins/inspect/plugin-png.xml:
+	* docs/plugins/inspect/plugin-pulseaudio.xml:
+	* docs/plugins/inspect/plugin-replaygain.xml:
+	* docs/plugins/inspect/plugin-rtp.xml:
+	* docs/plugins/inspect/plugin-rtpmanager.xml:
+	* docs/plugins/inspect/plugin-rtsp.xml:
+	* docs/plugins/inspect/plugin-shapewipe.xml:
+	* docs/plugins/inspect/plugin-shout2send.xml:
+	* docs/plugins/inspect/plugin-smpte.xml:
+	* docs/plugins/inspect/plugin-soup.xml:
+	* docs/plugins/inspect/plugin-spectrum.xml:
+	* docs/plugins/inspect/plugin-speex.xml:
+	* docs/plugins/inspect/plugin-taglib.xml:
+	* docs/plugins/inspect/plugin-udp.xml:
+	* docs/plugins/inspect/plugin-video4linux2.xml:
+	* docs/plugins/inspect/plugin-videobox.xml:
+	* docs/plugins/inspect/plugin-videocrop.xml:
+	* docs/plugins/inspect/plugin-videofilter.xml:
+	* docs/plugins/inspect/plugin-videomixer.xml:
+	* docs/plugins/inspect/plugin-vpx.xml:
+	* docs/plugins/inspect/plugin-wavenc.xml:
+	* docs/plugins/inspect/plugin-wavpack.xml:
+	* docs/plugins/inspect/plugin-wavparse.xml:
+	* docs/plugins/inspect/plugin-ximagesrc.xml:
+	* docs/plugins/inspect/plugin-y4menc.xml:
+	* gst-plugins-good.doap:
+	* win32/common/config.h:
+	  Release 1.0.8
 
 2013-07-09 15:34:04 +0200  Andoni Morales Alastruey <ylatuya@gmail.com>
 
