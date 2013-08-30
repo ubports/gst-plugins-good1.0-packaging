@@ -25,6 +25,7 @@
 #include "gstrtpjitterbuffer.h"
 #include "gstrtpptdemux.h"
 #include "gstrtpsession.h"
+#include "gstrtprtxqueue.h"
 #include "gstrtpssrcdemux.h"
 #include "gstrtpdtmfmux.h"
 #include "gstrtpmux.h"
@@ -45,6 +46,9 @@ plugin_init (GstPlugin * plugin)
 
   if (!gst_element_register (plugin, "rtpsession", GST_RANK_NONE,
           GST_TYPE_RTP_SESSION))
+    return FALSE;
+
+  if (!gst_rtp_rtx_queue_plugin_init (plugin))
     return FALSE;
 
   if (!gst_element_register (plugin, "rtpssrcdemux", GST_RANK_NONE,

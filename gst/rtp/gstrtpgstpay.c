@@ -54,6 +54,7 @@ GST_DEBUG_CATEGORY_STATIC (gst_rtp_pay_debug);
  *   1 = GST_EVENT_TAG
  *   2 = GST_EVENT_CUSTOM_DOWNSTREAM
  *   3 = GST_EVENT_CUSTOM_BOTH
+ *   4 = GST_EVENT_STREAM_START
  */
 
 static GstStaticPadTemplate gst_rtp_gst_pay_sink_template =
@@ -72,7 +73,22 @@ GST_STATIC_PAD_TEMPLATE ("src",
         "clock-rate = (int) 90000, " "encoding-name = (string) \"X-GST\"")
     );
 
+enum
+{
+  PROP_0,
+  PROP_CONFIG_INTERVAL,
+  PROP_LAST
+};
+
+#define DEFAULT_CONFIG_INTERVAL		      0
+
+static void gst_rtp_gst_pay_set_property (GObject * object, guint prop_id,
+    const GValue * value, GParamSpec * pspec);
+static void gst_rtp_gst_pay_get_property (GObject * object, guint prop_id,
+    GValue * value, GParamSpec * pspec);
 static void gst_rtp_gst_pay_finalize (GObject * obj);
+static GstStateChangeReturn gst_rtp_gst_pay_change_state (GstElement * element,
+    GstStateChange transition);
 
 static gboolean gst_rtp_gst_pay_setcaps (GstRTPBasePayload * payload,
     GstCaps * caps);
@@ -95,7 +111,20 @@ gst_rtp_gst_pay_class_init (GstRtpGSTPayClass * klass)
   gstelement_class = (GstElementClass *) klass;
   gstrtpbasepayload_class = (GstRTPBasePayloadClass *) klass;
 
+  gobject_class->set_property = gst_rtp_gst_pay_set_property;
+  gobject_class->get_property = gst_rtp_gst_pay_get_property;
   gobject_class->finalize = gst_rtp_gst_pay_finalize;
+
+  g_object_class_install_property (G_OBJECT_CLASS (klass),
+      PROP_CONFIG_INTERVAL,
+      g_param_spec_uint ("config-interval",
+          "Caps/Tags Send Interval",
+          "Interval for sending caps and TAG events in seconds (0 = disabled)",
+          0, 3600, DEFAULT_CONFIG_INTERVAL,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS)
+      );
+
+  gstelement_class->change_state = gst_rtp_gst_pay_change_state;
 
   gst_element_class_add_pad_template (gstelement_class,
       gst_static_pad_template_get (&gst_rtp_gst_pay_src_template));
@@ -119,8 +148,35 @@ static void
 gst_rtp_gst_pay_init (GstRtpGSTPay * rtpgstpay)
 {
   rtpgstpay->adapter = gst_adapter_new ();
+  rtpgstpay->pending_buffers = NULL;
   gst_rtp_base_payload_set_options (GST_RTP_BASE_PAYLOAD (rtpgstpay),
       "application", TRUE, "X-GST", 90000);
+  rtpgstpay->last_config = GST_CLOCK_TIME_NONE;
+  rtpgstpay->taglist = NULL;
+  rtpgstpay->config_interval = DEFAULT_CONFIG_INTERVAL;
+}
+
+static void
+gst_rtp_gst_pay_reset (GstRtpGSTPay * rtpgstpay, gboolean full)
+{
+  rtpgstpay->last_config = GST_CLOCK_TIME_NONE;
+  gst_adapter_clear (rtpgstpay->adapter);
+  rtpgstpay->flags &= 0x70;
+  rtpgstpay->etype = 0;
+  if (rtpgstpay->pending_buffers)
+    g_list_free_full (rtpgstpay->pending_buffers,
+        (GDestroyNotify) gst_buffer_list_unref);
+  rtpgstpay->pending_buffers = NULL;
+  if (full) {
+    if (rtpgstpay->taglist)
+      gst_tag_list_unref (rtpgstpay->taglist);
+    rtpgstpay->taglist = NULL;
+    if (rtpgstpay->stream_id)
+      g_free (rtpgstpay->stream_id);
+    rtpgstpay->stream_id = NULL;
+    rtpgstpay->current_CV = 0;
+    rtpgstpay->next_CV = 0;
+  }
 }
 
 static void
@@ -130,25 +186,92 @@ gst_rtp_gst_pay_finalize (GObject * obj)
 
   rtpgstpay = GST_RTP_GST_PAY (obj);
 
+  gst_rtp_gst_pay_reset (rtpgstpay, TRUE);
+
   g_object_unref (rtpgstpay->adapter);
 
   G_OBJECT_CLASS (parent_class)->finalize (obj);
 }
 
-static GstFlowReturn
-gst_rtp_gst_pay_flush (GstRtpGSTPay * rtpgstpay, GstClockTime timestamp)
+static void
+gst_rtp_gst_pay_set_property (GObject * object, guint prop_id,
+    const GValue * value, GParamSpec * pspec)
 {
-  GstFlowReturn ret;
+  GstRtpGSTPay *rtpgstpay;
+
+  rtpgstpay = GST_RTP_GST_PAY (object);
+
+  switch (prop_id) {
+    case PROP_CONFIG_INTERVAL:
+      rtpgstpay->config_interval = g_value_get_uint (value);
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      break;
+  }
+}
+
+static void
+gst_rtp_gst_pay_get_property (GObject * object, guint prop_id,
+    GValue * value, GParamSpec * pspec)
+{
+  GstRtpGSTPay *rtpgstpay;
+
+  rtpgstpay = GST_RTP_GST_PAY (object);
+
+  switch (prop_id) {
+    case PROP_CONFIG_INTERVAL:
+      g_value_set_uint (value, rtpgstpay->config_interval);
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      break;
+  }
+}
+
+static GstStateChangeReturn
+gst_rtp_gst_pay_change_state (GstElement * element, GstStateChange transition)
+{
+  GstRtpGSTPay *rtpgstpay;
+  GstStateChangeReturn ret;
+
+  rtpgstpay = GST_RTP_GST_PAY (element);
+
+  switch (transition) {
+    case GST_STATE_CHANGE_READY_TO_PAUSED:
+      gst_rtp_gst_pay_reset (rtpgstpay, TRUE);
+      break;
+    default:
+      break;
+  }
+
+  ret = GST_ELEMENT_CLASS (parent_class)->change_state (element, transition);
+
+  switch (transition) {
+    case GST_STATE_CHANGE_PAUSED_TO_READY:
+      gst_rtp_gst_pay_reset (rtpgstpay, TRUE);
+      break;
+    default:
+      break;
+  }
+  return ret;
+}
+
+
+static gboolean
+gst_rtp_gst_pay_create_from_adapter (GstRtpGSTPay * rtpgstpay,
+    GstClockTime timestamp)
+{
   guint avail;
   guint frag_offset;
   GstBufferList *list;
 
-  frag_offset = 0;
   avail = gst_adapter_available (rtpgstpay->adapter);
   if (avail == 0)
-    return GST_FLOW_OK;
+    return FALSE;
 
   list = gst_buffer_list_new ();
+  frag_offset = 0;
 
   while (avail) {
     guint towrite;
@@ -218,11 +341,34 @@ gst_rtp_gst_pay_flush (GstRtpGSTPay * rtpgstpay, GstClockTime timestamp)
     /* and add to list */
     gst_buffer_list_insert (list, -1, outbuf);
   }
-  /* push the whole buffer list at once */
-  ret = gst_rtp_base_payload_push_list (GST_RTP_BASE_PAYLOAD (rtpgstpay), list);
 
   rtpgstpay->flags &= 0x70;
   rtpgstpay->etype = 0;
+  rtpgstpay->pending_buffers = g_list_append (rtpgstpay->pending_buffers, list);
+
+  return TRUE;
+}
+
+static GstFlowReturn
+gst_rtp_gst_pay_flush (GstRtpGSTPay * rtpgstpay, GstClockTime timestamp)
+{
+  GstFlowReturn ret = GST_FLOW_OK;
+  GList *iter, *next;
+
+  gst_rtp_gst_pay_create_from_adapter (rtpgstpay, timestamp);
+  for (iter = rtpgstpay->pending_buffers; iter; iter = next) {
+    GstBufferList *list = iter->data;
+
+    next = iter->next;
+    rtpgstpay->pending_buffers = g_list_remove_link (rtpgstpay->pending_buffers,
+        iter);
+
+    /* push the whole buffer list at once */
+    ret = gst_rtp_base_payload_push_list (GST_RTP_BASE_PAYLOAD (rtpgstpay),
+        list);
+    if (ret != GST_FLOW_OK)
+      break;
+  }
 
   return ret;
 }
@@ -257,6 +403,29 @@ make_data_buffer (GstRtpGSTPay * rtpgstpay, gchar * data, guint size)
   return outbuf;
 }
 
+static void
+gst_rtp_gst_pay_send_caps (GstRtpGSTPay * rtpgstpay, guint8 cv, GstCaps * caps)
+{
+  gchar *capsstr;
+  guint capslen;
+  GstBuffer *outbuf;
+
+  capsstr = gst_caps_to_string (caps);
+  capslen = strlen (capsstr);
+  /* for 0 byte */
+  capslen++;
+
+  GST_DEBUG_OBJECT (rtpgstpay, "sending caps=%s", capsstr);
+
+  /* make a data buffer of it */
+  outbuf = make_data_buffer (rtpgstpay, capsstr, capslen);
+  g_free (capsstr);
+
+  /* store in adapter, we don't flush yet, buffer might follow */
+  rtpgstpay->flags = (1 << 7) | (cv << 4);
+  gst_adapter_push (rtpgstpay->adapter, outbuf);
+}
+
 static gboolean
 gst_rtp_gst_pay_setcaps (GstRTPBasePayload * payload, GstCaps * caps)
 {
@@ -264,29 +433,21 @@ gst_rtp_gst_pay_setcaps (GstRTPBasePayload * payload, GstCaps * caps)
   gboolean res;
   gchar *capsstr, *capsenc, *capsver;
   guint capslen;
-  GstBuffer *outbuf;
 
   rtpgstpay = GST_RTP_GST_PAY (payload);
 
   capsstr = gst_caps_to_string (caps);
   capslen = strlen (capsstr);
 
-  rtpgstpay->current_CV = rtpgstpay->next_CV;
-
   /* encode without 0 byte */
   capsenc = g_base64_encode ((guchar *) capsstr, capslen);
   GST_DEBUG_OBJECT (payload, "caps=%s, caps(base64)=%s", capsstr, capsenc);
-  /* for 0 byte */
-  capslen++;
-
-  /* make a data buffer of it */
-  outbuf = make_data_buffer (rtpgstpay, capsstr, capslen);
   g_free (capsstr);
 
-  /* store in adapter, we don't flush yet, buffer might follow */
-  rtpgstpay->flags = (1 << 7) | (rtpgstpay->current_CV << 4);
+  /* Send the new caps */
+  rtpgstpay->current_CV = rtpgstpay->next_CV;
   rtpgstpay->next_CV = (rtpgstpay->next_CV + 1) & 0x7;
-  gst_adapter_push (rtpgstpay->adapter, outbuf);
+  gst_rtp_gst_pay_send_caps (rtpgstpay, rtpgstpay->current_CV, caps);
 
   /* make caps for SDP */
   capsver = g_strdup_printf ("%d", rtpgstpay->current_CV);
@@ -299,12 +460,38 @@ gst_rtp_gst_pay_setcaps (GstRTPBasePayload * payload, GstCaps * caps)
   return res;
 }
 
+static void
+gst_rtp_gst_pay_send_event (GstRtpGSTPay * rtpgstpay, guint etype,
+    GstEvent * event)
+{
+  const GstStructure *s;
+  gchar *estr;
+  guint elen;
+  GstBuffer *outbuf;
+
+  /* Create the standalone caps packet if an inlined caps was pending */
+  gst_rtp_gst_pay_create_from_adapter (rtpgstpay, GST_CLOCK_TIME_NONE);
+
+  s = gst_event_get_structure (event);
+
+  estr = gst_structure_to_string (s);
+  elen = strlen (estr);
+  outbuf = make_data_buffer (rtpgstpay, estr, elen);
+  GST_DEBUG_OBJECT (rtpgstpay, "sending event=%s", estr);
+  g_free (estr);
+
+  rtpgstpay->etype = etype;
+  gst_adapter_push (rtpgstpay->adapter, outbuf);
+  /* Create the event packet now to avoid conflict with data/caps packets */
+  gst_rtp_gst_pay_create_from_adapter (rtpgstpay, GST_CLOCK_TIME_NONE);
+}
+
 static gboolean
 gst_rtp_gst_pay_sink_event (GstRTPBasePayload * payload, GstEvent * event)
 {
   gboolean ret;
   GstRtpGSTPay *rtpgstpay;
-  guint etype;
+  guint etype = 0;
 
   rtpgstpay = GST_RTP_GST_PAY (payload);
 
@@ -313,48 +500,100 @@ gst_rtp_gst_pay_sink_event (GstRTPBasePayload * payload, GstEvent * event)
       gst_event_ref (event));
 
   switch (GST_EVENT_TYPE (event)) {
-    case GST_EVENT_TAG:
+    case GST_EVENT_FLUSH_STOP:
+      gst_rtp_gst_pay_reset (rtpgstpay, FALSE);
+      break;
+    case GST_EVENT_TAG:{
+      GstTagList *tags;
+
+      gst_event_parse_tag (event, &tags);
+
+      if (gst_tag_list_get_scope (tags) == GST_TAG_SCOPE_STREAM) {
+        GstTagList *old;
+
+        GST_DEBUG_OBJECT (rtpgstpay, "storing stream tags %" GST_PTR_FORMAT,
+            tags);
+        if ((old = rtpgstpay->taglist))
+          gst_tag_list_unref (old);
+        rtpgstpay->taglist = gst_tag_list_ref (tags);
+      }
       etype = 1;
       break;
+    }
     case GST_EVENT_CUSTOM_DOWNSTREAM:
       etype = 2;
       break;
     case GST_EVENT_CUSTOM_BOTH:
-      etype = 2;
+      etype = 3;
       break;
+    case GST_EVENT_STREAM_START:{
+      const gchar *stream_id = NULL;
+
+      if (rtpgstpay->taglist)
+        gst_tag_list_unref (rtpgstpay->taglist);
+      rtpgstpay->taglist = NULL;
+
+      gst_event_parse_stream_start (event, &stream_id);
+      if (stream_id) {
+        if (rtpgstpay->stream_id)
+          g_free (rtpgstpay->stream_id);
+        rtpgstpay->stream_id = g_strdup (stream_id);
+      }
+      etype = 4;
+      break;
+    }
     default:
-      etype = 0;
       GST_LOG_OBJECT (rtpgstpay, "no event for %s",
           GST_EVENT_TYPE_NAME (event));
       break;
   }
   if (etype) {
-    const GstStructure *s;
-    gchar *estr;
-    guint elen;
-    GstBuffer *outbuf;
-
-    /* make sure the adapter is flushed */
-    gst_rtp_gst_pay_flush (rtpgstpay, GST_CLOCK_TIME_NONE);
-
     GST_DEBUG_OBJECT (rtpgstpay, "make event type %d for %s",
         etype, GST_EVENT_TYPE_NAME (event));
-    s = gst_event_get_structure (event);
-
-    estr = gst_structure_to_string (s);
-    elen = strlen (estr);
-    outbuf = make_data_buffer (rtpgstpay, estr, elen);
-    g_free (estr);
-
-    rtpgstpay->etype = etype;
-    gst_adapter_push (rtpgstpay->adapter, outbuf);
-    /* flush the adapter immediately */
-    gst_rtp_gst_pay_flush (rtpgstpay, GST_CLOCK_TIME_NONE);
+    gst_rtp_gst_pay_send_event (rtpgstpay, etype, event);
+    /* Do not send stream-start right away since caps/new-segment were not yet
+       sent, so our data would be considered invalid */
+    if (etype != 4) {
+      /* flush the adapter immediately */
+      gst_rtp_gst_pay_flush (rtpgstpay, GST_CLOCK_TIME_NONE);
+    }
   }
 
   gst_event_unref (event);
 
   return ret;
+}
+
+static void
+gst_rtp_gst_pay_send_config (GstRtpGSTPay * rtpgstpay, GstClockTime timestamp)
+{
+  GstPad *pad = GST_RTP_BASE_PAYLOAD_SINKPAD (rtpgstpay);
+  GstCaps *caps = NULL;
+  GstEvent *tag = NULL;
+  GstEvent *stream_start = NULL;
+
+  GST_DEBUG_OBJECT (rtpgstpay, "time to send config");
+  /* Send tags */
+  if (rtpgstpay->taglist && !gst_tag_list_is_empty (rtpgstpay->taglist))
+    tag = gst_event_new_tag (gst_tag_list_ref (rtpgstpay->taglist));
+  if (tag) {
+    /* Send start-stream to clear tags */
+    if (rtpgstpay->stream_id)
+      stream_start = gst_event_new_stream_start (rtpgstpay->stream_id);
+    if (stream_start) {
+      gst_rtp_gst_pay_send_event (rtpgstpay, 4, stream_start);
+      gst_event_unref (stream_start);
+    }
+    gst_rtp_gst_pay_send_event (rtpgstpay, 1, tag);
+    gst_event_unref (tag);
+  }
+  /* send caps */
+  caps = gst_pad_get_current_caps (pad);
+  if (caps) {
+    gst_rtp_gst_pay_send_caps (rtpgstpay, rtpgstpay->current_CV, caps);
+    gst_caps_unref (caps);
+  }
+  rtpgstpay->last_config = timestamp;
 }
 
 static GstFlowReturn
@@ -368,6 +607,33 @@ gst_rtp_gst_pay_handle_buffer (GstRTPBasePayload * basepayload,
   rtpgstpay = GST_RTP_GST_PAY (basepayload);
 
   timestamp = GST_BUFFER_TIMESTAMP (buffer);
+
+  /* check if we need to send the caps and taglist now */
+  if (rtpgstpay->config_interval > 0) {
+    GST_DEBUG_OBJECT (rtpgstpay,
+        "timestamp %" GST_TIME_FORMAT ", last config %" GST_TIME_FORMAT,
+        GST_TIME_ARGS (timestamp), GST_TIME_ARGS (rtpgstpay->last_config));
+
+    if (timestamp != GST_CLOCK_TIME_NONE &&
+        rtpgstpay->last_config != GST_CLOCK_TIME_NONE) {
+      guint64 diff;
+
+      /* calculate diff between last SPS/PPS in milliseconds */
+      if (timestamp > rtpgstpay->last_config)
+        diff = timestamp - rtpgstpay->last_config;
+      else
+        diff = 0;
+
+      GST_DEBUG_OBJECT (rtpgstpay,
+          "interval since last config %" GST_TIME_FORMAT, GST_TIME_ARGS (diff));
+
+      /* bigger than interval, queue SPS/PPS */
+      if (GST_TIME_AS_SECONDS (diff) >= rtpgstpay->config_interval)
+        gst_rtp_gst_pay_send_config (rtpgstpay, timestamp);
+    } else {
+      gst_rtp_gst_pay_send_config (rtpgstpay, timestamp);
+    }
+  }
 
   /* caps always from SDP for now */
   if (GST_BUFFER_FLAG_IS_SET (buffer, GST_BUFFER_FLAG_DELTA_UNIT))

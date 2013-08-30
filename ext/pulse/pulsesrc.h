@@ -30,8 +30,6 @@
 #include <pulse/pulseaudio.h>
 #include <pulse/thread-mainloop.h>
 
-#include "pulseprobe.h"
-
 G_BEGIN_DECLS
 
 #define GST_TYPE_PULSESRC \
@@ -68,12 +66,13 @@ struct _GstPulseSrc
   size_t read_buffer_length;
 
   gchar *device_description;
-  GstPulseProbe *probe;
 
   gdouble volume;
   gboolean volume_set:1;
   gboolean mute:1;
   gboolean mute_set:1;
+  guint32 current_source_idx;
+  gchar *current_source_name;
 
   gint notify; /* atomic */
 

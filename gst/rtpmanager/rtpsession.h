@@ -124,7 +124,7 @@ typedef void (*RTPSessionReconsider) (RTPSession *sess, gpointer user_data);
  * @all_headers: %TRUE if "all-headers" property should be set on the key unit
  *  request
  * @user_data: user data specified when registering
-*
+ *
  * Asks the encoder to produce a key unit as soon as possibly within the
  * bandwidth constraints
  */
@@ -143,6 +143,18 @@ typedef GstClockTime (*RTPSessionRequestTime) (RTPSession *sess,
     gpointer user_data);
 
 /**
+ * RTPSessionNotifyNACK:
+ * @sess: an #RTPSession
+ * @seqnum: the missing seqnum
+ * @blp: other missing seqnums
+ * @user_data: user data specified when registering
+ *
+ * Notifies of NACKed frames.
+ */
+typedef void (*RTPSessionNotifyNACK) (RTPSession *sess,
+    guint16 seqnum, guint16 blp, gpointer user_data);
+
+/**
  * RTPSessionCallbacks:
  * @RTPSessionProcessRTP: callback to process RTP packets
  * @RTPSessionSendRTP: callback for sending RTP packets
@@ -150,6 +162,8 @@ typedef GstClockTime (*RTPSessionRequestTime) (RTPSession *sess,
  * @RTPSessionSyncRTCP: callback for handling SR packets
  * @RTPSessionReconsider: callback for reconsidering the timeout
  * @RTPSessionRequestKeyUnit: callback for requesting a new key unit
+ * @RTPSessionRequestTime: callback for requesting the current time
+ * @RTPSessionNotifyNACK: callback for notifying NACK
  *
  * These callbacks can be installed on the session manager to get notification
  * when RTP and RTCP packets are ready for further processing. These callbacks
@@ -164,6 +178,7 @@ typedef struct {
   RTPSessionReconsider  reconsider;
   RTPSessionRequestKeyUnit request_key_unit;
   RTPSessionRequestTime request_time;
+  RTPSessionNotifyNACK  notify_nack;
 } RTPSessionCallbacks;
 
 /**
@@ -227,6 +242,7 @@ struct _RTPSession {
   gpointer              reconsider_user_data;
   gpointer              request_key_unit_user_data;
   gpointer              request_time_user_data;
+  gpointer              notify_nack_user_data;
 
   RTPSessionStats stats;
 
@@ -265,7 +281,7 @@ struct _RTPSessionClass {
       gboolean early);
   void (*on_feedback_rtcp)  (RTPSession *sess, guint type, guint fbtype,
       guint sender_ssrc, guint media_ssrc, GstBuffer *fci);
-  void (*send_rtcp)         (RTPSession *sess, GstClockTimeDiff max_delay);
+  void (*send_rtcp)         (RTPSession *sess, GstClockTime max_delay);
 };
 
 GType rtp_session_get_type (void);
@@ -338,13 +354,17 @@ GstFlowReturn   rtp_session_on_timeout             (RTPSession *sess, GstClockTi
 
 /* request the transmittion of an early RTCP packet */
 void            rtp_session_request_early_rtcp     (RTPSession * sess, GstClockTime current_time,
-                                                    GstClockTimeDiff max_delay);
+                                                    GstClockTime max_delay);
 
 /* Notify session of a request for a new key unit */
 gboolean        rtp_session_request_key_unit       (RTPSession * sess,
                                                     guint32 ssrc,
-                                                    GstClockTime now,
                                                     gboolean fir,
                                                     gint count);
+gboolean        rtp_session_request_nack           (RTPSession * sess,
+                                                    guint32 ssrc,
+                                                    guint16 seqnum,
+                                                    GstClockTime max_delay);
+
 
 #endif /* __RTP_SESSION_H__ */

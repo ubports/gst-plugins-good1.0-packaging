@@ -49,10 +49,13 @@ G_DEFINE_TYPE (GstRtpGSTDepay, gst_rtp_gst_depay, GST_TYPE_RTP_BASE_DEPAYLOAD);
 
 static void gst_rtp_gst_depay_finalize (GObject * object);
 
+static gboolean gst_rtp_gst_depay_handle_event (GstRTPBaseDepayload * depay,
+    GstEvent * event);
 static GstStateChangeReturn gst_rtp_gst_depay_change_state (GstElement *
     element, GstStateChange transition);
 
-static void gst_rtp_gst_depay_reset (GstRtpGSTDepay * rtpgstdepay);
+static void gst_rtp_gst_depay_reset (GstRtpGSTDepay * rtpgstdepay, gboolean
+    full);
 static gboolean gst_rtp_gst_depay_setcaps (GstRTPBaseDepayload * depayload,
     GstCaps * caps);
 static GstBuffer *gst_rtp_gst_depay_process (GstRTPBaseDepayload * depayload,
@@ -86,6 +89,7 @@ gst_rtp_gst_depay_class_init (GstRtpGSTDepayClass * klass)
       "Extracts GStreamer buffers from RTP packets",
       "Wim Taymans <wim.taymans@gmail.com>");
 
+  gstrtpbasedepayload_class->handle_event = gst_rtp_gst_depay_handle_event;
   gstrtpbasedepayload_class->set_caps = gst_rtp_gst_depay_setcaps;
   gstrtpbasedepayload_class->process = gst_rtp_gst_depay_process;
 }
@@ -103,7 +107,7 @@ gst_rtp_gst_depay_finalize (GObject * object)
 
   rtpgstdepay = GST_RTP_GST_DEPAY (object);
 
-  gst_rtp_gst_depay_reset (rtpgstdepay);
+  gst_rtp_gst_depay_reset (rtpgstdepay, TRUE);
   g_object_unref (rtpgstdepay->adapter);
 
   G_OBJECT_CLASS (parent_class)->finalize (object);
@@ -118,14 +122,21 @@ store_cache (GstRtpGSTDepay * rtpgstdepay, guint CV, GstCaps * caps)
 }
 
 static void
-gst_rtp_gst_depay_reset (GstRtpGSTDepay * rtpgstdepay)
+gst_rtp_gst_depay_reset (GstRtpGSTDepay * rtpgstdepay, gboolean full)
 {
   guint i;
 
   gst_adapter_clear (rtpgstdepay->adapter);
-  rtpgstdepay->current_CV = 0;
-  for (i = 0; i < 8; i++)
-    store_cache (rtpgstdepay, i, NULL);
+  if (full) {
+    rtpgstdepay->current_CV = 0;
+    for (i = 0; i < 8; i++)
+      store_cache (rtpgstdepay, i, NULL);
+    g_free (rtpgstdepay->stream_id);
+    rtpgstdepay->stream_id = NULL;
+    if (rtpgstdepay->tags)
+      gst_tag_list_unref (rtpgstdepay->tags);
+    rtpgstdepay->tags = NULL;
+  }
 }
 
 static gboolean
@@ -277,6 +288,9 @@ read_event (GstRtpGSTDepay * rtpgstdepay, guint type,
     case 3:
       etype = GST_EVENT_CUSTOM_BOTH;
       break;
+    case 4:
+      etype = GST_EVENT_STREAM_START;
+      break;
     default:
       goto unknown_event;
   }
@@ -304,6 +318,57 @@ unknown_event:
     gst_structure_free (s);
     return NULL;
   }
+}
+
+static void
+store_event (GstRtpGSTDepay * rtpgstdepay, GstEvent * event)
+{
+  gboolean do_push = FALSE;
+
+  switch (GST_EVENT_TYPE (event)) {
+    case GST_EVENT_TAG:
+    {
+      GstTagList *old, *tags;
+
+      gst_event_parse_tag (event, &tags);
+
+      old = rtpgstdepay->tags;
+      if (!old || !gst_tag_list_is_equal (old, tags)) {
+        do_push = TRUE;
+        if (old)
+          gst_tag_list_unref (old);
+        rtpgstdepay->tags = gst_tag_list_ref (tags);
+      }
+      break;
+    }
+    case GST_EVENT_CUSTOM_DOWNSTREAM:
+    case GST_EVENT_CUSTOM_BOTH:
+      /* always push custom events */
+      do_push = TRUE;
+      break;
+    case GST_EVENT_STREAM_START:
+    {
+      gchar *old;
+      const gchar *stream_id = NULL;
+
+      gst_event_parse_stream_start (event, &stream_id);
+
+      old = rtpgstdepay->stream_id;
+      if (!old || g_strcmp0 (old, stream_id)) {
+        do_push = TRUE;
+        g_free (old);
+        rtpgstdepay->stream_id = g_strdup (stream_id);
+      }
+      break;
+    }
+    default:
+      /* unknown event, don't push */
+      break;
+  }
+  if (do_push)
+    gst_pad_push_event (GST_RTP_BASE_DEPAYLOAD (rtpgstdepay)->srcpad, event);
+  else
+    gst_event_unref (event);
 }
 
 static GstBuffer *
@@ -393,7 +458,7 @@ gst_rtp_gst_depay_process (GstRTPBaseDepayload * depayload, GstBuffer * buf)
       GST_DEBUG_OBJECT (rtpgstdepay,
           "inline event, length %u, %" GST_PTR_FORMAT, size, event);
 
-      gst_pad_push_event (depayload->srcpad, event);
+      store_event (rtpgstdepay, event);
 
       /* no buffer after event */
       avail = 0;
@@ -478,6 +543,26 @@ missing_caps:
   }
 }
 
+static gboolean
+gst_rtp_gst_depay_handle_event (GstRTPBaseDepayload * depay, GstEvent * event)
+{
+  GstRtpGSTDepay *rtpgstdepay;
+
+  rtpgstdepay = GST_RTP_GST_DEPAY (depay);
+
+  switch (GST_EVENT_TYPE (event)) {
+    case GST_EVENT_FLUSH_STOP:
+      gst_rtp_gst_depay_reset (rtpgstdepay, FALSE);
+      break;
+    default:
+      break;
+  }
+
+  return
+      GST_RTP_BASE_DEPAYLOAD_CLASS (parent_class)->handle_event (depay, event);
+}
+
+
 static GstStateChangeReturn
 gst_rtp_gst_depay_change_state (GstElement * element, GstStateChange transition)
 {
@@ -488,7 +573,7 @@ gst_rtp_gst_depay_change_state (GstElement * element, GstStateChange transition)
 
   switch (transition) {
     case GST_STATE_CHANGE_READY_TO_PAUSED:
-      gst_rtp_gst_depay_reset (rtpgstdepay);
+      gst_rtp_gst_depay_reset (rtpgstdepay, TRUE);
       break;
     default:
       break;
@@ -498,7 +583,7 @@ gst_rtp_gst_depay_change_state (GstElement * element, GstStateChange transition)
 
   switch (transition) {
     case GST_STATE_CHANGE_PAUSED_TO_READY:
-      gst_rtp_gst_depay_reset (rtpgstdepay);
+      gst_rtp_gst_depay_reset (rtpgstdepay, TRUE);
       break;
     default:
       break;

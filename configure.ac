@@ -5,12 +5,12 @@ dnl please read gstreamer/docs/random/autotools before changing this file
 dnl initialize autoconf
 dnl releases only do -Wall, git and prerelease does -Werror too
 dnl use a three digit version number for releases, and four for git/pre
-AC_INIT([GStreamer Good Plug-ins],[1.1.3],[http://bugzilla.gnome.org/enter_bug.cgi?product=GStreamer],[gst-plugins-good])
+AC_INIT([GStreamer Good Plug-ins],[1.1.4],[http://bugzilla.gnome.org/enter_bug.cgi?product=GStreamer],[gst-plugins-good])
 
 AG_GST_INIT
 
 dnl initialize automake
-AM_INIT_AUTOMAKE([-Wno-portability 1.11 no-dist-gzip dist-xz tar-ustar])
+AM_INIT_AUTOMAKE([-Wno-portability 1.11 no-dist-gzip dist-xz tar-ustar subdir-objects])
 
 dnl define PACKAGE_VERSION_* variables
 AS_VERSION
@@ -43,11 +43,11 @@ AC_DEFINE_UNQUOTED(GST_API_VERSION, "$GST_API_VERSION",
   [GStreamer API Version])
 
 AG_GST_LIBTOOL_PREPARE
-AS_LIBTOOL(GST, 103, 0, 103)
+AS_LIBTOOL(GST, 104, 0, 104)
 
 dnl *** required versions of GStreamer stuff ***
-GST_REQ=1.1.3
-GSTPB_REQ=1.1.3
+GST_REQ=1.1.4
+GSTPB_REQ=1.1.4
 
 dnl *** autotools stuff ****
 
@@ -875,7 +875,7 @@ AG_GST_CHECK_FEATURE(SHOUT2, [Shoutcast/Icecast client library], shout2, [
 dnl *** soup ***
 translit(dnm, m, l) AM_CONDITIONAL(USE_SOUP, true)
 AG_GST_CHECK_FEATURE(SOUP, [soup http client plugin (2.4)], souphttpsrc, [
-  PKG_CHECK_MODULES(SOUP, libsoup-2.4 >= 2.26.1, [HAVE_SOUP="yes"], [HAVE_SOUP="no"])
+  PKG_CHECK_MODULES(SOUP, libsoup-2.4 >= 2.38, [HAVE_SOUP="yes"], [HAVE_SOUP="no"])
   AC_SUBST(SOUP_CFLAGS)
   AC_SUBST(SOUP_LIBS)
 ])
@@ -1007,7 +1007,15 @@ AG_GST_CHECK_FEATURE(ZLIB, [zlib support for qtdemux/matroska],, [
 dnl *** matroska prefers to have bz2 ***
 translit(dnm, m, l) AM_CONDITIONAL(USE_BZ2, true)
 AG_GST_CHECK_FEATURE(BZ2, [bz2 library for matroska ],, [
-  AG_GST_CHECK_LIBHEADER(BZ2, bz2, BZ2_bzCompress, ,bzlib.h, BZ2_LIBS="-lbz2")
+  save_LIBS=$LIBS
+  LIBS="$LIBS -lbz2"
+  AC_MSG_CHECKING([for BZ2_bzlibVersion in -lbz2])
+  AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <bzlib.h>]], [[const char *version = BZ2_bzlibVersion ();]])],[HAVE_BZ2=yes],[HAVE_BZ2=no])
+  AC_MSG_RESULT($HAVE_BZ2)
+  LIBS=$save_LIBS
+  if test "x$HAVE_BZ2" = "xyes"; then
+    BZ2_LIBS="-lbz2"
+  fi
   AC_SUBST(BZ2_LIBS)
 ])
 
@@ -1109,6 +1117,8 @@ GST_PLUGIN_LDFLAGS="-module -avoid-version -export-symbols-regex '^[_]*gst_plugi
 AC_SUBST(GST_PLUGIN_LDFLAGS)
 
 dnl *** output files ***
+
+$MKDIR_P tests/check/orc
 
 dnl keep this alphabetic per directory, please
 AC_CONFIG_FILES(

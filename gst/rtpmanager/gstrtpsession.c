@@ -116,7 +116,6 @@
 
 #include <gst/glib-compat-private.h>
 
-#include "gstrtpbin-marshal.h"
 #include "gstrtpsession.h"
 #include "rtpsession.h"
 
@@ -268,6 +267,8 @@ static void gst_rtp_session_request_key_unit (RTPSession * sess,
     gboolean all_headers, gpointer user_data);
 static GstClockTime gst_rtp_session_request_time (RTPSession * session,
     gpointer user_data);
+static void gst_rtp_session_notify_nack (RTPSession * sess,
+    guint16 seqnum, guint16 blp, gpointer user_data);
 
 static RTPSessionCallbacks callbacks = {
   gst_rtp_session_process_rtp,
@@ -277,7 +278,8 @@ static RTPSessionCallbacks callbacks = {
   gst_rtp_session_clock_rate,
   gst_rtp_session_reconsider,
   gst_rtp_session_request_key_unit,
-  gst_rtp_session_request_time
+  gst_rtp_session_request_time,
+  gst_rtp_session_notify_nack
 };
 
 /* GObject vmethods */
@@ -417,8 +419,7 @@ gst_rtp_session_class_init (GstRtpSessionClass * klass)
   gst_rtp_session_signals[SIGNAL_REQUEST_PT_MAP] =
       g_signal_new ("request-pt-map", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST, G_STRUCT_OFFSET (GstRtpSessionClass, request_pt_map),
-      NULL, NULL, gst_rtp_bin_marshal_BOXED__UINT, GST_TYPE_CAPS, 1,
-      G_TYPE_UINT);
+      NULL, NULL, g_cclosure_marshal_generic, GST_TYPE_CAPS, 1, G_TYPE_UINT);
   /**
    * GstRtpSession::clear-pt-map:
    * @sess: the object which received the signal
@@ -1467,7 +1468,7 @@ gst_rtp_session_request_remote_key_unit (GstRtpSession * rtpsession,
 
     if (pli || fir)
       return rtp_session_request_key_unit (rtpsession->priv->session, ssrc,
-          gst_clock_get_time (rtpsession->priv->sysclock), fir, count);
+          fir, count);
   }
 
   return FALSE;
@@ -1500,6 +1501,34 @@ gst_rtp_session_event_recv_rtp_src (GstPad * pad, GstObject * parent,
           count += G_MAXINT;    /* Make sure count is positive if present */
         if (gst_rtp_session_request_remote_key_unit (rtpsession, ssrc, pt,
                 all_headers, count))
+          forward = FALSE;
+      } else if (gst_structure_has_name (s, "GstRTPRetransmissionRequest")) {
+        GstClockTime running_time;
+        guint seqnum, delay, deadline, max_delay;
+
+        if (!gst_structure_get_clock_time (s, "running-time", &running_time))
+          running_time = -1;
+        if (!gst_structure_get_uint (s, "ssrc", &ssrc))
+          ssrc = -1;
+        if (!gst_structure_get_uint (s, "seqnum", &seqnum))
+          seqnum = -1;
+        if (!gst_structure_get_uint (s, "delay", &delay))
+          delay = 0;
+        if (!gst_structure_get_uint (s, "deadline", &deadline))
+          deadline = 100;
+
+        /* remaining time to receive the packet */
+        max_delay = deadline;
+        if (max_delay > delay)
+          max_delay -= delay;
+        /* estimated RTT */
+        if (max_delay > 40)
+          max_delay -= 40;
+        else
+          max_delay = 0;
+
+        if (rtp_session_request_nack (rtpsession->priv->session, ssrc, seqnum,
+                max_delay * GST_MSECOND))
           forward = FALSE;
       }
       break;
@@ -2315,4 +2344,38 @@ gst_rtp_session_request_time (RTPSession * session, gpointer user_data)
   GstRtpSession *rtpsession = GST_RTP_SESSION (user_data);
 
   return gst_clock_get_time (rtpsession->priv->sysclock);
+}
+
+static void
+gst_rtp_session_notify_nack (RTPSession * sess, guint16 seqnum,
+    guint16 blp, gpointer user_data)
+{
+  GstRtpSession *rtpsession = GST_RTP_SESSION (user_data);
+  GstEvent *event;
+  GstPad *send_rtp_sink;
+
+  GST_RTP_SESSION_LOCK (rtpsession);
+  if ((send_rtp_sink = rtpsession->send_rtp_sink))
+    gst_object_ref (send_rtp_sink);
+  GST_RTP_SESSION_UNLOCK (rtpsession);
+
+  if (send_rtp_sink) {
+    while (TRUE) {
+      event = gst_event_new_custom (GST_EVENT_CUSTOM_UPSTREAM,
+          gst_structure_new ("GstRTPRetransmissionRequest",
+              "seqnum", G_TYPE_UINT, (guint) seqnum, NULL));
+      gst_pad_push_event (send_rtp_sink, event);
+
+      if (blp == 0)
+        break;
+
+      seqnum++;
+      while ((blp & 1) == 0) {
+        seqnum++;
+        blp >>= 1;
+      }
+      blp >>= 1;
+    }
+    gst_object_unref (send_rtp_sink);
+  }
 }

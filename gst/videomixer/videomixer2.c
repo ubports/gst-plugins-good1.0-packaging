@@ -644,6 +644,7 @@ gst_videomixer2_reset (GstVideoMixer2 * mix)
 
   mix->newseg_pending = TRUE;
   g_atomic_int_set (&mix->flush_stop_pending, FALSE);
+  g_atomic_int_set (&mix->waiting_flush_stop, FALSE);
 }
 
 /*  1 == OK
@@ -1004,18 +1005,22 @@ gst_videomixer2_collected (GstCollectPads * pads, GstVideoMixer2 * mix)
   else
     output_start_time = mix->segment.position;
 
-  if (output_start_time >= mix->segment.stop) {
-    GST_DEBUG_OBJECT (mix, "Segment done");
-    GST_VIDEO_MIXER2_UNLOCK (mix);
-    gst_pad_push_event (mix->srcpad, gst_event_new_eos ());
-    ret = GST_FLOW_EOS;
-    goto done_unlocked;
-  }
-
   output_end_time =
       mix->ts_offset + gst_util_uint64_scale_round (mix->nframes + 1,
       GST_SECOND * GST_VIDEO_INFO_FPS_D (&mix->info),
       GST_VIDEO_INFO_FPS_N (&mix->info)) + mix->segment.start;
+
+  if (output_end_time >= mix->segment.stop) {
+    GST_DEBUG_OBJECT (mix, "Segment done");
+    GST_VIDEO_MIXER2_UNLOCK (mix);
+    if (!(mix->segment.flags & GST_SEGMENT_FLAG_SEGMENT)) {
+      gst_pad_push_event (mix->srcpad, gst_event_new_eos ());
+
+      ret = GST_FLOW_EOS;
+      goto done_unlocked;
+    }
+  }
+
   if (mix->segment.stop != -1)
     output_end_time = MIN (output_end_time, mix->segment.stop);
 
@@ -1430,6 +1435,7 @@ gst_videomixer2_src_event (GstPad * pad, GstObject * parent, GstEvent * event)
          * whichever happens first.
          */
         g_atomic_int_set (&mix->flush_stop_pending, TRUE);
+        g_atomic_int_set (&mix->waiting_flush_stop, FALSE);
       }
 
       GST_COLLECT_PADS_STREAM_UNLOCK (mix->collect);
@@ -1730,13 +1736,14 @@ gst_videomixer2_sink_event (GstCollectPads * pads, GstCollectData * cdata,
       break;
     }
     case GST_EVENT_FLUSH_START:
-      g_atomic_int_set (&mix->flush_stop_pending, TRUE);
+      g_atomic_int_set (&mix->waiting_flush_stop, TRUE);
+      g_atomic_int_set (&mix->flush_stop_pending, FALSE);
       ret = gst_collect_pads_event_default (pads, cdata, event, discard);
       event = NULL;
       break;
     case GST_EVENT_FLUSH_STOP:
       mix->newseg_pending = TRUE;
-      if (g_atomic_int_compare_and_exchange (&mix->flush_stop_pending, TRUE,
+      if (g_atomic_int_compare_and_exchange (&mix->waiting_flush_stop, TRUE,
               FALSE)) {
         GST_DEBUG_OBJECT (pad, "forwarding flush stop");
         ret = gst_collect_pads_event_default (pads, cdata, event, discard);

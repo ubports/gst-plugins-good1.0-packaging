@@ -189,13 +189,7 @@ am_libgstvideo4linux2_la_OBJECTS = libgstvideo4linux2_la-gstv4l2.lo \
 	libgstvideo4linux2_la-tuner.lo \
 	libgstvideo4linux2_la-tunerchannel.lo \
 	libgstvideo4linux2_la-tunernorm.lo $(am__objects_1)
-am__objects_2 = libgstvideo4linux2_la-tuner-marshal.lo \
-	libgstvideo4linux2_la-tuner-enumtypes.lo
-am__objects_3 =
-nodist_libgstvideo4linux2_la_OBJECTS = $(am__objects_2) \
-	$(am__objects_3)
-libgstvideo4linux2_la_OBJECTS = $(am_libgstvideo4linux2_la_OBJECTS) \
-	$(nodist_libgstvideo4linux2_la_OBJECTS)
+libgstvideo4linux2_la_OBJECTS = $(am_libgstvideo4linux2_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -238,8 +232,7 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(libgstvideo4linux2_la_SOURCES) \
-	$(nodist_libgstvideo4linux2_la_SOURCES)
+SOURCES = $(libgstvideo4linux2_la_SOURCES)
 DIST_SOURCES = $(am__libgstvideo4linux2_la_SOURCES_DIST)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
@@ -395,7 +388,6 @@ GTK_X11_LIBS = @GTK_X11_LIBS@
 GUDEV_CFLAGS = @GUDEV_CFLAGS@
 GUDEV_LIBS = @GUDEV_LIBS@
 HAVE_AVC1394 = @HAVE_AVC1394@
-HAVE_BZ2 = @HAVE_BZ2@
 HAVE_CXX = @HAVE_CXX@
 HAVE_DIRECTSOUND = @HAVE_DIRECTSOUND@
 HAVE_ROM1394 = @HAVE_ROM1394@
@@ -598,23 +590,6 @@ plugin_LTLIBRARIES = libgstvideo4linux2.la
 @USE_XVIDEO_TRUE@xv_source = gstv4l2videooverlay.c
 @USE_XVIDEO_FALSE@xv_libs = 
 @USE_XVIDEO_TRUE@xv_libs = $(X_LIBS) $(XVIDEO_LIBS)
-
-# variables used for enum/marshal generation
-glib_enum_headers = tuner.h tunernorm.h	tunerchannel.h
-glib_enum_define = GST_INTERFACES
-glib_gen_prefix = gst_interfaces
-glib_gen_basename = tuner
-built_sources = \
-	tuner-marshal.c \
-	tuner-enumtypes.c
-
-built_headers = \
-	tuner-marshal.h \
-	tuner-enumtypes.h
-
-EXTRA_DIST = tuner-marshal.list
-CLEANFILES = $(built_sources) $(built_headers)
-BUILT_SOURCES = $(built_sources) $(built_headers)
 enum_headers = $(foreach h,$(glib_enum_headers),\n\#include \"$(h)\")
 libgstvideo4linux2_la_SOURCES = gstv4l2.c \
 				gstv4l2colorbalance.c \
@@ -631,7 +606,6 @@ libgstvideo4linux2_la_SOURCES = gstv4l2.c \
 				tunernorm.c \
 				$(xv_source)
 
-nodist_libgstvideo4linux2_la_SOURCES = $(built_sources) $(built_headers)
 libgstvideo4linux2_la_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) \
 				 $(GST_BASE_CFLAGS) \
 				 $(GST_CFLAGS) \
@@ -666,8 +640,7 @@ noinst_HEADERS = \
 	tunerchannel.h \
 	tunernorm.h
 
-all: $(BUILT_SOURCES)
-	$(MAKE) $(AM_MAKEFLAGS) all-am
+all: all-am
 
 .SUFFIXES:
 .SUFFIXES: .c .lo .o .obj
@@ -757,30 +730,31 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstvideo4linux2_la-gstv4l2tuner.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstvideo4linux2_la-gstv4l2videooverlay.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstvideo4linux2_la-gstv4l2vidorient.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstvideo4linux2_la-tuner-enumtypes.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstvideo4linux2_la-tuner-marshal.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstvideo4linux2_la-tuner.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstvideo4linux2_la-tunerchannel.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstvideo4linux2_la-tunernorm.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstvideo4linux2_la-v4l2_calls.Plo@am__quote@
 
 .c.o:
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
+@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c $<
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c -o $@ $<
 
 .c.obj:
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
+@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
+@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c `$(CYGPATH_W) '$<'`
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
 .c.lo:
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LTCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
+@am__fastdepCC_TRUE@	$(LTCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCC_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
@@ -883,20 +857,6 @@ libgstvideo4linux2_la-gstv4l2videooverlay.lo: gstv4l2videooverlay.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstvideo4linux2_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstvideo4linux2_la_CFLAGS) $(CFLAGS) -c -o libgstvideo4linux2_la-gstv4l2videooverlay.lo `test -f 'gstv4l2videooverlay.c' || echo '$(srcdir)/'`gstv4l2videooverlay.c
 
-libgstvideo4linux2_la-tuner-marshal.lo: tuner-marshal.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstvideo4linux2_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstvideo4linux2_la_CFLAGS) $(CFLAGS) -MT libgstvideo4linux2_la-tuner-marshal.lo -MD -MP -MF $(DEPDIR)/libgstvideo4linux2_la-tuner-marshal.Tpo -c -o libgstvideo4linux2_la-tuner-marshal.lo `test -f 'tuner-marshal.c' || echo '$(srcdir)/'`tuner-marshal.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstvideo4linux2_la-tuner-marshal.Tpo $(DEPDIR)/libgstvideo4linux2_la-tuner-marshal.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tuner-marshal.c' object='libgstvideo4linux2_la-tuner-marshal.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstvideo4linux2_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstvideo4linux2_la_CFLAGS) $(CFLAGS) -c -o libgstvideo4linux2_la-tuner-marshal.lo `test -f 'tuner-marshal.c' || echo '$(srcdir)/'`tuner-marshal.c
-
-libgstvideo4linux2_la-tuner-enumtypes.lo: tuner-enumtypes.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstvideo4linux2_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstvideo4linux2_la_CFLAGS) $(CFLAGS) -MT libgstvideo4linux2_la-tuner-enumtypes.lo -MD -MP -MF $(DEPDIR)/libgstvideo4linux2_la-tuner-enumtypes.Tpo -c -o libgstvideo4linux2_la-tuner-enumtypes.lo `test -f 'tuner-enumtypes.c' || echo '$(srcdir)/'`tuner-enumtypes.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstvideo4linux2_la-tuner-enumtypes.Tpo $(DEPDIR)/libgstvideo4linux2_la-tuner-enumtypes.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tuner-enumtypes.c' object='libgstvideo4linux2_la-tuner-enumtypes.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstvideo4linux2_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstvideo4linux2_la_CFLAGS) $(CFLAGS) -c -o libgstvideo4linux2_la-tuner-enumtypes.lo `test -f 'tuner-enumtypes.c' || echo '$(srcdir)/'`tuner-enumtypes.c
-
 mostlyclean-libtool:
 	-rm -f *.lo
 
@@ -986,15 +946,13 @@ distdir: $(DISTFILES)
 	  fi; \
 	done
 check-am: all-am
-check: $(BUILT_SOURCES)
-	$(MAKE) $(AM_MAKEFLAGS) check-am
+check: check-am
 all-am: Makefile $(LTLIBRARIES) $(HEADERS)
 installdirs:
 	for dir in "$(DESTDIR)$(plugindir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
-install: $(BUILT_SOURCES)
-	$(MAKE) $(AM_MAKEFLAGS) install-am
+install: install-am
 install-exec: install-exec-am
 install-data: install-data-am
 uninstall: uninstall-am
@@ -1016,7 +974,6 @@ install-strip:
 mostlyclean-generic:
 
 clean-generic:
-	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
@@ -1025,7 +982,6 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
-	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
 clean: clean-am
 
 clean-am: clean-generic clean-libtool clean-pluginLTLIBRARIES \
@@ -1097,7 +1053,7 @@ ps-am:
 
 uninstall-am: uninstall-pluginLTLIBRARIES
 
-.MAKE: all check install install-am install-strip
+.MAKE: install-am install-strip
 
 .PHONY: CTAGS GTAGS TAGS all all-am check check-am clean clean-generic \
 	clean-libtool clean-pluginLTLIBRARIES cscopelist-am ctags \
