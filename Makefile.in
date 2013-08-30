@@ -370,7 +370,6 @@ GTK_X11_LIBS = @GTK_X11_LIBS@
 GUDEV_CFLAGS = @GUDEV_CFLAGS@
 GUDEV_LIBS = @GUDEV_LIBS@
 HAVE_AVC1394 = @HAVE_AVC1394@
-HAVE_BZ2 = @HAVE_BZ2@
 HAVE_CXX = @HAVE_CXX@
 HAVE_DIRECTSOUND = @HAVE_DIRECTSOUND@
 HAVE_ROM1394 = @HAVE_ROM1394@
@@ -1214,27 +1213,6 @@ check-valgrind:
 @HAVE_GST_CHECK_FALSE@	true
 
 win32-update:
-	for f in gst/udp/gstudp-marshal.c \
-		 gst/udp/gstudp-marshal.h \
-		 gst/udp/gstudp-enumtypes.c \
-		 gst/udp/gstudp-enumtypes.h \
-		 gst/rtpmanager/gstrtpbin-marshal.c \
-		 gst/rtpmanager/gstrtpbin-marshal.h \
-		 sys/v4l2/tuner-enumtypes.c \
-		 sys/v4l2/tuner-enumtypes.h \
-		 sys/v4l2/tuner-marshal.c \
-		 sys/v4l2/tuner-marshal.h; do \
-		cp $(top_builddir)/$$f win32/common; done
-	$(top_srcdir)/common/gst-indent win32/common/gstudp-marshal.c
-	$(top_srcdir)/common/gst-indent win32/common/gstudp-marshal.c
-	$(top_srcdir)/common/gst-indent win32/common/gstudp-enumtypes.c
-	$(top_srcdir)/common/gst-indent win32/common/gstudp-enumtypes.c
-	$(top_srcdir)/common/gst-indent win32/common/gstrtpbin-marshal.c
-	$(top_srcdir)/common/gst-indent win32/common/gstrtpbin-marshal.c
-	$(top_srcdir)/common/gst-indent win32/common/tuner-enumtypes.c
-	$(top_srcdir)/common/gst-indent win32/common/tuner-enumtypes.c
-	$(top_srcdir)/common/gst-indent win32/common/tuner-marshal.c
-	$(top_srcdir)/common/gst-indent win32/common/tuner-marshal.c
 	cp $(top_builddir)/win32/common/config.h-new \
 	    $(top_srcdir)/win32/common/config.h
 .PHONY: lcov-reset lcov lcov-run lcov-report lcov-upload lcov-clean

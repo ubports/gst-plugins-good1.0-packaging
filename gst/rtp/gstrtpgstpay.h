@@ -44,12 +44,18 @@ struct _GstRtpGSTPay
 {
   GstRTPBasePayload payload;
 
+  GList *pending_buffers; /* GstBufferList */
   GstAdapter *adapter;
   guint8 flags;
   guint8 etype;
 
   guint8 current_CV; /* CV field of incoming caps*/
   guint8 next_CV;
+
+  gchar *stream_id;
+  GstTagList *taglist;
+  guint config_interval;
+  GstClockTime last_config;
 };
 
 struct _GstRtpGSTPayClass

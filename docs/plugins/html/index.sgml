@@ -1155,6 +1155,7 @@
 <ANCHOR id="GstPulseSink--client" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-pulsesink.html#GstPulseSink--client">
 <ANCHOR id="GstPulseSink--stream-properties" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-pulsesink.html#GstPulseSink--stream-properties">
 <ANCHOR id="GstPulseSink--client-name" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-pulsesink.html#GstPulseSink--client-name">
+<ANCHOR id="GstPulseSink--current-device" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-pulsesink.html#GstPulseSink--current-device">
 <ANCHOR id="gst-plugins-good-plugins-pulsesrc" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-pulsesrc.html">
 <ANCHOR id="gst-plugins-good-plugins-pulsesrc.synopsis" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-pulsesrc.html#gst-plugins-good-plugins-pulsesrc.synopsis">
 <ANCHOR id="GstPulseSrc" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-pulsesrc.html#GstPulseSrc">
@@ -1174,6 +1175,7 @@
 <ANCHOR id="GstPulseSrc--source-output-index" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-pulsesrc.html#GstPulseSrc--source-output-index">
 <ANCHOR id="GstPulseSrc--volume" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-pulsesrc.html#GstPulseSrc--volume">
 <ANCHOR id="GstPulseSrc--client-name" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-pulsesrc.html#GstPulseSrc--client-name">
+<ANCHOR id="GstPulseSrc--current-device" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-pulsesrc.html#GstPulseSrc--current-device">
 <ANCHOR id="gst-plugins-good-plugins-quarktv" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-quarktv.html">
 <ANCHOR id="gst-plugins-good-plugins-quarktv.synopsis" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-quarktv.html#gst-plugins-good-plugins-quarktv.synopsis">
 <ANCHOR id="GstQuarkTV" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-quarktv.html#GstQuarkTV">
@@ -1457,6 +1459,7 @@
 <ANCHOR id="GstRTSPSrc--multicast-iface" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--multicast-iface">
 <ANCHOR id="GstRTSPSrc--ntp-sync" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--ntp-sync">
 <ANCHOR id="GstRTSPSrc--use-pipeline-clock" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--use-pipeline-clock">
+<ANCHOR id="GstRTSPSrc--sdes" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--sdes">
 <ANCHOR id="gst-plugins-good-plugins-rtspsrc.signal-details" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtspsrc.html#gst-plugins-good-plugins-rtspsrc.signal-details">
 <ANCHOR id="GstRTSPSrc-handle-request" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc-handle-request">
 <ANCHOR id="GstRTSPSrc-on-sdp" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc-on-sdp">
@@ -1484,6 +1487,7 @@
 <ANCHOR id="GstRtpBin--rtcp-sync-interval" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbin.html#GstRtpBin--rtcp-sync-interval">
 <ANCHOR id="GstRtpBin--drop-on-latency" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbin.html#GstRtpBin--drop-on-latency">
 <ANCHOR id="GstRtpBin--do-sync-event" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbin.html#GstRtpBin--do-sync-event">
+<ANCHOR id="GstRtpBin--do-retransmission" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbin.html#GstRtpBin--do-retransmission">
 <ANCHOR id="gst-plugins-good-plugins-rtpbin.signal-details" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbin.html#gst-plugins-good-plugins-rtpbin.signal-details">
 <ANCHOR id="GstRtpBin-clear-pt-map" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbin.html#GstRtpBin-clear-pt-map">
 <ANCHOR id="GstRtpBin-get-internal-session" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbin.html#GstRtpBin-get-internal-session">
@@ -1543,6 +1547,11 @@
 <ANCHOR id="GstRtpJitterBuffer--ts-offset" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer--ts-offset">
 <ANCHOR id="GstRtpJitterBuffer--mode" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer--mode">
 <ANCHOR id="GstRtpJitterBuffer--percent" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer--percent">
+<ANCHOR id="GstRtpJitterBuffer--do-retransmission" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer--do-retransmission">
+<ANCHOR id="GstRtpJitterBuffer--rtx-delay" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer--rtx-delay">
+<ANCHOR id="GstRtpJitterBuffer--rtx-delay-reorder" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer--rtx-delay-reorder">
+<ANCHOR id="GstRtpJitterBuffer--rtx-retry-period" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer--rtx-retry-period">
+<ANCHOR id="GstRtpJitterBuffer--rtx-retry-timeout" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer--rtx-retry-timeout">
 <ANCHOR id="gst-plugins-good-plugins-rtpjitterbuffer.signal-details" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpjitterbuffer.html#gst-plugins-good-plugins-rtpjitterbuffer.signal-details">
 <ANCHOR id="GstRtpJitterBuffer-clear-pt-map" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer-clear-pt-map">
 <ANCHOR id="GstRtpJitterBuffer-handle-sync" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer-handle-sync">

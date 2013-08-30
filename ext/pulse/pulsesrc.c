@@ -53,6 +53,7 @@ GST_DEBUG_CATEGORY_EXTERN (pulse_debug);
 
 #define DEFAULT_SERVER            NULL
 #define DEFAULT_DEVICE            NULL
+#define DEFAULT_CURRENT_DEVICE    NULL
 #define DEFAULT_DEVICE_NAME       NULL
 
 #define DEFAULT_VOLUME          1.0
@@ -65,6 +66,7 @@ enum
   PROP_SERVER,
   PROP_DEVICE,
   PROP_DEVICE_NAME,
+  PROP_CURRENT_DEVICE,
   PROP_CLIENT_NAME,
   PROP_STREAM_PROPERTIES,
   PROP_SOURCE_OUTPUT_INDEX,
@@ -107,27 +109,11 @@ static GstStateChangeReturn gst_pulsesrc_change_state (GstElement *
 
 static GstClockTime gst_pulsesrc_get_time (GstClock * clock, GstPulseSrc * src);
 
-#if (G_BYTE_ORDER == G_LITTLE_ENDIAN)
-# define FORMATS "{ S16LE, S16BE, F32LE, F32BE, S32LE, S32BE, U8 }"
-#else
-# define FORMATS "{ S16BE, S16LE, F32BE, F32LE, S32BE, S32LE, U8 }"
-#endif
-
 static GstStaticPadTemplate pad_template = GST_STATIC_PAD_TEMPLATE ("src",
     GST_PAD_SRC,
     GST_PAD_ALWAYS,
-    GST_STATIC_CAPS ("audio/x-raw, "
-        "format = (string) " FORMATS ", "
-        "layout = (string) interleaved, "
-        "rate = (int) [ 1, MAX ], "
-        "channels = (int) [ 1, 32 ];"
-        "audio/x-alaw, "
-        "rate = (int) [ 1, MAX], "
-        "channels = (int) [ 1, 32 ];"
-        "audio/x-mulaw, "
-        "rate = (int) [ 1, MAX], " "channels = (int) [ 1, 32 ]")
+    GST_STATIC_CAPS (_PULSE_CAPS_PCM)
     );
-
 
 #define gst_pulsesrc_parent_class parent_class
 G_DEFINE_TYPE_WITH_CODE (GstPulseSrc, gst_pulsesrc, GST_TYPE_AUDIO_SRC,
@@ -171,6 +157,11 @@ gst_pulsesrc_class_init (GstPulseSrcClass * klass)
       g_param_spec_string ("device", "Device",
           "The PulseAudio source device to connect to", DEFAULT_DEVICE,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+  g_object_class_install_property (gobject_class, PROP_CURRENT_DEVICE,
+      g_param_spec_string ("current-device", "Current Device",
+          "The current PulseAudio source device", DEFAULT_CURRENT_DEVICE,
+          G_PARAM_READABLE | G_PARAM_STATIC_STRINGS));
 
   g_object_class_install_property (gobject_class,
       PROP_DEVICE_NAME,
@@ -290,8 +281,6 @@ gst_pulsesrc_init (GstPulseSrc * pulsesrc)
   pulsesrc->properties = NULL;
   pulsesrc->proplist = NULL;
 
-  pulsesrc->probe = gst_pulseprobe_new (G_OBJECT (pulsesrc), G_OBJECT_GET_CLASS (pulsesrc), PROP_DEVICE, pulsesrc->server, FALSE, TRUE);        /* FALSE for sinks, TRUE for sources */
-
   /* this should be the default but it isn't yet */
   gst_audio_base_src_set_slave_method (GST_AUDIO_BASE_SRC (pulsesrc),
       GST_AUDIO_BASE_SRC_SLAVE_SKEW);
@@ -348,16 +337,12 @@ gst_pulsesrc_finalize (GObject * object)
   g_free (pulsesrc->server);
   g_free (pulsesrc->device);
   g_free (pulsesrc->client_name);
+  g_free (pulsesrc->current_source_name);
 
   if (pulsesrc->properties)
     gst_structure_free (pulsesrc->properties);
   if (pulsesrc->proplist)
     pa_proplist_free (pulsesrc->proplist);
-
-  if (pulsesrc->probe) {
-    gst_pulseprobe_free (pulsesrc->probe);
-    pulsesrc->probe = NULL;
-  }
 
   G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -468,17 +453,24 @@ gst_pulsesrc_source_output_info_cb (pa_context * c,
   if (i->index == psrc->source_output_idx) {
     psrc->volume = pa_sw_volume_to_linear (pa_cvolume_max (&i->volume));
     psrc->mute = i->mute;
+    psrc->current_source_idx = i->source;
+
+    if (G_UNLIKELY (psrc->volume > MAX_VOLUME)) {
+      GST_WARNING_OBJECT (psrc, "Clipped volume from %f to %f",
+          psrc->volume, MAX_VOLUME);
+      psrc->volume = MAX_VOLUME;
+    }
   }
 
 done:
   pa_threaded_mainloop_signal (psrc->mainloop, 0);
 }
 
-static gdouble
-gst_pulsesrc_get_stream_volume (GstPulseSrc * pulsesrc)
+static void
+gst_pulsesrc_get_source_output_info (GstPulseSrc * pulsesrc, gdouble * volume,
+    gboolean * mute)
 {
   pa_operation *o = NULL;
-  gdouble v;
 
   if (!pulsesrc->mainloop)
     goto no_mainloop;
@@ -500,33 +492,37 @@ gst_pulsesrc_get_stream_volume (GstPulseSrc * pulsesrc)
   }
 
 unlock:
-  v = pulsesrc->volume;
+
+  if (volume)
+    *volume = pulsesrc->volume;
+  if (mute)
+    *mute = pulsesrc->mute;
 
   if (o)
     pa_operation_unref (o);
 
   pa_threaded_mainloop_unlock (pulsesrc->mainloop);
 
-  if (v > MAX_VOLUME) {
-    GST_WARNING_OBJECT (pulsesrc, "Clipped volume from %f to %f", v,
-        MAX_VOLUME);
-    v = MAX_VOLUME;
-  }
-
-  return v;
+  return;
 
   /* ERRORS */
 no_mainloop:
   {
-    v = pulsesrc->volume;
     GST_DEBUG_OBJECT (pulsesrc, "we have no mainloop");
-    return v;
+    if (volume)
+      *volume = pulsesrc->volume;
+    if (mute)
+      *mute = pulsesrc->mute;
+    return;
   }
 no_index:
   {
-    v = pulsesrc->volume;
     GST_DEBUG_OBJECT (pulsesrc, "we don't have a stream index");
-    return v;
+    if (volume)
+      *volume = pulsesrc->volume;
+    if (mute)
+      *mute = pulsesrc->mute;
+    return;
   }
 info_failed:
   {
@@ -537,11 +533,34 @@ info_failed:
   }
 }
 
-static gboolean
-gst_pulsesrc_get_stream_mute (GstPulseSrc * pulsesrc)
+static void
+gst_pulsesrc_current_source_info_cb (pa_context * c, const pa_source_info * i,
+    int eol, void *userdata)
+{
+  GstPulseSrc *psrc;
+
+  psrc = GST_PULSESRC_CAST (userdata);
+
+  if (!i)
+    goto done;
+
+  /* If the index doesn't match our current stream,
+   * it implies we just recreated the stream (caps change)
+   */
+  if (i->index == psrc->current_source_idx) {
+    g_free (psrc->current_source_name);
+    psrc->current_source_name = g_strdup (i->name);
+  }
+
+done:
+  pa_threaded_mainloop_signal (psrc->mainloop, 0);
+}
+
+static gchar *
+gst_pulsesrc_get_current_device (GstPulseSrc * pulsesrc)
 {
   pa_operation *o = NULL;
-  gboolean mute;
+  gchar *current_src;
 
   if (!pulsesrc->mainloop)
     goto no_mainloop;
@@ -549,10 +568,13 @@ gst_pulsesrc_get_stream_mute (GstPulseSrc * pulsesrc)
   if (pulsesrc->source_output_idx == PA_INVALID_INDEX)
     goto no_index;
 
+  gst_pulsesrc_get_source_output_info (pulsesrc, NULL, NULL);
+
   pa_threaded_mainloop_lock (pulsesrc->mainloop);
 
-  if (!(o = pa_context_get_source_output_info (pulsesrc->context,
-              pulsesrc->source_output_idx, gst_pulsesrc_source_output_info_cb,
+
+  if (!(o = pa_context_get_source_info_by_index (pulsesrc->context,
+              pulsesrc->current_source_idx, gst_pulsesrc_current_source_info_cb,
               pulsesrc)))
     goto info_failed;
 
@@ -563,27 +585,26 @@ gst_pulsesrc_get_stream_mute (GstPulseSrc * pulsesrc)
   }
 
 unlock:
-  mute = pulsesrc->mute;
+
+  current_src = g_strdup (pulsesrc->current_source_name);
 
   if (o)
     pa_operation_unref (o);
 
   pa_threaded_mainloop_unlock (pulsesrc->mainloop);
 
-  return mute;
+  return current_src;
 
   /* ERRORS */
 no_mainloop:
   {
-    mute = pulsesrc->mute;
     GST_DEBUG_OBJECT (pulsesrc, "we have no mainloop");
-    return mute;
+    return NULL;
   }
 no_index:
   {
-    mute = pulsesrc->mute;
     GST_DEBUG_OBJECT (pulsesrc, "we don't have a stream index");
-    return mute;
+    return NULL;
   }
 info_failed:
   {
@@ -704,6 +725,55 @@ mute_failed:
 }
 
 static void
+gst_pulsesrc_set_stream_device (GstPulseSrc * pulsesrc, const gchar * device)
+{
+  pa_operation *o = NULL;
+
+  if (!pulsesrc->mainloop)
+    goto no_mainloop;
+
+  if (!pulsesrc->source_output_idx)
+    goto no_index;
+
+  pa_threaded_mainloop_lock (pulsesrc->mainloop);
+
+  GST_DEBUG_OBJECT (pulsesrc, "setting stream device to %s", device);
+
+  if (!(o = pa_context_move_source_output_by_name (pulsesrc->context,
+              pulsesrc->source_output_idx, device, NULL, NULL)))
+    goto move_failed;
+
+unlock:
+
+  if (o)
+    pa_operation_unref (o);
+
+  pa_threaded_mainloop_unlock (pulsesrc->mainloop);
+
+  return;
+
+  /* ERRORS */
+no_mainloop:
+  {
+    GST_DEBUG_OBJECT (pulsesrc, "we have no mainloop");
+    return;
+  }
+no_index:
+  {
+    GST_DEBUG_OBJECT (pulsesrc, "we don't have a stream index");
+    return;
+  }
+move_failed:
+  {
+    GST_ELEMENT_ERROR (pulsesrc, RESOURCE, FAILED,
+        ("pa_context_move_source_output_by_name(%s) failed: %s",
+            device, pa_strerror (pa_context_errno (pulsesrc->context))),
+        (NULL));
+    goto unlock;
+  }
+}
+
+static void
 gst_pulsesrc_set_property (GObject * object,
     guint prop_id, const GValue * value, GParamSpec * pspec)
 {
@@ -714,12 +784,11 @@ gst_pulsesrc_set_property (GObject * object,
     case PROP_SERVER:
       g_free (pulsesrc->server);
       pulsesrc->server = g_value_dup_string (value);
-      if (pulsesrc->probe)
-        gst_pulseprobe_set_server (pulsesrc->probe, pulsesrc->server);
       break;
     case PROP_DEVICE:
       g_free (pulsesrc->device);
       pulsesrc->device = g_value_dup_string (value);
+      gst_pulsesrc_set_stream_device (pulsesrc, pulsesrc->device);
       break;
     case PROP_CLIENT_NAME:
       g_free (pulsesrc->client_name);
@@ -765,6 +834,15 @@ gst_pulsesrc_get_property (GObject * object,
     case PROP_DEVICE:
       g_value_set_string (value, pulsesrc->device);
       break;
+    case PROP_CURRENT_DEVICE:
+    {
+      gchar *current_device = gst_pulsesrc_get_current_device (pulsesrc);
+      if (current_device)
+        g_value_take_string (value, current_device);
+      else
+        g_value_set_string (value, "");
+      break;
+    }
     case PROP_DEVICE_NAME:
       g_value_take_string (value, gst_pulsesrc_device_description (pulsesrc));
       break;
@@ -778,11 +856,19 @@ gst_pulsesrc_get_property (GObject * object,
       g_value_set_uint (value, pulsesrc->source_output_idx);
       break;
     case PROP_VOLUME:
-      g_value_set_double (value, gst_pulsesrc_get_stream_volume (pulsesrc));
+    {
+      gdouble volume;
+      gst_pulsesrc_get_source_output_info (pulsesrc, &volume, NULL);
+      g_value_set_double (value, volume);
       break;
+    }
     case PROP_MUTE:
-      g_value_set_boolean (value, gst_pulsesrc_get_stream_mute (pulsesrc));
+    {
+      gboolean mute;
+      gst_pulsesrc_get_source_output_info (pulsesrc, NULL, &mute);
+      g_value_set_boolean (value, mute);
       break;
+    }
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -1004,6 +1090,7 @@ gst_pulsesrc_read (GstAudioSrc * asrc, gpointer data, guint length,
   if (g_atomic_int_compare_and_exchange (&pulsesrc->notify, 1, 0)) {
     g_object_notify (G_OBJECT (pulsesrc), "volume");
     g_object_notify (G_OBJECT (pulsesrc), "mute");
+    g_object_notify (G_OBJECT (pulsesrc), "current-device");
   }
 
   pa_threaded_mainloop_lock (pulsesrc->mainloop);

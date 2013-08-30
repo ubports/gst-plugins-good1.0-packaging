@@ -684,7 +684,6 @@ rtp_jitter_buffer_insert (RTPJitterBuffer * jbuf, GstBuffer * buf,
    * running time. */
   time = calculate_skew (jbuf, rtptime, time, clock_rate);
   GST_BUFFER_PTS (buf) = time;
-  GST_BUFFER_DTS (buf) = time;
 
   /* It's more likely that the packet was inserted in the front of the buffer */
   if (G_LIKELY (list))
@@ -695,7 +694,7 @@ rtp_jitter_buffer_insert (RTPJitterBuffer * jbuf, GstBuffer * buf,
   /* buffering mode, update buffer stats */
   if (jbuf->mode == RTP_JITTER_BUFFER_MODE_BUFFER)
     update_buffer_level (jbuf, percent);
-  else
+  else if (percent)
     *percent = -1;
 
   /* tail was changed when we did not find a previous packet, we set the return
@@ -739,7 +738,7 @@ rtp_jitter_buffer_pop (RTPJitterBuffer * jbuf, gint * percent)
   /* buffering mode, update buffer stats */
   if (jbuf->mode == RTP_JITTER_BUFFER_MODE_BUFFER)
     update_buffer_level (jbuf, percent);
-  else
+  else if (percent)
     *percent = -1;
 
   return buf;

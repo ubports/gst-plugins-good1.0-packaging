@@ -51,7 +51,11 @@ typedef struct
 
   gchar *mime;
 
+  GstClockTime  last_ts;        /* last timestamp to make sure we don't send
+                                 * two buffers with the same timestamp */
   GstFlowReturn last_ret;
+
+  gboolean      discont;
 }
 GstMultipartPad;
 
