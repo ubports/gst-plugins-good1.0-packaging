@@ -89,6 +89,8 @@
 #define QTDEMUX_SECONDS_FROM_1904_TO_1970 (((1970 - 1904) * (guint64) 365 + \
     QTDEMUX_LEAP_YEARS_FROM_1904_TO_1970) * QTDEMUX_SECONDS_PER_DAY)
 
+#define STREAM_IS_EOS(s) (s->time_position == -1)
+
 GST_DEBUG_CATEGORY (qtdemux_debug);
 
 /*typedef struct _QtNode QtNode; */
@@ -206,6 +208,10 @@ struct _QtDemuxStream
 
   gboolean new_caps;
   gboolean new_stream;          /* signals that a stream_start is required */
+  gboolean on_keyframe;         /* if this stream last pushed buffer was a
+                                 * keyframe. This is important to identify
+                                 * where to stop pushing buffers after a
+                                 * segment stop time */
 
   /* if the stream has a redirect URI in its headers, we store it here */
   gchar *redirect_uri;
@@ -1252,17 +1258,17 @@ gst_qtdemux_do_push_seek (GstQTDemux * qtdemux, GstPad * pad, GstEvent * event)
   GstFormat format;
   GstSeekFlags flags;
   GstSeekType cur_type, stop_type;
-  gint64 cur, stop;
+  gint64 cur, stop, key_cur;
   gboolean res;
   gint64 byte_cur;
+  gint64 original_stop;
+  guint32 seqnum;
 
   GST_DEBUG_OBJECT (qtdemux, "doing push-based seek");
 
   gst_event_parse_seek (event, &rate, &format, &flags,
       &cur_type, &cur, &stop_type, &stop);
-
-  /* FIXME, always play to the end */
-  stop = -1;
+  seqnum = gst_event_get_seqnum (event);
 
   /* only forward streaming and seeking is possible */
   if (rate <= 0)
@@ -1273,10 +1279,16 @@ gst_qtdemux_do_push_seek (GstQTDemux * qtdemux, GstPad * pad, GstEvent * event)
           stop_type, &stop))
     goto no_format;
 
+  /* Upstrea seek in bytes will have undefined stop, but qtdemux stores
+   * the original stop position to use when upstream pushes the new segment
+   * for this seek */
+  original_stop = stop;
+  stop = -1;
+
   /* find reasonable corresponding BYTE position,
    * also try to mind about keyframes, since we can not go back a bit for them
    * later on */
-  gst_qtdemux_adjust_seek (qtdemux, cur, NULL, &byte_cur);
+  gst_qtdemux_adjust_seek (qtdemux, cur, &key_cur, &byte_cur);
 
   if (byte_cur == -1)
     goto abort_seek;
@@ -1285,19 +1297,25 @@ gst_qtdemux_do_push_seek (GstQTDemux * qtdemux, GstPad * pad, GstEvent * event)
       "start %" G_GINT64_FORMAT ", stop %" G_GINT64_FORMAT, rate, byte_cur,
       stop);
 
+  GST_OBJECT_LOCK (qtdemux);
+  qtdemux->seek_offset = byte_cur;
   if (!(flags & GST_SEEK_FLAG_KEY_UNIT)) {
-    GST_DEBUG_OBJECT (qtdemux,
-        "Requested seek time: %" GST_TIME_FORMAT ", calculated seek offset: %"
-        G_GUINT64_FORMAT, GST_TIME_ARGS (cur), byte_cur);
-    GST_OBJECT_LOCK (qtdemux);
-    qtdemux->requested_seek_time = cur;
-    qtdemux->seek_offset = byte_cur;
-    GST_OBJECT_UNLOCK (qtdemux);
+    qtdemux->push_seek_start = cur;
+  } else {
+    qtdemux->push_seek_start = key_cur;
   }
+
+  if (stop_type == GST_SEEK_TYPE_NONE) {
+    qtdemux->push_seek_stop = qtdemux->segment.stop;
+  } else {
+    qtdemux->push_seek_stop = original_stop;
+  }
+  GST_OBJECT_UNLOCK (qtdemux);
 
   /* BYTE seek event */
   event = gst_event_new_seek (rate, GST_FORMAT_BYTES, flags, cur_type, byte_cur,
       stop_type, stop);
+  gst_event_set_seqnum (event, seqnum);
   res = gst_pad_push_event (qtdemux->sinkpad, event);
 
   return res;
@@ -1809,8 +1827,6 @@ gst_qtdemux_reset (GstQTDemux * qtdemux, gboolean hard)
       gst_object_unref (qtdemux->pending_newsegment);
     qtdemux->pending_newsegment = NULL;
     qtdemux->upstream_newsegment = TRUE;
-    qtdemux->requested_seek_time = GST_CLOCK_TIME_NONE;
-    qtdemux->seek_offset = 0;
     qtdemux->upstream_seekable = FALSE;
     qtdemux->upstream_size = 0;
 
@@ -1849,6 +1865,7 @@ gst_qtdemux_reset (GstQTDemux * qtdemux, gboolean hard)
       qtdemux->streams[n]->last_ret = GST_FLOW_OK;
       qtdemux->streams[n]->sent_eos = FALSE;
       qtdemux->streams[n]->segment_seqnum = 0;
+      qtdemux->streams[n]->time_position = 0;
     }
   }
 }
@@ -1893,29 +1910,37 @@ gst_qtdemux_handle_sink_event (GstPad * sinkpad, GstObject * parent,
         }
       }
 
+      /* check if this matches a time seek we received previously
+       * FIXME for backwards compatibility reasons we use the
+       * seek_offset here to compare. In the future we might want to
+       * change this to use the seqnum as it uniquely should identify
+       * the segment that corresponds to the seek. */
+      GST_DEBUG_OBJECT (demux, "Stored seek offset: %" G_GINT64_FORMAT
+          ", received segment offset %" G_GINT64_FORMAT,
+          demux->seek_offset, segment.start);
+      if (segment.format == GST_FORMAT_BYTES
+          && demux->seek_offset == segment.start) {
+        GST_OBJECT_LOCK (demux);
+        offset = segment.start;
+
+        segment.format = GST_FORMAT_TIME;
+        segment.start = demux->push_seek_start;
+        segment.stop = demux->push_seek_stop;
+        GST_DEBUG_OBJECT (demux, "Replaced segment with stored seek "
+            "segment %" GST_TIME_FORMAT " - %" GST_TIME_FORMAT,
+            GST_TIME_ARGS (segment.start), GST_TIME_ARGS (segment.stop));
+        GST_OBJECT_UNLOCK (demux);
+      }
+
       /* we only expect a BYTE segment, e.g. following a seek */
       if (segment.format == GST_FORMAT_BYTES) {
         if (GST_CLOCK_TIME_IS_VALID (segment.start)) {
-          gint64 requested_seek_time;
-          guint64 seek_offset;
-
           offset = segment.start;
 
-          GST_OBJECT_LOCK (demux);
-          requested_seek_time = demux->requested_seek_time;
-          seek_offset = demux->seek_offset;
-          demux->requested_seek_time = -1;
-          demux->seek_offset = -1;
-          GST_OBJECT_UNLOCK (demux);
-
-          if (offset == seek_offset) {
-            segment.start = requested_seek_time;
-          } else {
-            gst_qtdemux_find_sample (demux, segment.start, TRUE, FALSE, NULL,
-                NULL, (gint64 *) & segment.start);
-            if ((gint64) segment.start < 0)
-              segment.start = 0;
-          }
+          gst_qtdemux_find_sample (demux, segment.start, TRUE, FALSE, NULL,
+              NULL, (gint64 *) & segment.start);
+          if ((gint64) segment.start < 0)
+            segment.start = 0;
         }
         if (GST_CLOCK_TIME_IS_VALID (segment.stop)) {
           gst_qtdemux_find_sample (demux, segment.stop, FALSE, FALSE, NULL,
@@ -3703,7 +3728,7 @@ gst_qtdemux_sync_streams (GstQTDemux * demux)
 
     if (demux->pullbased) {
       /* loop mode is sample time based */
-      if (stream->time_position != -1)
+      if (!STREAM_IS_EOS (stream))
         continue;
     } else {
       /* push mode is byte position based */
@@ -4067,8 +4092,13 @@ gst_qtdemux_decorate_and_push_buffer (GstQTDemux * qtdemux,
     GST_BUFFER_FLAG_UNSET (buf, GST_BUFFER_FLAG_DISCONT);
   }
 
-  if (!keyframe)
+  if (!keyframe) {
     GST_BUFFER_FLAG_SET (buf, GST_BUFFER_FLAG_DELTA_UNIT);
+    stream->on_keyframe = FALSE;
+  } else {
+    stream->on_keyframe = TRUE;
+  }
+
 
   GST_LOG_OBJECT (qtdemux,
       "Pushing buffer with dts %" GST_TIME_FORMAT ", pts %" GST_TIME_FORMAT
@@ -4130,9 +4160,11 @@ gst_qtdemux_loop_state_movie (GstQTDemux * qtdemux)
 
   /* check for segment end */
   if (G_UNLIKELY (qtdemux->segment.stop != -1
-          && qtdemux->segment.stop < min_time)) {
+          && qtdemux->segment.stop <= min_time
+          && qtdemux->streams[index]->on_keyframe)) {
     GST_DEBUG_OBJECT (qtdemux, "we reached the end of our segment.");
-    goto eos;
+    qtdemux->streams[index]->time_position = -1;
+    goto eos_stream;
   }
 
   /* gap events for subtitle streams */
@@ -4856,7 +4888,7 @@ gst_qtdemux_chain (GstPad * sinkpad, GstObject * parent, GstBuffer * inbuf)
           }
         }
 
-        /* Figure out which stream this is packet belongs to */
+        /* Figure out which stream this packet belongs to */
         for (i = 0; i < demux->n_streams; i++) {
           stream = demux->streams[i];
           if (stream->sample_index >= stream->n_samples)
@@ -4879,24 +4911,50 @@ gst_qtdemux_chain (GstPad * sinkpad, GstObject * parent, GstBuffer * inbuf)
         }
 
         /* Put data in a buffer, set timestamps, caps, ... */
-        outbuf = gst_adapter_take_buffer (demux->adapter, demux->neededbytes);
-        GST_DEBUG_OBJECT (demux, "stream : %" GST_FOURCC_FORMAT,
-            GST_FOURCC_ARGS (stream->fourcc));
-
-        g_return_val_if_fail (outbuf != NULL, GST_FLOW_ERROR);
-
         sample = &stream->samples[stream->sample_index];
 
-        dts = QTSAMPLE_DTS (stream, sample);
-        pts = QTSAMPLE_PTS (stream, sample);
-        duration = QTSAMPLE_DUR_DTS (stream, sample, dts);
-        keyframe = QTSAMPLE_KEYFRAME (stream, sample);
+        if (G_LIKELY (!(STREAM_IS_EOS (stream)))) {
+          outbuf = gst_adapter_take_buffer (demux->adapter, demux->neededbytes);
+          GST_DEBUG_OBJECT (demux, "stream : %" GST_FOURCC_FORMAT,
+              GST_FOURCC_ARGS (stream->fourcc));
 
-        ret = gst_qtdemux_decorate_and_push_buffer (demux, stream, outbuf,
-            dts, pts, duration, keyframe, dts, demux->offset);
+          g_return_val_if_fail (outbuf != NULL, GST_FLOW_ERROR);
 
-        /* combine flows */
-        ret = gst_qtdemux_combine_flows (demux, stream, ret);
+          dts = QTSAMPLE_DTS (stream, sample);
+          pts = QTSAMPLE_PTS (stream, sample);
+          duration = QTSAMPLE_DUR_DTS (stream, sample, dts);
+          keyframe = QTSAMPLE_KEYFRAME (stream, sample);
+
+          /* check for segment end */
+          if (G_UNLIKELY (demux->segment.stop != -1
+                  && demux->segment.stop <= pts && stream->on_keyframe)) {
+            GST_DEBUG_OBJECT (demux, "we reached the end of our segment.");
+            stream->time_position = -1; /* this means EOS */
+
+            /* check if all streams are eos */
+            ret = GST_FLOW_EOS;
+            for (i = 0; i < demux->n_streams; i++) {
+              if (!STREAM_IS_EOS (demux->streams[i])) {
+                ret = GST_FLOW_OK;
+                break;
+              }
+            }
+
+            if (ret == GST_FLOW_EOS) {
+              GST_DEBUG_OBJECT (demux, "All streams are EOS, signal upstream");
+              goto eos;
+            }
+          } else {
+            ret = gst_qtdemux_decorate_and_push_buffer (demux, stream, outbuf,
+                dts, pts, duration, keyframe, dts, demux->offset);
+          }
+
+          /* combine flows */
+          ret = gst_qtdemux_combine_flows (demux, stream, ret);
+        } else {
+          /* skip this data, stream is EOS */
+          gst_adapter_flush (demux->adapter, demux->neededbytes);
+        }
 
         stream->sample_index++;
         stream->offset_in_sample = 0;
@@ -5387,6 +5445,12 @@ qtdemux_parse_node (GstQTDemux * qtdemux, GNode * node, const guint8 * buffer,
       case FOURCC_avc1:
       {
         GST_MEMDUMP_OBJECT (qtdemux, "avc1", buffer, end - buffer);
+        qtdemux_parse_container (qtdemux, node, buffer + 0x56, end);
+        break;
+      }
+      case FOURCC_avc3:
+      {
+        GST_MEMDUMP_OBJECT (qtdemux, "avc3", buffer, end - buffer);
         qtdemux_parse_container (qtdemux, node, buffer + 0x56, end);
         break;
       }
@@ -7305,6 +7369,7 @@ qtdemux_parse_trak (GstQTDemux * qtdemux, GNode * trak)
       switch (fourcc) {
         case FOURCC_H264:
         case FOURCC_avc1:
+        case FOURCC_avc3:
         {
           gint len = QT_UINT32 (stsd_data) - 0x66;
           const guint8 *avc_data = stsd_data + 0x66;
@@ -10333,6 +10398,12 @@ qtdemux_video_caps (GstQTDemux * qtdemux, QtDemuxStream * stream,
       _codec ("H.264 / AVC");
       caps = gst_caps_new_simple ("video/x-h264",
           "stream-format", G_TYPE_STRING, "avc",
+          "alignment", G_TYPE_STRING, "au", NULL);
+      break;
+    case GST_MAKE_FOURCC ('a', 'v', 'c', '3'):
+      _codec ("H.264 / AVC");
+      caps = gst_caps_new_simple ("video/x-h264",
+          "stream-format", G_TYPE_STRING, "avc3",
           "alignment", G_TYPE_STRING, "au", NULL);
       break;
     case GST_MAKE_FOURCC ('r', 'l', 'e', ' '):

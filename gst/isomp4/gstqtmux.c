@@ -188,7 +188,6 @@ enum
 
 /* some spare for header size as well */
 #define MDAT_LARGE_FILE_LIMIT           ((guint64) 1024 * 1024 * 1024 * 2)
-#define MAX_TOLERATED_LATENESS          (GST_SECOND / 10)
 
 #define DEFAULT_MOVIE_TIMESCALE         1000
 #define DEFAULT_TRAK_TIMESCALE          0
@@ -1892,8 +1891,7 @@ gst_qt_mux_stop_file (GstQTMux * qtmux)
     guint32 lateness;
     guint32 duration;
 
-    if (GST_CLOCK_TIME_IS_VALID (qtpad->first_ts) &&
-        qtpad->first_ts > first_ts + MAX_TOLERATED_LATENESS) {
+    if (GST_CLOCK_TIME_IS_VALID (qtpad->first_ts) && qtpad->first_ts > first_ts) {
       GST_DEBUG_OBJECT (qtmux, "Pad %s is a late stream by %" GST_TIME_FORMAT,
           GST_PAD_NAME (qtpad->collect.pad),
           GST_TIME_ARGS (qtpad->first_ts - first_ts));
@@ -2130,6 +2128,33 @@ gst_qt_mux_add_buffer (GstQTMux * qtmux, GstQTPad * pad, GstBuffer * buf)
 
   last_buf = pad->last_buf;
 
+  /* if buffer has missing DTS, we take either segment start or previous buffer end time, 
+     which ever is later */
+  if (buf && pad->have_dts && !GST_BUFFER_DTS_IS_VALID (buf)) {
+    GstClockTime last_buf_duration = last_buf
+        && GST_BUFFER_DURATION_IS_VALID (last_buf) ?
+        GST_BUFFER_DURATION (last_buf) : 0;
+
+    buf = gst_buffer_make_writable (buf);
+    GST_BUFFER_DTS (buf) =
+        gst_segment_to_running_time (&pad->collect.segment, GST_FORMAT_TIME,
+        pad->collect.segment.start);
+    if (GST_CLOCK_TIME_IS_VALID (pad->first_ts))
+      check_and_subtract_ts (qtmux, &GST_BUFFER_DTS (buf), pad->first_ts);
+
+    if (last_buf
+        && (GST_BUFFER_DTS (last_buf) + last_buf_duration) >
+        GST_BUFFER_DTS (buf)) {
+      GST_BUFFER_DTS (buf) = GST_BUFFER_DTS (last_buf) + last_buf_duration;
+    }
+  }
+
+  if (last_buf && !buf && !GST_BUFFER_DURATION_IS_VALID (last_buf)) {
+    /* this is last buffer; there is no next buffer so we need valid number as duration */
+    last_buf = gst_buffer_make_writable (last_buf);
+    GST_BUFFER_DURATION (last_buf) = 0;
+  }
+
   if (last_buf == NULL) {
 #ifndef GST_DISABLE_GST_DEBUG
     if (buf == NULL) {
@@ -2149,12 +2174,20 @@ gst_qt_mux_add_buffer (GstQTMux * qtmux, GstQTPad * pad, GstBuffer * buf)
 
   /* if this is the first buffer, store the timestamp */
   if (G_UNLIKELY (pad->first_ts == GST_CLOCK_TIME_NONE) && last_buf) {
-    if (GST_CLOCK_TIME_IS_VALID (GST_BUFFER_PTS (last_buf))) {
+    if (pad->have_dts) {
+      /* first pad always has DTS. If it was not provided by upstream it was set to segment start */
+      pad->first_ts = GST_BUFFER_DTS (last_buf);
+    } else if (GST_BUFFER_PTS_IS_VALID (last_buf)) {
       pad->first_ts = GST_BUFFER_PTS (last_buf);
+    }
+
+    if (GST_CLOCK_TIME_IS_VALID (pad->first_ts)) {
       GST_DEBUG ("setting first_ts to %" G_GUINT64_FORMAT, pad->first_ts);
+      last_buf = gst_buffer_make_writable (last_buf);
       check_and_subtract_ts (qtmux, &GST_BUFFER_DTS (last_buf), pad->first_ts);
       check_and_subtract_ts (qtmux, &GST_BUFFER_PTS (last_buf), pad->first_ts);
       if (buf) {
+        buf = gst_buffer_make_writable (buf);
         check_and_subtract_ts (qtmux, &GST_BUFFER_DTS (buf), pad->first_ts);
         check_and_subtract_ts (qtmux, &GST_BUFFER_PTS (buf), pad->first_ts);
       }
@@ -2229,10 +2262,7 @@ gst_qt_mux_add_buffer (GstQTMux * qtmux, GstQTPad * pad, GstBuffer * buf)
     if (pad->have_dts) {
       gint64 scaled_dts;
       if (pad->last_buf) {
-        if (GST_BUFFER_DTS_IS_VALID (pad->last_buf))
-          pad->last_dts = GST_BUFFER_DTS (pad->last_buf);
-        else
-          pad->last_dts = GST_BUFFER_PTS (pad->last_buf);
+        pad->last_dts = GST_BUFFER_DTS (pad->last_buf);
       } else {
         pad->last_dts = GST_BUFFER_DTS (last_buf) +
             GST_BUFFER_DURATION (last_buf);
