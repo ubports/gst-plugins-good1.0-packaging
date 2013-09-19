@@ -311,6 +311,7 @@
 <ANCHOR id="gst-plugins-good-plugins-autoaudiosink.property-details" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-autoaudiosink.html#gst-plugins-good-plugins-autoaudiosink.property-details">
 <ANCHOR id="GstAutoAudioSink--filter-caps" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-autoaudiosink.html#GstAutoAudioSink--filter-caps">
 <ANCHOR id="GstAutoAudioSink--ts-offset" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-autoaudiosink.html#GstAutoAudioSink--ts-offset">
+<ANCHOR id="GstAutoAudioSink--sync" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-autoaudiosink.html#GstAutoAudioSink--sync">
 <ANCHOR id="gst-plugins-good-plugins-autoaudiosink.see-also" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-autoaudiosink.html#gst-plugins-good-plugins-autoaudiosink.see-also">
 <ANCHOR id="gst-plugins-good-plugins-autoaudiosrc" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-autoaudiosrc.html">
 <ANCHOR id="gst-plugins-good-plugins-autoaudiosrc.synopsis" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-autoaudiosrc.html#gst-plugins-good-plugins-autoaudiosrc.synopsis">
@@ -336,6 +337,7 @@
 <ANCHOR id="gst-plugins-good-plugins-autovideosink.property-details" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-autovideosink.html#gst-plugins-good-plugins-autovideosink.property-details">
 <ANCHOR id="GstAutoVideoSink--filter-caps" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-autovideosink.html#GstAutoVideoSink--filter-caps">
 <ANCHOR id="GstAutoVideoSink--ts-offset" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-autovideosink.html#GstAutoVideoSink--ts-offset">
+<ANCHOR id="GstAutoVideoSink--sync" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-autovideosink.html#GstAutoVideoSink--sync">
 <ANCHOR id="gst-plugins-good-plugins-autovideosink.see-also" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-autovideosink.html#gst-plugins-good-plugins-autovideosink.see-also">
 <ANCHOR id="gst-plugins-good-plugins-autovideosrc" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-autovideosrc.html">
 <ANCHOR id="gst-plugins-good-plugins-autovideosrc.synopsis" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-autovideosrc.html#gst-plugins-good-plugins-autovideosrc.synopsis">
@@ -1832,6 +1834,7 @@
 <ANCHOR id="GstUDPSrc--socket" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-udpsrc.html#GstUDPSrc--socket">
 <ANCHOR id="GstUDPSrc--used-socket" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-udpsrc.html#GstUDPSrc--used-socket">
 <ANCHOR id="GstUDPSrc--bind-address" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-udpsrc.html#GstUDPSrc--bind-address">
+<ANCHOR id="GstUDPSrc--address" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-udpsrc.html#GstUDPSrc--address">
 <ANCHOR id="gst-plugins-good-plugins-udpsrc.see-also" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-udpsrc.html#gst-plugins-good-plugins-udpsrc.see-also">
 <ANCHOR id="gst-plugins-good-plugins-udpsink" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-udpsink.html">
 <ANCHOR id="gst-plugins-good-plugins-udpsink.synopsis" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-udpsink.html#gst-plugins-good-plugins-udpsink.synopsis">

@@ -63,7 +63,8 @@ GType
 gst_v4l2_meta_api_get_type (void)
 {
   static volatile GType type;
-  static const gchar *tags[] = { "memory", NULL };
+  static const gchar *tags[] =
+      { GST_META_TAG_VIDEO_STR, GST_META_TAG_MEMORY_STR, NULL };
 
   if (g_once_init_enter (&type)) {
     GType _type = gst_meta_api_type_register ("GstV4l2MetaAPI", tags);
@@ -247,8 +248,22 @@ gst_v4l2_buffer_pool_alloc_buffer (GstBufferPool * bpool, GstBuffer ** buffer,
         offs = 0;
         for (i = 0; i < n_planes; i++) {
           offset[i] = offs;
-          stride[i] =
-              GST_VIDEO_FORMAT_INFO_SCALE_WIDTH (finfo, i, obj->bytesperline);
+
+          switch (info->finfo->format) {
+            case GST_VIDEO_FORMAT_NV12:
+            case GST_VIDEO_FORMAT_NV21:
+            case GST_VIDEO_FORMAT_NV16:
+            case GST_VIDEO_FORMAT_NV24:
+              stride[i] =
+                  (i == 0 ? 1 : 2) * GST_VIDEO_FORMAT_INFO_SCALE_WIDTH (finfo,
+                  i, obj->bytesperline);
+              break;
+            default:
+              stride[i] =
+                  GST_VIDEO_FORMAT_INFO_SCALE_WIDTH (finfo, i,
+                  obj->bytesperline);
+              break;
+          }
 
           offs +=
               stride[i] * GST_VIDEO_FORMAT_INFO_SCALE_HEIGHT (finfo, i, height);
@@ -432,7 +447,7 @@ gst_v4l2_buffer_pool_set_config (GstBufferPool * bpool, GstStructure * config)
   pool->copy_threshold = copy_threshold;
 
   if (obj->mode == GST_V4L2_IO_DMABUF)
-    allocator = gst_dmabuf_allocator_obtain ();
+    allocator = gst_dmabuf_allocator_new ();
 
   if (pool->allocator)
     gst_object_unref (pool->allocator);
