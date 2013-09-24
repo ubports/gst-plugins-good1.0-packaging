@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #include <gst/check/gstcheck.h>
@@ -289,7 +289,7 @@ simple_launch_lines_suite (void)
   tcase_add_test (tc_chain, test_rtp_payloaders);
   tcase_add_test (tc_chain, test_video_encoders_decoders);
   /* FIXME: very rarely fails, maybe because of negotiation issues? */
-  tcase_skip_broken_test (tc_chain, test_videomixer);
+  tcase_add_test (tc_chain, test_videomixer);
 #endif
   return s;
 }

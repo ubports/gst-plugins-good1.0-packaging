@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -24,7 +24,6 @@
 #endif
 
 #include "tuner.h"
-#include "tuner-marshal.h"
 
 #include <string.h>
 
@@ -83,37 +82,12 @@ enum
   LAST_SIGNAL
 };
 
-static void gst_tuner_class_init (GstTunerInterface * iface);
-
 static guint gst_tuner_signals[LAST_SIGNAL] = { 0 };
 
-GType
-gst_tuner_get_type (void)
-{
-  static GType gst_tuner_type = 0;
-
-  if (!gst_tuner_type) {
-    static const GTypeInfo gst_tuner_info = {
-      sizeof (GstTunerInterface),
-      (GBaseInitFunc) gst_tuner_class_init,
-      NULL,
-      NULL,
-      NULL,
-      NULL,
-      0,
-      0,
-      NULL,
-    };
-
-    gst_tuner_type = g_type_register_static (G_TYPE_INTERFACE,
-        "GstTuner", &gst_tuner_info, 0);
-  }
-
-  return gst_tuner_type;
-}
+G_DEFINE_INTERFACE (GstTuner, gst_tuner, G_TYPE_INVALID);
 
 static void
-gst_tuner_class_init (GstTunerInterface * iface)
+gst_tuner_default_init (GstTunerInterface * iface)
 {
   static gboolean initialized = FALSE;
 
@@ -157,8 +131,8 @@ gst_tuner_class_init (GstTunerInterface * iface)
         GST_TYPE_TUNER, G_SIGNAL_RUN_LAST,
         G_STRUCT_OFFSET (GstTunerInterface, frequency_changed),
         NULL, NULL,
-        gst_interfaces_marshal_VOID__OBJECT_ULONG, G_TYPE_NONE, 2,
-        GST_TYPE_TUNER_CHANNEL, G_TYPE_ULONG);
+        g_cclosure_marshal_generic, G_TYPE_NONE, 2, GST_TYPE_TUNER_CHANNEL,
+        G_TYPE_ULONG);
     /**
      * GstTuner::signal-changed:
      * @tuner: The element providing the GstTuner interface
@@ -174,8 +148,8 @@ gst_tuner_class_init (GstTunerInterface * iface)
         GST_TYPE_TUNER, G_SIGNAL_RUN_LAST,
         G_STRUCT_OFFSET (GstTunerInterface, signal_changed),
         NULL, NULL,
-        gst_interfaces_marshal_VOID__OBJECT_INT, G_TYPE_NONE, 2,
-        GST_TYPE_TUNER_CHANNEL, G_TYPE_INT);
+        g_cclosure_marshal_generic, G_TYPE_NONE, 2, GST_TYPE_TUNER_CHANNEL,
+        G_TYPE_INT);
 
     initialized = TRUE;
   }

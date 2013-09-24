@@ -17,8 +17,8 @@
 *
 * You should have received a copy of the GNU Library General Public
 * License along with this library; if not, write to the
-* Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-* Boston, MA 02111-1307, USA.
+* Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+* Boston, MA 02110-1301, USA.
 *
 *
 * The development of this code was made possible due to the involvement
@@ -53,7 +53,6 @@
 #endif
 
 #include <gst/base/gstbasesink.h>
-#include <gst/audio/streamvolume.h>
 #include "gstdirectsoundsink.h"
 #include <gst/audio/gstaudioiec61937.h>
 
@@ -155,8 +154,6 @@ gst_directsound_sink_class_init (GstDirectSoundSinkClass * klass)
 
   GST_DEBUG_CATEGORY_INIT (directsoundsink_debug, "directsoundsink", 0,
       "DirectSound sink");
-
-  parent_class = g_type_class_peek_parent (klass);
 
   gobject_class->finalize = gst_directsound_sink_finalize;
   gobject_class->set_property = gst_directsound_sink_set_property;
@@ -261,7 +258,6 @@ gst_directsound_sink_getcaps (GstBaseSink * bsink, GstCaps * filter)
   GstPadTemplate *pad_template;
   GstDirectSoundSink *dsoundsink = GST_DIRECTSOUND_SINK (bsink);
   GstCaps *caps;
-  gchar *caps_string = NULL;
 
   if (dsoundsink->pDS == NULL) {
     GST_DEBUG_OBJECT (dsoundsink, "device not open, using template caps");
@@ -269,20 +265,23 @@ gst_directsound_sink_getcaps (GstBaseSink * bsink, GstCaps * filter)
   }
 
   if (dsoundsink->cached_caps) {
-    caps_string = gst_caps_to_string (dsoundsink->cached_caps);
-    GST_DEBUG_OBJECT (dsoundsink, "Returning cached caps: %s", caps_string);
-    g_free (caps_string);
-    return gst_caps_ref (dsoundsink->cached_caps);
+    caps = gst_caps_ref (dsoundsink->cached_caps);
+  } else {
+    element_class = GST_ELEMENT_GET_CLASS (dsoundsink);
+    pad_template = gst_element_class_get_pad_template (element_class, "sink");
+    g_return_val_if_fail (pad_template != NULL, NULL);
+
+    caps = gst_directsound_probe_supported_formats (dsoundsink,
+        gst_pad_template_get_caps (pad_template));
+    if (caps)
+      dsoundsink->cached_caps = gst_caps_ref (caps);
   }
 
-  element_class = GST_ELEMENT_GET_CLASS (dsoundsink);
-  pad_template = gst_element_class_get_pad_template (element_class, "sink");
-  g_return_val_if_fail (pad_template != NULL, NULL);
-
-  caps = gst_directsound_probe_supported_formats (dsoundsink,
-      gst_pad_template_get_caps (pad_template));
-  if (caps) {
-    dsoundsink->cached_caps = gst_caps_ref (caps);
+  if (caps && filter) {
+    GstCaps *tmp =
+        gst_caps_intersect_full (filter, caps, GST_CAPS_INTERSECT_FIRST);
+    gst_caps_unref (caps);
+    caps = tmp;
   }
 
   if (caps) {
@@ -315,10 +314,11 @@ gst_directsound_sink_acceptcaps (GstBaseSink * sink, GstQuery * query)
 
   pad_caps = gst_pad_query_caps (pad, NULL);
   if (pad_caps) {
-    gboolean cret = gst_caps_can_intersect (pad_caps, caps);
+    gboolean cret = gst_caps_is_subset (caps, pad_caps);
     gst_caps_unref (pad_caps);
     if (!cret) {
-      GST_DEBUG_OBJECT (dsink, "Can't intersect caps, not accepting caps");
+      GST_DEBUG_OBJECT (dsink,
+          "Caps are not a subset of the pad caps, not accepting caps");
       goto done;
     }
   }

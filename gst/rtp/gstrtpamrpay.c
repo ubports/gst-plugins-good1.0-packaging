@@ -13,8 +13,39 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
+ */
+
+/**
+ * SECTION:element-rtpamrpay
+ * @see_also: rtpamrdepay
+ *
+ * Payload AMR audio into RTP packets according to RFC 3267.
+ * For detailed information see: http://www.rfc-editor.org/rfc/rfc3267.txt
+ *
+ * <refsect2>
+ * <title>Example pipeline</title>
+ * |[
+ * gst-launch -v audiotestsrc ! amrnbenc ! rtpamrpay ! udpsink
+ * ]| This example pipeline will encode and payload an AMR stream. Refer to
+ * the rtpamrdepay example to depayload and decode the RTP stream.
+ * </refsect2>
+ *
+ * Last reviewed on 2013-04-25 (1.1.0)
+ */
+
+/* references:
+ *
+ * RFC 3267 - Real-Time Transport Protocol (RTP) Payload Format and File
+ *    Storage Format for the Adaptive Multi-Rate (AMR) and Adaptive
+ *    Multi-Rate Wideband (AMR-WB) Audio Codecs.
+ *
+ * ETSI TS 126 201 V6.0.0 (2004-12) - Digital cellular telecommunications system (Phase 2+);
+ *                 Universal Mobile Telecommunications System (UMTS);
+ *                          AMR speech codec, wideband;
+ *                                 Frame structure
+ *                    (3GPP TS 26.201 version 6.0.0 Release 6)
  */
 
 #ifdef HAVE_CONFIG_H
@@ -29,19 +60,6 @@
 
 GST_DEBUG_CATEGORY_STATIC (rtpamrpay_debug);
 #define GST_CAT_DEFAULT (rtpamrpay_debug)
-
-/* references:
- *
- * RFC 3267 - Real-Time Transport Protocol (RTP) Payload Format and File
- *    Storage Format for the Adaptive Multi-Rate (AMR) and Adaptive
- *    Multi-Rate Wideband (AMR-WB) Audio Codecs.
- *
- * ETSI TS 126 201 V6.0.0 (2004-12) - Digital cellular telecommunications system (Phase 2+);
- *                 Universal Mobile Telecommunications System (UMTS);
- *                          AMR speech codec, wideband;
- *                                 Frame structure
- *                    (3GPP TS 26.201 version 6.0.0 Release 6)
- */
 
 static GstStaticPadTemplate gst_rtp_amr_pay_sink_template =
     GST_STATIC_PAD_TEMPLATE ("sink",

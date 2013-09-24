@@ -16,8 +16,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #ifndef __GST_MATROSKA_DEMUX_H__
@@ -55,6 +55,9 @@ typedef struct _GstMatroskaDemux {
   guint                    num_a_streams;
   guint                    num_t_streams;
 
+  guint                    group_id;
+  gboolean                 have_group_id;
+
   /* state */
   gboolean                 streaming;
   guint                    level_up;
@@ -90,6 +93,7 @@ typedef struct _GstMatroskaDemux {
   guint64                  index_offset;
   GstEvent                *seek_event;
   gboolean                 need_segment;
+  guint32                  segment_seqnum;
 
   /* reverse playback */
   GArray                  *seek_index;

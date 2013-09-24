@@ -16,8 +16,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 /**
@@ -2363,7 +2363,11 @@ gst_deinterlace_do_bufferpool (GstDeinterlace * self, GstCaps * outcaps)
     gst_query_parse_nth_allocation_pool (query, 0, &pool, &size, &min, &max);
   else {
     pool = NULL;
-    size = GST_VIDEO_INFO_SIZE (&self->vinfo), min = max = 0;
+    size = GST_VIDEO_INFO_SIZE (&self->vinfo);
+    min =
+        MAX ((gst_deinterlace_method_get_fields_required (self->method) +
+            1) / 2 + 1, 4);
+    max = 0;
   }
 
   if (pool == NULL) {
@@ -2376,6 +2380,7 @@ gst_deinterlace_do_bufferpool (GstDeinterlace * self, GstCaps * outcaps)
   config = gst_buffer_pool_get_config (pool);
   gst_buffer_pool_config_set_params (config, outcaps, size, min, max);
   gst_buffer_pool_config_set_allocator (config, allocator, &params);
+  gst_buffer_pool_config_add_option (config, GST_BUFFER_POOL_OPTION_VIDEO_META);
   gst_buffer_pool_set_config (pool, config);
 
   /* now store */
@@ -2461,8 +2466,7 @@ gst_deinterlace_setcaps (GstDeinterlace * self, GstPad * pad, GstCaps * caps)
         "progressive", NULL);
   }
 
-  if (!gst_pad_set_caps (self->srcpad, srccaps))
-    goto caps_not_accepted;
+  gst_pad_set_caps (self->srcpad, srccaps);
 
   if (fps_n != 0) {
     self->field_duration = gst_util_uint64_scale (GST_SECOND, fps_d, fps_n);
@@ -2486,12 +2490,6 @@ gst_deinterlace_setcaps (GstDeinterlace * self, GstPad * pad, GstCaps * caps)
 invalid_caps:
   {
     GST_ERROR_OBJECT (pad, "Invalid caps: %" GST_PTR_FORMAT, caps);
-    return FALSE;
-  }
-caps_not_accepted:
-  {
-    GST_ERROR_OBJECT (pad, "Caps not accepted: %" GST_PTR_FORMAT, srccaps);
-    gst_caps_unref (srccaps);
     return FALSE;
   }
 no_bufferpool:
@@ -2600,6 +2598,41 @@ gst_deinterlace_sink_event (GstPad * pad, GstObject * parent, GstEvent * event)
 }
 
 static gboolean
+gst_deinterlace_propose_allocation (GstDeinterlace * self, GstQuery * query)
+{
+  GstBufferPool *pool;
+  GstCaps *caps;
+  GstVideoInfo info;
+  guint size;
+  GstStructure *config;
+
+  gst_query_parse_allocation (query, &caps, NULL);
+
+  if (caps == NULL)
+    return FALSE;
+
+  if (!gst_video_info_from_caps (&info, caps))
+    return FALSE;
+
+  size = GST_VIDEO_INFO_SIZE (&info);
+
+  pool = gst_video_buffer_pool_new ();
+
+  gst_query_add_allocation_pool (query, pool, size, 0, 0);
+
+  config = gst_buffer_pool_get_config (pool);
+  gst_buffer_pool_config_set_params (config, caps, size,
+      (gst_deinterlace_method_get_fields_required (self->method) + 1) / 2 + 1,
+      0);
+  gst_buffer_pool_set_config (pool, config);
+
+  gst_object_unref (pool);
+  gst_query_add_allocation_meta (query, GST_VIDEO_META_API_TYPE, NULL);
+
+  return TRUE;
+}
+
+static gboolean
 gst_deinterlace_sink_query (GstPad * pad, GstObject * parent, GstQuery * query)
 {
   GstDeinterlace *self = GST_DEINTERLACE (parent);
@@ -2623,7 +2656,7 @@ gst_deinterlace_sink_query (GstPad * pad, GstObject * parent, GstQuery * query)
       if (self->passthrough)
         res = gst_pad_peer_query (self->srcpad, query);
       else
-        res = gst_pad_query_default (pad, parent, query);
+        res = gst_deinterlace_propose_allocation (self, query);
       break;
     default:
       res = gst_pad_query_default (pad, parent, query);

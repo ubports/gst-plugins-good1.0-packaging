@@ -17,8 +17,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 /**
@@ -74,18 +74,6 @@ GST_STATIC_PAD_TEMPLATE ("sink",
     GST_STATIC_CAPS ("audio/x-flac")
     );
 
-/* signals and args */
-enum
-{
-  /* FILL ME */
-  LAST_SIGNAL
-};
-
-enum
-{
-  ARG_0
-      /* FILL ME */
-};
 
 static void gst_flac_tag_dispose (GObject * object);
 
@@ -172,9 +160,21 @@ gst_flac_tag_init (GstFlacTag * tag)
 static gboolean
 gst_flac_tag_sink_event (GstPad * pad, GstObject * parent, GstEvent * event)
 {
+  GstFlacTag *tag;
   gboolean ret;
 
+  tag = GST_FLAC_TAG (parent);
+
+  GST_DEBUG_OBJECT (pad, "Received %s event on sinkpad, %" GST_PTR_FORMAT,
+      GST_EVENT_TYPE_NAME (event), event);
+
   switch (GST_EVENT_TYPE (event)) {
+    case GST_EVENT_CAPS:
+      /* FIXME: parse and store the caps. Once we parsed and built the headers,
+       * update the "streamheader" field in the caps and send a new caps event
+       */
+      ret = gst_pad_push_event (tag->srcpad, event);
+      break;
     default:
       ret = gst_pad_event_default (pad, parent, event);
       break;
@@ -198,6 +198,8 @@ gst_flac_tag_chain (GstPad * pad, GstObject * parent, GstBuffer * buffer)
   tag = GST_FLAC_TAG (parent);
 
   gst_adapter_push (tag->adapter, buffer);
+
+  GST_LOG_OBJECT (pad, "state: %d", tag->state);
 
   /* Initial state, we don't even know if we are dealing with a flac file */
   if (tag->state == GST_FLAC_TAG_STATE_INIT) {
@@ -428,7 +430,7 @@ gst_flac_tag_chain (GstPad * pad, GstObject * parent, GstBuffer * buffer)
   }
 
 cleanup:
-
+  GST_LOG_OBJECT (pad, "state: %d, ret: %d", tag->state, ret);
   return ret;
 
   /* ERRORS */

@@ -2,7 +2,7 @@ GObject
   GInitiallyUnowned
     GstObject
       GstAllocator
-        GstDefaultAllocator
+        GstAllocatorSysmem
       GstAudioRingBuffer
         GstAudioSinkRingBuffer
         GstAudioSrcRingBuffer
@@ -22,10 +22,12 @@ GObject
         GstAuParse
         GstAudioDecoder
           GstFlacDec
+          GstMuLawDec
           GstSpeexDec
           GstWavpackDec
         GstAudioEncoder
           GstFlacEnc
+          GstMuLawEnc
           GstSpeexEnc
           GstWavpackEnc
         GstAviDemux
@@ -38,6 +40,7 @@ GObject
           GstDcaParse
           GstFlacParse
           GstMpegAudioParse
+          GstSbcParse
           GstWavpackParse
         GstBaseSink
           GstAudioBaseSink
@@ -59,6 +62,7 @@ GObject
             GstGdkPixbufSink
             GstV4l2Sink
         GstBaseSrc
+          GstDTMFSrc
           GstPushSrc
             GstAudioBaseSrc
               GstAudioSrc
@@ -73,6 +77,7 @@ GObject
             GstUDPSrc
             GstV4l2Src
             GstXImageSrc
+          GstRTPDTMFSrc
           GstSplitFileSrc
         GstBaseTransform
           GstAudioFilter
@@ -103,6 +108,7 @@ GObject
           GstProgressReport
           GstRgAnalysis
           GstRgLimiter
+          GstScaletempo
           GstTagInject
           GstVideoFilter
             GstAgingTV
@@ -163,8 +169,7 @@ GObject
         GstMatroskaMux
           GstWebMMux
         GstMatroskaParse
-        GstMuLawDec
-        GstMuLawEnc
+        GstMonoscope
         GstMultipartDemux
         GstMultipartMux
         GstQTDemux
@@ -178,6 +183,7 @@ GObject
           GstRtpAC3Depay
           GstRtpAMRDepay
           GstRtpCELTDepay
+          GstRtpDTMFDepay
           GstRtpG722Depay
           GstRtpG723Depay
           GstRtpG726Depay
@@ -189,6 +195,7 @@ GObject
           GstRtpJ2KDepay
           GstRtpJPEGDepay
           GstRtpL16Depay
+          GstRtpL24Depay
           GstRtpMP1SDepay
           GstRtpMP2TDepay
           GstRtpMP4ADepay
@@ -203,7 +210,9 @@ GObject
           GstRtpQDM2Depay
           GstRtpSPEEXDepay
           GstRtpSV3VDepay
+          GstRtpSbcDepay
           GstRtpTheoraDepay
+          GstRtpVP8Depay
           GstRtpVRawDepay
           GstRtpVorbisDepay
           GstRtpXQTDepay
@@ -215,6 +224,7 @@ GObject
             GstRtpG722Pay
             GstRtpG726Pay
             GstRtpL16Pay
+            GstRtpL24Pay
             GstRtpPcmaPay
             GstRtpPcmuPay
           GstRTPDVPay
@@ -236,11 +246,16 @@ GObject
           GstRtpMP4GPay
           GstRtpMP4VPay
           GstRtpMPAPay
+          GstRtpSBCPay
           GstRtpSPEEXPay
           GstRtpTheoraPay
+          GstRtpVP8Pay
           GstRtpVRawPay
           GstRtpVorbisPay
         GstRTPDec
+        GstRTPMux
+          GstRTPDTMFMux
+        GstRTPRtxQueue
         GstRndBufferSize
         GstRtpJitterBuffer
         GstRtpPtDemux

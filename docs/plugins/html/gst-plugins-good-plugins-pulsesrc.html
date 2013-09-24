@@ -3,12 +3,12 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>pulsesrc</title>
-<meta name="generator" content="DocBook XSL Stylesheets V1.76.1">
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
 <link rel="home" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-pulsesink.html" title="pulsesink">
 <link rel="next" href="gst-plugins-good-plugins-quarktv.html" title="quarktv">
-<meta name="generator" content="GTK-Doc V1.18 (XML mode)">
+<meta name="generator" content="GTK-Doc V1.19 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -64,7 +64,7 @@
 <a name="gst-plugins-good-plugins-pulsesrc.implemented-interfaces"></a><h2>Implemented Interfaces</h2>
 <p>
 GstPulseSrc implements
- <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gst-plugins-base-libs/html/gst-plugins-base-libs-gststreamvolume.html#GstStreamVolume">GstStreamVolume</a>,  GstImplementsInterface,  GstMixer and  GstPropertyProbe.</p>
+ <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gst-plugins-base-libs/html/gst-plugins-base-libs-gststreamvolume.html#GstStreamVolume">GstStreamVolume</a>,  <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstImplementsInterface.html">GstImplementsInterface</a>,  <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gst-plugins-base-libs/html/gst-plugins-base-libs-gstmixer.html#GstMixer">GstMixer</a> and  <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gst-plugins-base-libs/html/gst-plugins-base-libs-gstpropertyprobe.html#GstPropertyProbe">GstPropertyProbe</a>.</p>
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-pulsesrc.properties"></a><h2>Properties</h2>
@@ -78,6 +78,7 @@ GstPulseSrc implements
   "<a class="link" href="gst-plugins-good-plugins-pulsesrc.html#GstPulseSrc--source-output-index" title='The "source-output-index" property'>source-output-index</a>"      <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a>                 : Read
   "<a class="link" href="gst-plugins-good-plugins-pulsesrc.html#GstPulseSrc--volume" title='The "volume" property'>volume</a>"                   <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gdouble"><span class="type">gdouble</span></a>               : Read / Write
   "<a class="link" href="gst-plugins-good-plugins-pulsesrc.html#GstPulseSrc--client-name" title='The "client-name" property'>client-name</a>"              <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a>*                : Read / Write
+  "<a class="link" href="gst-plugins-good-plugins-pulsesrc.html#GstPulseSrc--current-device" title='The "current-device" property'>current-device</a>"           <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a>*                : Read
 </pre>
 </div>
 <div class="refsect1">
@@ -85,9 +86,12 @@ GstPulseSrc implements
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp16340160"></a><h3>Element Information</h3>
-<div class="variablelist"><table border="0">
+<a name="id-1.2.100.7.2.1"></a><h3>Element Information</h3>
+<div class="variablelist"><table border="0" class="variablelist">
+<colgroup>
 <col align="left" valign="top">
+<col>
+</colgroup>
 <tbody>
 <tr>
 <td><p><span class="term">plugin</span></p></td>
@@ -108,9 +112,12 @@ GstPulseSrc implements
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp12388752"></a><h3>Element Pads</h3>
-<div class="variablelist"><table border="0">
+<a name="id-1.2.100.7.2.2"></a><h3>Element Pads</h3>
+<div class="variablelist"><table border="0" class="variablelist">
+<colgroup>
 <col align="left" valign="top">
+<col>
+</colgroup>
 <tbody>
 <tr>
 <td><p><span class="term">name</span></p></td>
@@ -126,7 +133,7 @@ GstPulseSrc implements
 </tr>
 <tr>
 <td><p><span class="term">details</span></p></td>
-<td>audio/x-raw, format=(string){ S16LE, S16BE, F32LE, F32BE, S32LE, S32BE, U8 }, layout=(string)interleaved, rate=(int)[ 1, 2147483647 ], channels=(int)[ 1, 32 ]</td>
+<td>audio/x-raw, format=(string){ S16LE, S16BE, F32LE, F32BE, S32LE, S32BE, S24LE, S24BE, S24_32LE, S24_32BE, U8 }, layout=(string)interleaved, rate=(int)[ 1, 2147483647 ], channels=(int)[ 1, 32 ]</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
@@ -216,10 +223,17 @@ GstPulseSrc implements
 <p>The PulseAudio client_name_to_use.</p>
 <p>Default value: "lt-gst-plugins-good-plugins-scan"</p>
 </div>
+<hr>
+<div class="refsect2">
+<a name="GstPulseSrc--current-device"></a><h3>The <code class="literal">"current-device"</code> property</h3>
+<pre class="programlisting">  "current-device"           <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a>*                : Read</pre>
+<p>The current PulseAudio source device.</p>
+<p>Default value: NULL</p>
+</div>
 </div>
 </div>
 <div class="footer">
 <hr>
-          Generated by GTK-Doc V1.18</div>
+          Generated by GTK-Doc V1.19</div>
 </body>
 </html>

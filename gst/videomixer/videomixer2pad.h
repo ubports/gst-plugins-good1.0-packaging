@@ -14,8 +14,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
  
 #ifndef __GST_VIDEO_MIXER2_PAD_H__
@@ -25,6 +25,8 @@
 #include <gst/video/video.h>
 
 #include <gst/base/gstcollectpads.h>
+
+#include "videoconvert.h"
 
 G_BEGIN_DECLS
 
@@ -62,6 +64,14 @@ struct _GstVideoMixer2Pad
   gdouble alpha;
 
   GstVideoMixer2Collect *mixcol;
+
+  /* caps used for conversion if needed */
+  GstVideoInfo conversion_info;
+
+  /* Converter, if NULL no conversion is done */
+  VideoConvert *convert;
+
+  gboolean need_conversion_update;
 };
 
 struct _GstVideoMixer2PadClass

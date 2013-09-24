@@ -1,13 +1,13 @@
 # Polish translation for gst-plugins-good.
 # This file is distributed under the same license as the gst-plugins-good package.
-# Jakub Bogusz <qboosh@pld-linux.org>, 2007-2012.
+# Jakub Bogusz <qboosh@pld-linux.org>, 2007-2013.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gst-plugins-good 1.0.3\n"
+"Project-Id-Version: gst-plugins-good 1.1.4\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2013-08-28 15:03+0100\n"
-"PO-Revision-Date: 2012-11-28 19:27+0100\n"
+"POT-Creation-Date: 2013-09-19 10:18+0200\n"
+"PO-Revision-Date: 2013-09-15 11:26+0200\n"
 "Last-Translator: Jakub Bogusz <qboosh@pld-linux.org>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -15,16 +15,22 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+msgid "Jack server not found"
+msgstr "Nie znaleziono serwera Jack"
+
+msgid "Failed to decode JPEG image"
+msgstr "Nie udało się zdekodować obrazu JPEG"
+
 #. TRANSLATORS: 'song title' by 'artist name'
 #, c-format
 msgid "'%s' by '%s'"
 msgstr "'%s' autorstwa '%s'"
 
-msgid "Failed to decode JPEG image"
-msgstr "Nie udało się zdekodować obrazu JPEG"
-
 msgid "Could not connect to server"
 msgstr "Nie udało się połączyć z serwerem"
+
+msgid "No URL set."
+msgstr "Nie ustawiono URL-a."
 
 msgid "Server does not support seeking."
 msgstr "Serwer nie obsługuje przewijania."
@@ -45,9 +51,6 @@ msgstr "Wystąpił błąd sieciowy lub serwer nieoczekiwanie zamknął połącze
 msgid "Server sent bad data."
 msgstr "Serwer przysłał błędne dane."
 
-msgid "No URL set."
-msgstr "Nie ustawiono URL-a."
-
 msgid "Internal data stream error."
 msgstr "Błąd wewnętrzny strumienia danych."
 
@@ -59,6 +62,10 @@ msgstr "Ten plik nie zawiera strumieni nadających się do odtworzenia."
 
 msgid "This file is invalid and cannot be played."
 msgstr "Ten plik jest błędny i nie może być odtworzony."
+
+msgid "Cannot play stream because it is encrypted with PlayReady DRM."
+msgstr ""
+"Nie można odtwarzać strumienia, ponieważ jest zaszyfrowany DRM-em PlayReady."
 
 msgid "This file is corrupt and cannot be played."
 msgstr "Ten plik jest uszkodzony i nie może być odtworzony."
@@ -113,16 +120,6 @@ msgid "Could not open audio device for playback."
 msgstr "Nie udało się otworzyć urządzenia dźwiękowego do odtwarzania."
 
 msgid ""
-"Could not open audio device for recording. You don't have permission to open "
-"the device."
-msgstr ""
-"Nie udało się otworzyć urządzenia dźwiękowego do nagrywania. Brak uprawnień "
-"do otwarcia urządzenia."
-
-msgid "Could not open audio device for recording."
-msgstr "Nie udało się otworzyć urządzenia dźwiękowego do nagrywania."
-
-msgid ""
 "Could not open audio device for playback. This version of the Open Sound "
 "System is not supported by this element."
 msgstr ""
@@ -140,6 +137,43 @@ msgstr "Nagrywanie nie jest obsługiwane przez to urządzenie dźwiękowe."
 
 msgid "Error recording from audio device."
 msgstr "Błąd nagrywania z urządzenia dźwiękowego."
+
+msgid ""
+"Could not open audio device for recording. You don't have permission to open "
+"the device."
+msgstr ""
+"Nie udało się otworzyć urządzenia dźwiękowego do nagrywania. Brak uprawnień "
+"do otwarcia urządzenia."
+
+msgid "Could not open audio device for recording."
+msgstr "Nie udało się otworzyć urządzenia dźwiękowego do nagrywania."
+
+msgid "Record Source"
+msgstr "Źródło nagrywania"
+
+msgid "Microphone"
+msgstr "Mikrofon"
+
+msgid "Line In"
+msgstr "Wejście linii"
+
+msgid "Internal CD"
+msgstr "Wewnętrzny CD"
+
+msgid "SPDIF In"
+msgstr "Wejście SPDIF"
+
+msgid "AUX 1 In"
+msgstr "Wejście AUX 1"
+
+msgid "AUX 2 In"
+msgstr "Wejście AUX 2"
+
+msgid "Codec Loopback"
+msgstr "Pętla zwrotna kodeka"
+
+msgid "SunVTS Loopback"
+msgstr "Pętla zwrotna SunVTS"
 
 msgid "Volume"
 msgstr "Głośność"
@@ -242,6 +276,10 @@ msgid "Failed to change mute state for device '%s'."
 msgstr "Nie udało się zmienić stanu wyciszenia dla urządzenia '%s'."
 
 #, c-format
+msgid "Cannot identify device '%s'."
+msgstr "Nie można zidentyfikować urządzenia '%s'."
+
+#, c-format
 msgid ""
 "Error getting capabilities for device '%s': It isn't a v4l2 driver. Check if "
 "it is a v4l1 driver."
@@ -264,10 +302,6 @@ msgstr "Nie udało się odpytać normalizacji urządzenia '%s'."
 #, c-format
 msgid "Failed getting controls attributes on device '%s'."
 msgstr "Nie udało się uzyskać atrybutów sterujących urządzenia '%s'."
-
-#, c-format
-msgid "Cannot identify device '%s'."
-msgstr "Nie można zidentyfikować urządzenia '%s'."
 
 #, c-format
 msgid "This isn't a device '%s'."

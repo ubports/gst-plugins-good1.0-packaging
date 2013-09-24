@@ -17,8 +17,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 /**
@@ -109,7 +109,6 @@ G_DEFINE_TYPE_WITH_CODE (GstV4l2Src, gst_v4l2src, GST_TYPE_PUSH_SRC,
     G_IMPLEMENT_INTERFACE (GST_TYPE_VIDEO_ORIENTATION,
         gst_v4l2src_video_orientation_interface_init));
 
-static void gst_v4l2src_dispose (GObject * object);
 static void gst_v4l2src_finalize (GstV4l2Src * v4l2src);
 
 /* element methods */
@@ -148,7 +147,6 @@ gst_v4l2src_class_init (GstV4l2SrcClass * klass)
   basesrc_class = GST_BASE_SRC_CLASS (klass);
   pushsrc_class = GST_PUSH_SRC_CLASS (klass);
 
-  gobject_class->dispose = gst_v4l2src_dispose;
   gobject_class->finalize = (GObjectFinalizeFunc) gst_v4l2src_finalize;
   gobject_class->set_property = gst_v4l2src_set_property;
   gobject_class->get_property = gst_v4l2src_get_property;
@@ -162,9 +160,7 @@ gst_v4l2src_class_init (GstV4l2SrcClass * klass)
    * GstV4l2Src::prepare-format:
    * @v4l2src: the v4l2src instance
    * @fd: the file descriptor of the current device
-   * @fourcc: the fourcc of the format being set
-   * @width: The width of the video
-   * @height: The height of the video
+   * @caps: the caps of the format being set
    *
    * This signal gets emitted before calling the v4l2 VIDIOC_S_FMT ioctl
    * (set format). This allows for any custom configuration of the device to
@@ -177,9 +173,7 @@ gst_v4l2src_class_init (GstV4l2SrcClass * klass)
   gst_v4l2_signals[SIGNAL_PRE_SET_FORMAT] = g_signal_new ("prepare-format",
       G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST,
-      0,
-      NULL, NULL,
-      NULL, G_TYPE_NONE, 4, G_TYPE_INT, G_TYPE_UINT, G_TYPE_UINT, G_TYPE_UINT);
+      0, NULL, NULL, NULL, G_TYPE_NONE, 2, G_TYPE_INT, GST_TYPE_CAPS);
 
   gst_element_class_set_static_metadata (element_class,
       "Video (video4linux2) Source", "Source/Video",
@@ -221,18 +215,6 @@ gst_v4l2src_init (GstV4l2Src * v4l2src)
 
   gst_base_src_set_format (GST_BASE_SRC (v4l2src), GST_FORMAT_TIME);
   gst_base_src_set_live (GST_BASE_SRC (v4l2src), TRUE);
-}
-
-static void
-gst_v4l2src_dispose (GObject * object)
-{
-  GstV4l2Src *v4l2src = GST_V4L2SRC (object);
-
-  if (v4l2src->probed_caps) {
-    gst_caps_unref (v4l2src->probed_caps);
-  }
-
-  G_OBJECT_CLASS (parent_class)->dispose (object);
 }
 
 
@@ -334,8 +316,8 @@ gst_v4l2src_negotiate (GstBaseSrc * basesrc)
   if (thiscaps == NULL || gst_caps_is_any (thiscaps))
     goto no_nego_needed;
 
-  /* get the peer caps */
-  peercaps = gst_pad_peer_query_caps (GST_BASE_SRC_PAD (basesrc), thiscaps);
+  /* get the peer caps without a filter as we'll filter ourselves later on */
+  peercaps = gst_pad_peer_query_caps (GST_BASE_SRC_PAD (basesrc), NULL);
   GST_DEBUG_OBJECT (basesrc, "caps of peer: %" GST_PTR_FORMAT, peercaps);
   LOG_CAPS (basesrc, peercaps);
   if (peercaps && !gst_caps_is_any (peercaps)) {
@@ -441,9 +423,6 @@ gst_v4l2src_get_caps (GstBaseSrc * src, GstCaps * filter)
 {
   GstV4l2Src *v4l2src;
   GstV4l2Object *obj;
-  GstCaps *ret;
-  GSList *walk;
-  GSList *formats;
 
   v4l2src = GST_V4L2SRC (src);
   obj = v4l2src->v4l2object;
@@ -452,41 +431,7 @@ gst_v4l2src_get_caps (GstBaseSrc * src, GstCaps * filter)
     return gst_pad_get_pad_template_caps (GST_BASE_SRC_PAD (v4l2src));
   }
 
-  if (v4l2src->probed_caps)
-    return gst_caps_ref (v4l2src->probed_caps);
-
-  formats = gst_v4l2_object_get_format_list (obj);
-
-  ret = gst_caps_new_empty ();
-
-  for (walk = formats; walk; walk = walk->next) {
-    struct v4l2_fmtdesc *format;
-    GstStructure *template;
-
-    format = (struct v4l2_fmtdesc *) walk->data;
-
-    template = gst_v4l2_object_v4l2fourcc_to_structure (format->pixelformat);
-
-    if (template) {
-      GstCaps *tmp;
-
-      tmp =
-          gst_v4l2_object_probe_caps_for_format (obj,
-          format->pixelformat, template);
-      if (tmp)
-        gst_caps_append (ret, tmp);
-
-      gst_structure_free (template);
-    } else {
-      GST_DEBUG_OBJECT (v4l2src, "unknown format %u", format->pixelformat);
-    }
-  }
-
-  v4l2src->probed_caps = gst_caps_ref (ret);
-
-  GST_INFO_OBJECT (v4l2src, "probed caps: %" GST_PTR_FORMAT, ret);
-
-  return ret;
+  return gst_v4l2_object_get_caps (obj, filter);
 }
 
 static gboolean
@@ -498,9 +443,16 @@ gst_v4l2src_set_caps (GstBaseSrc * src, GstCaps * caps)
   v4l2src = GST_V4L2SRC (src);
   obj = v4l2src->v4l2object;
 
+  /* make sure the caps changed before doing anything */
+  if (gst_v4l2_object_caps_equal (obj, caps))
+    return TRUE;
+
   /* make sure we stop capturing and dealloc buffers */
   if (!gst_v4l2_object_stop (obj))
     return FALSE;
+
+  g_signal_emit (v4l2src, gst_v4l2_signals[SIGNAL_PRE_SET_FORMAT], 0,
+      v4l2src->v4l2object->video_fd, caps);
 
   if (!gst_v4l2_object_set_format (obj, caps))
     /* error already posted */
@@ -563,6 +515,7 @@ gst_v4l2src_decide_allocation (GstBaseSrc * bsrc, GstQuery * query)
       break;
     case GST_V4L2_IO_MMAP:
     case GST_V4L2_IO_USERPTR:
+    case GST_V4L2_IO_DMABUF:
       /* in streaming mode, prefer our own pool */
       pool = GST_BUFFER_POOL_CAST (obj->pool);
       size = obj->sizeimage;
@@ -737,10 +690,6 @@ gst_v4l2src_change_state (GstElement * element, GstStateChange transition)
       if (!gst_v4l2_object_close (obj))
         return GST_STATE_CHANGE_FAILURE;
 
-      if (v4l2src->probed_caps) {
-        gst_caps_unref (v4l2src->probed_caps);
-        v4l2src->probed_caps = NULL;
-      }
       break;
     default:
       break;

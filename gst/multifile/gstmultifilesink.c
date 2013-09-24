@@ -19,8 +19,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 /**
  * SECTION:element-multifilesink
@@ -271,7 +271,6 @@ gst_multi_file_sink_class_init (GstMultiFileSinkClass * klass)
 
   gobject_class->finalize = gst_multi_file_sink_finalize;
 
-  gstbasesink_class->get_times = NULL;
   gstbasesink_class->stop = GST_DEBUG_FUNCPTR (gst_multi_file_sink_stop);
   gstbasesink_class->render = GST_DEBUG_FUNCPTR (gst_multi_file_sink_render);
   gstbasesink_class->render_list =
@@ -586,10 +585,12 @@ gst_multi_file_sink_render (GstBaseSink * sink, GstBuffer * buffer)
       if (multifilesink->file == NULL) {
         if (!gst_multi_file_sink_open_next_file (multifilesink))
           goto stdio_write_error;
-      }
 
-      if (!gst_multi_file_sink_write_stream_headers (multifilesink))
-        goto stdio_write_error;
+        /* we don't need to write stream headers here, they will be inserted in
+         * the stream by upstream elements if key unit events have
+         * all_headers=true set
+         */
+      }
 
       ret = fwrite (map.data, map.size, 1, multifilesink->file);
 

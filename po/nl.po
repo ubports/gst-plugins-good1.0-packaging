@@ -1,13 +1,13 @@
-# translation of gst-plugins-good-1.0.3.nl.po to Dutch
+# translation of gst-plugins-good-1.1.4.nl.po to Dutch
 # This file is put in the public domain.
 #
-# Freek de Kruijf <f.de.kruijf@gmail.com>, 2007, 2008, 2009, 2010, 2011, 2012.
+# Freek de Kruijf <f.de.kruijf@gmail.com>, 2007, 2008, 2009, 2010, 2011, 2012, 2013.
 msgid ""
 msgstr ""
-"Project-Id-Version: gst-plugins-good 1.0.3\n"
+"Project-Id-Version: gst-plugins-good 1.1.4\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2013-08-28 15:03+0100\n"
-"PO-Revision-Date: 2012-11-29 22:30+0100\n"
+"POT-Creation-Date: 2013-09-19 10:18+0200\n"
+"PO-Revision-Date: 2013-09-15 13:31+0200\n"
 "Last-Translator: Freek de Kruijf <f.de.kruijf@gmail.com>\n"
 "Language-Team: Dutch <vertaling@vrijschrift.org>\n"
 "Language: nl\n"
@@ -17,16 +17,22 @@ msgstr ""
 "X-Generator: Lokalize 1.5\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 
+msgid "Jack server not found"
+msgstr "Jack-server niet gevonden"
+
+msgid "Failed to decode JPEG image"
+msgstr "Kan de JPEG-afbeelding niet decoderen"
+
 #. TRANSLATORS: 'song title' by 'artist name'
 #, c-format
 msgid "'%s' by '%s'"
 msgstr "'%s' door '%s'"
 
-msgid "Failed to decode JPEG image"
-msgstr "Kan de JPEG-afbeelding niet decoderen"
-
 msgid "Could not connect to server"
 msgstr "Kan geen verbinding maken met server"
+
+msgid "No URL set."
+msgstr "Geen URL ingesteld."
 
 msgid "Server does not support seeking."
 msgstr "Zoeken wordt door de server niet ondersteund."
@@ -49,9 +55,6 @@ msgstr ""
 msgid "Server sent bad data."
 msgstr "De server stuurde onjuiste gegevens."
 
-msgid "No URL set."
-msgstr "Geen URL ingesteld."
-
 msgid "Internal data stream error."
 msgstr "Interne fout in gegevensstroom."
 
@@ -63,6 +66,9 @@ msgstr "Dit bestand bevat geen afspeelbare stromen."
 
 msgid "This file is invalid and cannot be played."
 msgstr "Dit bestand is ongeldig en kan niet afgespeeld worden."
+
+msgid "Cannot play stream because it is encrypted with PlayReady DRM."
+msgstr "Kan stream niet afspelen omdat het versleuteld is met PlayReady DRM."
 
 msgid "This file is corrupt and cannot be played."
 msgstr "Dit bestand is beschadigd en kan niet afgespeeld worden."
@@ -118,16 +124,6 @@ msgid "Could not open audio device for playback."
 msgstr "Kan het audio-apparaat niet openen voor afspelen."
 
 msgid ""
-"Could not open audio device for recording. You don't have permission to open "
-"the device."
-msgstr ""
-"Kan het audio-apparaat niet openen voor opnemen. U hebt geen toestemming om "
-"het apparaat te openen."
-
-msgid "Could not open audio device for recording."
-msgstr "Kan het audio-apparaat niet openen voor opnemen."
-
-msgid ""
 "Could not open audio device for playback. This version of the Open Sound "
 "System is not supported by this element."
 msgstr ""
@@ -145,6 +141,43 @@ msgstr "Opnemen wordt niet ondersteund door dit audio-apparaat"
 
 msgid "Error recording from audio device."
 msgstr "Fout bij opnemen vanaf audio-apparaat."
+
+msgid ""
+"Could not open audio device for recording. You don't have permission to open "
+"the device."
+msgstr ""
+"Kan het audio-apparaat niet openen voor opnemen. U hebt geen toestemming om "
+"het apparaat te openen."
+
+msgid "Could not open audio device for recording."
+msgstr "Kan het audio-apparaat niet openen voor opnemen."
+
+msgid "Record Source"
+msgstr "Opnamebron"
+
+msgid "Microphone"
+msgstr "Microfoon"
+
+msgid "Line In"
+msgstr "Lijn-in"
+
+msgid "Internal CD"
+msgstr "Interne cd"
+
+msgid "SPDIF In"
+msgstr "SPDIF-in"
+
+msgid "AUX 1 In"
+msgstr "AUX 1-in"
+
+msgid "AUX 2 In"
+msgstr "AUX 2-in"
+
+msgid "Codec Loopback"
+msgstr "Codec-loopback"
+
+msgid "SunVTS Loopback"
+msgstr "SunVTS-loopback"
 
 msgid "Volume"
 msgstr "Volume"
@@ -245,6 +278,10 @@ msgid "Failed to change mute state for device '%s'."
 msgstr "De gedempte status van apparaat '%s' wijzigen is mislukt."
 
 #, c-format
+msgid "Cannot identify device '%s'."
+msgstr "Kan apparaat '%s' niet identificeren."
+
+#, c-format
 msgid ""
 "Error getting capabilities for device '%s': It isn't a v4l2 driver. Check if "
 "it is a v4l1 driver."
@@ -267,10 +304,6 @@ msgstr "Kan de norm op apparaat '%s' niet opvragen."
 #, c-format
 msgid "Failed getting controls attributes on device '%s'."
 msgstr "Kan de knopeigenschappen op apparaat '%s' niet verkrijgen."
-
-#, c-format
-msgid "Cannot identify device '%s'."
-msgstr "Kan apparaat '%s' niet identificeren."
 
 #, c-format
 msgid "This isn't a device '%s'."
@@ -359,9 +392,6 @@ msgstr "Kan niet werken zonder een klok."
 
 #~ msgid "Line-in"
 #~ msgstr "Lijn-in"
-
-#~ msgid "Microphone"
-#~ msgstr "Microfoon"
 
 #~ msgid "CD"
 #~ msgstr "CD"
@@ -460,20 +490,8 @@ msgstr "Kan niet werken zonder een klok."
 #~ msgid "Telephone"
 #~ msgstr "Telefoon"
 
-#~ msgid "Line In"
-#~ msgstr "Lijn-in"
-
-#~ msgid "Internal CD"
-#~ msgstr "Interne cd"
-
 #~ msgid "Video In"
 #~ msgstr "Video-in"
-
-#~ msgid "AUX 1 In"
-#~ msgstr "AUX 1-in"
-
-#~ msgid "AUX 2 In"
-#~ msgstr "AUX 2-in"
 
 #~ msgid "AUX In"
 #~ msgstr "AUX-in"
@@ -487,9 +505,6 @@ msgstr "Kan niet werken zonder een klok."
 #~ msgid "Microphone Boost"
 #~ msgstr "Microfoon-boost"
 
-#~ msgid "Loopback"
-#~ msgstr "Loopback"
-
 #~ msgid "Diagnostic"
 #~ msgstr "Diagnose"
 
@@ -501,9 +516,6 @@ msgstr "Kan niet werken zonder een klok."
 
 #~ msgid "Input"
 #~ msgstr "Invoer"
-
-#~ msgid "Record Source"
-#~ msgstr "Opnamebron"
 
 #~ msgid "Monitor Source"
 #~ msgstr "Monitorbron"
@@ -543,9 +555,6 @@ msgstr "Kan niet werken zonder een klok."
 
 #~ msgid "Input Mix"
 #~ msgstr "Invoer-mix"
-
-#~ msgid "SPDIF In"
-#~ msgstr "SPDIF-in"
 
 #~ msgid "Microphone 1"
 #~ msgstr "Microfoon-1"

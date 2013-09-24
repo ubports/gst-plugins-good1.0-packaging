@@ -4,7 +4,7 @@
 %define gst_minver   0.11.0
 
 Name: 		%{gstreamer}-plugins-good
-Version: 	1.0.10
+Version: 	1.1.90
 Release: 	1.gst
 Summary: 	GStreamer plug-ins with good code and licensing
 
@@ -129,6 +129,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/gstreamer-%{majorminor}/libgstshapewipe.so
 %{_libdir}/gstreamer-%{majorminor}/libgstvideofilter.so
 %{_libdir}/gstreamer-%{majorminor}/libgstaudioparsers.so
+%{_libdir}/gstreamer-%{majorminor}/libgstdtmf.so
 
 # sys plugins
 %{_libdir}/gstreamer-%{majorminor}/libgstvideo4linux2.so

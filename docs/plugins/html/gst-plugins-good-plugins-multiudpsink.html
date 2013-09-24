@@ -3,12 +3,12 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>multiudpsink</title>
-<meta name="generator" content="DocBook XSL Stylesheets V1.76.1">
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
 <link rel="home" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-multipartmux.html" title="multipartmux">
 <link rel="next" href="gst-plugins-good-plugins-optv.html" title="optv">
-<meta name="generator" content="GTK-Doc V1.18 (XML mode)">
+<meta name="generator" content="GTK-Doc V1.19 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -79,6 +79,10 @@
   "<a class="link" href="gst-plugins-good-plugins-multiudpsink.html#GstMultiUDPSink--used-socket" title='The "used-socket" property'>used-socket</a>"              <a href="http://library.gnome.org/devel/gio/unstable/GSocket.html"><span class="type">GSocket</span></a>*              : Read
   "<a class="link" href="gst-plugins-good-plugins-multiudpsink.html#GstMultiUDPSink--force-ipv4" title='The "force-ipv4" property'>force-ipv4</a>"               <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a>              : Read / Write
   "<a class="link" href="gst-plugins-good-plugins-multiudpsink.html#GstMultiUDPSink--multicast-iface" title='The "multicast-iface" property'>multicast-iface</a>"          <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a>*                : Read / Write
+  "<a class="link" href="gst-plugins-good-plugins-multiudpsink.html#GstMultiUDPSink--bind-address" title='The "bind-address" property'>bind-address</a>"             <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a>*                : Read / Write
+  "<a class="link" href="gst-plugins-good-plugins-multiudpsink.html#GstMultiUDPSink--bind-port" title='The "bind-port" property'>bind-port</a>"                <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a>                  : Read / Write
+  "<a class="link" href="gst-plugins-good-plugins-multiudpsink.html#GstMultiUDPSink--socket-v6" title='The "socket-v6" property'>socket-v6</a>"                <a href="http://library.gnome.org/devel/gio/unstable/GSocket.html"><span class="type">GSocket</span></a>*              : Read / Write
+  "<a class="link" href="gst-plugins-good-plugins-multiudpsink.html#GstMultiUDPSink--used-socket-v6" title='The "used-socket-v6" property'>used-socket-v6</a>"           <a href="http://library.gnome.org/devel/gio/unstable/GSocket.html"><span class="type">GSocket</span></a>*              : Read
 </pre>
 </div>
 <div class="refsect1">
@@ -102,9 +106,12 @@ It can be combined with rtp payload encoders to implement RTP streaming.
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp14668672"></a><h3>Element Information</h3>
-<div class="variablelist"><table border="0">
+<a name="id-1.2.87.7.3.1"></a><h3>Element Information</h3>
+<div class="variablelist"><table border="0" class="variablelist">
+<colgroup>
 <col align="left" valign="top">
+<col>
+</colgroup>
 <tbody>
 <tr>
 <td><p><span class="term">plugin</span></p></td>
@@ -125,9 +132,12 @@ It can be combined with rtp payload encoders to implement RTP streaming.
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp7819664"></a><h3>Element Pads</h3>
-<div class="variablelist"><table border="0">
+<a name="id-1.2.87.7.3.2"></a><h3>Element Pads</h3>
+<div class="variablelist"><table border="0" class="variablelist">
+<colgroup>
 <col align="left" valign="top">
+<col>
+</colgroup>
 <tbody>
 <tr>
 <td><p><span class="term">name</span></p></td>
@@ -282,7 +292,7 @@ It can be combined with rtp payload encoders to implement RTP streaming.
 <div class="refsect2">
 <a name="GstMultiUDPSink--force-ipv4"></a><h3>The <code class="literal">"force-ipv4"</code> property</h3>
 <pre class="programlisting">  "force-ipv4"               <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a>              : Read / Write</pre>
-<p>Forcing the use of an IPv4 socket.</p>
+<p>Forcing the use of an IPv4 socket (DEPRECATED, has no effect anymore).</p>
 <p>Default value: FALSE</p>
 </div>
 <hr>
@@ -291,6 +301,33 @@ It can be combined with rtp payload encoders to implement RTP streaming.
 <pre class="programlisting">  "multicast-iface"          <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a>*                : Read / Write</pre>
 <p>The network interface on which to join the multicast group.</p>
 <p>Default value: NULL</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstMultiUDPSink--bind-address"></a><h3>The <code class="literal">"bind-address"</code> property</h3>
+<pre class="programlisting">  "bind-address"             <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a>*                : Read / Write</pre>
+<p>Address to bind the socket to.</p>
+<p>Default value: NULL</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstMultiUDPSink--bind-port"></a><h3>The <code class="literal">"bind-port"</code> property</h3>
+<pre class="programlisting">  "bind-port"                <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a>                  : Read / Write</pre>
+<p>Port to bind the socket to.</p>
+<p>Allowed values: [0,65535]</p>
+<p>Default value: 0</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstMultiUDPSink--socket-v6"></a><h3>The <code class="literal">"socket-v6"</code> property</h3>
+<pre class="programlisting">  "socket-v6"                <a href="http://library.gnome.org/devel/gio/unstable/GSocket.html"><span class="type">GSocket</span></a>*              : Read / Write</pre>
+<p>Socket to use for UDPv6 sending. (NULL == allocate).</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstMultiUDPSink--used-socket-v6"></a><h3>The <code class="literal">"used-socket-v6"</code> property</h3>
+<pre class="programlisting">  "used-socket-v6"           <a href="http://library.gnome.org/devel/gio/unstable/GSocket.html"><span class="type">GSocket</span></a>*              : Read</pre>
+<p>Socket currently in use for UDPv6 sending. (NULL == no socket).</p>
 </div>
 </div>
 <div class="refsect1">
@@ -312,8 +349,11 @@ When a host/port pair is added multiple times, an equal amount of remove
 calls must be performed to actually remove the host/port pair from the list
 of destinations.
 </p>
-<div class="variablelist"><table border="0">
+<div class="variablelist"><table border="0" class="variablelist">
+<colgroup>
 <col align="left" valign="top">
+<col>
+</colgroup>
 <tbody>
 <tr>
 <td><p><span class="term"><em class="parameter"><code>gstmultiudpsink</code></em> :</span></p></td>
@@ -342,8 +382,11 @@ of destinations.
 <p>
 Clear the list of clients.
 </p>
-<div class="variablelist"><table border="0">
+<div class="variablelist"><table border="0" class="variablelist">
+<colgroup>
 <col align="left" valign="top">
+<col>
+</colgroup>
 <tbody>
 <tr>
 <td><p><span class="term"><em class="parameter"><code>gstmultiudpsink</code></em> :</span></p></td>
@@ -367,8 +410,11 @@ Clear the list of clients.
 Signal emited when a new client is added to the list of
 clients.
 </p>
-<div class="variablelist"><table border="0">
+<div class="variablelist"><table border="0" class="variablelist">
+<colgroup>
 <col align="left" valign="top">
+<col>
+</colgroup>
 <tbody>
 <tr>
 <td><p><span class="term"><em class="parameter"><code>gstmultiudpsink</code></em> :</span></p></td>
@@ -400,8 +446,11 @@ clients.
 Signal emited when a client is removed from the list of
 clients.
 </p>
-<div class="variablelist"><table border="0">
+<div class="variablelist"><table border="0" class="variablelist">
+<colgroup>
 <col align="left" valign="top">
+<col>
+</colgroup>
 <tbody>
 <tr>
 <td><p><span class="term"><em class="parameter"><code>gstmultiudpsink</code></em> :</span></p></td>
@@ -432,8 +481,11 @@ clients.
 <p>
 Get the statistics of the client with destination <em class="parameter"><code>host</code></em> and <em class="parameter"><code>port</code></em>.
 </p>
-<div class="variablelist"><table border="0">
+<div class="variablelist"><table border="0" class="variablelist">
+<colgroup>
 <col align="left" valign="top">
+<col>
+</colgroup>
 <tbody>
 <tr>
 <td><p><span class="term"><em class="parameter"><code>gstmultiudpsink</code></em> :</span></p></td>
@@ -470,8 +522,11 @@ connect_time (in epoch seconds), disconnect_time (in epoch seconds)</td>
 Remove the client with destination <em class="parameter"><code>host</code></em> and <em class="parameter"><code>port</code></em> from the list of
 clients.
 </p>
-<div class="variablelist"><table border="0">
+<div class="variablelist"><table border="0" class="variablelist">
+<colgroup>
 <col align="left" valign="top">
+<col>
+</colgroup>
 <tbody>
 <tr>
 <td><p><span class="term"><em class="parameter"><code>gstmultiudpsink</code></em> :</span></p></td>
@@ -500,6 +555,6 @@ udpsink, multifdsink
 </div>
 <div class="footer">
 <hr>
-          Generated by GTK-Doc V1.18</div>
+          Generated by GTK-Doc V1.19</div>
 </body>
 </html>

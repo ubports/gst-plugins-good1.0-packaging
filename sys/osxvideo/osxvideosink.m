@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  *
  * The development of this code was made possible due to the involvement of
  * Pioneers of the Inevitable, the creators of the Songbird Music player.
@@ -486,6 +486,9 @@ gst_osx_video_sink_set_property (GObject * object, guint prop_id,
   switch (prop_id) {
     case ARG_EMBED:
       osxvideosink->embed = g_value_get_boolean(value);
+      g_warning ("The \"embed\" property of osxvideosink is deprecated and "
+          "will be removed in the near future. Use the GstVideoOverlay "
+          "instead.");
       break;
     case ARG_FORCE_PAR:
       osxvideosink->keep_par = g_value_get_boolean(value);

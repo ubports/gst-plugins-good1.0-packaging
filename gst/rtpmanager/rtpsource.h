@@ -13,8 +13,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #ifndef __RTP_SOURCE_H__
@@ -51,7 +51,7 @@ typedef struct _RTPSourceClass RTPSourceClass;
  * Check if @src is active. A source is active when it has been validated
  * and has not yet received a BYE packet.
  */
-#define RTP_SOURCE_IS_ACTIVE(src)  (src->validated && !src->received_bye)
+#define RTP_SOURCE_IS_ACTIVE(src)  (src->validated && !src->marked_bye)
 
 /**
  * RTP_SOURCE_IS_SENDER:
@@ -60,11 +60,19 @@ typedef struct _RTPSourceClass RTPSourceClass;
  * Check if @src is a sender.
  */
 #define RTP_SOURCE_IS_SENDER(src)  (src->is_sender)
+/**
+ * RTP_SOURCE_IS_MARKED_BYE:
+ * @src: an #RTPSource
+ *
+ * Check if @src is a marked as BYE.
+ */
+#define RTP_SOURCE_IS_MARKED_BYE(src)  (src->marked_bye)
+
 
 /**
  * RTPSourcePushRTP:
  * @src: an #RTPSource
- * @buffer: the RTP buffer ready for processing
+ * @data: the RTP buffer or buffer list ready for processing
  * @user_data: user data specified when registering
  *
  * This callback will be called when @src has @buffer ready for further
@@ -72,7 +80,7 @@ typedef struct _RTPSourceClass RTPSourceClass;
  *
  * Returns: a #GstFlowReturn.
  */
-typedef GstFlowReturn (*RTPSourcePushRTP) (RTPSource *src, GstBuffer *buffer,
+typedef GstFlowReturn (*RTPSourcePushRTP) (RTPSource *src, gpointer data,
 	gpointer user_data);
 
 /**
@@ -127,6 +135,7 @@ struct _RTPSource {
   /*< private >*/
   guint32       ssrc;
 
+  guint16       generation;
   guint         probation;
   guint         curr_probation;
   gboolean      validated;
@@ -137,8 +146,9 @@ struct _RTPSource {
 
   GstStructure  *sdes;
 
-  gboolean      received_bye;
+  gboolean      marked_bye;
   gchar        *bye_reason;
+  gboolean      sent_bye;
 
   GSocketAddress *rtp_from;
   GSocketAddress *rtcp_from;
@@ -177,6 +187,10 @@ struct _RTPSource {
   gboolean     send_fir;
   guint8       current_send_fir_seqnum;
   gint         last_fir_count;
+
+  gboolean     send_nack;
+  GArray      *nacks;
+
 };
 
 struct _RTPSourceClass {
@@ -199,15 +213,13 @@ gboolean        rtp_source_is_active           (RTPSource *src);
 gboolean        rtp_source_is_validated        (RTPSource *src);
 gboolean        rtp_source_is_sender           (RTPSource *src);
 
-gboolean        rtp_source_received_bye        (RTPSource *src);
+void            rtp_source_mark_bye            (RTPSource *src, const gchar *reason);
+gboolean        rtp_source_is_marked_bye       (RTPSource *src);
 gchar *         rtp_source_get_bye_reason      (RTPSource *src);
 
 void            rtp_source_update_caps         (RTPSource *src, GstCaps *caps);
 
 /* SDES info */
-gboolean        rtp_source_set_sdes_string     (RTPSource *src, GstRTCPSDESType type,
-                                                const gchar *data);
-gchar*          rtp_source_get_sdes_string     (RTPSource *src, GstRTCPSDESType type);
 const GstStructure *
                 rtp_source_get_sdes_struct     (RTPSource * src);
 gboolean        rtp_source_set_sdes_struct     (RTPSource * src, GstStructure *sdes);
@@ -217,12 +229,11 @@ void            rtp_source_set_rtp_from        (RTPSource *src, GSocketAddress *
 void            rtp_source_set_rtcp_from       (RTPSource *src, GSocketAddress *address);
 
 /* handling RTP */
-GstFlowReturn   rtp_source_process_rtp         (RTPSource *src, GstBuffer *buffer, RTPArrivalStats *arrival);
+GstFlowReturn   rtp_source_process_rtp         (RTPSource *src, RTPPacketInfo *pinfo);
 
-GstFlowReturn   rtp_source_send_rtp            (RTPSource *src, gpointer data, gboolean is_list,
-                                                GstClockTime running_time);
+GstFlowReturn   rtp_source_send_rtp            (RTPSource *src, RTPPacketInfo *pinfo);
+
 /* RTCP messages */
-void            rtp_source_process_bye         (RTPSource *src, const gchar *reason);
 void            rtp_source_process_sr          (RTPSource *src, GstClockTime time, guint64 ntptime,
                                                 guint32 rtptime, guint32 packet_count, guint32 octet_count);
 void            rtp_source_process_rb          (RTPSource *src, guint64 ntpnstime, guint8 fractionlost,
@@ -261,10 +272,13 @@ void            rtp_source_timeout             (RTPSource * src,
 void            rtp_source_retain_rtcp_packet  (RTPSource * src,
                                                 GstRTCPPacket *pkt,
                                                 GstClockTime running_time);
-
 gboolean        rtp_source_has_retained        (RTPSource * src,
                                                 GCompareFunc func,
                                                 gconstpointer data);
 
+void            rtp_source_register_nack       (RTPSource * src,
+                                                guint16 seqnum);
+guint32 *       rtp_source_get_nacks           (RTPSource * src, guint *n_nacks);
+void            rtp_source_clear_nacks         (RTPSource * src);
 
 #endif /* __RTP_SOURCE_H__ */

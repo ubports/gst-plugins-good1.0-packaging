@@ -13,8 +13,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -35,7 +35,7 @@ static GstStaticPadTemplate gst_rtp_vraw_pay_sink_template =
     GST_PAD_SINK,
     GST_PAD_ALWAYS,
     GST_STATIC_CAPS ("video/x-raw, "
-        "format = (string) { RGB, RGBA, BGR, BGRA, AYUYV, UYVY, I420, Y41B, UYVP, I420, Y42B, Y444 }, "
+        "format = (string) { RGB, RGBA, BGR, BGRA, AYUV, UYVY, I420, Y41B, UYVP }, "
         "width = (int) [ 1, 32767 ], " "height = (int) [ 1, 32767 ]; ")
     );
 
@@ -177,7 +177,7 @@ gst_rtp_vraw_pay_setcaps (GstRTPBasePayload * payload, GstCaps * caps)
       break;
     case GST_VIDEO_FORMAT_UYVP:
       samplingstr = "YCbCr-4:2:2";
-      pgroup = 4;
+      pgroup = 5;
       xinc = 2;
       depth = 10;
       depthstr = "10";
@@ -409,6 +409,7 @@ gst_rtp_vraw_pay_handle_buffer (GstRTPBasePayload * payload, GstBuffer * buffer)
           case GST_VIDEO_FORMAT_BGR:
           case GST_VIDEO_FORMAT_BGRA:
           case GST_VIDEO_FORMAT_UYVY:
+          case GST_VIDEO_FORMAT_UYVP:
             offs /= rtpvrawpay->xinc;
             memcpy (outdata, yp + (lin * ystride) + (offs * pgroup), length);
             outdata += length;

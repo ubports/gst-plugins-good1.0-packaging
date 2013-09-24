@@ -13,8 +13,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -549,8 +549,11 @@ gst_rtp_theora_depay_process (GstRTPBaseDepayload * depayload, GstBuffer * buf)
       gst_buffer_fill (outbuf, 0, payload, length);
     }
 
-    if (payload_len > 0 && (payload[0] & 0xC0) == 0x0)
+    if (payload_len > 0 && (payload[0] & 0xC0) == 0x0) {
       rtptheoradepay->needs_keyframe = FALSE;
+    } else {
+      GST_BUFFER_FLAG_SET (outbuf, GST_BUFFER_FLAG_DELTA_UNIT);
+    }
 
     payload += length;
     payload_len -= length;

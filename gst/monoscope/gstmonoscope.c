@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 /**
@@ -349,7 +349,8 @@ gst_monoscope_chain (GstPad * pad, GstObject * parent, GstBuffer * inbuf)
   if (GST_BUFFER_TIMESTAMP (inbuf) != GST_CLOCK_TIME_NONE)
     monoscope->next_ts = GST_BUFFER_TIMESTAMP (inbuf);
 
-  GST_LOG_OBJECT (monoscope, "in buffer has %d samples, ts=%" GST_TIME_FORMAT,
+  GST_LOG_OBJECT (monoscope,
+      "in buffer has %" G_GSIZE_FORMAT " samples, ts=%" GST_TIME_FORMAT,
       gst_buffer_get_size (inbuf) / monoscope->bps,
       GST_TIME_ARGS (GST_BUFFER_TIMESTAMP (inbuf)));
 

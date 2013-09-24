@@ -13,8 +13,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #ifndef __GST_RTP_GST_PAY_H__
@@ -22,6 +22,7 @@
 
 #include <gst/gst.h>
 #include <gst/rtp/gstrtpbasepayload.h>
+#include <gst/base/gstadapter.h>
 
 G_BEGIN_DECLS
 
@@ -42,6 +43,19 @@ typedef struct _GstRtpGSTPayClass GstRtpGSTPayClass;
 struct _GstRtpGSTPay
 {
   GstRTPBasePayload payload;
+
+  GList *pending_buffers; /* GstBufferList */
+  GstAdapter *adapter;
+  guint8 flags;
+  guint8 etype;
+
+  guint8 current_CV; /* CV field of incoming caps*/
+  guint8 next_CV;
+
+  gchar *stream_id;
+  GstTagList *taglist;
+  guint config_interval;
+  GstClockTime last_config;
 };
 
 struct _GstRtpGSTPayClass

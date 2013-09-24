@@ -1,13 +1,14 @@
-# translation of gst-plugins-good-0.10.26.2.po to Turkish
+# translation of gst-plugins-good-1.0.3.po to Turkish
 # This file is put in the public domain.
 # Server Acim <serveracim@gmail.com>, 2010.
 # Server Acim <serveracim@gmail.com>, 2011.
+# Server Acim <serveracim@gmail.com>, 2013.
 msgid ""
 msgstr ""
-"Project-Id-Version: gst-plugins-good 0.10.26.2\n"
+"Project-Id-Version: gst-plugins-good 1.0.3\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2013-08-28 15:03+0100\n"
-"PO-Revision-Date: 2011-01-08 00:03+0200\n"
+"POT-Creation-Date: 2013-09-19 10:18+0200\n"
+"PO-Revision-Date: 2013-03-10 13:05+0200\n"
 "Last-Translator: Server Acim <serveracim@gmail.com>\n"
 "Language-Team: Turkish <gnu-tr-u12a@lists.sourceforge.net>\n"
 "Language: tr\n"
@@ -15,16 +16,22 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+msgid "Jack server not found"
+msgstr ""
+
+msgid "Failed to decode JPEG image"
+msgstr "JPEG görüntüsünü çözümlenemedi"
+
 #. TRANSLATORS: 'song title' by 'artist name'
 #, c-format
 msgid "'%s' by '%s'"
 msgstr "'%s' tarafından '%s'"
 
-msgid "Failed to decode JPEG image"
-msgstr "JPEG görüntüsünü çözümlenemedi"
-
 msgid "Could not connect to server"
 msgstr "Sunucuya bağlanamıyor"
+
+msgid "No URL set."
+msgstr "Hiç bir URL ayarlanmamış."
 
 msgid "Server does not support seeking."
 msgstr "Sunucu aramayı desteklemiyor."
@@ -47,9 +54,6 @@ msgstr ""
 msgid "Server sent bad data."
 msgstr "Sunucu yetersiz veri gönderdi."
 
-msgid "No URL set."
-msgstr "Hiç bir URL ayarlanmamış."
-
 msgid "Internal data stream error."
 msgstr "İç veri akım hatası."
 
@@ -61,6 +65,9 @@ msgstr "Dosya çalınabilir akışlar içermiyor."
 
 msgid "This file is invalid and cannot be played."
 msgstr "Bu dosya geçersiz ve oynatılamaz."
+
+msgid "Cannot play stream because it is encrypted with PlayReady DRM."
+msgstr ""
 
 msgid "This file is corrupt and cannot be played."
 msgstr "Bu dosya bozuk ve oynatılamaz."
@@ -112,14 +119,6 @@ msgid "Could not open audio device for playback."
 msgstr "Çalmak için ses aygıtı açılamıyor."
 
 msgid ""
-"Could not open audio device for recording. You don't have permission to open "
-"the device."
-msgstr "Kayıt için aygıtı açamıyor. Aygıtı açmak için yetkiniz yok."
-
-msgid "Could not open audio device for recording."
-msgstr "Aygıtı kayıt için açamıyor."
-
-msgid ""
 "Could not open audio device for playback. This version of the Open Sound "
 "System is not supported by this element."
 msgstr ""
@@ -137,6 +136,43 @@ msgstr "Bu ses aygıtı kaydetmeyi desteklemiyor."
 
 msgid "Error recording from audio device."
 msgstr "Ses aygıtından kaydetmekte hata."
+
+msgid ""
+"Could not open audio device for recording. You don't have permission to open "
+"the device."
+msgstr "Kayıt için aygıtı açamıyor. Aygıtı açmak için yetkiniz yok."
+
+msgid "Could not open audio device for recording."
+msgstr "Aygıtı kayıt için açamıyor."
+
+msgid "Record Source"
+msgstr "Kayıt Kaynağı"
+
+msgid "Microphone"
+msgstr "Mikrofon"
+
+msgid "Line In"
+msgstr "Hat Girişi"
+
+msgid "Internal CD"
+msgstr "Dahili CD"
+
+msgid "SPDIF In"
+msgstr "SPDIF Girişi"
+
+msgid "AUX 1 In"
+msgstr "AUX 1 Giriş"
+
+msgid "AUX 2 In"
+msgstr "AUX 2 Giriş"
+
+#, fuzzy
+msgid "Codec Loopback"
+msgstr "Geridönüm"
+
+#, fuzzy
+msgid "SunVTS Loopback"
+msgstr "Geridönüm"
 
 msgid "Volume"
 msgstr "Ses Girişi"
@@ -177,25 +213,23 @@ msgstr "Aygıtın '%s' birlikte çalışabileceği vidyo kiplerini sıralamada h
 msgid "Could not map buffers from device '%s'"
 msgstr "Aygıttan '%s' bellekler eşlenemiyor"
 
-#, fuzzy, c-format
+#, c-format
 msgid "The driver of device '%s' does not support the IO method %d"
-msgstr ""
-"Bu aygıtın sürücüsü '%s' bilinen görüntü yakalama yöntemlerinden herhangi "
-"birisi desteklemiyor."
+msgstr "Bu aygıtın sürücüsü '%s' IO yöntemini desteklemiyor %d"
 
-#, fuzzy, c-format
+#, c-format
 msgid "The driver of device '%s' does not support any known IO method."
 msgstr ""
-"Bu aygıtın sürücüsü '%s' bilinen görüntü yakalama yöntemlerinden herhangi "
-"birisi desteklemiyor."
+"Bu aygıtın sürücüsü '%s' bilinen IO yöntemlerinden herhangi birisini "
+"desteklemiyor."
 
-#, fuzzy, c-format
+#, c-format
 msgid "Device '%s' does not support video capture"
-msgstr "Aygıt '%s' bir çıkış aygıtı değil."
+msgstr "Aygıt '%s' video yakalamayı desteklemiyor"
 
 #, c-format
 msgid "Device '%s' is busy"
-msgstr ""
+msgstr "Aygıt '%s' meşgul"
 
 #, c-format
 msgid "Device '%s' cannot capture at %dx%d"
@@ -209,36 +243,39 @@ msgstr "Aygıt '%s' belirtilen kipte görüntü yakalayamadı"
 msgid "Could not get parameters on device '%s'"
 msgstr "Değiştirgeler aygıttan '%s' alınamıyor"
 
-#, fuzzy
 msgid "Video device did not accept new frame rate setting."
-msgstr "Vidyo giriş aygıtı yeni çerçeve oranı ayarlarını kabul etmedi."
+msgstr "Vidyo aygıtı yeni çerçeve oranı ayarlarını kabul etmedi."
 
 msgid "Video device could not create buffer pool."
-msgstr ""
+msgstr "Video aygıtı tampon havuzu yaratamadı."
 
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to get settings of tuner %d on device '%s'."
-msgstr "Radyo istasyonu ayarlarını bulma %d şu aygıtta '%s' başarılamadı."
+msgstr "İstasyon ayarlarını bulma işlemi %d şu aygıtta '%s' başarılamadı."
 
-#, fuzzy, c-format
+#, c-format
 msgid "Error getting capabilities for device '%s'."
-msgstr "%d bayt bilgili '%s' aygıtından okumada hata."
+msgstr "Bu aygıt için kapasite bilgisi alınamadı '%s'."
 
-#, fuzzy, c-format
+#, c-format
 msgid "Device '%s' is not a tuner."
-msgstr "Aygıt '%s' bir çıkış aygıtı değil."
+msgstr "Aygıt '%s' bir radyo değil."
 
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to get radio input on device '%s'. "
-msgstr "Giriş değeri olarak bu %d şu aygıtta %s ayarlanamadı."
+msgstr "Radyo giriş değeri şu aygıtta '%s' ayarlanamadı."
 
 #, c-format
 msgid "Failed to set input %d on device %s."
 msgstr "Giriş değeri olarak bu %d şu aygıtta %s ayarlanamadı."
 
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to change mute state for device '%s'."
-msgstr "Aygıt için '%s' güçlü sinyal alımı gerçekleşemedi."
+msgstr "Aygıt '%s' susturulmaya ayarlanamadı."
+
+#, c-format
+msgid "Cannot identify device '%s'."
+msgstr "Aygıt tanımlanamıyor '%s'."
 
 #, c-format
 msgid ""
@@ -263,10 +300,6 @@ msgstr "Şu aygıtta '%s' sorgu normuna erişilemedi."
 #, c-format
 msgid "Failed getting controls attributes on device '%s'."
 msgstr "Denetim davranışları şu aygıtta '%s' bulunamadı."
-
-#, c-format
-msgid "Cannot identify device '%s'."
-msgstr "Aygıt tanımlanamıyor '%s'."
 
 #, c-format
 msgid "This isn't a device '%s'."
@@ -352,9 +385,6 @@ msgstr "Saat olmadan çalışamaz"
 
 #~ msgid "Line-in"
 #~ msgstr "Hat girişi"
-
-#~ msgid "Microphone"
-#~ msgstr "Mikrofon"
 
 #~ msgid "CD"
 #~ msgstr "CD"
@@ -453,20 +483,8 @@ msgstr "Saat olmadan çalışamaz"
 #~ msgid "Telephone"
 #~ msgstr "Telefon"
 
-#~ msgid "Line In"
-#~ msgstr "Hat Girişi"
-
-#~ msgid "Internal CD"
-#~ msgstr "Dahili CD"
-
 #~ msgid "Video In"
 #~ msgstr "Vidyo Girişi"
-
-#~ msgid "AUX 1 In"
-#~ msgstr "AUX 1 Giriş"
-
-#~ msgid "AUX 2 In"
-#~ msgstr "AUX 2 Giriş"
 
 #~ msgid "AUX In"
 #~ msgstr "AUX Giriş"
@@ -480,9 +498,6 @@ msgstr "Saat olmadan çalışamaz"
 #~ msgid "Microphone Boost"
 #~ msgstr "Mikrofon Seviye Yükseltme"
 
-#~ msgid "Loopback"
-#~ msgstr "Geridönüm"
-
 #~ msgid "Diagnostic"
 #~ msgstr "Ayarlar"
 
@@ -494,9 +509,6 @@ msgstr "Saat olmadan çalışamaz"
 
 #~ msgid "Input"
 #~ msgstr "Giriş"
-
-#~ msgid "Record Source"
-#~ msgstr "Kayıt Kaynağı"
 
 #~ msgid "Monitor Source"
 #~ msgstr "Hoparlör Kaynağı"
@@ -536,9 +548,6 @@ msgstr "Saat olmadan çalışamaz"
 
 #~ msgid "Input Mix"
 #~ msgstr "Giriş Mix"
-
-#~ msgid "SPDIF In"
-#~ msgstr "SPDIF Girişi"
 
 #~ msgid "Microphone 1"
 #~ msgstr "Mikrofon 1"

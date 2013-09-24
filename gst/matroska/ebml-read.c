@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -137,7 +137,10 @@ gst_ebml_peek_id_length (guint32 * _id, guint64 * _length, guint * _needed,
   /* ERRORS */
 peek_error:
   {
-    GST_WARNING_OBJECT (el, "peek failed, ret = %d", ret);
+    if (ret != GST_FLOW_FLUSHING)
+      GST_WARNING_OBJECT (el, "peek failed, ret = %s", gst_flow_get_name (ret));
+    else
+      GST_DEBUG_OBJECT (el, "peek failed, ret = %s", gst_flow_get_name (ret));
     *_needed = needed;
     return ret;
   }

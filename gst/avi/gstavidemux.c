@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 /* Element-Checklist-Version: 5 */
 
@@ -57,7 +57,7 @@
 
 #define DIV_ROUND_UP(s,v) (((s) + ((v)-1)) / (v))
 
-#define GST_AVI_KEYFRAME 1
+#define GST_AVI_KEYFRAME (1 << 0)
 #define ENTRY_IS_KEYFRAME(e) ((e)->flags == GST_AVI_KEYFRAME)
 #define ENTRY_SET_KEYFRAME(e) ((e)->flags = GST_AVI_KEYFRAME)
 #define ENTRY_UNSET_KEYFRAME(e) ((e)->flags = 0)
@@ -255,6 +255,9 @@ gst_avi_demux_reset (GstAviDemux * avi)
   avi->num_a_streams = 0;
   avi->num_t_streams = 0;
   avi->main_stream = -1;
+
+  avi->have_group_id = FALSE;
+  avi->group_id = G_MAXUINT;
 
   avi->state = GST_AVI_DEMUX_START;
   avi->offset = 0;
@@ -456,14 +459,14 @@ gst_avi_demux_handle_src_query (GstPad * pad, GstObject * parent,
       if (stream->strh->type == GST_RIFF_FCC_auds) {
         if (stream->is_vbr) {
           /* VBR */
-          pos = gst_util_uint64_scale ((gint64) stream->current_entry *
-              stream->strh->scale, GST_SECOND, (guint64) stream->strh->rate);
+          pos = avi_stream_convert_frames_to_time_unchecked (stream,
+              stream->current_total);
           GST_DEBUG_OBJECT (avi, "VBR convert frame %u, time %"
               GST_TIME_FORMAT, stream->current_entry, GST_TIME_ARGS (pos));
         } else if (stream->strf.auds->av_bps != 0) {
           /* CBR */
-          pos = gst_util_uint64_scale (stream->current_total, GST_SECOND,
-              (guint64) stream->strf.auds->av_bps);
+          pos = avi_stream_convert_bytes_to_time_unchecked (stream,
+              stream->current_total);
           GST_DEBUG_OBJECT (avi,
               "CBR convert bytes %u, time %" GST_TIME_FORMAT,
               stream->current_total, GST_TIME_ARGS (pos));
@@ -510,14 +513,16 @@ gst_avi_demux_handle_src_query (GstPad * pad, GstObject * parent,
 
       /* only act on audio or video streams */
       if (stream->strh->type != GST_RIFF_FCC_auds &&
-          stream->strh->type != GST_RIFF_FCC_vids) {
+          stream->strh->type != GST_RIFF_FCC_vids &&
+          stream->strh->type != GST_RIFF_FCC_iavs) {
         res = FALSE;
         break;
       }
 
       /* take stream duration, fall back to avih duration */
       if ((duration = stream->duration) == -1)
-        duration = avi->duration;
+        if ((duration = stream->hdr_duration) == -1)
+          duration = avi->duration;
 
       gst_query_parse_duration (query, &fmt, NULL);
 
@@ -571,6 +576,25 @@ gst_avi_demux_handle_src_query (GstPad * pad, GstObject * parent,
         gst_query_set_convert (query, src_fmt, src_val, dest_fmt, dest_val);
       else
         res = gst_pad_query_default (pad, parent, query);
+      break;
+    }
+    case GST_QUERY_SEGMENT:
+    {
+      GstFormat format;
+      gint64 start, stop;
+
+      format = avi->segment.format;
+
+      start =
+          gst_segment_to_stream_time (&avi->segment, format,
+          avi->segment.start);
+      if ((stop = avi->segment.stop) == -1)
+        stop = avi->segment.duration;
+      else
+        stop = gst_segment_to_stream_time (&avi->segment, format, stop);
+
+      gst_query_set_segment (query, avi->segment.rate, format, start, stop);
+      res = TRUE;
       break;
     }
     default:
@@ -724,6 +748,7 @@ gst_avi_demux_handle_sink_event (GstPad * pad, GstObject * parent,
     {
       gint64 boffset, offset = 0;
       GstSegment segment;
+      GstEvent *segment_event;
 
       /* some debug output */
       gst_event_copy_segment (event, &segment);
@@ -821,7 +846,9 @@ gst_avi_demux_handle_sink_event (GstPad * pad, GstObject * parent,
       gst_segment_copy_into (&segment, &avi->segment);
 
       GST_DEBUG_OBJECT (avi, "Pushing newseg %" GST_SEGMENT_FORMAT, &segment);
-      gst_avi_demux_push_event (avi, gst_event_new_segment (&segment));
+      segment_event = gst_event_new_segment (&segment);
+      gst_event_set_seqnum (segment_event, gst_event_get_seqnum (event));
+      gst_avi_demux_push_event (avi, segment_event);
 
       GST_DEBUG_OBJECT (avi, "next chunk expected at %" G_GINT64_FORMAT,
           boffset);
@@ -1370,9 +1397,13 @@ gst_avi_demux_get_buffer_info (GstAviDemux * avi, GstAviStream * stream,
       if (timestamp)
         *timestamp =
             avi_stream_convert_frames_to_time_unchecked (stream, entry->total);
-      if (ts_end)
+      if (ts_end) {
+        gint size = 1;
+        if (G_LIKELY (entry_n + 1 < stream->idx_n))
+          size = stream->index[entry_n + 1].total - entry->total;
         *ts_end = avi_stream_convert_frames_to_time_unchecked (stream,
-            entry->total + 1);
+            entry->total + size);
+      }
     } else {
       if (timestamp)
         *timestamp =
@@ -1978,6 +2009,7 @@ gst_avi_demux_parse_stream (GstAviDemux * avi, GstBuffer * buf)
   GstElement *element;
   gboolean got_strh = FALSE, got_strf = FALSE, got_vprp = FALSE;
   gst_riff_vprp *vprp = NULL;
+  GstEvent *event;
   gchar *stream_id;
 
   element = GST_ELEMENT_CAST (avi);
@@ -2355,9 +2387,26 @@ gst_avi_demux_parse_stream (GstAviDemux * avi, GstBuffer * buf)
 
   gst_pad_set_active (pad, TRUE);
   stream_id =
-      gst_pad_create_stream_id_printf (pad, GST_ELEMENT_CAST (avi), "%u",
+      gst_pad_create_stream_id_printf (pad, GST_ELEMENT_CAST (avi), "%03u",
       avi->num_streams);
-  gst_pad_push_event (pad, gst_event_new_stream_start (stream_id));
+
+  event = gst_pad_get_sticky_event (avi->sinkpad, GST_EVENT_STREAM_START, 0);
+  if (event) {
+    if (gst_event_parse_group_id (event, &avi->group_id))
+      avi->have_group_id = TRUE;
+    else
+      avi->have_group_id = FALSE;
+    gst_event_unref (event);
+  } else if (!avi->have_group_id) {
+    avi->have_group_id = TRUE;
+    avi->group_id = gst_util_group_id_next ();
+  }
+
+  event = gst_event_new_stream_start (stream_id);
+  if (avi->have_group_id)
+    gst_event_set_group_id (event, avi->group_id);
+
+  gst_pad_push_event (pad, event);
   g_free (stream_id);
   gst_pad_set_caps (pad, caps);
   gst_caps_unref (caps);
@@ -2547,10 +2596,11 @@ gst_avi_demux_index_for_time (GstAviDemux * avi,
     } else {
       index = avi_stream_convert_time_to_frames_unchecked (stream, time);
     }
-  } else {
+  } else if (stream->strh->type == GST_RIFF_FCC_auds) {
     /* constant rate stream */
     total = avi_stream_convert_time_to_bytes_unchecked (stream, time);
-  }
+  } else
+    return -1;
 
   if (index == -1) {
     GstAviIndexEntry *entry;
@@ -2587,7 +2637,9 @@ gst_avi_demux_stream_for_id (GstAviDemux * avi, guint32 id)
   /* get the stream for this entry */
   stream_nr = CHUNKID_TO_STREAMNR (id);
   if (G_UNLIKELY (stream_nr >= avi->num_streams)) {
-    GST_WARNING_OBJECT (avi, "invalid stream nr %d", stream_nr);
+    GST_WARNING_OBJECT (avi,
+        "invalid stream nr %d (0x%08x, %" GST_FOURCC_FORMAT ")", stream_nr, id,
+        GST_FOURCC_ARGS (id));
     return NULL;
   }
   stream = &avi->stream[stream_nr];
@@ -2665,7 +2717,8 @@ gst_avi_demux_parse_index (GstAviDemux * avi, GstBuffer * buf)
     if (stream->strh->type == GST_RIFF_FCC_auds) {
       /* all audio frames are keyframes */
       ENTRY_SET_KEYFRAME (&entry);
-    } else if (stream->strf.vids->compression == GST_RIFF_DXSB) {
+    } else if (stream->strh->type == GST_RIFF_FCC_vids &&
+        stream->strf.vids->compression == GST_RIFF_DXSB) {
       /* all xsub frames are keyframes */
       ENTRY_SET_KEYFRAME (&entry);
     } else {
@@ -4073,6 +4126,8 @@ gst_avi_demux_do_seek (GstAviDemux * avi, GstSegment * segment)
   /* get the entry index for the requested position */
   index = gst_avi_demux_index_for_time (avi, stream, seek_time);
   GST_DEBUG_OBJECT (avi, "Got entry %u", index);
+  if (index == -1)
+    return FALSE;
 
   /* check if we are already on a keyframe */
   if (!ENTRY_IS_KEYFRAME (&stream->index[index])) {
@@ -4124,6 +4179,8 @@ gst_avi_demux_do_seek (GstAviDemux * avi, GstSegment * segment)
 
     /* get the entry index for the requested position */
     index = gst_avi_demux_index_for_time (avi, ostream, seek_time);
+    if (index == -1)
+      continue;
 
     /* move to previous keyframe */
     if (!ENTRY_IS_KEYFRAME (&ostream->index[index]))
@@ -4152,12 +4209,14 @@ gst_avi_demux_handle_seek (GstAviDemux * avi, GstPad * pad, GstEvent * event)
   gboolean update;
   GstSegment seeksegment = { 0, };
   gint i;
+  guint32 seqnum = 0;
 
   if (event) {
     GST_DEBUG_OBJECT (avi, "doing seek with event");
 
     gst_event_parse_seek (event, &rate, &format, &flags,
         &cur_type, &cur, &stop_type, &stop);
+    seqnum = gst_event_get_seqnum (event);
 
     /* we have to have a format as the segment format. Try to convert
      * if not. */
@@ -4189,6 +4248,8 @@ gst_avi_demux_handle_seek (GstAviDemux * avi, GstPad * pad, GstEvent * event)
   if (flush) {
     GstEvent *fevent = gst_event_new_flush_start ();
 
+    if (seqnum)
+      gst_event_set_seqnum (fevent, seqnum);
     /* for a flushing seek, we send a flush_start on all pads. This will
      * eventually stop streaming with a WRONG_STATE. We can thus eventually
      * take the STREAM_LOCK. */
@@ -4222,6 +4283,9 @@ gst_avi_demux_handle_seek (GstAviDemux * avi, GstPad * pad, GstEvent * event)
   if (flush) {
     GstEvent *fevent = gst_event_new_flush_stop (TRUE);
 
+    if (seqnum)
+      gst_event_set_seqnum (fevent, seqnum);
+
     GST_DEBUG_OBJECT (avi, "sending flush stop");
     gst_avi_demux_push_event (avi, gst_event_ref (fevent));
     gst_pad_push_event (avi->sinkpad, fevent);
@@ -4232,15 +4296,20 @@ gst_avi_demux_handle_seek (GstAviDemux * avi, GstPad * pad, GstEvent * event)
 
   /* post the SEGMENT_START message when we do segmented playback */
   if (avi->segment.flags & GST_SEEK_FLAG_SEGMENT) {
-    gst_element_post_message (GST_ELEMENT_CAST (avi),
+    GstMessage *segment_start_msg =
         gst_message_new_segment_start (GST_OBJECT_CAST (avi),
-            avi->segment.format, avi->segment.position));
+        avi->segment.format, avi->segment.position);
+    if (seqnum)
+      gst_message_set_seqnum (segment_start_msg, seqnum);
+    gst_element_post_message (GST_ELEMENT_CAST (avi), segment_start_msg);
   }
 
   /* queue the segment event for the streaming thread. */
   if (avi->seg_event)
     gst_event_unref (avi->seg_event);
   avi->seg_event = gst_event_new_segment (&avi->segment);
+  if (seqnum)
+    gst_event_set_seqnum (avi->seg_event, seqnum);
 
   if (!avi->streaming) {
     gst_pad_start_task (avi->sinkpad, (GstTaskFunction) gst_avi_demux_loop,
@@ -4339,6 +4408,8 @@ avi_demux_handle_seek_push (GstAviDemux * avi, GstPad * pad, GstEvent * event)
   index = gst_avi_demux_index_for_time (avi, stream, cur);
   GST_DEBUG_OBJECT (avi, "str %u: Found entry %u for %" GST_TIME_FORMAT,
       str_num, index, GST_TIME_ARGS (cur));
+  if (index == -1)
+    return -1;
 
   /* check if we are already on a keyframe */
   if (!ENTRY_IS_KEYFRAME (&stream->index[index])) {
@@ -4389,6 +4460,8 @@ avi_demux_handle_seek_push (GstAviDemux * avi, GstPad * pad, GstEvent * event)
     idx = gst_avi_demux_index_for_time (avi, str, cur);
     GST_DEBUG_OBJECT (avi, "str %u: Found entry %u for %" GST_TIME_FORMAT, n,
         idx, GST_TIME_ARGS (cur));
+    if (idx == -1)
+      continue;
 
     /* check if we are already on a keyframe */
     if (!ENTRY_IS_KEYFRAME (&str->index[idx])) {
@@ -4543,6 +4616,10 @@ gst_avi_demux_invert (GstAviStream * stream, GstBuffer * buf)
     return buf;                 /* Ignore non DIB buffers */
   }
 
+  /* raw rgb data is stored topdown, but instead of inverting the buffer, */
+  /* some tools just negate the height field in the header (e.g. ffmpeg) */
+  if (((gint32) stream->strf.vids->height) < 0)
+    return buf;
 
   h = stream->strf.vids->height;
   w = stream->strf.vids->width;
@@ -5107,7 +5184,18 @@ gst_avi_demux_stream_data (GstAviDemux * avi)
 
         /* increment our positions */
         stream->current_entry++;
-        stream->current_total += size;
+        /* as in pull mode, 'total' is either bytes (CBR) or frames (VBR) */
+        if (stream->strh->type == GST_RIFF_FCC_auds && stream->is_vbr) {
+          gint blockalign = stream->strf.auds->blockalign;
+          if (blockalign > 0)
+            stream->current_total += DIV_ROUND_UP (size, blockalign);
+          else
+            stream->current_total++;
+        } else {
+          stream->current_total += size;
+        }
+        GST_LOG_OBJECT (avi, "current entry %u, total %u",
+            stream->current_entry, stream->current_total);
 
         /* update current position in the segment */
         avi->segment.position = next_ts;

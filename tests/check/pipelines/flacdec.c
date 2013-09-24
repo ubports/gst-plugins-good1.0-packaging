@@ -13,8 +13,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #include <gst/check/gstcheck.h>
@@ -36,7 +36,7 @@ _get_first_sample (GstSample * sample)
   fail_unless (caps != NULL, "sample without caps");
 
   buf = gst_sample_get_buffer (sample);
-  GST_DEBUG ("buffer with size=%u, caps=%" GST_PTR_FORMAT,
+  GST_DEBUG ("buffer with size=%" G_GSIZE_FORMAT ", caps=%" GST_PTR_FORMAT,
       gst_buffer_get_size (buf), caps);
 
   gst_buffer_map (buf, &map, GST_MAP_READ);

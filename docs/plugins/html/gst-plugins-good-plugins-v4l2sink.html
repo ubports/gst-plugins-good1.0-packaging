@@ -3,12 +3,12 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>v4l2sink</title>
-<meta name="generator" content="DocBook XSL Stylesheets V1.76.1">
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
 <link rel="home" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-v4l2src.html" title="v4l2src">
 <link rel="next" href="gst-plugins-good-plugins-v4l2radio.html" title="v4l2radio">
-<meta name="generator" content="GTK-Doc V1.18 (XML mode)">
+<meta name="generator" content="GTK-Doc V1.19 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -62,7 +62,7 @@
 <a name="gst-plugins-good-plugins-v4l2sink.implemented-interfaces"></a><h2>Implemented Interfaces</h2>
 <p>
 GstV4l2Sink implements
- GstTuner,  <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gst-plugins-base-libs/html/gst-plugins-base-libs-gstvideooverlay.html#GstVideoOverlay">GstVideoOverlay</a>,  GstNavigation,  <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gst-plugins-base-libs/html/gst-plugins-base-libs-gstcolorbalance.html#GstColorBalance">GstColorBalance</a> and  <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gst-plugins-base-libs/html/gst-plugins-base-libs-gstvideoorientation.html#GstVideoOrientation">GstVideoOrientation</a>.</p>
+ <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gst-plugins-base-libs/html/gst-plugins-base-libs-gsttuner.html#GstTuner">GstTuner</a>,  <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gst-plugins-base-libs/html/gst-plugins-base-libs-gstvideooverlay.html#GstVideoOverlay">GstVideoOverlay</a>,  <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gst-plugins-base-libs/html/gst-plugins-base-libs-gstnavigation.html#GstNavigation">GstNavigation</a>,  <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gst-plugins-base-libs/html/gst-plugins-base-libs-gstcolorbalance.html#GstColorBalance">GstColorBalance</a> and  <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gst-plugins-base-libs/html/gst-plugins-base-libs-gstvideoorientation.html#GstVideoOrientation">GstVideoOrientation</a>.</p>
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-v4l2sink.properties"></a><h2>Properties</h2>
@@ -87,6 +87,9 @@ GstV4l2Sink implements
   "<a class="link" href="gst-plugins-good-plugins-v4l2sink.html#GstV4l2Sink--min-queued-bufs" title='The "min-queued-bufs" property'>min-queued-bufs</a>"          <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a>                 : Read / Write
   "<a class="link" href="gst-plugins-good-plugins-v4l2sink.html#GstV4l2Sink--io-mode" title='The "io-mode" property'>io-mode</a>"                  <span class="type">GstV4l2IOMode</span>         : Read / Write
   "<a class="link" href="gst-plugins-good-plugins-v4l2sink.html#GstV4l2Sink--norm" title='The "norm" property'>norm</a>"                     <span class="type">V4L2_TV_norms</span>         : Read / Write
+  "<a class="link" href="gst-plugins-good-plugins-v4l2sink.html#GstV4l2Sink--extra-controls" title='The "extra-controls" property'>extra-controls</a>"           <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstStructure.html#GstStructure"><span class="type">GstStructure</span></a>*         : Read / Write
+  "<a class="link" href="gst-plugins-good-plugins-v4l2sink.html#GstV4l2Sink--force-aspect-ratio" title='The "force-aspect-ratio" property'>force-aspect-ratio</a>"       <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a>              : Read / Write
+  "<a class="link" href="gst-plugins-good-plugins-v4l2sink.html#GstV4l2Sink--pixel-aspect-ratio" title='The "pixel-aspect-ratio" property'>pixel-aspect-ratio</a>"       <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a>*                : Read / Write
 </pre>
 </div>
 <div class="refsect1">
@@ -94,9 +97,12 @@ GstV4l2Sink implements
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp17423808"></a><h3>Element Information</h3>
-<div class="variablelist"><table border="0">
+<a name="id-1.2.148.7.2.1"></a><h3>Element Information</h3>
+<div class="variablelist"><table border="0" class="variablelist">
+<colgroup>
 <col align="left" valign="top">
+<col>
+</colgroup>
 <tbody>
 <tr>
 <td><p><span class="term">plugin</span></p></td>
@@ -117,9 +123,12 @@ GstV4l2Sink implements
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp22115328"></a><h3>Element Pads</h3>
-<div class="variablelist"><table border="0">
+<a name="id-1.2.148.7.2.2"></a><h3>Element Pads</h3>
+<div class="variablelist"><table border="0" class="variablelist">
+<colgroup>
 <col align="left" valign="top">
+<col>
+</colgroup>
 <tbody>
 <tr>
 <td><p><span class="term">name</span></p></td>
@@ -224,6 +233,14 @@ GstV4l2Sink implements
 <tr>
 <td><p><span class="term"></span></p></td>
 <td> video/mpegts</td>
+</tr>
+<tr>
+<td><p><span class="term"></span></p></td>
+<td> video/mpeg, mpegversion=(int)4, systemstream=(boolean)false, width=(int)[ 1, 32768 ], height=(int)[ 1, 32768 ], framerate=(fraction)[ 0/1, 100/1 ]</td>
+</tr>
+<tr>
+<td><p><span class="term"></span></p></td>
+<td> video/x-h263, variant=(string)itu, width=(int)[ 1, 32768 ], height=(int)[ 1, 32768 ], framerate=(fraction)[ 0/1, 100/1 ]</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
@@ -404,10 +421,30 @@ GstV4l2Sink implements
 <p>video standard.</p>
 <p>Default value: none</p>
 </div>
+<hr>
+<div class="refsect2">
+<a name="GstV4l2Sink--extra-controls"></a><h3>The <code class="literal">"extra-controls"</code> property</h3>
+<pre class="programlisting">  "extra-controls"           <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstStructure.html#GstStructure"><span class="type">GstStructure</span></a>*         : Read / Write</pre>
+<p>Extra v4l2 controls (CIDs) for the device.</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstV4l2Sink--force-aspect-ratio"></a><h3>The <code class="literal">"force-aspect-ratio"</code> property</h3>
+<pre class="programlisting">  "force-aspect-ratio"       <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a>              : Read / Write</pre>
+<p>When enabled, the pixel aspect ratio will be enforced.</p>
+<p>Default value: TRUE</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstV4l2Sink--pixel-aspect-ratio"></a><h3>The <code class="literal">"pixel-aspect-ratio"</code> property</h3>
+<pre class="programlisting">  "pixel-aspect-ratio"       <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a>*                : Read / Write</pre>
+<p>Overwrite the pixel aspect ratio of the device.</p>
+<p>Default value: "1/1"</p>
+</div>
 </div>
 </div>
 <div class="footer">
 <hr>
-          Generated by GTK-Doc V1.18</div>
+          Generated by GTK-Doc V1.19</div>
 </body>
 </html>

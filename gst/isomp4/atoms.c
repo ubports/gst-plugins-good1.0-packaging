@@ -14,8 +14,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 /*
  * Unless otherwise indicated, Source Code is licensed under MIT license.
@@ -3320,7 +3320,8 @@ atom_trak_set_video_type (AtomTRAK * trak, AtomsContext * context,
   ste = atom_trak_add_video_entry (trak, context, entry->fourcc);
 
   trak->is_video = TRUE;
-  trak->is_h264 = (entry->fourcc == FOURCC_avc1);
+  trak->is_h264 = (entry->fourcc == FOURCC_avc1
+      || entry->fourcc == FOURCC_avc3);
 
   ste->version = entry->version;
   ste->width = entry->width;

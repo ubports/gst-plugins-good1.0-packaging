@@ -13,8 +13,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #ifndef __RTP_STATS_H__
@@ -56,24 +56,44 @@ typedef struct {
 } RTPReceiverReport;
 
 /**
- * RTPArrivalStats:
+ * RTPPacketInfo:
+ * @send: if this is a packet for sending
+ * @rtp: if this info is about an RTP packet
+ * @is_list: if this is a bufferlist
+ * @data: a #GstBuffer or #GstBufferList
  * @address: address of the sender of the packet
  * @current_time: current time according to the system clock
- * @running_time: arrival time of a packet as buffer running_time
- * @ntpnstime: arrival time of a packet NTP time in nanoseconds
+ * @running_time: time of a packet as buffer running_time
+ * @ntpnstime: time of a packet NTP time in nanoseconds
+ * @header_len: number of overhead bytes per packet
  * @bytes: bytes of the packet including lowlevel overhead
  * @payload_len: bytes of the RTP payload
+ * @seqnum: the seqnum of the packet
+ * @pt: the payload type of the packet
+ * @rtptime: the RTP time of the packet
  *
- * Structure holding information about the arrival stats of a packet.
+ * Structure holding information about the packet.
  */
 typedef struct {
+  gboolean      send;
+  gboolean      rtp;
+  gboolean      is_list;
+  gpointer      data;
   GSocketAddress *address;
   GstClockTime  current_time;
   GstClockTime  running_time;
   guint64       ntpnstime;
+  guint         header_len;
   guint         bytes;
+  guint         packets;
   guint         payload_len;
-} RTPArrivalStats;
+  guint32       ssrc;
+  guint16       seqnum;
+  guint8        pt;
+  guint32       rtptime;
+  guint32       csrc_count;
+  guint32       csrcs[16];
+} RTPPacketInfo;
 
 /**
  * RTPSourceStats:
@@ -179,7 +199,9 @@ typedef struct {
   gdouble       receiver_fraction;
   gdouble       min_interval;
   GstClockTime  bye_timeout;
+  guint         internal_sources;
   guint         sender_sources;
+  guint         internal_sender_sources;
   guint         active_sources;
   guint         avg_rtcp_packet_size;
   guint         bye_members;

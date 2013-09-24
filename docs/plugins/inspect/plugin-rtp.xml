@@ -3,7 +3,7 @@
   <description>Real-time protocol plugins</description>
   <filename>../../gst/rtp/.libs/libgstrtp.so</filename>
   <basename>libgstrtp.so</basename>
-  <version>1.0.10</version>
+  <version>1.1.90</version>
   <license>LGPL</license>
   <source>gst-plugins-good</source>
   <package>GStreamer Good Plug-ins source release</package>
@@ -69,6 +69,48 @@
           <direction>source</direction>
           <presence>always</presence>
           <details>application/x-rtp, media=(string)audio, payload=(int)[ 96, 127 ], clock-rate=(int)[ 1, 2147483647 ], encoding-name=(string)L16, channels=(int)[ 1, 2147483647 ]; application/x-rtp, media=(string)audio, encoding-name=(string)L16, payload=(int)10, clock-rate=(int)44100; application/x-rtp, media=(string)audio, encoding-name=(string)L16, payload=(int)11, clock-rate=(int)44100</details>
+        </caps>
+      </pads>
+    </element>
+    <element>
+      <name>rtpL24depay</name>
+      <longname>RTP audio depayloader</longname>
+      <class>Codec/Depayloader/Network/RTP</class>
+      <description>Extracts raw 24-bit audio from RTP packets</description>
+      <author>Zeeshan Ali &lt;zak147@yahoo.com&gt;,Wim Taymans &lt;wim.taymans@gmail.com&gt;,David Holroyd &lt;dave@badgers-in-foil.co.uk&gt;</author>
+      <pads>
+        <caps>
+          <name>sink</name>
+          <direction>sink</direction>
+          <presence>always</presence>
+          <details>application/x-rtp, media=(string)audio, clock-rate=(int)[ 1, 2147483647 ], encoding-name=(string)L24</details>
+        </caps>
+        <caps>
+          <name>src</name>
+          <direction>source</direction>
+          <presence>always</presence>
+          <details>audio/x-raw, format=(string)S24BE, layout=(string)interleaved, rate=(int)[ 1, 2147483647 ], channels=(int)[ 1, 2147483647 ]</details>
+        </caps>
+      </pads>
+    </element>
+    <element>
+      <name>rtpL24pay</name>
+      <longname>RTP audio payloader</longname>
+      <class>Codec/Payloader/Network/RTP</class>
+      <description>Payload-encode Raw 24-bit audio into RTP packets (RFC 3190)</description>
+      <author>Wim Taymans &lt;wim.taymans@gmail.com&gt;,David Holroyd &lt;dave@badgers-in-foil.co.uk&gt;</author>
+      <pads>
+        <caps>
+          <name>sink</name>
+          <direction>sink</direction>
+          <presence>always</presence>
+          <details>audio/x-raw, format=(string)S24BE, layout=(string)interleaved, rate=(int)[ 1, 2147483647 ], channels=(int)[ 1, 2147483647 ]</details>
+        </caps>
+        <caps>
+          <name>src</name>
+          <direction>source</direction>
+          <presence>always</presence>
+          <details>application/x-rtp, media=(string)audio, payload=(int)[ 96, 127 ], clock-rate=(int)[ 1, 2147483647 ], encoding-name=(string)L24, channels=(int)[ 1, 2147483647 ]</details>
         </caps>
       </pads>
     </element>
@@ -782,7 +824,7 @@
           <name>src</name>
           <direction>source</direction>
           <presence>always</presence>
-          <details>application/x-rtp, media=(string)video, payload=(int)26, clock-rate=(int)90000, encoding-name=(string)JPEG</details>
+          <details>application/x-rtp, media=(string)video, payload=(int)26, clock-rate=(int)90000, encoding-name=(string)JPEG, width=(int)[ 1, 65536 ], height=(int)[ 1, 65536 ]</details>
         </caps>
       </pads>
     </element>
@@ -1207,6 +1249,48 @@
       </pads>
     </element>
     <element>
+      <name>rtpsbcdepay</name>
+      <longname>RTP SBC audio depayloader</longname>
+      <class>Codec/Depayloader/Network/RTP</class>
+      <description>Extracts SBC audio from RTP packets</description>
+      <author>Arun Raghavan &lt;arun.raghavan@collabora.co.uk&gt;</author>
+      <pads>
+        <caps>
+          <name>sink</name>
+          <direction>sink</direction>
+          <presence>always</presence>
+          <details>application/x-rtp, media=(string)audio, payload=(int)[ 96, 127 ], clock-rate=(int){ 16000, 32000, 44100, 48000 }, encoding-name=(string)SBC</details>
+        </caps>
+        <caps>
+          <name>src</name>
+          <direction>source</direction>
+          <presence>always</presence>
+          <details>audio/x-sbc, rate=(int){ 16000, 32000, 44100, 48000 }, channels=(int)[ 1, 2 ], mode=(string){ mono, dual, stereo, joint }, blocks=(int){ 4, 8, 12, 16 }, subbands=(int){ 4, 8 }, allocation-method=(string){ snr, loudness }, bitpool=(int)[ 2, 64 ]</details>
+        </caps>
+      </pads>
+    </element>
+    <element>
+      <name>rtpsbcpay</name>
+      <longname>RTP packet payloader</longname>
+      <class>Codec/Payloader/Network</class>
+      <description>Payload SBC audio as RTP packets</description>
+      <author>Thiago Sousa Santos &lt;thiagoss@lcc.ufcg.edu.br&gt;</author>
+      <pads>
+        <caps>
+          <name>sink</name>
+          <direction>sink</direction>
+          <presence>always</presence>
+          <details>audio/x-sbc, rate=(int){ 16000, 32000, 44100, 48000 }, channels=(int)[ 1, 2 ], channel-mode=(string){ mono, dual, stereo, joint }, blocks=(int){ 4, 8, 12, 16 }, subbands=(int){ 4, 8 }, allocation-method=(string){ snr, loudness }, bitpool=(int)[ 2, 64 ]</details>
+        </caps>
+        <caps>
+          <name>src</name>
+          <direction>source</direction>
+          <presence>always</presence>
+          <details>application/x-rtp, media=(string)audio, payload=(int)[ 96, 127 ], clock-rate=(int){ 16000, 32000, 44100, 48000 }, encoding-name=(string)SBC</details>
+        </caps>
+      </pads>
+    </element>
+    <element>
       <name>rtpsirendepay</name>
       <longname>RTP Siren packet depayloader</longname>
       <class>Codec/Depayloader/Network/RTP</class>
@@ -1396,6 +1480,48 @@
       </pads>
     </element>
     <element>
+      <name>rtpvp8depay</name>
+      <longname>RTP VP8 depayloader</longname>
+      <class>Codec/Depayloader/Network/RTP</class>
+      <description>Extracts VP8 video from RTP packets)</description>
+      <author>Sjoerd Simons &lt;sjoerd@luon.net&gt;</author>
+      <pads>
+        <caps>
+          <name>sink</name>
+          <direction>sink</direction>
+          <presence>always</presence>
+          <details>application/x-rtp, clock-rate=(int)90000, media=(string)video, encoding-name=(string)VP8-DRAFT-IETF-01</details>
+        </caps>
+        <caps>
+          <name>src</name>
+          <direction>source</direction>
+          <presence>always</presence>
+          <details>video/x-vp8</details>
+        </caps>
+      </pads>
+    </element>
+    <element>
+      <name>rtpvp8pay</name>
+      <longname>RTP VP8 payloader</longname>
+      <class>Codec/Payloader/Network/RTP</class>
+      <description>Puts VP8 video in RTP packets)</description>
+      <author>Sjoerd Simons &lt;sjoerd@luon.net&gt;</author>
+      <pads>
+        <caps>
+          <name>sink</name>
+          <direction>sink</direction>
+          <presence>always</presence>
+          <details>video/x-vp8</details>
+        </caps>
+        <caps>
+          <name>src</name>
+          <direction>source</direction>
+          <presence>always</presence>
+          <details>application/x-rtp, payload=(int)[ 96, 127 ], clock-rate=(int)90000, encoding-name=(string)VP8-DRAFT-IETF-01</details>
+        </caps>
+      </pads>
+    </element>
+    <element>
       <name>rtpvrawdepay</name>
       <longname>RTP Raw Video depayloader</longname>
       <class>Codec/Depayloader/Network/RTP</class>
@@ -1427,7 +1553,7 @@
           <name>sink</name>
           <direction>sink</direction>
           <presence>always</presence>
-          <details>video/x-raw, format=(string){ RGB, RGBA, BGR, BGRA, AYUYV, UYVY, I420, Y41B, UYVP, I420, Y42B, Y444 }, width=(int)[ 1, 32767 ], height=(int)[ 1, 32767 ]</details>
+          <details>video/x-raw, format=(string){ RGB, RGBA, BGR, BGRA, AYUV, UYVY, I420, Y41B, UYVP }, width=(int)[ 1, 32767 ], height=(int)[ 1, 32767 ]</details>
         </caps>
         <caps>
           <name>src</name>

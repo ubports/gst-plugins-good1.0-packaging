@@ -13,8 +13,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 #include <string.h>
 
@@ -126,7 +126,7 @@ rtp_source_class_init (RTPSourceClass * klass)
    * name application/x-rtp-source-stats with the following fields:
    *
    *  "ssrc"         G_TYPE_UINT     The SSRC of this source
-   *  "internal"     G_TYPE_BOOLEAN  If this source is the source of the session
+   *  "internal"     G_TYPE_BOOLEAN  If this source is a source of the session
    *  "validated"    G_TYPE_BOOLEAN  If the source is validated
    *  "received-bye" G_TYPE_BOOLEAN  If we received a BYE from this source
    *  "is-csrc"      G_TYPE_BOOLEAN  If this source was found as CSRC
@@ -219,13 +219,24 @@ rtp_source_class_init (RTPSourceClass * klass)
 void
 rtp_source_reset (RTPSource * src)
 {
-  src->received_bye = FALSE;
+  src->marked_bye = FALSE;
+  if (src->bye_reason)
+    g_free (src->bye_reason);
+  src->bye_reason = NULL;
+  src->sent_bye = FALSE;
 
   src->stats.cycles = -1;
   src->stats.jitter = 0;
   src->stats.transit = -1;
   src->stats.curr_sr = 0;
+  src->stats.sr[0].is_valid = FALSE;
   src->stats.curr_rr = 0;
+  src->stats.rr[0].is_valid = FALSE;
+  src->stats.prev_rtptime = GST_CLOCK_TIME_NONE;
+  src->stats.prev_rtcptime = GST_CLOCK_TIME_NONE;
+  src->stats.last_rtptime = GST_CLOCK_TIME_NONE;
+  src->stats.last_rtcptime = GST_CLOCK_TIME_NONE;
+  g_array_set_size (src->nacks, 0);
 }
 
 static void
@@ -248,6 +259,7 @@ rtp_source_init (RTPSource * src)
   src->last_rtptime = -1;
 
   src->retained_feedback = g_queue_new ();
+  src->nacks = g_array_new (FALSE, FALSE, sizeof (guint32));
 
   rtp_source_reset (src);
 }
@@ -285,6 +297,8 @@ rtp_source_finalize (GObject * object)
     gst_buffer_unref (buffer);
   g_queue_free (src->retained_feedback);
 
+  g_array_free (src->nacks, TRUE);
+
   if (src->rtp_from)
     g_object_unref (src->rtp_from);
   if (src->rtcp_from)
@@ -321,7 +335,7 @@ rtp_source_create_stats (RTPSource * src)
       "ssrc", G_TYPE_UINT, (guint) src->ssrc,
       "internal", G_TYPE_BOOLEAN, internal,
       "validated", G_TYPE_BOOLEAN, src->validated,
-      "received-bye", G_TYPE_BOOLEAN, src->received_bye,
+      "received-bye", G_TYPE_BOOLEAN, src->marked_bye,
       "is-csrc", G_TYPE_BOOLEAN, src->is_csrc,
       "is-sender", G_TYPE_BOOLEAN, is_sender,
       "seqnum-base", G_TYPE_INT, src->seqnum_base,
@@ -426,7 +440,7 @@ sdes_struct_compare_func (GQuark field_id, const GValue * value,
 }
 
 /**
- * rtp_source_set_sdes:
+ * rtp_source_set_sdes_struct:
  * @src: an #RTPSource
  * @sdes: the SDES structure
  *
@@ -454,7 +468,6 @@ rtp_source_set_sdes_struct (RTPSource * src, GstStructure * sdes)
   } else {
     gst_structure_free (sdes);
   }
-
   return changed;
 }
 
@@ -670,21 +683,21 @@ rtp_source_is_sender (RTPSource * src)
 }
 
 /**
- * rtp_source_received_bye:
+ * rtp_source_is_marked_bye:
  * @src: an #RTPSource
  *
- * Check if @src has receoved a BYE packet.
+ * Check if @src is marked as leaving the session with a BYE packet.
  *
- * Returns: %TRUE if @src has received a BYE packet.
+ * Returns: %TRUE if @src has been marked BYE.
  */
 gboolean
-rtp_source_received_bye (RTPSource * src)
+rtp_source_is_marked_bye (RTPSource * src)
 {
   gboolean result;
 
   g_return_val_if_fail (RTP_IS_SOURCE (src), FALSE);
 
-  result = src->received_bye;
+  result = RTP_SOURCE_IS_MARKED_BYE (src);
 
   return result;
 }
@@ -694,11 +707,11 @@ rtp_source_received_bye (RTPSource * src)
  * rtp_source_get_bye_reason:
  * @src: an #RTPSource
  *
- * Get the BYE reason for @src. Check if the source receoved a BYE message first
- * with rtp_source_received_bye().
+ * Get the BYE reason for @src. Check if the source is marked as leaving the
+ * session with a BYE message first with rtp_source_is_marked_bye().
  *
- * Returns: The BYE reason or NULL when no reason was given or the source did
- * not receive a BYE message yet. g_fee() after usage.
+ * Returns: The BYE reason or NULL when no reason was given or the source was
+ * not marked BYE yet. g_free() after usage.
  */
 gchar *
 rtp_source_get_bye_reason (RTPSource * src)
@@ -753,75 +766,6 @@ rtp_source_update_caps (RTPSource * src, GstCaps * caps)
   GST_DEBUG ("got seqnum-base %" G_GINT32_FORMAT, src->seqnum_base);
 
   gst_caps_replace (&src->caps, caps);
-}
-
-/**
- * rtp_source_set_sdes_string:
- * @src: an #RTPSource
- * @type: the type of the SDES item
- * @data: the SDES data
- *
- * Store an SDES item of @type in @src.
- *
- * Returns: %FALSE if the SDES item was unchanged or @type is unknown.
- */
-gboolean
-rtp_source_set_sdes_string (RTPSource * src, GstRTCPSDESType type,
-    const gchar * data)
-{
-  const gchar *old;
-  const gchar *field;
-
-  field = gst_rtcp_sdes_type_to_name (type);
-
-  if (gst_structure_has_field (src->sdes, field))
-    old = gst_structure_get_string (src->sdes, field);
-  else
-    old = NULL;
-
-  if (old == NULL && data == NULL)
-    return FALSE;
-
-  if (old != NULL && data != NULL && strcmp (old, data) == 0)
-    return FALSE;
-
-  if (data == NULL)
-    gst_structure_remove_field (src->sdes, field);
-  else
-    gst_structure_set (src->sdes, field, G_TYPE_STRING, data, NULL);
-
-  return TRUE;
-}
-
-/**
- * rtp_source_get_sdes_string:
- * @src: an #RTPSource
- * @type: the type of the SDES item
- *
- * Get the SDES item of @type from @src.
- *
- * Returns: a null-terminated copy of the SDES item or NULL when @type was not
- * valid or the SDES item was unset. g_free() after usage.
- */
-gchar *
-rtp_source_get_sdes_string (RTPSource * src, GstRTCPSDESType type)
-{
-  gchar *result;
-  const gchar *type_name;
-
-  g_return_val_if_fail (RTP_IS_SOURCE (src), NULL);
-
-  if (type < 0 || type > GST_RTCP_SDES_PRIV - 1)
-    return NULL;
-
-  type_name = gst_rtcp_sdes_type_to_name (type);
-
-  if (!gst_structure_has_field (src->sdes, type_name))
-    return NULL;
-
-  result = g_strdup (gst_structure_get_string (src->sdes, type_name));
-
-  return result;
 }
 
 /**
@@ -919,34 +863,27 @@ get_clock_rate (RTPSource * src, guint8 payload)
  * 50 milliseconds apart and arrive 60 milliseconds apart, then the jitter is 10
  * milliseconds. */
 static void
-calculate_jitter (RTPSource * src, GstBuffer * buffer,
-    RTPArrivalStats * arrival)
+calculate_jitter (RTPSource * src, RTPPacketInfo * pinfo)
 {
   GstClockTime running_time;
   guint32 rtparrival, transit, rtptime;
   gint32 diff;
   gint clock_rate;
   guint8 pt;
-  GstRTPBuffer rtp = { NULL };
 
   /* get arrival time */
-  if ((running_time = arrival->running_time) == GST_CLOCK_TIME_NONE)
+  if ((running_time = pinfo->running_time) == GST_CLOCK_TIME_NONE)
     goto no_time;
 
-  if (!gst_rtp_buffer_map (buffer, GST_MAP_READ, &rtp))
-    goto invalid_packet;
-
-  pt = gst_rtp_buffer_get_payload_type (&rtp);
+  pt = pinfo->pt;
 
   GST_LOG ("SSRC %08x got payload %d", src->ssrc, pt);
 
   /* get clockrate */
-  if ((clock_rate = get_clock_rate (src, pt)) == -1) {
-    gst_rtp_buffer_unmap (&rtp);
+  if ((clock_rate = get_clock_rate (src, pt)) == -1)
     goto no_clock_rate;
-  }
 
-  rtptime = gst_rtp_buffer_get_timestamp (&rtp);
+  rtptime = pinfo->rtptime;
 
   /* convert arrival time to RTP timestamp units, truncate to 32 bits, we don't
    * care about the absolute value, just the difference. */
@@ -975,18 +912,12 @@ calculate_jitter (RTPSource * src, GstBuffer * buffer,
   GST_LOG ("rtparrival %u, rtptime %u, clock-rate %d, diff %d, jitter: %f",
       rtparrival, rtptime, clock_rate, diff, (src->stats.jitter) / 16.0);
 
-  gst_rtp_buffer_unmap (&rtp);
   return;
 
   /* ERRORS */
 no_time:
   {
     GST_WARNING ("cannot get current running_time");
-    return;
-  }
-invalid_packet:
-  {
-    GST_WARNING ("invalid RTP packet");
     return;
   }
 no_clock_rate:
@@ -1049,35 +980,29 @@ do_bitrate_estimation (RTPSource * src, GstClockTime running_time,
 /**
  * rtp_source_process_rtp:
  * @src: an #RTPSource
- * @buffer: an RTP buffer
+ * @pinfo: an #RTPPacketInfo
  *
- * Let @src handle the incomming RTP @buffer.
+ * Let @src handle the incomming RTP packet described in @pinfo.
  *
  * Returns: a #GstFlowReturn.
  */
 GstFlowReturn
-rtp_source_process_rtp (RTPSource * src, GstBuffer * buffer,
-    RTPArrivalStats * arrival)
+rtp_source_process_rtp (RTPSource * src, RTPPacketInfo * pinfo)
 {
   GstFlowReturn result = GST_FLOW_OK;
   guint16 seqnr, udelta;
   RTPSourceStats *stats;
   guint16 expected;
-  GstRTPBuffer rtp = { NULL };
 
   g_return_val_if_fail (RTP_IS_SOURCE (src), GST_FLOW_ERROR);
-  g_return_val_if_fail (GST_IS_BUFFER (buffer), GST_FLOW_ERROR);
+  g_return_val_if_fail (pinfo != NULL, GST_FLOW_ERROR);
 
   stats = &src->stats;
 
-  if (!gst_rtp_buffer_map (buffer, GST_MAP_READ, &rtp))
-    goto invalid_packet;
-
-  seqnr = gst_rtp_buffer_get_seq (&rtp);
-  gst_rtp_buffer_unmap (&rtp);
+  seqnr = pinfo->seqnum;
 
   if (stats->cycles == -1) {
-    GST_DEBUG ("received first buffer");
+    GST_DEBUG ("received first packet");
     /* first time we heard of this source */
     init_seq (src, seqnr);
     src->stats.max_seq = seqnr - 1;
@@ -1102,9 +1027,10 @@ rtp_source_process_rtp (RTPSource * src, GstBuffer * buffer,
       } else {
         GstBuffer *q;
 
-        GST_DEBUG ("probation %d: queue buffer", src->curr_probation);
+        GST_DEBUG ("probation %d: queue packet", src->curr_probation);
         /* when still in probation, keep packets in a list. */
-        g_queue_push_tail (src->packets, buffer);
+        g_queue_push_tail (src->packets, pinfo->data);
+        pinfo->data = NULL;
         /* remove packets from queue if there are too many */
         while (g_queue_get_length (src->packets) > RTP_MAX_PROBATION_LEN) {
           q = g_queue_pop_head (src->packets);
@@ -1140,40 +1066,34 @@ rtp_source_process_rtp (RTPSource * src, GstBuffer * buffer,
     GST_WARNING ("duplicate or reordered packet (seqnr %d)", seqnr);
   }
 
-  src->stats.octets_received += arrival->payload_len;
-  src->stats.bytes_received += arrival->bytes;
+  src->stats.octets_received += pinfo->payload_len;
+  src->stats.bytes_received += pinfo->bytes;
   src->stats.packets_received++;
   /* for the bitrate estimation */
-  src->bytes_received += arrival->payload_len;
+  src->bytes_received += pinfo->payload_len;
   /* the source that sent the packet must be a sender */
   src->is_sender = TRUE;
   src->validated = TRUE;
 
-  do_bitrate_estimation (src, arrival->running_time, &src->bytes_received);
+  do_bitrate_estimation (src, pinfo->running_time, &src->bytes_received);
 
   GST_LOG ("seq %d, PC: %" G_GUINT64_FORMAT ", OC: %" G_GUINT64_FORMAT,
       seqnr, src->stats.packets_received, src->stats.octets_received);
 
   /* calculate jitter for the stats */
-  calculate_jitter (src, buffer, arrival);
+  calculate_jitter (src, pinfo);
 
   /* we're ready to push the RTP packet now */
-  result = push_packet (src, buffer);
+  result = push_packet (src, pinfo->data);
+  pinfo->data = NULL;
 
 done:
   return result;
 
   /* ERRORS */
-invalid_packet:
-  {
-    GST_WARNING ("invalid packet received");
-    gst_buffer_unref (buffer);
-    return GST_FLOW_OK;
-  }
 bad_sequence:
   {
     GST_WARNING ("unacceptable seqnum received");
-    gst_buffer_unref (buffer);
     return GST_FLOW_OK;
   }
 probation_seqnum:
@@ -1181,44 +1101,32 @@ probation_seqnum:
     GST_WARNING ("probation: seqnr %d != expected %d", seqnr, expected);
     src->curr_probation = src->probation;
     src->stats.max_seq = seqnr;
-    gst_buffer_unref (buffer);
     return GST_FLOW_OK;
   }
 }
 
 /**
- * rtp_source_process_bye:
+ * rtp_source_mark_bye:
  * @src: an #RTPSource
  * @reason: the reason for leaving
  *
- * Notify @src that a BYE packet has been received. This will make the source
- * inactive.
+ * Mark @src in the BYE state. This can happen when the source wants to
+ * leave the sesssion or when a BYE packets has been received.
+ *
+ * This will make the source inactive.
  */
 void
-rtp_source_process_bye (RTPSource * src, const gchar * reason)
+rtp_source_mark_bye (RTPSource * src, const gchar * reason)
 {
   g_return_if_fail (RTP_IS_SOURCE (src));
 
   GST_DEBUG ("marking SSRC %08x as BYE, reason: %s", src->ssrc,
       GST_STR_NULL (reason));
 
-  /* copy the reason and mark as received_bye */
+  /* copy the reason and mark as bye */
   g_free (src->bye_reason);
   src->bye_reason = g_strdup (reason);
-  src->received_bye = TRUE;
-}
-
-static gboolean
-set_ssrc (GstBuffer ** buffer, guint idx, RTPSource * src)
-{
-  GstRTPBuffer rtp = { NULL };
-
-  *buffer = gst_buffer_make_writable (*buffer);
-  if (gst_rtp_buffer_map (*buffer, GST_MAP_WRITE, &rtp)) {
-    gst_rtp_buffer_set_ssrc (&rtp, src->ssrc);
-    gst_rtp_buffer_unmap (&rtp);
-  }
-  return TRUE;
+  src->marked_bye = TRUE;
 }
 
 /**
@@ -1235,69 +1143,30 @@ set_ssrc (GstBuffer ** buffer, guint idx, RTPSource * src)
  * Returns: a #GstFlowReturn.
  */
 GstFlowReturn
-rtp_source_send_rtp (RTPSource * src, gpointer data, gboolean is_list,
-    GstClockTime running_time)
+rtp_source_send_rtp (RTPSource * src, RTPPacketInfo * pinfo)
 {
   GstFlowReturn result;
-  guint len;
+  GstClockTime running_time;
   guint32 rtptime;
   guint64 ext_rtptime;
   guint64 rt_diff, rtp_diff;
-  GstBufferList *list = NULL;
-  GstBuffer *buffer = NULL;
-  guint packets;
-  guint32 ssrc;
-  GstRTPBuffer rtp = { NULL };
 
   g_return_val_if_fail (RTP_IS_SOURCE (src), GST_FLOW_ERROR);
-  g_return_val_if_fail (is_list || GST_IS_BUFFER (data), GST_FLOW_ERROR);
-
-  if (is_list) {
-    list = GST_BUFFER_LIST_CAST (data);
-
-    /* We can grab the caps from the first group, since all
-     * groups of a buffer list have same caps. */
-    buffer = gst_buffer_list_get (list, 0);
-    if (!buffer)
-      goto no_buffer;
-  } else {
-    buffer = GST_BUFFER_CAST (data);
-  }
 
   /* we are a sender now */
   src->is_sender = TRUE;
 
-  if (is_list) {
-    gint i;
-
-    /* Each group makes up a network packet. */
-    packets = gst_buffer_list_length (list);
-    for (i = 0, len = 0; i < packets; i++) {
-      if (!gst_rtp_buffer_map (gst_buffer_list_get (list, i), GST_MAP_READ,
-              &rtp))
-        goto invalid_packet;
-
-      len += gst_rtp_buffer_get_payload_len (&rtp);
-      gst_rtp_buffer_unmap (&rtp);
-    }
-    /* subsequent info taken from first list member */
-    gst_rtp_buffer_map (gst_buffer_list_get (list, 0), GST_MAP_READ, &rtp);
-  } else {
-    packets = 1;
-    if (!gst_rtp_buffer_map (buffer, GST_MAP_READ, &rtp))
-      goto invalid_packet;
-
-    len = gst_rtp_buffer_get_payload_len (&rtp);
-  }
-
   /* update stats for the SR */
-  src->stats.packets_sent += packets;
-  src->stats.octets_sent += len;
-  src->bytes_sent += len;
+  src->stats.packets_sent += pinfo->packets;
+  src->stats.octets_sent += pinfo->payload_len;
+  src->bytes_sent += pinfo->payload_len;
+
+  running_time = pinfo->running_time;
 
   do_bitrate_estimation (src, running_time, &src->bytes_sent);
 
-  rtptime = gst_rtp_buffer_get_timestamp (&rtp);
+  rtptime = pinfo->rtptime;
+
   ext_rtptime = src->last_rtptime;
   ext_rtptime = gst_rtp_buffer_ext_timestamp (&ext_rtptime, rtptime);
 
@@ -1321,56 +1190,21 @@ rtp_source_send_rtp (RTPSource * src, gpointer data, gboolean is_list,
   src->last_rtptime = ext_rtptime;
 
   /* push packet */
-  if (!src->callbacks.push_rtp) {
-    gst_rtp_buffer_unmap (&rtp);
+  if (!src->callbacks.push_rtp)
     goto no_callback;
-  }
 
-  ssrc = gst_rtp_buffer_get_ssrc (&rtp);
-  gst_rtp_buffer_unmap (&rtp);
+  GST_LOG ("pushing RTP %s %" G_GUINT64_FORMAT,
+      pinfo->is_list ? "list" : "packet", src->stats.packets_sent);
 
-  if (ssrc != src->ssrc) {
-    /* the SSRC of the packet is not correct, make a writable buffer and
-     * update the SSRC. This could involve a complete copy of the packet when
-     * it is not writable. Usually the payloader will use caps negotiation to
-     * get the correct SSRC from the session manager before pushing anything. */
-
-    /* FIXME, we don't want to warn yet because we can't inform any payloader
-     * of the changes SSRC yet because we don't implement pad-alloc. */
-    GST_LOG ("updating SSRC from %08x to %08x, fix the payloader", ssrc,
-        src->ssrc);
-
-    if (is_list) {
-      list = gst_buffer_list_make_writable (list);
-      gst_buffer_list_foreach (list, (GstBufferListFunc) set_ssrc, src);
-    } else {
-      set_ssrc (&buffer, 0, src);
-    }
-  }
-  GST_LOG ("pushing RTP %s %" G_GUINT64_FORMAT, is_list ? "list" : "packet",
-      src->stats.packets_sent);
-
-  result = src->callbacks.push_rtp (src, data, src->user_data);
+  result = src->callbacks.push_rtp (src, pinfo->data, src->user_data);
+  pinfo->data = NULL;
 
   return result;
 
   /* ERRORS */
-invalid_packet:
-  {
-    GST_WARNING ("invalid packet received");
-    gst_mini_object_unref (GST_MINI_OBJECT_CAST (data));
-    return GST_FLOW_OK;
-  }
-no_buffer:
-  {
-    GST_WARNING ("no buffers in buffer list");
-    gst_mini_object_unref (GST_MINI_OBJECT_CAST (data));
-    return GST_FLOW_OK;
-  }
 no_callback:
   {
     GST_WARNING ("no callback installed, dropping packet");
-    gst_mini_object_unref (GST_MINI_OBJECT_CAST (data));
     return GST_FLOW_OK;
   }
 }
@@ -1871,4 +1705,75 @@ rtp_source_has_retained (RTPSource * src, GCompareFunc func, gconstpointer data)
     return TRUE;
   else
     return FALSE;
+}
+
+/**
+ * @src: The #RTPSource
+ * @seqnum: a seqnum
+ *
+ * Register that @seqnum has not been received from @src.
+ */
+void
+rtp_source_register_nack (RTPSource * src, guint16 seqnum)
+{
+  guint i, len;
+  guint32 dword = seqnum << 16;
+  gint diff = 16;
+
+  len = src->nacks->len;
+  for (i = 0; i < len; i++) {
+    guint32 tdword;
+    guint16 tseq;
+
+    tdword = g_array_index (src->nacks, guint32, i);
+    tseq = tdword >> 16;
+
+    diff = gst_rtp_buffer_compare_seqnum (tseq, seqnum);
+    if (diff < 16)
+      break;
+  }
+  /* we already have this seqnum */
+  if (diff == 0)
+    return;
+  /* it comes before the recorded seqnum, FIXME, we could merge it
+   * if not to far away */
+  if (diff < 0) {
+    GST_DEBUG ("insert NACK #%u at %u", seqnum, i);
+    g_array_insert_val (src->nacks, i, dword);
+  } else if (diff < 16) {
+    /* we can merge it */
+    dword = g_array_index (src->nacks, guint32, i);
+    dword |= 1 << (diff - 1);
+    GST_DEBUG ("merge NACK #%u at %u with NACK #%u -> 0x%08x", seqnum, i,
+        dword >> 16, dword);
+    g_array_index (src->nacks, guint32, i) = dword;
+  } else {
+    GST_DEBUG ("append NACK #%u", seqnum);
+    g_array_append_val (src->nacks, dword);
+  }
+  src->send_nack = TRUE;
+}
+
+/**
+ * @src: The #RTPSource
+ * @n_nacks: result number of nacks
+ *
+ * Get the registered NACKS since the last rtp_source_clear_nacks().
+ *
+ * Returns: an array of @n_nacks seqnum values.
+ */
+guint32 *
+rtp_source_get_nacks (RTPSource * src, guint * n_nacks)
+{
+  if (n_nacks)
+    *n_nacks = src->nacks->len;
+
+  return (guint32 *) src->nacks->data;
+}
+
+void
+rtp_source_clear_nacks (RTPSource * src)
+{
+  g_array_set_size (src->nacks, 0);
+  src->send_nack = FALSE;
 }

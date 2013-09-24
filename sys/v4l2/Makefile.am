@@ -8,27 +8,6 @@ xv_source =
 xv_libs =
 endif
 
-
-# variables used for enum/marshal generation
-glib_enum_headers = tuner.h tunernorm.h	tunerchannel.h
-glib_enum_define = GST_INTERFACES
-glib_gen_prefix = gst_interfaces
-glib_gen_basename = tuner
-
-built_sources = \
-	tuner-marshal.c \
-	tuner-enumtypes.c
-
-built_headers = \
-	tuner-marshal.h \
-	tuner-enumtypes.h
-
-EXTRA_DIST = tuner-marshal.list
-
-CLEANFILES = $(built_sources) $(built_headers)
-
-BUILT_SOURCES = $(built_sources) $(built_headers)
-
 include $(top_srcdir)/common/gst-glib-gen.mak
 
 libgstvideo4linux2_la_SOURCES = gstv4l2.c \
@@ -45,7 +24,6 @@ libgstvideo4linux2_la_SOURCES = gstv4l2.c \
 				tunerchannel.c \
 				tunernorm.c \
 				$(xv_source)
-nodist_libgstvideo4linux2_la_SOURCES = $(built_sources) $(built_headers)
 
 libgstvideo4linux2_la_CFLAGS =   $(GST_PLUGINS_BASE_CFLAGS) \
 				 $(GST_BASE_CFLAGS) \
@@ -56,15 +34,15 @@ libgstvideo4linux2_la_CFLAGS =   $(GST_PLUGINS_BASE_CFLAGS) \
 
 libgstvideo4linux2_la_LDFLAGS = $(GST_PLUGIN_LDFLAGS)
 libgstvideo4linux2_la_LIBTOOLFLAGS = $(GST_PLUGIN_LIBTOOLFLAGS)
-
 libgstvideo4linux2_la_LIBADD =   $(GST_PLUGINS_BASE_LIBS) \
-				 $(GST_BASE_LIBS) \
-				 $(GST_PLUGINS_BASE_LIBS) \
+				 -lgstallocators-$(GST_API_VERSION) \
 				 -lgstvideo-$(GST_API_VERSION) \
+				 $(GST_BASE_LIBS) \
 				 $(GST_LIBS) \
 				 $(xv_libs) \
 				 $(LIBV4L2_LIBS) \
-				 $(GUDEV_LIBS)
+				 $(GUDEV_LIBS) \
+				 $(LIBRT)
 
 noinst_HEADERS = \
 	gstv4l2bufferpool.h \

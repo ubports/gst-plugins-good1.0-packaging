@@ -3,12 +3,12 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>pulsesink</title>
-<meta name="generator" content="DocBook XSL Stylesheets V1.76.1">
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
 <link rel="home" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-progressreport.html" title="progressreport">
 <link rel="next" href="gst-plugins-good-plugins-pulsesrc.html" title="pulsesrc">
-<meta name="generator" content="GTK-Doc V1.18 (XML mode)">
+<meta name="generator" content="GTK-Doc V1.19 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -62,7 +62,7 @@
 <a name="gst-plugins-good-plugins-pulsesink.implemented-interfaces"></a><h2>Implemented Interfaces</h2>
 <p>
 GstPulseSink implements
- <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gst-plugins-base-libs/html/gst-plugins-base-libs-gststreamvolume.html#GstStreamVolume">GstStreamVolume</a>,  GstImplementsInterface and  GstPropertyProbe.</p>
+ <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gst-plugins-base-libs/html/gst-plugins-base-libs-gststreamvolume.html#GstStreamVolume">GstStreamVolume</a>,  <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstImplementsInterface.html">GstImplementsInterface</a> and  <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gst-plugins-base-libs/html/gst-plugins-base-libs-gstpropertyprobe.html#GstPropertyProbe">GstPropertyProbe</a>.</p>
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-pulsesink.properties"></a><h2>Properties</h2>
@@ -75,6 +75,7 @@ GstPulseSink implements
   "<a class="link" href="gst-plugins-good-plugins-pulsesink.html#GstPulseSink--client" title='The "client" property'>client</a>"                   <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a>*                : Read / Write
   "<a class="link" href="gst-plugins-good-plugins-pulsesink.html#GstPulseSink--stream-properties" title='The "stream-properties" property'>stream-properties</a>"        <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstStructure.html#GstStructure"><span class="type">GstStructure</span></a>*         : Read / Write
   "<a class="link" href="gst-plugins-good-plugins-pulsesink.html#GstPulseSink--client-name" title='The "client-name" property'>client-name</a>"              <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a>*                : Read / Write
+  "<a class="link" href="gst-plugins-good-plugins-pulsesink.html#GstPulseSink--current-device" title='The "current-device" property'>current-device</a>"           <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a>*                : Read
 </pre>
 </div>
 <div class="refsect1">
@@ -82,9 +83,12 @@ GstPulseSink implements
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="idp18593120"></a><h3>Element Information</h3>
-<div class="variablelist"><table border="0">
+<a name="id-1.2.99.7.2.1"></a><h3>Element Information</h3>
+<div class="variablelist"><table border="0" class="variablelist">
+<colgroup>
 <col align="left" valign="top">
+<col>
+</colgroup>
 <tbody>
 <tr>
 <td><p><span class="term">plugin</span></p></td>
@@ -105,9 +109,12 @@ GstPulseSink implements
 </div>
 <hr>
 <div class="refsect2">
-<a name="idp14965120"></a><h3>Element Pads</h3>
-<div class="variablelist"><table border="0">
+<a name="id-1.2.99.7.2.2"></a><h3>Element Pads</h3>
+<div class="variablelist"><table border="0" class="variablelist">
+<colgroup>
 <col align="left" valign="top">
+<col>
+</colgroup>
 <tbody>
 <tr>
 <td><p><span class="term">name</span></p></td>
@@ -148,6 +155,10 @@ GstPulseSink implements
 <tr>
 <td><p><span class="term"></span></p></td>
 <td> audio/mpeg, mpegversion=(int)1, mpegaudioversion=(int)[ 1, 2 ], parsed=(boolean)true</td>
+</tr>
+<tr>
+<td><p><span class="term"></span></p></td>
+<td> audio/mpeg, mpegversion=(int){ 2, 4 }, framed=(boolean)true, stream-format=(string)adts</td>
 </tr>
 </tbody>
 </table></div>
@@ -222,10 +233,17 @@ GstPulseSink implements
 <p>The PulseAudio client name to use.</p>
 <p>Default value: "lt-gst-plugins-good-plugins-scan"</p>
 </div>
+<hr>
+<div class="refsect2">
+<a name="GstPulseSink--current-device"></a><h3>The <code class="literal">"current-device"</code> property</h3>
+<pre class="programlisting">  "current-device"           <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a>*                : Read</pre>
+<p>The current PulseAudio sink device.</p>
+<p>Default value: NULL</p>
+</div>
 </div>
 </div>
 <div class="footer">
 <hr>
-          Generated by GTK-Doc V1.18</div>
+          Generated by GTK-Doc V1.19</div>
 </body>
 </html>

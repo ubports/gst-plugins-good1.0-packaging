@@ -13,8 +13,18 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
+ */
+
+/**
+ * SECTION:element-rtpbvdepay
+ * @see_also: rtpbvpay
+ *
+ * Extract BroadcomVoice audio from RTP packets according to RFC 4298.
+ * For detailed information see: http://www.rfc-editor.org/rfc/rfc4298.txt
+ *
+ * Last reviewed on 2013-04-25 (1.1.0)
  */
 
 #ifdef HAVE_CONFIG_H
@@ -165,8 +175,8 @@ gst_rtp_bv_depay_process (GstRTPBaseDepayload * depayload, GstBuffer * buf)
   gst_rtp_buffer_unmap (&rtp);
 
   if (marker && outbuf) {
-    /* mark start of talkspurt with DISCONT */
-    GST_BUFFER_FLAG_SET (outbuf, GST_BUFFER_FLAG_DISCONT);
+    /* mark start of talkspurt with RESYNC */
+    GST_BUFFER_FLAG_SET (outbuf, GST_BUFFER_FLAG_RESYNC);
   }
 
   return outbuf;

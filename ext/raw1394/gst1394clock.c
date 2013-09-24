@@ -17,8 +17,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -97,7 +97,8 @@ Gst1394Clock *
 gst_1394_clock_new (const gchar * name)
 {
   Gst1394Clock *_1394clock =
-      GST_1394_CLOCK (g_object_new (GST_TYPE_1394_CLOCK, "name", name, NULL));
+      GST_1394_CLOCK (g_object_new (GST_TYPE_1394_CLOCK, "name", name,
+          "clock-type", GST_CLOCK_TYPE_OTHER, NULL));
 
   return _1394clock;
 }

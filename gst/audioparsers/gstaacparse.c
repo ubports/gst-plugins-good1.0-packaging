@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 /**
@@ -45,6 +45,7 @@
 #include <string.h>
 
 #include <gst/base/gstbitreader.h>
+#include <gst/pbutils/codec-utils.h>
 #include "gstaacparse.h"
 
 
@@ -68,6 +69,9 @@ GST_DEBUG_CATEGORY_STATIC (aacparse_debug);
 #define ADTS_MAX_SIZE 10        /* Should be enough */
 #define LOAS_MAX_SIZE 3         /* Should be enough */
 
+#define ADTS_HEADERS_LENGTH 7UL /* Total byte-length of fixed and variable
+                                   headers prepended during raw to ADTS
+                                   conversion */
 
 #define AAC_FRAME_DURATION(parse) (GST_SECOND/parse->frames_per_sec)
 
@@ -91,21 +95,10 @@ static GstCaps *gst_aac_parse_sink_getcaps (GstBaseParse * parse,
 
 static GstFlowReturn gst_aac_parse_handle_frame (GstBaseParse * parse,
     GstBaseParseFrame * frame, gint * skipsize);
+static GstFlowReturn gst_aac_parse_pre_push_frame (GstBaseParse * parse,
+    GstBaseParseFrame * frame);
 
 G_DEFINE_TYPE (GstAacParse, gst_aac_parse, GST_TYPE_BASE_PARSE);
-
-static inline gint
-gst_aac_parse_get_sample_rate_from_index (guint sr_idx)
-{
-  static const guint aac_sample_rates[] = { 96000, 88200, 64000, 48000, 44100,
-    32000, 24000, 22050, 16000, 12000, 11025, 8000
-  };
-
-  if (sr_idx < G_N_ELEMENTS (aac_sample_rates))
-    return aac_sample_rates[sr_idx];
-  GST_WARNING ("Invalid sample rate index %u", sr_idx);
-  return 0;
-}
 
 /**
  * gst_aac_parse_class_init:
@@ -135,6 +128,8 @@ gst_aac_parse_class_init (GstAacParseClass * klass)
   parse_class->set_sink_caps = GST_DEBUG_FUNCPTR (gst_aac_parse_sink_setcaps);
   parse_class->get_sink_caps = GST_DEBUG_FUNCPTR (gst_aac_parse_sink_getcaps);
   parse_class->handle_frame = GST_DEBUG_FUNCPTR (gst_aac_parse_handle_frame);
+  parse_class->pre_push_frame =
+      GST_DEBUG_FUNCPTR (gst_aac_parse_pre_push_frame);
 }
 
 
@@ -165,9 +160,11 @@ static gboolean
 gst_aac_parse_set_src_caps (GstAacParse * aacparse, GstCaps * sink_caps)
 {
   GstStructure *s;
-  GstCaps *src_caps = NULL;
+  GstCaps *src_caps = NULL, *allowed;
   gboolean res = FALSE;
   const gchar *stream_format;
+  GstBuffer *codec_data;
+  guint16 codec_data_data;
 
   GST_DEBUG_OBJECT (aacparse, "sink caps: %" GST_PTR_FORMAT, sink_caps);
   if (sink_caps)
@@ -178,6 +175,7 @@ gst_aac_parse_set_src_caps (GstAacParse * aacparse, GstCaps * sink_caps)
   gst_caps_set_simple (src_caps, "framed", G_TYPE_BOOLEAN, TRUE,
       "mpegversion", G_TYPE_INT, aacparse->mpegversion, NULL);
 
+  aacparse->output_header_type = aacparse->header_type;
   switch (aacparse->header_type) {
     case DSPAAC_HEADER_NONE:
       stream_format = "raw";
@@ -203,11 +201,65 @@ gst_aac_parse_set_src_caps (GstAacParse * aacparse, GstCaps * sink_caps)
   if (stream_format)
     gst_structure_set (s, "stream-format", G_TYPE_STRING, stream_format, NULL);
 
+  allowed = gst_pad_get_allowed_caps (GST_BASE_PARSE (aacparse)->srcpad);
+  if (!gst_caps_can_intersect (src_caps, allowed)) {
+    GST_DEBUG_OBJECT (GST_BASE_PARSE (aacparse)->srcpad,
+        "Caps can not intersect");
+    if (aacparse->header_type == DSPAAC_HEADER_ADTS) {
+      GST_DEBUG_OBJECT (GST_BASE_PARSE (aacparse)->srcpad,
+          "Input is ADTS, trying raw");
+      gst_caps_set_simple (src_caps, "stream-format", G_TYPE_STRING, "raw",
+          NULL);
+      if (gst_caps_can_intersect (src_caps, allowed)) {
+        GstMapInfo map;
+        int idx;
+
+        idx =
+            gst_codec_utils_aac_get_index_from_sample_rate
+            (aacparse->sample_rate);
+        if (idx < 0)
+          goto not_a_known_rate;
+
+        GST_DEBUG_OBJECT (GST_BASE_PARSE (aacparse)->srcpad,
+            "Caps can intersect, we will drop the ADTS layer");
+        aacparse->output_header_type = DSPAAC_HEADER_NONE;
+
+        /* The codec_data data is according to AudioSpecificConfig,
+           ISO/IEC 14496-3, 1.6.2.1 */
+        codec_data = gst_buffer_new_and_alloc (2);
+        gst_buffer_map (codec_data, &map, GST_MAP_WRITE);
+        codec_data_data =
+            (aacparse->object_type << 11) |
+            (idx << 7) | (aacparse->channels << 3);
+        GST_WRITE_UINT16_BE (map.data, codec_data_data);
+        gst_buffer_unmap (codec_data, &map);
+        gst_caps_set_simple (src_caps, "codec_data", GST_TYPE_BUFFER,
+            codec_data, NULL);
+      }
+    } else if (aacparse->header_type == DSPAAC_HEADER_NONE) {
+      GST_DEBUG_OBJECT (GST_BASE_PARSE (aacparse)->srcpad,
+          "Input is raw, trying ADTS");
+      gst_caps_set_simple (src_caps, "stream-format", G_TYPE_STRING, "adts",
+          NULL);
+      if (gst_caps_can_intersect (src_caps, allowed)) {
+        GST_DEBUG_OBJECT (GST_BASE_PARSE (aacparse)->srcpad,
+            "Caps can intersect, we will prepend ADTS headers");
+        aacparse->output_header_type = DSPAAC_HEADER_ADTS;
+      }
+    }
+  }
+  gst_caps_unref (allowed);
+
   GST_DEBUG_OBJECT (aacparse, "setting src caps: %" GST_PTR_FORMAT, src_caps);
 
   res = gst_pad_set_caps (GST_BASE_PARSE (aacparse)->srcpad, src_caps);
   gst_caps_unref (src_caps);
   return res;
+
+not_a_known_rate:
+  gst_caps_unref (allowed);
+  gst_caps_unref (src_caps);
+  return FALSE;
 }
 
 
@@ -250,7 +302,8 @@ gst_aac_parse_sink_setcaps (GstBaseParse * parse, GstCaps * caps)
 
       sr_idx = ((map.data[0] & 0x07) << 1) | ((map.data[1] & 0x80) >> 7);
       aacparse->object_type = (map.data[0] & 0xf8) >> 3;
-      aacparse->sample_rate = gst_aac_parse_get_sample_rate_from_index (sr_idx);
+      aacparse->sample_rate =
+          gst_codec_utils_aac_get_sample_rate_from_index (sr_idx);
       aacparse->channels = (map.data[1] & 0x78) >> 3;
       aacparse->header_type = DSPAAC_HEADER_NONE;
       aacparse->mpegversion = 4;
@@ -263,7 +316,8 @@ gst_aac_parse_sink_setcaps (GstBaseParse * parse, GstCaps * caps)
 
       /* arrange for metadata and get out of the way */
       gst_aac_parse_set_src_caps (aacparse, caps);
-      gst_base_parse_set_passthrough (parse, TRUE);
+      if (aacparse->header_type == aacparse->output_header_type)
+        gst_base_parse_set_passthrough (parse, TRUE);
     } else
       return FALSE;
 
@@ -669,7 +723,7 @@ gst_aac_parse_parse_adts_header (GstAacParse * aacparse, const guint8 * data,
   if (rate) {
     gint sr_idx = (data[2] & 0x3c) >> 2;
 
-    *rate = gst_aac_parse_get_sample_rate_from_index (sr_idx);
+    *rate = gst_codec_utils_aac_get_sample_rate_from_index (sr_idx);
   }
   if (channels)
     *channels = ((data[2] & 0x01) << 2) | ((data[3] & 0xc0) >> 6);
@@ -677,7 +731,7 @@ gst_aac_parse_parse_adts_header (GstAacParse * aacparse, const guint8 * data,
   if (version)
     *version = (data[1] & 0x08) ? 2 : 4;
   if (object)
-    *object = (data[2] & 0xc0) >> 6;
+    *object = ((data[2] & 0xc0) >> 6) + 1;
 }
 
 /**
@@ -860,7 +914,8 @@ gst_aac_parse_detect_stream (GstAacParse * aacparse,
 
     /* FIXME: This gives totally wrong results. Duration calculation cannot
        be based on this */
-    aacparse->sample_rate = gst_aac_parse_get_sample_rate_from_index (sr_idx);
+    aacparse->sample_rate =
+        gst_codec_utils_aac_get_sample_rate_from_index (sr_idx);
 
     /* baseparse is not given any fps,
      * so it will give up on timestamps, seeking, etc */
@@ -892,6 +947,184 @@ gst_aac_parse_detect_stream (GstAacParse * aacparse,
   return FALSE;
 }
 
+/**
+ * gst_aac_parse_get_audio_profile_object_type
+ * @aacparse: #GstAacParse.
+ *
+ * Gets the MPEG-2 profile or the MPEG-4 object type value corresponding to the
+ * mpegversion and profile of @aacparse's src pad caps, according to the
+ * values defined by table 1.A.11 in ISO/IEC 14496-3.
+ *
+ * Returns: the profile or object type value corresponding to @aacparse's src
+ * pad caps, if such a value exists; otherwise G_MAXUINT8.
+ */
+static guint8
+gst_aac_parse_get_audio_profile_object_type (GstAacParse * aacparse)
+{
+  GstCaps *srccaps;
+  GstStructure *srcstruct;
+  const gchar *profile;
+  guint8 ret;
+
+  srccaps = gst_pad_get_current_caps (GST_BASE_PARSE_SRC_PAD (aacparse));
+  srcstruct = gst_caps_get_structure (srccaps, 0);
+  profile = gst_structure_get_string (srcstruct, "profile");
+  if (G_UNLIKELY (profile == NULL)) {
+    gst_caps_unref (srccaps);
+    return G_MAXUINT8;
+  }
+
+  if (g_strcmp0 (profile, "main") == 0) {
+    ret = (guint8) 0U;
+  } else if (g_strcmp0 (profile, "lc") == 0) {
+    ret = (guint8) 1U;
+  } else if (g_strcmp0 (profile, "ssr") == 0) {
+    ret = (guint8) 2U;
+  } else if (g_strcmp0 (profile, "ltp") == 0) {
+    if (G_LIKELY (aacparse->mpegversion == 4))
+      ret = (guint8) 3U;
+    else
+      ret = G_MAXUINT8;         /* LTP Object Type allowed only for MPEG-4 */
+  } else {
+    ret = G_MAXUINT8;
+  }
+
+  gst_caps_unref (srccaps);
+  return ret;
+}
+
+/**
+ * gst_aac_parse_get_audio_channel_configuration
+ * @num_channels: number of audio channels.
+ *
+ * Gets the Channel Configuration value, as defined by table 1.19 in ISO/IEC
+ * 14496-3, for a given number of audio channels.
+ *
+ * Returns: the Channel Configuration value corresponding to @num_channels, if
+ * such a value exists; otherwise G_MAXUINT8.
+ */
+static guint8
+gst_aac_parse_get_audio_channel_configuration (gint num_channels)
+{
+  if (num_channels >= 1 && num_channels <= 6)   /* Mono up to & including 5.1 */
+    return (guint8) num_channels;
+  else if (num_channels == 8)   /* 7.1 */
+    return (guint8) 7U;
+  else
+    return G_MAXUINT8;
+}
+
+/**
+ * gst_aac_parse_get_audio_sampling_frequency_index:
+ * @sample_rate: audio sampling rate.
+ *
+ * Gets the Sampling Frequency Index value, as defined by table 1.18 in ISO/IEC
+ * 14496-3, for a given sampling rate.
+ *
+ * Returns: the Sampling Frequency Index value corresponding to @sample_rate,
+ * if such a value exists; otherwise G_MAXUINT8.
+ */
+static guint8
+gst_aac_parse_get_audio_sampling_frequency_index (gint sample_rate)
+{
+  switch (sample_rate) {
+    case 96000:
+      return 0x0U;
+    case 88200:
+      return 0x1U;
+    case 64000:
+      return 0x2U;
+    case 48000:
+      return 0x3U;
+    case 44100:
+      return 0x4U;
+    case 32000:
+      return 0x5U;
+    case 24000:
+      return 0x6U;
+    case 22050:
+      return 0x7U;
+    case 16000:
+      return 0x8U;
+    case 12000:
+      return 0x9U;
+    case 11025:
+      return 0xAU;
+    case 8000:
+      return 0xBU;
+    case 7350:
+      return 0xCU;
+    default:
+      return G_MAXUINT8;
+  }
+}
+
+/**
+ * gst_aac_parse_prepend_adts_headers:
+ * @aacparse: #GstAacParse.
+ * @frame: raw AAC frame to which ADTS headers shall be prepended.
+ *
+ * Prepends ADTS headers to a raw AAC audio frame.
+ *
+ * Returns: TRUE if ADTS headers were successfully prepended; FALSE otherwise.
+ */
+static gboolean
+gst_aac_parse_prepend_adts_headers (GstAacParse * aacparse,
+    GstBaseParseFrame * frame)
+{
+  GstMemory *mem;
+  guint8 *adts_headers;
+  gsize buf_size;
+  gsize frame_size;
+  guint8 id, profile, channel_configuration, sampling_frequency_index;
+
+  id = (aacparse->mpegversion == 4) ? 0x0U : 0x1U;
+  profile = gst_aac_parse_get_audio_profile_object_type (aacparse);
+  if (profile == G_MAXUINT8) {
+    GST_ERROR_OBJECT (aacparse, "Unsupported audio profile or object type");
+    return FALSE;
+  }
+  channel_configuration =
+      gst_aac_parse_get_audio_channel_configuration (aacparse->channels);
+  if (channel_configuration == G_MAXUINT8) {
+    GST_ERROR_OBJECT (aacparse, "Unsupported number of channels");
+    return FALSE;
+  }
+  sampling_frequency_index =
+      gst_aac_parse_get_audio_sampling_frequency_index (aacparse->sample_rate);
+  if (sampling_frequency_index == G_MAXUINT8) {
+    GST_ERROR_OBJECT (aacparse, "Unsupported sampling frequency");
+    return FALSE;
+  }
+
+  frame->out_buffer = gst_buffer_copy (frame->buffer);
+  buf_size = gst_buffer_get_size (frame->out_buffer);
+  frame_size = buf_size + ADTS_HEADERS_LENGTH;
+
+  if (G_UNLIKELY (frame_size >= 0x4000)) {
+    GST_ERROR_OBJECT (aacparse, "Frame size is too big for ADTS");
+    return FALSE;
+  }
+
+  adts_headers = (guint8 *) g_malloc0 (ADTS_HEADERS_LENGTH);
+
+  /* Note: no error correction bits are added to the resulting ADTS frames */
+  adts_headers[0] = 0xFFU;
+  adts_headers[1] = 0xF0U | (id << 3) | 0x1U;
+  adts_headers[2] = (profile << 6) | (sampling_frequency_index << 2) | 0x2U |
+      (channel_configuration & 0x4U);
+  adts_headers[3] = ((channel_configuration & 0x3U) << 6) | 0x30U |
+      (guint8) (frame_size >> 11);
+  adts_headers[4] = (guint8) ((frame_size >> 3) & 0x00FF);
+  adts_headers[5] = (guint8) (((frame_size & 0x0007) << 5) + 0x1FU);
+  adts_headers[6] = 0xFCU;
+
+  mem = gst_memory_new_wrapped (0, adts_headers, ADTS_HEADERS_LENGTH, 0,
+      ADTS_HEADERS_LENGTH, NULL, NULL);
+  gst_buffer_prepend_memory (frame->out_buffer, mem);
+
+  return TRUE;
+}
 
 /**
  * gst_aac_parse_check_valid_frame:
@@ -1036,6 +1269,14 @@ gst_aac_parse_handle_frame (GstBaseParse * parse,
     }
   }
 
+  if (aacparse->header_type == DSPAAC_HEADER_NONE
+      && aacparse->output_header_type == DSPAAC_HEADER_ADTS) {
+    if (!gst_aac_parse_prepend_adts_headers (aacparse, frame)) {
+      GST_ERROR_OBJECT (aacparse, "Failed to prepend ADTS headers to frame");
+      ret = GST_FLOW_ERROR;
+    }
+  }
+
 exit:
   gst_buffer_unmap (buffer, &map);
 
@@ -1051,6 +1292,26 @@ exit:
 
   if (ret && framesize <= map.size) {
     return gst_base_parse_finish_frame (parse, frame, framesize);
+  }
+
+  return GST_FLOW_OK;
+}
+
+static GstFlowReturn
+gst_aac_parse_pre_push_frame (GstBaseParse * parse, GstBaseParseFrame * frame)
+{
+  GstAacParse *aacparse = GST_AAC_PARSE (parse);
+
+  /* As a special case, we can remove the ADTS framing and output raw AAC. */
+  if (aacparse->header_type == DSPAAC_HEADER_ADTS
+      && aacparse->output_header_type == DSPAAC_HEADER_NONE) {
+    guint header_size;
+    GstMapInfo map;
+    gst_buffer_map (frame->buffer, &map, GST_MAP_READ);
+    header_size = (map.data[1] & 1) ? 7 : 9;    /* optional CRC */
+    gst_buffer_unmap (frame->buffer, &map);
+    gst_buffer_resize (frame->buffer, header_size,
+        gst_buffer_get_size (frame->buffer) - header_size);
   }
 
   return GST_FLOW_OK;

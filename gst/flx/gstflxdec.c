@@ -13,8 +13,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 /**
  * SECTION:element-flxdec
@@ -586,6 +586,13 @@ gst_flxdec_chain (GstPad * pad, GstObject * parent, GstBuffer * buf)
           flxdec->next_time += flxdec->frame_time;
 
           res = gst_pad_push (flxdec->srcpad, out);
+          break;
+        default:
+          /* check if we have the complete frame */
+          if (avail < flxfh.size)
+            goto need_more_data;
+
+          gst_adapter_flush (flxdec->adapter, flxfh.size);
           break;
       }
 

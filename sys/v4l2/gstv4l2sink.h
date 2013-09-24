@@ -18,8 +18,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #ifndef __GSTV4L2SINK_H__
@@ -54,7 +54,6 @@ struct _GstV4l2Sink {
 
   /*< private >*/
   GstV4l2Object * v4l2object;
-  GstCaps *probed_caps;         /* all supported caps of underlying v4l2 device */
 
   gint video_width, video_height;      /* original (unscaled) video w/h */
 

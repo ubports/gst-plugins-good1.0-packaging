@@ -13,10 +13,34 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
+/**
+ * SECTION:element-rtpamrdepay
+ * @see_also: rtpamrpay
+ *
+ * Extract AMR audio from RTP packets according to RFC 3267.
+ * For detailed information see: http://www.rfc-editor.org/rfc/rfc3267.txt
+ *
+ * <refsect2>
+ * <title>Example pipeline</title>
+ * |[
+ * gst-launch-1.0 udpsrc caps='application/x-rtp, media=(string)audio, clock-rate=(int)8000, encoding-name=(string)AMR, encoding-params=(string)1, octet-align=(string)1, payload=(int)96' ! rtpamrdepay ! amrnbdec ! pulsesink
+ * ]| This example pipeline will depayload and decode an RTP AMR stream. Refer to
+ * the rtpamrpay example to create the RTP stream.
+ * </refsect2>
+ *
+ * Last reviewed on 2013-04-25 (1.1.0)
+ */
+
+/*
+ * RFC 3267 - Real-Time Transport Protocol (RTP) Payload Format and File
+ * Storage Format for the Adaptive Multi-Rate (AMR) and Adaptive Multi-Rate
+ * Wideband (AMR-WB) Audio Codecs.
+ *
+ */
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
 #endif
@@ -29,13 +53,6 @@
 
 GST_DEBUG_CATEGORY_STATIC (rtpamrdepay_debug);
 #define GST_CAT_DEFAULT (rtpamrdepay_debug)
-
-/* references:
- *
- * RFC 3267 - Real-Time Transport Protocol (RTP) Payload Format and File
- * Storage Format for the Adaptive Multi-Rate (AMR) and Adaptive Multi-Rate
- * Wideband (AMR-WB) Audio Codecs.
- */
 
 /* RtpAMRDepay signals and args */
 enum
@@ -405,9 +422,9 @@ gst_rtp_amr_depay_process (GstRTPBaseDepayload * depayload, GstBuffer * buf)
     GST_BUFFER_DURATION (outbuf) = num_packets * 20 * GST_MSECOND;
 
     if (gst_rtp_buffer_get_marker (&rtp)) {
-      /* marker bit marks a discont buffer after a talkspurt. */
+      /* marker bit marks a buffer after a talkspurt. */
       GST_DEBUG_OBJECT (depayload, "marker bit was set");
-      GST_BUFFER_FLAG_SET (outbuf, GST_BUFFER_FLAG_DISCONT);
+      GST_BUFFER_FLAG_SET (outbuf, GST_BUFFER_FLAG_RESYNC);
     }
 
     GST_DEBUG_OBJECT (depayload, "pushing buffer of size %" G_GSIZE_FORMAT,

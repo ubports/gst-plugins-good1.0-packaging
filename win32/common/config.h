@@ -58,7 +58,7 @@
 #define GST_PACKAGE_ORIGIN "Unknown package origin"
 
 /* GStreamer package release date/time for plugins as YYYY-MM-DD */
-#define GST_PACKAGE_RELEASE_DATETIME "2013-08-28"
+#define GST_PACKAGE_RELEASE_DATETIME "2013-09-19"
 
 /* Define if static plugins should be built */
 #undef GST_PLUGIN_BUILD_STATIC
@@ -89,6 +89,9 @@
 /* Define to 1 if you have the MacOS X function CFPreferencesCopyAppValue in
    the CoreFoundation framework. */
 #undef HAVE_CFPREFERENCESCOPYAPPVALUE
+
+/* Define to 1 if you have the `clock_gettime' function. */
+#undef HAVE_CLOCK_GETTIME
 
 /* Define to 1 if you have the `cosh' function. */
 #undef HAVE_COSH
@@ -138,6 +141,10 @@
 /* Define if the GNU dcgettext() function is already present or preinstalled.
    */
 #undef HAVE_DCGETTEXT
+
+/* Define to 1 if you have the declaration of `V4L2_MEMORY_DMABUF', and to 0
+   if you don't. */
+#undef HAVE_DECL_V4L2_MEMORY_DMABUF
 
 /* Define to enable DirectSound plug-in (used by directsoundsink). */
 #undef HAVE_DIRECTSOUND
@@ -225,9 +232,6 @@
 
 /* Define to enable Portable Network Graphics library (used by png). */
 #undef HAVE_LIBPNG
-
-/* soup gnome integration */
-#undef HAVE_LIBSOUP_GNOME
 
 /* Whether libv4l2 is available for video buffer conversion */
 #undef HAVE_LIBV4L2
@@ -334,6 +338,12 @@
 /* Defined if the VP8 encoder is available */
 #undef HAVE_VP8_ENCODER
 
+/* Defined if the VP9 decoder is available */
+#undef HAVE_VP9_DECODER
+
+/* Defined if the VP9 encoder is available */
+#undef HAVE_VP9_ENCODER
+
 /* Define to enable VPX decoder (used by vpx). */
 #undef HAVE_VPX
 
@@ -365,9 +375,6 @@
    */
 #undef LT_OBJDIR
 
-/* Define to 1 if your C compiler doesn't accept -c and -o together. */
-#undef NO_MINUS_C_MINUS_O
-
 /* Name of package */
 #define PACKAGE "gst-plugins-good"
 
@@ -378,7 +385,7 @@
 #define PACKAGE_NAME "GStreamer Good Plug-ins"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "GStreamer Good Plug-ins 1.0.10"
+#define PACKAGE_STRING "GStreamer Good Plug-ins 1.1.90"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "gst-plugins-good"
@@ -387,7 +394,7 @@
 #undef PACKAGE_URL
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.0.10"
+#define PACKAGE_VERSION "1.1.90"
 
 /* directory where plugins are located */
 #ifdef _DEBUG
@@ -421,7 +428,7 @@
 #undef TARGET_CPU
 
 /* Version number of package */
-#define VERSION "1.0.10"
+#define VERSION "1.1.90"
 
 /* old wavpack API */
 #undef WAVPACK_OLD_API

@@ -95,6 +95,7 @@ EXTRA_HFILES = \
 	$(top_srcdir)/gst/audiofx/audiowsincband.h \
 	$(top_srcdir)/gst/audiofx/audiowsinclimit.h \
 	$(top_srcdir)/gst/audiofx/audiofirfilter.h \
+	$(top_srcdir)/gst/audiofx/gstscaletempo.h \
 	$(top_srcdir)/gst/audioparsers/gstaacparse.h \
 	$(top_srcdir)/gst/audioparsers/gstac3parse.h \
 	$(top_srcdir)/gst/audioparsers/gstamrparse.h \
@@ -114,6 +115,9 @@ EXTRA_HFILES = \
 	$(top_srcdir)/gst/debugutils/gsttaginject.h \
 	$(top_srcdir)/gst/debugutils/progressreport.h \
 	$(top_srcdir)/gst/deinterlace/gstdeinterlace.h \
+	$(top_srcdir)/gst/dtmf/gstdtmfsrc.h \
+	$(top_srcdir)/gst/dtmf/gstrtpdtmfsrc.h \
+	$(top_srcdir)/gst/dtmf/gstrtpdtmfdepay.h \
 	$(top_srcdir)/gst/effectv/gstaging.h \
 	$(top_srcdir)/gst/effectv/gstdice.h \
 	$(top_srcdir)/gst/effectv/gstedge.h \
@@ -167,6 +171,8 @@ EXTRA_HFILES = \
 	$(top_srcdir)/gst/rtpmanager/gstrtpptdemux.h \
 	$(top_srcdir)/gst/rtpmanager/gstrtpsession.h \
 	$(top_srcdir)/gst/rtpmanager/gstrtpssrcdemux.h \
+	$(top_srcdir)/gst/rtpmanager/gstrtpmux.h \
+	$(top_srcdir)/gst/rtpmanager/gstrtpdtmfmux.h \
 	$(top_srcdir)/gst/rtsp/gstrtpdec.h \
 	$(top_srcdir)/gst/rtsp/gstrtspsrc.h \
 	$(top_srcdir)/gst/shapewipe/gstshapewipe.h \

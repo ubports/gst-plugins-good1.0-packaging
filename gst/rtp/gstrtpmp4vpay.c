@@ -13,8 +13,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -275,7 +275,8 @@ gst_rtp_mp4v_pay_flush (GstRtpMP4VPay * rtpmp4vpay)
     outbuf = gst_rtp_buffer_new_allocate (0, 0, 0);
 
     /* Take buffer with the payload from the adapter */
-    outbuf_data = gst_adapter_take_buffer (rtpmp4vpay->adapter, payload_len);
+    outbuf_data = gst_adapter_take_buffer_fast (rtpmp4vpay->adapter,
+        payload_len);
 
     avail -= payload_len;
 
