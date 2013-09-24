@@ -13,8 +13,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 /*
  * Unless otherwise indicated, Source Code is licensed under MIT license.
@@ -953,7 +953,7 @@ void atom_moov_add_3gp_tag           (AtomMOOV * moov, guint32 fourcc, guint8 * 
 
 void atom_moov_add_xmp_tags          (AtomMOOV * moov, GstBuffer * xmp);
 
-#define GST_QT_MUX_DEFAULT_TAG_LANGUAGE   "eng"
+#define GST_QT_MUX_DEFAULT_TAG_LANGUAGE   "und" /* undefined/unknown */
 guint16  language_code               (const char * lang);
 
 #endif /* __ATOMS_H__ */

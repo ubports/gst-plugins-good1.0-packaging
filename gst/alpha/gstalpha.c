@@ -16,8 +16,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 /**
@@ -191,9 +191,9 @@ gst_alpha_method_get_type (void)
   static GType alpha_method_type = 0;
   static const GEnumValue alpha_method[] = {
     {ALPHA_METHOD_SET, "Set/adjust alpha channel", "set"},
-    {ALPHA_METHOD_GREEN, "Chroma Key green", "green"},
-    {ALPHA_METHOD_BLUE, "Chroma Key blue", "blue"},
-    {ALPHA_METHOD_CUSTOM, "Chroma Key on target_r/g/b", "custom"},
+    {ALPHA_METHOD_GREEN, "Chroma Key on pure green", "green"},
+    {ALPHA_METHOD_BLUE, "Chroma Key on pure blue", "blue"},
+    {ALPHA_METHOD_CUSTOM, "Chroma Key on custom RGB values", "custom"},
     {0, NULL, NULL},
   };
 
@@ -227,15 +227,18 @@ gst_alpha_class_init (GstAlphaClass * klass)
           0.0, 1.0, DEFAULT_ALPHA,
           G_PARAM_READWRITE | GST_PARAM_CONTROLLABLE | G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (G_OBJECT_CLASS (klass), PROP_TARGET_R,
-      g_param_spec_uint ("target-r", "Target Red", "The Red target", 0, 255,
+      g_param_spec_uint ("target-r", "Target Red",
+          "The red color value for custom RGB chroma keying", 0, 255,
           DEFAULT_TARGET_R,
           G_PARAM_READWRITE | GST_PARAM_CONTROLLABLE | G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (G_OBJECT_CLASS (klass), PROP_TARGET_G,
-      g_param_spec_uint ("target-g", "Target Green", "The Green target", 0, 255,
+      g_param_spec_uint ("target-g", "Target Green",
+          "The green color value for custom RGB chroma keying", 0, 255,
           DEFAULT_TARGET_G,
           G_PARAM_READWRITE | GST_PARAM_CONTROLLABLE | G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (G_OBJECT_CLASS (klass), PROP_TARGET_B,
-      g_param_spec_uint ("target-b", "Target Blue", "The Blue target", 0, 255,
+      g_param_spec_uint ("target-b", "Target Blue",
+          "The blue color value for custom RGB chroma keying", 0, 255,
           DEFAULT_TARGET_B,
           G_PARAM_READWRITE | GST_PARAM_CONTROLLABLE | G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (G_OBJECT_CLASS (klass), PROP_ANGLE,
@@ -253,7 +256,7 @@ gst_alpha_class_init (GstAlphaClass * klass)
           G_PARAM_READWRITE | GST_PARAM_CONTROLLABLE | G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (G_OBJECT_CLASS (klass),
       PROP_WHITE_SENSITIVITY, g_param_spec_uint ("white-sensitivity",
-          "Sensitivity", "Sensitivity to bright colors", 0, 128,
+          "White Sensitivity", "Sensitivity to bright colors", 0, 128,
           DEFAULT_WHITE_SENSITIVITY,
           G_PARAM_READWRITE | GST_PARAM_CONTROLLABLE | G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (G_OBJECT_CLASS (klass),
@@ -327,20 +330,6 @@ gst_alpha_set_property (GObject * object, guint prop_id,
           && (alpha->prefer_passthrough);
       alpha->method = method;
 
-      switch (alpha->method) {
-        case ALPHA_METHOD_GREEN:
-          alpha->target_r = 0;
-          alpha->target_g = 255;
-          alpha->target_b = 0;
-          break;
-        case ALPHA_METHOD_BLUE:
-          alpha->target_r = 0;
-          alpha->target_g = 0;
-          alpha->target_b = 255;
-          break;
-        default:
-          break;
-      }
       gst_alpha_set_process_function (alpha);
       gst_alpha_init_params (alpha);
       break;
@@ -2300,7 +2289,25 @@ gst_alpha_init_params_full (GstAlpha * alpha,
   gfloat tmp;
   gfloat tmp1, tmp2;
   gfloat y;
+  guint target_r = alpha->target_r;
+  guint target_g = alpha->target_g;
+  guint target_b = alpha->target_b;
   const gint *matrix;
+
+  switch (alpha->method) {
+    case ALPHA_METHOD_GREEN:
+      target_r = 0;
+      target_g = 255;
+      target_b = 0;
+      break;
+    case ALPHA_METHOD_BLUE:
+      target_r = 0;
+      target_g = 0;
+      target_b = 255;
+      break;
+    default:
+      break;
+  }
 
   /* RGB->RGB: convert to SDTV YUV, chroma keying, convert back
    * YUV->RGB: chroma keying, convert to RGB
@@ -2325,20 +2332,18 @@ gst_alpha_init_params_full (GstAlpha * alpha,
         (alpha->out_sdtv) ? cog_rgb_to_ycbcr_matrix_8bit_sdtv :
         cog_rgb_to_ycbcr_matrix_8bit_hdtv;
 
-  y = (matrix[0] * ((gint) alpha->target_r) +
-      matrix[1] * ((gint) alpha->target_g) +
-      matrix[2] * ((gint) alpha->target_b) + matrix[3]) >> 8;
+  y = (matrix[0] * ((gint) target_r) +
+      matrix[1] * ((gint) target_g) +
+      matrix[2] * ((gint) target_b) + matrix[3]) >> 8;
   /* Cb,Cr without offset here because the chroma keying
    * works with them being in range [-128,127]
    */
   tmp1 =
-      (matrix[4] * ((gint) alpha->target_r) +
-      matrix[5] * ((gint) alpha->target_g) +
-      matrix[6] * ((gint) alpha->target_b)) >> 8;
+      (matrix[4] * ((gint) target_r) +
+      matrix[5] * ((gint) target_g) + matrix[6] * ((gint) target_b)) >> 8;
   tmp2 =
-      (matrix[8] * ((gint) alpha->target_r) +
-      matrix[9] * ((gint) alpha->target_g) +
-      matrix[10] * ((gint) alpha->target_b)) >> 8;
+      (matrix[8] * ((gint) target_r) +
+      matrix[9] * ((gint) target_g) + matrix[10] * ((gint) target_b)) >> 8;
 
   kgl = sqrt (tmp1 * tmp1 + tmp2 * tmp2);
   alpha->cb = 127 * (tmp1 / kgl);

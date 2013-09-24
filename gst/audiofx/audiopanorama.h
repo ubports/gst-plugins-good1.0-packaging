@@ -14,8 +14,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
  
 #ifndef __GST_AUDIO_PANORAMA_H__
@@ -37,18 +37,24 @@ G_BEGIN_DECLS
 typedef struct _GstAudioPanorama      GstAudioPanorama;
 typedef struct _GstAudioPanoramaClass GstAudioPanoramaClass;
 
-typedef void (*GstAudioPanoramaProcessFunc)(GstAudioPanorama*, guint8*, guint8*, guint);
+typedef void (*GstAudioPanoramaProcessFunc)(gfloat, guint8*, guint8*, guint);
+
+typedef enum
+{
+  METHOD_PSYCHOACOUSTIC = 0,
+  METHOD_SIMPLE
+} GstAudioPanoramaMethod;
 
 struct _GstAudioPanorama {
   GstBaseTransform element;
 
+  /* properties */
   gfloat panorama;
+  GstAudioPanoramaMethod method;
 
   /* < private > */
   GstAudioPanoramaProcessFunc process;
-
   GstAudioInfo info;
-  gint method;
 };
 
 struct _GstAudioPanoramaClass {

@@ -15,13 +15,15 @@
  *
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with gst-pulse; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
  *  USA.
  */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include <gst/audio/audio.h>
 
 #include "pulseutil.h"
 
@@ -162,6 +164,13 @@ gst_pulse_fill_format_info (GstAudioRingBufferSpec * spec, pa_format_info ** f,
     format->encoding = PA_ENCODING_DTS_IEC61937;
   } else if (spec->type == GST_AUDIO_RING_BUFFER_FORMAT_TYPE_MPEG) {
     format->encoding = PA_ENCODING_MPEG_IEC61937;
+#if PA_CHECK_VERSION(3,99,0)
+  } else if (spec->type == GST_AUDIO_RING_BUFFER_FORMAT_TYPE_MPEG2_AAC) {
+    format->encoding = PA_ENCODING_MPEG2_AAC_IEC61937;
+  } else if (spec->type == GST_AUDIO_RING_BUFFER_FORMAT_TYPE_MPEG4_AAC) {
+    /* HACK. treat MPEG4 AAC as MPEG2 AAC for the moment */
+    format->encoding = PA_ENCODING_MPEG2_AAC_IEC61937;
+#endif
   } else {
     goto fail;
   }
@@ -185,6 +194,48 @@ fail:
   if (format)
     pa_format_info_free (format);
   return FALSE;
+}
+
+const char *
+gst_pulse_sample_format_to_caps_format (pa_sample_format_t sf)
+{
+  switch (sf) {
+    case PA_SAMPLE_U8:
+      return "U8";
+
+    case PA_SAMPLE_S16LE:
+      return "S16LE";
+
+    case PA_SAMPLE_S16BE:
+      return "S16BE";
+
+    case PA_SAMPLE_FLOAT32LE:
+      return "F32LE";
+
+    case PA_SAMPLE_FLOAT32BE:
+      return "F32BE";
+
+    case PA_SAMPLE_S32LE:
+      return "S32LE";
+
+    case PA_SAMPLE_S32BE:
+      return "S32BE";
+
+    case PA_SAMPLE_S24LE:
+      return "S24LE";
+
+    case PA_SAMPLE_S24BE:
+      return "S24BE";
+
+    case PA_SAMPLE_S24_32LE:
+      return "S24_32LE";
+
+    case PA_SAMPLE_S24_32BE:
+      return "S24_32BE";
+
+    default:
+      return NULL;
+  }
 }
 
 /* PATH_MAX is not defined everywhere, e.g. on GNU Hurd */

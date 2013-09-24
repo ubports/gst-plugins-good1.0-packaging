@@ -13,8 +13,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 
@@ -28,7 +28,6 @@
 G_BEGIN_DECLS
 
 #include "gstudpnetutils.h"
-#include "gstudp.h"
 
 #define GST_TYPE_UDPSRC \
   (gst_udpsrc_get_type())
@@ -49,7 +48,7 @@ struct _GstUDPSrc {
   GstPushSrc parent;
 
   /* properties */
-  gchar     *host;
+  gchar     *address;
   gint       port;
   gchar     *multi_iface;
   gint       ttl;

@@ -16,8 +16,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 /**
@@ -40,7 +40,7 @@
  * <refsect2>
  * <title>Sample pipelines</title>
  * |[
- * gst-launch-1.0 filesrc location=/tmp/test.multipart ! multipartdemux ! jpegdec ! videoconvert ! ximagesink
+ * gst-launch-1.0 filesrc location=/tmp/test.multipart ! multipartdemux ! image/jpeg,framerate=\(fraction\)5/1 ! jpegparse ! jpegdec ! videoconvert ! autovideosink
  * ]| a simple pipeline to demux a multipart file muxed with #GstMultipartMux
  * containing JPEG frames.
  * </refsect2>
@@ -116,7 +116,7 @@ static void gst_multipart_set_property (GObject * object, guint prop_id,
 static void gst_multipart_get_property (GObject * object, guint prop_id,
     GValue * value, GParamSpec * pspec);
 
-static void gst_multipart_demux_finalize (GObject * object);
+static void gst_multipart_demux_dispose (GObject * object);
 
 #define gst_multipart_demux_parent_class parent_class
 G_DEFINE_TYPE (GstMultipartDemux, gst_multipart_demux, GST_TYPE_ELEMENT);
@@ -129,7 +129,7 @@ gst_multipart_demux_class_init (GstMultipartDemuxClass * klass)
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
   GstElementClass *gstelement_class = GST_ELEMENT_CLASS (klass);
 
-  gobject_class->finalize = gst_multipart_demux_finalize;
+  gobject_class->dispose = gst_multipart_demux_dispose;
   gobject_class->set_property = gst_multipart_set_property;
   gobject_class->get_property = gst_multipart_get_property;
 
@@ -193,24 +193,35 @@ gst_multipart_demux_init (GstMultipartDemux * multipart)
 }
 
 static void
-gst_multipart_pad_free (GstMultipartPad * mppad)
+gst_multipart_demux_remove_src_pads (GstMultipartDemux * demux)
 {
-  g_free (mppad->mime);
-  g_free (mppad);
+  while (demux->srcpads != NULL) {
+    GstMultipartPad *mppad = demux->srcpads->data;
+
+    gst_element_remove_pad (GST_ELEMENT (demux), mppad->pad);
+    g_free (mppad->mime);
+    g_free (mppad);
+    demux->srcpads = g_slist_delete_link (demux->srcpads, demux->srcpads);
+  }
+  demux->srcpads = NULL;
+  demux->numpads = 0;
 }
 
 static void
-gst_multipart_demux_finalize (GObject * object)
+gst_multipart_demux_dispose (GObject * object)
 {
   GstMultipartDemux *demux = GST_MULTIPART_DEMUX (object);
 
-  g_object_unref (demux->adapter);
+  if (demux->adapter != NULL)
+    g_object_unref (demux->adapter);
+  demux->adapter = NULL;
   g_free (demux->boundary);
+  demux->boundary = NULL;
   g_free (demux->mime_type);
-  g_slist_foreach (demux->srcpads, (GFunc) gst_multipart_pad_free, NULL);
-  g_slist_free (demux->srcpads);
+  demux->mime_type = NULL;
+  gst_multipart_demux_remove_src_pads (demux);
 
-  G_OBJECT_CLASS (parent_class)->finalize (object);
+  G_OBJECT_CLASS (parent_class)->dispose (object);
 }
 
 static const gchar *
@@ -301,6 +312,8 @@ gst_multipart_find_pad_by_mime (GstMultipartDemux * demux, gchar * mime,
     mppad->pad = pad;
     mppad->mime = g_strdup (mime);
     mppad->last_ret = GST_FLOW_OK;
+    mppad->last_ts = GST_CLOCK_TIME_NONE;
+    mppad->discont = TRUE;
 
     demux->srcpads = g_slist_prepend (demux->srcpads, mppad);
     demux->numpads++;
@@ -536,7 +549,6 @@ gst_multipart_demux_chain (GstPad * pad, GstObject * parent, GstBuffer * buf)
 {
   GstMultipartDemux *multipart;
   GstAdapter *adapter;
-  GstClockTime timestamp;
   gint size = 1;
   GstFlowReturn res;
 
@@ -545,9 +557,14 @@ gst_multipart_demux_chain (GstPad * pad, GstObject * parent, GstBuffer * buf)
 
   res = GST_FLOW_OK;
 
-  timestamp = GST_BUFFER_TIMESTAMP (buf);
-
   if (GST_BUFFER_FLAG_IS_SET (buf, GST_BUFFER_FLAG_DISCONT)) {
+    GSList *l;
+
+    for (l = multipart->srcpads; l != NULL; l = l->next) {
+      GstMultipartPad *srcpad = l->data;
+
+      srcpad->discont = TRUE;
+    }
     gst_adapter_clear (adapter);
   }
   gst_adapter_push (adapter, buf);
@@ -578,9 +595,13 @@ gst_multipart_demux_chain (GstPad * pad, GstObject * parent, GstBuffer * buf)
       GST_DEBUG_OBJECT (multipart, "skipping empty content.");
       gst_adapter_flush (adapter, size - datalen);
     } else {
+      GstClockTime ts;
+
       srcpad =
           gst_multipart_find_pad_by_mime (multipart,
           multipart->mime_type, &created);
+
+      ts = gst_adapter_prev_pts (adapter, NULL);
       outbuf = gst_adapter_take_buffer (adapter, datalen);
       gst_adapter_flush (adapter, size - datalen);
 
@@ -596,11 +617,23 @@ gst_multipart_demux_chain (GstPad * pad, GstObject * parent, GstBuffer * buf)
         tags = gst_tag_list_new (GST_TAG_CONTAINER_FORMAT, "Multipart", NULL);
         gst_tag_list_set_scope (tags, GST_TAG_SCOPE_GLOBAL);
         gst_pad_push_event (srcpad->pad, gst_event_new_tag (tags));
-
-        GST_BUFFER_TIMESTAMP (outbuf) = 0;
-      } else {
-        GST_BUFFER_TIMESTAMP (outbuf) = timestamp;
       }
+
+      outbuf = gst_buffer_make_writable (outbuf);
+      if (srcpad->last_ts == GST_CLOCK_TIME_NONE || srcpad->last_ts != ts) {
+        GST_BUFFER_TIMESTAMP (outbuf) = ts;
+        srcpad->last_ts = ts;
+      } else {
+        GST_BUFFER_TIMESTAMP (outbuf) = GST_CLOCK_TIME_NONE;
+      }
+
+      if (srcpad->discont) {
+        GST_BUFFER_FLAG_SET (outbuf, GST_BUFFER_FLAG_DISCONT);
+        srcpad->discont = FALSE;
+      } else {
+        GST_BUFFER_FLAG_UNSET (outbuf, GST_BUFFER_FLAG_DISCONT);
+      }
+
       GST_DEBUG_OBJECT (multipart,
           "pushing buffer with timestamp %" GST_TIME_FORMAT,
           GST_TIME_ARGS (GST_BUFFER_TIMESTAMP (outbuf)));
@@ -643,6 +676,9 @@ gst_multipart_demux_change_state (GstElement * element,
       g_free (multipart->mime_type);
       multipart->mime_type = NULL;
       gst_adapter_clear (multipart->adapter);
+      multipart->content_length = -1;
+      multipart->scanpos = 0;
+      gst_multipart_demux_remove_src_pads (multipart);
       break;
     case GST_STATE_CHANGE_READY_TO_NULL:
       break;

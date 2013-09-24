@@ -14,8 +14,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 /**
@@ -862,7 +862,8 @@ gst_ximage_src_create (GstPushSrc * bs, GstBuffer ** buf)
     return GST_FLOW_ERROR;
 
   *buf = image;
-  GST_BUFFER_TIMESTAMP (*buf) = next_capture_ts;
+  GST_BUFFER_DTS (*buf) = GST_CLOCK_TIME_NONE;
+  GST_BUFFER_PTS (*buf) = next_capture_ts;
   GST_BUFFER_DURATION (*buf) = dur;
 
   return GST_FLOW_OK;

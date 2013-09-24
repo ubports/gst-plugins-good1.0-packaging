@@ -13,8 +13,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -25,7 +25,10 @@
 #include "gstrtpjitterbuffer.h"
 #include "gstrtpptdemux.h"
 #include "gstrtpsession.h"
+#include "gstrtprtxqueue.h"
 #include "gstrtpssrcdemux.h"
+#include "gstrtpdtmfmux.h"
+#include "gstrtpmux.h"
 
 static gboolean
 plugin_init (GstPlugin * plugin)
@@ -45,8 +48,17 @@ plugin_init (GstPlugin * plugin)
           GST_TYPE_RTP_SESSION))
     return FALSE;
 
+  if (!gst_rtp_rtx_queue_plugin_init (plugin))
+    return FALSE;
+
   if (!gst_element_register (plugin, "rtpssrcdemux", GST_RANK_NONE,
           GST_TYPE_RTP_SSRC_DEMUX))
+    return FALSE;
+
+  if (!gst_rtp_mux_plugin_init (plugin))
+    return FALSE;
+
+  if (!gst_rtp_dtmf_mux_plugin_init (plugin))
     return FALSE;
 
   return TRUE;

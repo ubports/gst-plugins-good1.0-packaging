@@ -16,8 +16,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 /*
@@ -726,9 +726,9 @@ deinterlace_frame_di_greedyh_packed (GstDeinterlaceMethod * method,
       GST_DEINTERLACE_METHOD_GREEDY_H_GET_CLASS (self);
   gint InfoIsOdd = 0;
   gint Line;
-  gint RowStride = method->row_stride[0];
+  gint RowStride = GST_VIDEO_FRAME_COMP_STRIDE (outframe, 0);
   gint FieldHeight = GST_VIDEO_INFO_HEIGHT (method->vinfo) / 2;
-  gint Pitch = method->row_stride[0] * 2;
+  gint Pitch = RowStride * 2;
   const guint8 *L1;             // ptr to Line1, of 3
   const guint8 *L2;             // ptr to Line2, the weave line
   const guint8 *L3;             // ptr to Line3
@@ -912,9 +912,9 @@ deinterlace_frame_di_greedyh_planar (GstDeinterlaceMethod * method,
 
   for (i = 0; i < 3; i++) {
     InfoIsOdd = (history[cur_field_idx - 1].flags == PICTURE_INTERLACED_BOTTOM);
-    RowStride = method->row_stride[i];
-    FieldHeight = method->height[i] / 2;
-    Pitch = method->row_stride[i] * 2;
+    RowStride = GST_VIDEO_FRAME_PLANE_STRIDE (outframe, i);
+    FieldHeight = GST_VIDEO_FRAME_HEIGHT (outframe) / 2;
+    Pitch = RowStride * 2;
 
     if (i == 0)
       scanline = klass->scanline_planar_y;

@@ -14,8 +14,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 /**
@@ -187,6 +187,7 @@ gst_audio_echo_set_property (GObject * object, guint prop_id,
   switch (prop_id) {
     case PROP_DELAY:{
       guint64 max_delay, delay;
+      guint rate;
 
       g_mutex_lock (&self->lock);
       delay = g_value_get_uint64 (value);
@@ -201,6 +202,11 @@ gst_audio_echo_set_property (GObject * object, guint prop_id,
         self->delay = delay;
         self->max_delay = MAX (delay, max_delay);
       }
+      rate = GST_AUDIO_FILTER_RATE (self);
+      if (rate > 0)
+        self->delay_frames =
+            MAX (gst_util_uint64_scale (self->delay, rate, GST_SECOND), 1);
+
       g_mutex_unlock (&self->lock);
       break;
     }

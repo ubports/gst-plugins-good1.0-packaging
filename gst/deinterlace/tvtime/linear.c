@@ -14,8 +14,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 /*
@@ -56,34 +56,30 @@ deinterlace_scanline_linear_c (GstDeinterlaceSimpleMethod * self,
 
 static void
 deinterlace_scanline_linear_packed_c (GstDeinterlaceSimpleMethod * self,
-    guint8 * out, const GstDeinterlaceScanlineData * scanlines)
+    guint8 * out, const GstDeinterlaceScanlineData * scanlines, guint size)
 {
-  deinterlace_scanline_linear_c (self, out, scanlines->t0, scanlines->b0,
-      self->parent.row_stride[0]);
+  deinterlace_scanline_linear_c (self, out, scanlines->t0, scanlines->b0, size);
 }
 
 static void
 deinterlace_scanline_linear_planar_y_c (GstDeinterlaceSimpleMethod * self,
-    guint8 * out, const GstDeinterlaceScanlineData * scanlines)
+    guint8 * out, const GstDeinterlaceScanlineData * scanlines, guint size)
 {
-  deinterlace_scanline_linear_c (self, out, scanlines->t0, scanlines->b0,
-      self->parent.row_stride[0]);
+  deinterlace_scanline_linear_c (self, out, scanlines->t0, scanlines->b0, size);
 }
 
 static void
 deinterlace_scanline_linear_planar_u_c (GstDeinterlaceSimpleMethod * self,
-    guint8 * out, const GstDeinterlaceScanlineData * scanlines)
+    guint8 * out, const GstDeinterlaceScanlineData * scanlines, guint size)
 {
-  deinterlace_scanline_linear_c (self, out, scanlines->t0, scanlines->b0,
-      self->parent.row_stride[1]);
+  deinterlace_scanline_linear_c (self, out, scanlines->t0, scanlines->b0, size);
 }
 
 static void
 deinterlace_scanline_linear_planar_v_c (GstDeinterlaceSimpleMethod * self,
-    guint8 * out, const GstDeinterlaceScanlineData * scanlines)
+    guint8 * out, const GstDeinterlaceScanlineData * scanlines, guint size)
 {
-  deinterlace_scanline_linear_c (self, out, scanlines->t0, scanlines->b0,
-      self->parent.row_stride[2]);
+  deinterlace_scanline_linear_c (self, out, scanlines->t0, scanlines->b0, size);
 }
 
 G_DEFINE_TYPE (GstDeinterlaceMethodLinear, gst_deinterlace_method_linear,

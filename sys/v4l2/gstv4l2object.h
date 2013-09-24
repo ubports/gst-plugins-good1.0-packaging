@@ -17,8 +17,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #ifndef __GST_V4L2_OBJECT_H__
@@ -75,7 +75,8 @@ typedef enum {
   GST_V4L2_IO_AUTO    = 0,
   GST_V4L2_IO_RW      = 1,
   GST_V4L2_IO_MMAP    = 2,
-  GST_V4L2_IO_USERPTR = 3
+  GST_V4L2_IO_USERPTR = 3,
+  GST_V4L2_IO_DMABUF  = 4
 } GstV4l2IOMode;
 
 typedef gboolean  (*GstV4l2GetInOutFunction)  (GstV4l2Object * v4l2object, gint * input);
@@ -138,15 +139,20 @@ struct _GstV4l2Object {
 
   /* lists... */
   GSList *formats;              /* list of available capture formats */
+  GstCaps *probed_caps;
 
   GList *colors;
   GList *norms;
   GList *channels;
+  GData *controls;
 
   /* properties */
   v4l2_std_id tv_norm;
   gchar *channel;
   gulong frequency;
+  GstStructure *extra_controls;
+  gboolean keep_aspect;
+  GValue *par;
 
   /* X-overlay */
   GstV4l2Xv *xv;
@@ -175,7 +181,10 @@ GType gst_v4l2_object_get_type (void);
     PROP_SATURATION,			\
     PROP_HUE,                           \
     PROP_TV_NORM,                       \
-    PROP_IO_MODE
+    PROP_IO_MODE,                       \
+    PROP_EXTRA_CONTROLS,                \
+    PROP_PIXEL_ASPECT_RATIO,            \
+    PROP_FORCE_ASPECT_RATIO
 
 /* create/destroy */
 GstV4l2Object *	gst_v4l2_object_new 		 (GstElement * element,
@@ -215,16 +224,13 @@ GValueArray* gst_v4l2_probe_get_values      (GstPropertyProbe * probe, guint pro
                                              GList ** klass_devices);
 #endif
 
-GstCaps*      gst_v4l2_object_probe_caps_for_format (GstV4l2Object *v4l2object, guint32 pixelformat,
-                                             const GstStructure * template);
-
-GSList*       gst_v4l2_object_get_format_list  (GstV4l2Object *v4l2object);
-
 GstCaps*      gst_v4l2_object_get_all_caps (void);
 
 GstStructure* gst_v4l2_object_v4l2fourcc_to_structure (guint32 fourcc);
 
 gboolean      gst_v4l2_object_set_format (GstV4l2Object *v4l2object, GstCaps * caps);
+
+gboolean      gst_v4l2_object_caps_equal  (GstV4l2Object * v4l2object, GstCaps * caps);
 
 gboolean      gst_v4l2_object_unlock      (GstV4l2Object *v4l2object);
 gboolean      gst_v4l2_object_unlock_stop (GstV4l2Object *v4l2object);
@@ -234,6 +240,9 @@ gboolean      gst_v4l2_object_stop        (GstV4l2Object *v4l2object);
 
 gboolean      gst_v4l2_object_copy        (GstV4l2Object * v4l2object,
                                            GstBuffer * dest, GstBuffer *src);
+
+GstCaps *     gst_v4l2_object_get_caps    (GstV4l2Object * v4l2object,
+                                           GstCaps * filter);
 
 
 #define GST_IMPLEMENT_V4L2_PROBE_METHODS(Type_Class, interface_as_function)                 \

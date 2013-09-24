@@ -13,8 +13,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 #include <string.h>
 #include <stdlib.h>
@@ -373,6 +373,9 @@ calculate_skew (RTPJitterBuffer * jbuf, guint32 rtptime, GstClockTime time,
 
   ext_rtptime = gst_rtp_buffer_ext_timestamp (&jbuf->ext_rtptime, rtptime);
 
+  if (jbuf->last_rtptime != -1 && ext_rtptime == jbuf->last_rtptime)
+    return jbuf->prev_out_time;
+
   gstrtptime = gst_util_uint64_scale_int (ext_rtptime, GST_SECOND, clock_rate);
 
   /* keep track of the last extended rtptime */
@@ -681,7 +684,6 @@ rtp_jitter_buffer_insert (RTPJitterBuffer * jbuf, GstBuffer * buf,
    * running time. */
   time = calculate_skew (jbuf, rtptime, time, clock_rate);
   GST_BUFFER_PTS (buf) = time;
-  GST_BUFFER_DTS (buf) = time;
 
   /* It's more likely that the packet was inserted in the front of the buffer */
   if (G_LIKELY (list))
@@ -692,7 +694,7 @@ rtp_jitter_buffer_insert (RTPJitterBuffer * jbuf, GstBuffer * buf,
   /* buffering mode, update buffer stats */
   if (jbuf->mode == RTP_JITTER_BUFFER_MODE_BUFFER)
     update_buffer_level (jbuf, percent);
-  else
+  else if (percent)
     *percent = -1;
 
   /* tail was changed when we did not find a previous packet, we set the return
@@ -736,7 +738,7 @@ rtp_jitter_buffer_pop (RTPJitterBuffer * jbuf, gint * percent)
   /* buffering mode, update buffer stats */
   if (jbuf->mode == RTP_JITTER_BUFFER_MODE_BUFFER)
     update_buffer_level (jbuf, percent);
-  else
+  else if (percent)
     *percent = -1;
 
   return buf;

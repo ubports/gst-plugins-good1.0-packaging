@@ -14,8 +14,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 /*
@@ -95,23 +95,24 @@ static void FUNCT_NAME(GstDeinterlaceMethod *d_method,
   }
 
   /* double stride do address just every odd/even scanline */
-  src_pitch = self->parent.row_stride[0]*2;
-  dst_pitch = self->parent.row_stride[0];
-  rowsize   = self->parent.row_stride[0];
+  src_pitch = GST_VIDEO_FRAME_PLANE_STRIDE (outframe, 0) * 2;
+  dst_pitch = GST_VIDEO_FRAME_PLANE_STRIDE (outframe, 0);
+  rowsize = GST_VIDEO_FRAME_PLANE_STRIDE (outframe, 0);
+
   FldHeight = GST_VIDEO_INFO_HEIGHT (self->parent.vinfo) / 2;
 
   pCopySrc   = GST_VIDEO_FRAME_PLANE_DATA (history[history_count-1].frame, 0);
   if (history[history_count - 1].flags & PICTURE_INTERLACED_BOTTOM)
-    pCopySrc += rowsize;
+    pCopySrc += GST_VIDEO_FRAME_PLANE_STRIDE (history[history_count-1].frame, 0);
   pCopySrcP  = GST_VIDEO_FRAME_PLANE_DATA (history[history_count-3].frame, 0);
   if (history[history_count - 3].flags & PICTURE_INTERLACED_BOTTOM)
-    pCopySrcP += rowsize;
+    pCopySrcP += GST_VIDEO_FRAME_PLANE_STRIDE (history[history_count-3].frame, 0);
   pWeaveSrc  = GST_VIDEO_FRAME_PLANE_DATA (history[history_count-2].frame, 0);
   if (history[history_count - 2].flags & PICTURE_INTERLACED_BOTTOM)
-    pWeaveSrc += rowsize;
+    pWeaveSrc += GST_VIDEO_FRAME_PLANE_STRIDE (history[history_count-2].frame, 0);
   pWeaveSrcP = GST_VIDEO_FRAME_PLANE_DATA (history[history_count-4].frame, 0);
   if (history[history_count - 4].flags & PICTURE_INTERLACED_BOTTOM)
-    pWeaveSrcP += rowsize;
+    pWeaveSrcP += GST_VIDEO_FRAME_PLANE_STRIDE (history[history_count-4].frame, 0);
 
   /* use bottom field and interlace top field */
   if (history[history_count-2].flags == PICTURE_INTERLACED_BOTTOM) {

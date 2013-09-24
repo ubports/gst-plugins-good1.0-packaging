@@ -13,8 +13,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #ifndef __GST_DYNUDPSINK_H__
@@ -27,7 +27,6 @@
 G_BEGIN_DECLS
 
 #include "gstudpnetutils.h"
-#include "gstudp.h"
 
 #define GST_TYPE_DYNUDPSINK             (gst_dynudpsink_get_type())
 #define GST_DYNUDPSINK(obj)             (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_DYNUDPSINK,GstDynUDPSink))
@@ -45,14 +44,15 @@ struct _GstDynUDPSink {
   GstBaseSink parent;
 
   /* properties */
-  GSocket *socket;
+  GSocket *socket, *socket_v6;
   gboolean close_socket;
+  gchar *bind_address;
+  gint bind_port;
 
   /* the socket in use */
-  GSocket *used_socket;
+  GSocket *used_socket, *used_socket_v6;
   gboolean external_socket;
   GCancellable *cancellable;
-  GSocketFamily family;
 };
 
 struct _GstDynUDPSinkClass {

@@ -17,8 +17,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -109,7 +109,8 @@ cap_failed:
 static gboolean
 gst_v4l2_fill_lists (GstV4l2Object * v4l2object)
 {
-  gint n;
+  gint n, next;
+  struct v4l2_queryctrl control = { 0, };
 
   GstElement *e;
 
@@ -145,7 +146,8 @@ gst_v4l2_fill_lists (GstV4l2Object * v4l2object)
     GST_LOG_OBJECT (e, "   name:      '%s'", input.name);
     GST_LOG_OBJECT (e, "   type:      %08x", input.type);
     GST_LOG_OBJECT (e, "   audioset:  %08x", input.audioset);
-    GST_LOG_OBJECT (e, "   std:       %016" G_GINT64_MODIFIER "x", input.std);
+    GST_LOG_OBJECT (e, "   std:       %016" G_GINT64_MODIFIER "x",
+        (guint64) input.std);
     GST_LOG_OBJECT (e, "   status:    %08x", input.status);
 
     v4l2channel = g_object_new (GST_TYPE_V4L2_TUNER_CHANNEL, NULL);
@@ -203,7 +205,7 @@ gst_v4l2_fill_lists (GstV4l2Object * v4l2object)
     standard.index = n;
 
     if (v4l2_ioctl (v4l2object->video_fd, VIDIOC_ENUMSTD, &standard) < 0) {
-      if (errno == EINVAL || errno == ENOTTY)
+      if (errno == EINVAL || errno == ENOTTY || errno == ENODATA)
         break;                  /* end of enumeration */
       else {
         GST_ELEMENT_ERROR (e, RESOURCE, SETTINGS,
@@ -236,10 +238,20 @@ gst_v4l2_fill_lists (GstV4l2Object * v4l2object)
   GST_DEBUG_OBJECT (e, "  controls+menus");
 
   /* and lastly, controls+menus (if appropriate) */
-  for (n = V4L2_CID_BASE;; n++) {
-    struct v4l2_queryctrl control = { 0, };
+#ifdef V4L2_CTRL_FLAG_NEXT_CTRL
+  next = V4L2_CTRL_FLAG_NEXT_CTRL;
+  n = 0;
+#else
+  next = 0;
+  n = V4L2_CID_BASE;
+#endif
+  control.id = next;
+  while (TRUE) {
     GstV4l2ColorBalanceChannel *v4l2channel;
     GstColorBalanceChannel *channel;
+
+    if (!next)
+      n++;
 
     /* when we reached the last official CID, continue with private CIDs */
     if (n == V4L2_CID_LASTP1) {
@@ -248,8 +260,19 @@ gst_v4l2_fill_lists (GstV4l2Object * v4l2object)
     }
     GST_DEBUG_OBJECT (e, "checking control %08x", n);
 
-    control.id = n;
+    control.id = n | next;
     if (v4l2_ioctl (v4l2object->video_fd, VIDIOC_QUERYCTRL, &control) < 0) {
+      if (next) {
+        if (n > 0) {
+          GST_DEBUG_OBJECT (e, "controls finished");
+          break;
+        } else {
+          GST_DEBUG_OBJECT (e, "V4L2_CTRL_FLAG_NEXT_CTRL not supported.");
+          next = 0;
+          n = V4L2_CID_BASE;
+          continue;
+        }
+      }
       if (errno == EINVAL || errno == ENOTTY || errno == EIO || errno == ENOENT) {
         if (n < V4L2_CID_PRIVATE_BASE) {
           GST_DEBUG_OBJECT (e, "skipping control %08x", n);
@@ -265,9 +288,46 @@ gst_v4l2_fill_lists (GstV4l2Object * v4l2object)
         continue;
       }
     }
+    n = control.id;
     if (control.flags & V4L2_CTRL_FLAG_DISABLED) {
       GST_DEBUG_OBJECT (e, "skipping disabled control");
       continue;
+    }
+#ifdef V4L2_CTRL_TYPE_CTRL_CLASS
+    if (control.type == V4L2_CTRL_TYPE_CTRL_CLASS) {
+      GST_DEBUG_OBJECT (e, "starting control class '%s'", control.name);
+      continue;
+    }
+#endif
+    switch (control.type) {
+      case V4L2_CTRL_TYPE_INTEGER:
+      case V4L2_CTRL_TYPE_BOOLEAN:
+      case V4L2_CTRL_TYPE_MENU:
+#ifdef V4L2_CTRL_TYPE_INTEGER_MENU
+      case V4L2_CTRL_TYPE_INTEGER_MENU:
+#endif
+#ifdef V4L2_CTRL_TYPE_BITMASK
+      case V4L2_CTRL_TYPE_BITMASK:
+#endif
+      case V4L2_CTRL_TYPE_BUTTON:{
+        int i;
+        control.name[31] = '\0';
+        for (i = 0; control.name[i]; ++i) {
+          control.name[i] = g_ascii_tolower (control.name[i]);
+          if (!g_ascii_isalnum (control.name[i]))
+            control.name[i] = '_';
+        }
+        GST_INFO_OBJECT (e, "adding generic controls '%s'", control.name);
+        g_datalist_id_set_data (&v4l2object->controls,
+            g_quark_from_string ((const gchar *) control.name),
+            GINT_TO_POINTER (n));
+        break;
+      }
+      default:
+        GST_DEBUG_OBJECT (e,
+            "Control type for '%s' not suppored for extra controls.",
+            control.name);
+        break;
     }
 
     switch (n) {
@@ -406,6 +466,8 @@ gst_v4l2_empty_lists (GstV4l2Object * v4l2object)
   g_list_foreach (v4l2object->colors, (GFunc) g_object_unref, NULL);
   g_list_free (v4l2object->colors);
   v4l2object->colors = NULL;
+
+  g_datalist_clear (&v4l2object->controls);
 }
 
 /******************************************************
@@ -480,7 +542,13 @@ gst_v4l2_open (GstV4l2Object * v4l2object)
 
   pollfd.fd = v4l2object->video_fd;
   gst_poll_add_fd (v4l2object->poll, &pollfd);
-  gst_poll_fd_ctl_read (v4l2object->poll, &pollfd, TRUE);
+  if (v4l2object->type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
+    gst_poll_fd_ctl_read (v4l2object->poll, &pollfd, TRUE);
+  else
+    gst_poll_fd_ctl_write (v4l2object->poll, &pollfd, TRUE);
+
+  if (v4l2object->extra_controls)
+    gst_v4l2_set_controls (v4l2object, v4l2object->extra_controls);
 
   return TRUE;
 
@@ -805,6 +873,33 @@ ctrl_failed:
             value, attribute_num, v4l2object->videodev), GST_ERROR_SYSTEM);
     return FALSE;
   }
+}
+
+static gboolean
+set_contol (GQuark field_id, const GValue * value, gpointer user_data)
+{
+  GstV4l2Object *v4l2object = user_data;
+  gpointer *d = g_datalist_id_get_data (&v4l2object->controls, field_id);
+  if (!d) {
+    GST_WARNING_OBJECT (v4l2object,
+        "Control '%s' does not exist or has an unsupported type.",
+        g_quark_to_string (field_id));
+    return TRUE;
+  }
+  if (!G_VALUE_HOLDS (value, G_TYPE_INT)) {
+    GST_WARNING_OBJECT (v4l2object,
+        "'int' value expected for control '%s'.", g_quark_to_string (field_id));
+    return TRUE;
+  }
+  gst_v4l2_set_attribute (v4l2object, GPOINTER_TO_INT (d),
+      g_value_get_int (value));
+  return TRUE;
+}
+
+gboolean
+gst_v4l2_set_controls (GstV4l2Object * v4l2object, GstStructure * controls)
+{
+  return gst_structure_foreach (controls, set_contol, v4l2object);
 }
 
 gboolean

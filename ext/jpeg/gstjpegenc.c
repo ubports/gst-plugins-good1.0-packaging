@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 /**
  * SECTION:element-jpegenc
@@ -41,7 +41,7 @@
 #include "gstjpeg.h"
 #include <gst/video/video.h>
 #include <gst/video/gstvideometa.h>
-#include <gst/base/gstbytereader.h>
+#include <gst/base/base.h>
 
 /* experimental */
 /* setting smoothig seems to have no effect in libjepeg
@@ -70,7 +70,6 @@ enum
   PROP_IDCT_METHOD
 };
 
-static void gst_jpegenc_reset (GstJpegEnc * enc);
 static void gst_jpegenc_finalize (GObject * object);
 
 static void gst_jpegenc_resync (GstJpegEnc * jpegenc);
@@ -300,28 +299,6 @@ gst_jpegenc_init (GstJpegEnc * jpegenc)
   jpegenc->quality = JPEG_DEFAULT_QUALITY;
   jpegenc->smoothing = JPEG_DEFAULT_SMOOTHING;
   jpegenc->idct_method = JPEG_DEFAULT_IDCT_METHOD;
-
-  gst_jpegenc_reset (jpegenc);
-}
-
-static void
-gst_jpegenc_reset (GstJpegEnc * enc)
-{
-  gint i, j;
-
-  g_free (enc->line[0]);
-  g_free (enc->line[1]);
-  g_free (enc->line[2]);
-  enc->line[0] = NULL;
-  enc->line[1] = NULL;
-  enc->line[2] = NULL;
-  for (i = 0; i < 3; i++) {
-    for (j = 0; j < 4 * DCTSIZE; j++) {
-      g_free (enc->row[i][j]);
-      enc->row[i][j] = NULL;
-    }
-  }
-  enc->sof_marker = -1;
 }
 
 static void
@@ -547,8 +524,7 @@ gst_jpegenc_handle_frame (GstVideoEncoder * encoder, GstVideoCodecFrame * frame)
 invalid_frame:
   {
     GST_WARNING_OBJECT (jpegenc, "invalid frame received");
-    gst_video_encoder_finish_frame (encoder, frame);
-    return GST_FLOW_OK;
+    return gst_video_encoder_finish_frame (encoder, frame);
   }
 }
 
@@ -625,6 +601,7 @@ gst_jpegenc_start (GstVideoEncoder * benc)
   enc->line[0] = NULL;
   enc->line[1] = NULL;
   enc->line[2] = NULL;
+  enc->sof_marker = -1;
 
   return TRUE;
 }
@@ -633,8 +610,20 @@ static gboolean
 gst_jpegenc_stop (GstVideoEncoder * benc)
 {
   GstJpegEnc *enc = (GstJpegEnc *) benc;
+  gint i, j;
 
-  gst_jpegenc_reset (enc);
+  g_free (enc->line[0]);
+  g_free (enc->line[1]);
+  g_free (enc->line[2]);
+  enc->line[0] = NULL;
+  enc->line[1] = NULL;
+  enc->line[2] = NULL;
+  for (i = 0; i < 3; i++) {
+    for (j = 0; j < 4 * DCTSIZE; j++) {
+      g_free (enc->row[i][j]);
+      enc->row[i][j] = NULL;
+    }
+  }
 
   return TRUE;
 }

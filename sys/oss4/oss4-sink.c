@@ -13,8 +13,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 /**
  * SECTION:element-oss4sink
@@ -545,7 +545,13 @@ non_block:
 static gboolean
 gst_oss4_sink_open_func (GstAudioSink * asink)
 {
-  return gst_oss4_sink_open (asink, FALSE);
+  if (!gst_oss4_sink_open (asink, FALSE))
+    return FALSE;
+
+  /* the initial volume might not be the property default, so notify
+   * application to make it get a reading of the current volume */
+  g_object_notify (G_OBJECT (asink), "volume");
+  return TRUE;
 }
 
 static gboolean

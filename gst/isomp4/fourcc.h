@@ -13,8 +13,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
  /*
  * Unless otherwise indicated, Source Code is licensed under MIT license.
@@ -143,6 +143,7 @@ G_BEGIN_DECLS
 #define FOURCC_qtim     GST_MAKE_FOURCC('q','t','i','m')
 #define FOURCC_drms     GST_MAKE_FOURCC('d','r','m','s')
 #define FOURCC_avc1     GST_MAKE_FOURCC('a','v','c','1')
+#define FOURCC_avc3     GST_MAKE_FOURCC('a','v','c','3')
 #define FOURCC_h263     GST_MAKE_FOURCC('h','2','6','3')
 #define FOURCC_s263     GST_MAKE_FOURCC('s','2','6','3')
 #define FOURCC_avcC     GST_MAKE_FOURCC('a','v','c','C')

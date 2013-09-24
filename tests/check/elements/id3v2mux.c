@@ -16,8 +16,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #include <gst/check/gstcheck.h>
@@ -294,7 +294,7 @@ got_buffer (GstElement * fakesink, GstBuffer * buf, GstPad * pad,
 
   gst_buffer_map (buf, &map, GST_MAP_READ);
 
-  GST_LOG ("got buffer, size=%u, offset=%" G_GINT64_FORMAT, map.size, off);
+  GST_LOG ("size=%" G_GSIZE_FORMAT ", offset=%" G_GINT64_FORMAT, map.size, off);
 
   fail_unless (GST_BUFFER_OFFSET_IS_VALID (buf));
 

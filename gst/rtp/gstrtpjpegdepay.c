@@ -13,8 +13,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -50,6 +50,7 @@ static GstStaticPadTemplate gst_rtp_jpeg_depay_sink_template =
         /*
          * "a-framerate = (string) 0.00, "
          * "x-framerate = (string) 0.00, "
+         * "a-framesize = (string) 1234-1234, "
          * "x-dimensions = (string) \"1234,1234\", "
          */
         "application/x-rtp, "
@@ -60,6 +61,7 @@ static GstStaticPadTemplate gst_rtp_jpeg_depay_sink_template =
         /*
          * "a-framerate = (string) 0.00, "
          * "x-framerate = (string) 0.00, "
+         * "a-framesize = (string) 1234-1234, "
          * "x-dimensions = (string) \"1234,1234\""
          */
     )
@@ -456,6 +458,15 @@ gst_rtp_jpeg_depay_setcaps (GstRTPBaseDepayload * depayload, GstCaps * caps)
     }
   }
 
+  if ((media_attr = gst_structure_get_string (structure, "a-framesize"))) {
+    gint w, h;
+
+    if (sscanf (media_attr, "%d-%d", &w, &h) == 2) {
+      rtpjpegdepay->media_width = w;
+      rtpjpegdepay->media_height = h;
+    }
+  }
+
   /* try to get a framerate */
   media_attr = gst_structure_get_string (structure, "a-framerate");
   if (!media_attr)
@@ -503,6 +514,7 @@ gst_rtp_jpeg_depay_process (GstRTPBaseDepayload * depayload, GstBuffer * buf)
   rtpjpegdepay = GST_RTP_JPEG_DEPAY (depayload);
 
   if (GST_BUFFER_IS_DISCONT (buf)) {
+    GST_DEBUG_OBJECT (depayload, "DISCONT, reset adapter");
     gst_adapter_clear (rtpjpegdepay->adapter);
     rtpjpegdepay->discont = TRUE;
   }

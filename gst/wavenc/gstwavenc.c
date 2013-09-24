@@ -15,14 +15,24 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  * 
  */
 /**
  * SECTION:element-wavenc
  *
- * Format a audio stream into the wav format.
+ * Format an audio stream into the wav format.
+ *
+ * <refsect2>
+ * <title>Example launch line</title>
+ * |[
+ * gst-launch-1.0 cdparanoiasrc mode=continuous ! queue ! audioconvert ! wavenc ! filesink location=cd.wav
+ * ]| Rip a whole audio CD into a single wav file, with the track table written into a CUE sheet inside the file
+ * |[
+ * gst-launch-1.0 cdparanoiasrc track=5 ! queue ! audioconvert ! wavenc ! filesink location=track5.wav
+ * ]| Rip track 5 of an audio CD into a single wav file containing unencoded raw audio samples.
+ * </refsect2>
  *
  */
 #ifdef HAVE_CONFIG_H
@@ -34,6 +44,7 @@
 
 #include <gst/audio/audio.h>
 #include <gst/riff/riff-media.h>
+#include <gst/base/gstbytewriter.h>
 
 GST_DEBUG_CATEGORY_STATIC (wavenc_debug);
 #define GST_CAT_DEFAULT wavenc_debug
@@ -68,6 +79,38 @@ struct wave_header
   struct common_struct common;
   struct chunk_struct data;
 };
+
+typedef struct
+{
+  /* Offset Size    Description   Value
+   * 0x00   4       ID            unique identification value
+   * 0x04   4       Position      play order position
+   * 0x08   4       Data Chunk ID RIFF ID of corresponding data chunk
+   * 0x0c   4       Chunk Start   Byte Offset of Data Chunk *
+   * 0x10   4       Block Start   Byte Offset to sample of First Channel
+   * 0x14   4       Sample Offset Byte Offset to sample byte of First Channel
+   */
+  guint32 id;
+  guint32 position;
+  guint8 data_chunk_id[4];
+  guint32 chunk_start;
+  guint32 block_start;
+  guint32 sample_offset;
+} GstWavEncCue;
+
+typedef struct
+{
+  /* Offset Size    Description     Value
+   * 0x00   4       Chunk ID        "labl" (0x6C61626C) or "note" (0x6E6F7465)
+   * 0x04   4       Chunk Data Size depends on contained text
+   * 0x08   4       Cue Point ID    0 - 0xFFFFFFFF
+   * 0x0c           Text
+   */
+  guint8 chunk_id[4];
+  guint32 chunk_data_size;
+  guint32 cue_point_id;
+  gchar *text;
+} GstWavEncLabl, GstWavEncNote;
 
 /* FIXME: mono doesn't produce correct files it seems, at least mplayer xruns */
 /* Max. of two channels, more channels need WAVFORMATEX with
@@ -113,7 +156,10 @@ static GstStaticPadTemplate src_factory = GST_STATIC_PAD_TEMPLATE ("src",
     );
 
 #define gst_wavenc_parent_class parent_class
-G_DEFINE_TYPE (GstWavEnc, gst_wavenc, GST_TYPE_ELEMENT);
+G_DEFINE_TYPE_WITH_CODE (GstWavEnc, gst_wavenc, GST_TYPE_ELEMENT,
+    G_IMPLEMENT_INTERFACE (GST_TYPE_TAG_SETTER, NULL)
+    G_IMPLEMENT_INTERFACE (GST_TYPE_TOC_SETTER, NULL)
+    );
 
 static GstFlowReturn gst_wavenc_chain (GstPad * pad, GstObject * parent,
     GstBuffer * buf);
@@ -165,7 +211,7 @@ gst_wavenc_init (GstWavEnc * wavenc)
 #define WAV_HEADER_LEN 44
 
 static GstBuffer *
-gst_wavenc_create_header_buf (GstWavEnc * wavenc, guint audio_data_size)
+gst_wavenc_create_header_buf (GstWavEnc * wavenc)
 {
   struct wave_header wave;
   GstBuffer *buf;
@@ -177,25 +223,24 @@ gst_wavenc_create_header_buf (GstWavEnc * wavenc, guint audio_data_size)
   header = map.data;
   memset (header, 0, WAV_HEADER_LEN);
 
-  wave.common.wChannels = wavenc->channels;
-  wave.common.wBitsPerSample = wavenc->width;
-  wave.common.dwSamplesPerSec = wavenc->rate;
-
-  /* Fill out our wav-header with some information */
   memcpy (wave.riff.id, "RIFF", 4);
-  wave.riff.len = audio_data_size + WAV_HEADER_LEN - 8;
+  wave.riff.len =
+      wavenc->meta_length + wavenc->audio_length + WAV_HEADER_LEN - 8;
   memcpy (wave.riff.wav_id, "WAVE", 4);
 
   memcpy (wave.format.id, "fmt ", 4);
   wave.format.len = 16;
 
+  wave.common.wChannels = wavenc->channels;
+  wave.common.wBitsPerSample = wavenc->width;
+  wave.common.dwSamplesPerSec = wavenc->rate;
   wave.common.wFormatTag = wavenc->format;
   wave.common.wBlockAlign = (wavenc->width / 8) * wave.common.wChannels;
   wave.common.dwAvgBytesPerSec =
       wave.common.wBlockAlign * wave.common.dwSamplesPerSec;
 
   memcpy (wave.data.id, "data", 4);
-  wave.data.len = audio_data_size;
+  wave.data.len = wavenc->audio_length;
 
   memcpy (header, (char *) wave.riff.id, 4);
   GST_WRITE_UINT32_LE (header + 4, wave.riff.len);
@@ -217,7 +262,7 @@ gst_wavenc_create_header_buf (GstWavEnc * wavenc, guint audio_data_size)
 }
 
 static GstFlowReturn
-gst_wavenc_push_header (GstWavEnc * wavenc, guint audio_data_size)
+gst_wavenc_push_header (GstWavEnc * wavenc)
 {
   GstFlowReturn ret;
   GstBuffer *outbuf;
@@ -227,9 +272,10 @@ gst_wavenc_push_header (GstWavEnc * wavenc, guint audio_data_size)
   gst_segment_init (&segment, GST_FORMAT_BYTES);
   gst_pad_push_event (wavenc->srcpad, gst_event_new_segment (&segment));
 
-  GST_DEBUG_OBJECT (wavenc, "writing header with datasize=%u", audio_data_size);
+  GST_DEBUG_OBJECT (wavenc, "writing header, meta_size=%u, audio_size=%u",
+      wavenc->meta_length, wavenc->audio_length);
 
-  outbuf = gst_wavenc_create_header_buf (wavenc, audio_data_size);
+  outbuf = gst_wavenc_create_header_buf (wavenc);
   GST_BUFFER_OFFSET (outbuf) = 0;
 
   ret = gst_pad_push (wavenc->srcpad, outbuf);
@@ -313,291 +359,417 @@ fail:
   return FALSE;
 }
 
-#if 0
-static struct _maps
+static void
+gst_wavparse_tags_foreach (const GstTagList * tags, const gchar * tag,
+    gpointer data)
 {
-  const guint32 id;
-  const gchar *name;
-} maps[] = {
+  const struct
   {
-  GST_RIFF_INFO_IARL, "Location"}, {
-  GST_RIFF_INFO_IART, "Artist"}, {
-  GST_RIFF_INFO_ICMS, "Commissioner"}, {
-  GST_RIFF_INFO_ICMT, "Comment"}, {
-  GST_RIFF_INFO_ICOP, "Copyright"}, {
-  GST_RIFF_INFO_ICRD, "Creation Date"}, {
-  GST_RIFF_INFO_IENG, "Engineer"}, {
-  GST_RIFF_INFO_IGNR, "Genre"}, {
-  GST_RIFF_INFO_IKEY, "Keywords"}, {
-  GST_RIFF_INFO_INAM, "Title"}, {
-  GST_RIFF_INFO_IPRD, "Product"}, {
-  GST_RIFF_INFO_ISBJ, "Subject"}, {
-  GST_RIFF_INFO_ISFT, "Software"}, {
-  GST_RIFF_INFO_ITCH, "Technician"}
-};
-
-static guint32
-get_id_from_name (const char *name)
-{
-  int i;
-
-  for (i = 0; i < G_N_ELEMENTS (maps); i++) {
-    if (strcasecmp (maps[i].name, name) == 0) {
-      return maps[i].id;
-    }
-  }
-
-  return 0;
-}
-
-static void
-write_metadata (GstWavEnc * wavenc)
-{
-  GString *info_str;
-  GList *props;
-  int total = 4;
-  gboolean need_to_write = FALSE;
-
-  info_str = g_string_new ("LIST    INFO");
-
-  for (props = wavenc->metadata->properties->properties; props;
-      props = props->next) {
-    GstPropsEntry *entry = props->data;
-    const char *name;
-    guint32 id;
-
-    name = gst_props_entry_get_name (entry);
-    id = get_id_from_name (name);
-    if (id != 0) {
-      const char *text;
-      char *tmp;
-      int len, req, i;
-
-      need_to_write = TRUE;     /* We've got at least one entry */
-
-      gst_props_entry_get_string (entry, &text);
-      len = strlen (text) + 1;  /* The length in the file includes the \0 */
-
-      tmp = g_strdup_printf ("%" GST_FOURCC_FORMAT "%d%s", GST_FOURCC_ARGS (id),
-          GUINT32_TO_LE (len), text);
-      g_string_append (info_str, tmp);
-      g_free (tmp);
-
-      /* Check that we end on an even boundary */
-      req = ((len + 8) + 1) & ~1;
-      for (i = 0; i < req - len; i++) {
-        g_string_append_printf (info_str, "%c", 0);
+    guint32 fcc;
+    const gchar *tag;
+  } rifftags[] = {
+    {
+    GST_RIFF_INFO_IARL, GST_TAG_LOCATION}, {
+    GST_RIFF_INFO_IART, GST_TAG_ARTIST}, {
+    GST_RIFF_INFO_ICMT, GST_TAG_COMMENT}, {
+    GST_RIFF_INFO_ICOP, GST_TAG_COPYRIGHT}, {
+    GST_RIFF_INFO_ICRD, GST_TAG_DATE}, {
+    GST_RIFF_INFO_IGNR, GST_TAG_GENRE}, {
+    GST_RIFF_INFO_IKEY, GST_TAG_KEYWORDS}, {
+    GST_RIFF_INFO_INAM, GST_TAG_TITLE}, {
+    GST_RIFF_INFO_IPRD, GST_TAG_ALBUM}, {
+    GST_RIFF_INFO_ISBJ, GST_TAG_ALBUM_ARTIST}, {
+    GST_RIFF_INFO_ISFT, GST_TAG_ENCODER}, {
+    GST_RIFF_INFO_ISRC, GST_TAG_ISRC}, {
+    0, NULL}
+  };
+  gint n;
+  gchar *str = NULL;
+  GstByteWriter *bw = data;
+  for (n = 0; rifftags[n].fcc != 0; n++) {
+    if (!strcmp (rifftags[n].tag, tag)) {
+      if (rifftags[n].fcc == GST_RIFF_INFO_ICRD) {
+        GDate *date;
+        /* special case for the date tag */
+        if (gst_tag_list_get_date (tags, tag, &date)) {
+          str =
+              g_strdup_printf ("%04d:%02d:%02d", g_date_get_year (date),
+              g_date_get_month (date), g_date_get_day (date));
+          g_date_free (date);
+        }
+      } else {
+        gst_tag_list_get_string (tags, tag, &str);
       }
-
-      total += req;
+      if (str) {
+        gst_byte_writer_put_uint32_le (bw, rifftags[n].fcc);
+        gst_byte_writer_put_uint32_le (bw, GST_ROUND_UP_2 (strlen (str)));
+        gst_byte_writer_put_string (bw, str);
+        g_free (str);
+        str = NULL;
+        break;
+      }
     }
   }
 
-  if (need_to_write) {
-    GstBuffer *buf;
-
-    /* Now we've got all the strings together, we can write our length in */
-    info_str->str[4] = GUINT32_TO_LE (total);
-
-    buf = gst_buffer_new ();
-    gst_buffer_set_data (buf, info_str->str, info_str->len);
-
-    gst_pad_push (wavenc->srcpad, GST_DATA (buf));
-    g_string_free (info_str, FALSE);
-  }
 }
 
-static void
-write_cues (GstWavEnc * wavenc)
+static GstFlowReturn
+gst_wavenc_write_tags (GstWavEnc * wavenc)
 {
-  GString *cue_string, *point_string;
+  const GstTagList *user_tags;
+  GstTagList *tags;
+  guint size;
   GstBuffer *buf;
-  GList *cue_list, *c;
-  int num_cues, total = 4;
+  GstByteWriter bw;
 
-  if (gst_props_get (wavenc->metadata->properties,
-          "cues", &cue_list, NULL) == FALSE) {
-    /* No cues, move along please, nothing to see here */
-    return;
+  g_return_val_if_fail (wavenc != NULL, GST_FLOW_OK);
+
+  user_tags = gst_tag_setter_get_tag_list (GST_TAG_SETTER (wavenc));
+  if ((!wavenc->tags) && (!user_tags)) {
+    GST_DEBUG_OBJECT (wavenc, "have no tags");
+    return GST_FLOW_OK;
   }
+  tags =
+      gst_tag_list_merge (user_tags, wavenc->tags,
+      gst_tag_setter_get_tag_merge_mode (GST_TAG_SETTER (wavenc)));
 
-  /* Space for 'cue ', chunk size and number of cuepoints */
-  cue_string = g_string_new ("cue         ");
-#define CUEPOINT_SIZE 24
-  point_string = g_string_sized_new (CUEPOINT_SIZE);
+  GST_DEBUG_OBJECT (wavenc, "writing tags");
 
-  for (c = cue_list, num_cues = 0; c; c = c->next, num_cues++) {
-    GstCaps *cue_caps = c->data;
-    guint32 pos;
+  gst_byte_writer_init_with_size (&bw, 1024, FALSE);
 
-    gst_props_get (cue_caps->properties, "position", &pos, NULL);
+  /* add LIST INFO chunk */
+  gst_byte_writer_put_data (&bw, (const guint8 *) "LIST", 4);
+  gst_byte_writer_put_uint32_le (&bw, 0);
+  gst_byte_writer_put_data (&bw, (const guint8 *) "INFO", 4);
 
-    point_string->str[0] = GUINT32_TO_LE (num_cues + 1);
-    point_string->str[4] = GUINT32_TO_LE (0);
-    /* Fixme: There is probably a macro for this */
-    point_string->str[8] = 'd';
-    point_string->str[9] = 'a';
-    point_string->str[10] = 't';
-    point_string->str[11] = 'a';
-    point_string->str[12] = GUINT32_TO_LE (0);
-    point_string->str[16] = GUINT32_TO_LE (0);
-    point_string->str[20] = GUINT32_TO_LE (pos);
+  /* add tags */
+  gst_tag_list_foreach (tags, gst_wavparse_tags_foreach, &bw);
 
-    total += CUEPOINT_SIZE;
-  }
+  /* sets real size of LIST INFO chunk */
+  size = gst_byte_writer_get_pos (&bw);
+  gst_byte_writer_set_pos (&bw, 4);
+  gst_byte_writer_put_uint32_le (&bw, size - 8);
 
-  /* Set the length and chunk size */
-  cue_string->str[4] = GUINT32_TO_LE (total);
-  cue_string->str[8] = GUINT32_TO_LE (num_cues);
-  /* Stick the cue points on the end */
-  g_string_append (cue_string, point_string->str);
-  g_string_free (point_string, TRUE);
+  gst_tag_list_unref (tags);
 
-  buf = gst_buffer_new ();
-  gst_buffer_set_data (buf, cue_string->str, cue_string->len);
-
-  gst_pad_push (wavenc->srcpad, GST_DATA (buf));
-  g_string_free (cue_string, FALSE);
+  buf = gst_byte_writer_reset_and_get_buffer (&bw);
+  wavenc->meta_length += gst_buffer_get_size (buf);
+  return gst_pad_push (wavenc->srcpad, buf);
 }
 
-static void
-write_labels (GstWavEnc * wavenc)
+static gboolean
+gst_wavenc_is_cue_id_unique (guint32 id, GList * list)
 {
-  GstBuffer *buf;
-  GString *info_str;
-  int total = 4;
-  GList *caps;
+  GstWavEncCue *cue;
 
-  info_str = g_string_new ("LIST    adtl");
-  if (gst_props_get (wavenc->metadata->properties, "ltxts", &caps, NULL)) {
-    GList *p;
-    int i;
-
-    for (p = caps, i = 1; p; p = p->next, i++) {
-      GstCaps *ltxt_caps = p->data;
-      GString *ltxt;
-      char *label = NULL;
-      int len, req, j;
-
-      gst_props_get (ltxt_caps->properties, "name", &label, NULL);
-      len = strlen (label);
-
-#define LTXT_SIZE 28
-      ltxt = g_string_new ("ltxt                        ");
-      ltxt->str[8] = GUINT32_TO_LE (i); /* Identifier */
-      ltxt->str[12] = GUINT32_TO_LE (0);        /* Sample Length */
-      ltxt->str[16] = GUINT32_TO_LE (0);        /* FIXME: Don't save the purpose yet */
-      ltxt->str[20] = GUINT16_TO_LE (0);        /* Country */
-      ltxt->str[22] = GUINT16_TO_LE (0);        /* Language */
-      ltxt->str[24] = GUINT16_TO_LE (0);        /* Dialect */
-      ltxt->str[26] = GUINT16_TO_LE (0);        /* Code Page */
-      g_string_append (ltxt, label);
-      g_free (label);
-
-      len += LTXT_SIZE;
-
-      ltxt->str[4] = GUINT32_TO_LE (len);
-
-      /* Check that we end on an even boundary */
-      req = ((len + 8) + 1) & ~1;
-      for (j = 0; j < req - len; j++) {
-        g_string_append_printf (ltxt, "%c", 0);
-      }
-
-      total += req;
-
-      g_string_append (info_str, ltxt->str);
-      g_string_free (ltxt, TRUE);
-    }
+  while (list) {
+    cue = list->data;
+    if (cue->id == id)
+      return FALSE;
+    list = g_list_next (list);
   }
 
-  if (gst_props_get (wavenc->metadata->properties, "labels", &caps, NULL)) {
-    GList *p;
-    int i;
-
-    for (p = caps, i = 1; p; p = p->next, i++) {
-      GstCaps *labl_caps = p->data;
-      GString *labl;
-      char *label = NULL;
-      int len, req, j;
-
-      gst_props_get (labl_caps->properties, "name", &label, NULL);
-      len = strlen (label);
-
-#define LABL_SIZE 4
-      labl = g_string_new ("labl        ");
-      labl->str[8] = GUINT32_TO_LE (i);
-      g_string_append (labl, label);
-      g_free (label);
-
-      len += LABL_SIZE;
-
-      labl->str[4] = GUINT32_TO_LE (len);
-
-      /* Check our size */
-      req = ((len + 8) + 1) & ~1;
-      for (j = 0; j < req - len; j++) {
-        g_string_append_printf (labl, "%c", 0);
-      }
-
-      total += req;
-
-      g_string_append (info_str, labl->str);
-      g_string_free (labl, TRUE);
-    }
-  }
-
-  if (gst_props_get (wavenc->metadata->properties, "notes", &caps, NULL)) {
-    GList *p;
-    int i;
-
-    for (p = caps, i = 1; p; p = p->next, i++) {
-      GstCaps *note_caps = p->data;
-      GString *note;
-      char *label = NULL;
-      int len, req, j;
-
-      gst_props_get (note_caps->properties, "name", &label, NULL);
-      len = strlen (label);
-
-#define NOTE_SIZE 4
-      note = g_string_new ("note        ");
-      note->str[8] = GUINT32_TO_LE (i);
-      g_string_append (note, label);
-      g_free (label);
-
-      len += NOTE_SIZE;
-
-      note->str[4] = GUINT32_TO_LE (len);
-
-      /* Size check */
-      req = ((len + 8) + 1) & ~1;
-      for (j = 0; j < req - len; j++) {
-        g_string_append_printf (note, "%c", 0);
-      }
-
-      total += req;
-
-      g_string_append (info_str, note->str);
-      g_string_free (note, TRUE);
-    }
-  }
-
-  info_str->str[4] = GUINT32_TO_LE (total);
-
-  buf = gst_buffer_new ();
-  gst_buffer_set_data (buf, info_str->str, info_str->len);
-
-  gst_pad_push (wavenc->srcpad, GST_DATA (buf));
-  g_string_free (info_str, FALSE);
+  return TRUE;
 }
-#endif
+
+static gboolean
+gst_wavenc_parse_cue (GstWavEnc * wavenc, guint32 id, GstTocEntry * entry)
+{
+  gint64 start;
+  GstWavEncCue *cue;
+
+  g_return_val_if_fail (entry != NULL, FALSE);
+
+  gst_toc_entry_get_start_stop_times (entry, &start, NULL);
+
+  cue = g_new (GstWavEncCue, 1);
+  cue->id = id;
+  cue->position = gst_util_uint64_scale_round (start, wavenc->rate, GST_SECOND);
+  memcpy (cue->data_chunk_id, "data", 4);
+  cue->chunk_start = 0;
+  cue->block_start = 0;
+  cue->sample_offset = cue->position;
+  wavenc->cues = g_list_append (wavenc->cues, cue);
+
+  return TRUE;
+}
+
+static gboolean
+gst_wavenc_parse_labl (GstWavEnc * wavenc, guint32 id, GstTocEntry * entry)
+{
+  gchar *tag;
+  GstTagList *tags;
+  GstWavEncLabl *labl;
+
+  g_return_val_if_fail (entry != NULL, FALSE);
+
+  tags = gst_toc_entry_get_tags (entry);
+  if (!tags) {
+    GST_INFO_OBJECT (wavenc, "no tags for entry: %d", id);
+    return FALSE;
+  }
+  if (!gst_tag_list_get_string (tags, GST_TAG_TITLE, &tag)) {
+    GST_INFO_OBJECT (wavenc, "no title tag for entry: %d", id);
+    return FALSE;
+  }
+
+  labl = g_new (GstWavEncLabl, 1);
+  memcpy (labl->chunk_id, "labl", 4);
+  labl->chunk_data_size = 4 + strlen (tag) + 1;
+  labl->cue_point_id = id;
+  labl->text = tag;
+
+  GST_DEBUG_OBJECT (wavenc, "got labl: '%s'", tag);
+
+  wavenc->labls = g_list_append (wavenc->labls, labl);
+
+  return TRUE;
+}
+
+static gboolean
+gst_wavenc_parse_note (GstWavEnc * wavenc, guint32 id, GstTocEntry * entry)
+{
+  gchar *tag;
+  GstTagList *tags;
+  GstWavEncNote *note;
+
+  g_return_val_if_fail (entry != NULL, FALSE);
+  tags = gst_toc_entry_get_tags (entry);
+  if (!tags) {
+    GST_INFO_OBJECT (wavenc, "no tags for entry: %d", id);
+    return FALSE;
+  }
+  if (!gst_tag_list_get_string (tags, GST_TAG_COMMENT, &tag)) {
+    GST_INFO_OBJECT (wavenc, "no comment tag for entry: %d", id);
+    return FALSE;
+  }
+
+  note = g_new (GstWavEncNote, 1);
+  memcpy (note->chunk_id, "note", 4);
+  note->chunk_data_size = 4 + strlen (tag) + 1;
+  note->cue_point_id = id;
+  note->text = tag;
+
+  GST_DEBUG_OBJECT (wavenc, "got note: '%s'", tag);
+
+  wavenc->notes = g_list_append (wavenc->notes, note);
+
+  return TRUE;
+}
+
+static gboolean
+gst_wavenc_write_cues (guint8 ** data, GList * list)
+{
+  GstWavEncCue *cue;
+
+  while (list) {
+    cue = list->data;
+    GST_WRITE_UINT32_LE (*data, cue->id);
+    GST_WRITE_UINT32_LE (*data + 4, cue->position);
+    memcpy (*data + 8, (gchar *) cue->data_chunk_id, 4);
+    GST_WRITE_UINT32_LE (*data + 12, cue->chunk_start);
+    GST_WRITE_UINT32_LE (*data + 16, cue->block_start);
+    GST_WRITE_UINT32_LE (*data + 20, cue->sample_offset);
+    *data += 24;
+    list = g_list_next (list);
+  }
+
+  return TRUE;
+}
+
+static gboolean
+gst_wavenc_write_labls (guint8 ** data, GList * list)
+{
+  GstWavEncLabl *labl;
+
+  while (list) {
+    labl = list->data;
+    memcpy (*data, (gchar *) labl->chunk_id, 4);
+    GST_WRITE_UINT32_LE (*data + 4, labl->chunk_data_size);
+    GST_WRITE_UINT32_LE (*data + 8, labl->cue_point_id);
+    memcpy (*data + 12, (gchar *) labl->text, strlen (labl->text));
+    *data += 8 + GST_ROUND_UP_2 (labl->chunk_data_size);
+    list = g_list_next (list);
+  }
+
+  return TRUE;
+}
+
+static gboolean
+gst_wavenc_write_notes (guint8 ** data, GList * list)
+{
+  GstWavEncNote *note;
+
+  while (list) {
+    note = list->data;
+    memcpy (*data, (gchar *) note->chunk_id, 4);
+    GST_WRITE_UINT32_LE (*data + 4, note->chunk_data_size);
+    GST_WRITE_UINT32_LE (*data + 8, note->cue_point_id);
+    memcpy (*data + 12, (gchar *) note->text, strlen (note->text));
+    *data += 8 + GST_ROUND_UP_2 (note->chunk_data_size);
+    list = g_list_next (list);
+  }
+
+  return TRUE;
+}
+
+static GstFlowReturn
+gst_wavenc_write_toc (GstWavEnc * wavenc)
+{
+  GList *list;
+  GstToc *toc;
+  GstTocEntry *entry, *subentry;
+  GstBuffer *buf;
+  GstMapInfo map;
+  guint8 *data;
+  guint32 ncues, size, cues_size, labls_size, notes_size;
+
+  if (!wavenc->toc) {
+    GST_DEBUG_OBJECT (wavenc, "have no toc, checking toc_setter");
+    wavenc->toc = gst_toc_setter_get_toc (GST_TOC_SETTER (wavenc));
+  }
+  if (!wavenc->toc) {
+    GST_WARNING_OBJECT (wavenc, "have no toc");
+    return GST_FLOW_OK;
+  }
+
+  toc = gst_toc_ref (wavenc->toc);
+  size = 0;
+  cues_size = 0;
+  labls_size = 0;
+  notes_size = 0;
+
+  /* check if the TOC entries is valid */
+  list = gst_toc_get_entries (toc);
+  entry = list->data;
+  if (gst_toc_entry_is_alternative (entry)) {
+    list = gst_toc_entry_get_sub_entries (entry);
+    while (list) {
+      subentry = list->data;
+      if (!gst_toc_entry_is_sequence (subentry))
+        return FALSE;
+      list = g_list_next (list);
+    }
+    list = gst_toc_entry_get_sub_entries (entry);
+  }
+  if (gst_toc_entry_is_sequence (entry)) {
+    while (list) {
+      entry = list->data;
+      if (!gst_toc_entry_is_sequence (entry))
+        return FALSE;
+      list = g_list_next (list);
+    }
+    list = gst_toc_get_entries (toc);
+  }
+
+  ncues = g_list_length (list);
+  GST_DEBUG_OBJECT (wavenc, "number of cue entries: %d", ncues);
+
+  while (list) {
+    guint32 id = 0;
+    gint64 id64;
+    const gchar *uid;
+
+    entry = list->data;
+    uid = gst_toc_entry_get_uid (entry);
+    id64 = g_ascii_strtoll (uid, NULL, 0);
+    /* check if id unique compatible with guint32 else generate random */
+    if (id64 >= 0 && gst_wavenc_is_cue_id_unique (id64, wavenc->cues)) {
+      id = (guint32) id64;
+    } else {
+      do {
+        id = g_random_int ();
+      } while (!gst_wavenc_is_cue_id_unique (id, wavenc->cues));
+    }
+    gst_wavenc_parse_cue (wavenc, id, entry);
+    gst_wavenc_parse_labl (wavenc, id, entry);
+    gst_wavenc_parse_note (wavenc, id, entry);
+    list = g_list_next (list);
+  }
+
+  /* count cues size */
+  if (wavenc->cues) {
+    cues_size = 24 * g_list_length (wavenc->cues);
+    size += 12 + cues_size;
+  } else {
+    GST_WARNING_OBJECT (wavenc, "cue's not found");
+    return FALSE;
+  }
+  /* count labls size */
+  if (wavenc->labls) {
+    list = wavenc->labls;
+    while (list) {
+      GstWavEncLabl *labl;
+      labl = list->data;
+      labls_size += 8 + GST_ROUND_UP_2 (labl->chunk_data_size);
+      list = g_list_next (list);
+    }
+    size += labls_size;
+  }
+  /* count notes size */
+  if (wavenc->notes) {
+    list = wavenc->notes;
+    while (list) {
+      GstWavEncNote *note;
+      note = list->data;
+      notes_size += 8 + GST_ROUND_UP_2 (note->chunk_data_size);
+      list = g_list_next (list);
+    }
+    size += notes_size;
+  }
+  if (wavenc->labls || wavenc->notes) {
+    size += 12;
+  }
+
+  buf = gst_buffer_new_and_alloc (size);
+  gst_buffer_map (buf, &map, GST_MAP_WRITE);
+  data = map.data;
+  memset (data, 0, size);
+
+  /* write Cue Chunk */
+  if (wavenc->cues) {
+    memcpy (data, (gchar *) "cue ", 4);
+    GST_WRITE_UINT32_LE (data + 4, 4 + cues_size);
+    GST_WRITE_UINT32_LE (data + 8, ncues);
+    data += 12;
+    gst_wavenc_write_cues (&data, wavenc->cues);
+
+    /* write Associated Data List Chunk */
+    if (wavenc->labls || wavenc->notes) {
+      memcpy (data, (gchar *) "LIST", 4);
+      GST_WRITE_UINT32_LE (data + 4, 4 + labls_size + notes_size);
+      memcpy (data + 8, (gchar *) "adtl", 4);
+      data += 12;
+      if (wavenc->labls)
+        gst_wavenc_write_labls (&data, wavenc->labls);
+      if (wavenc->notes)
+        gst_wavenc_write_notes (&data, wavenc->notes);
+    }
+  }
+
+  /* free resources */
+  if (toc)
+    gst_toc_unref (toc);
+  if (wavenc->cues)
+    g_list_free_full (wavenc->cues, g_free);
+  if (wavenc->labls)
+    g_list_free_full (wavenc->labls, g_free);
+  if (wavenc->notes)
+    g_list_free_full (wavenc->notes, g_free);
+
+  gst_buffer_unmap (buf, &map);
+  wavenc->meta_length += gst_buffer_get_size (buf);
+
+  return gst_pad_push (wavenc->srcpad, buf);
+}
 
 static gboolean
 gst_wavenc_event (GstPad * pad, GstObject * parent, GstEvent * event)
 {
   gboolean res = TRUE;
   GstWavEnc *wavenc;
+  GstTagList *tags;
+  GstToc *toc;
 
   wavenc = GST_WAVENC (parent);
 
@@ -613,18 +785,24 @@ gst_wavenc_event (GstPad * pad, GstObject * parent, GstEvent * event)
       gst_event_unref (event);
       break;
     }
-    case GST_EVENT_EOS:{
+    case GST_EVENT_EOS:
+    {
+      GstFlowReturn flow;
       GST_DEBUG_OBJECT (wavenc, "got EOS");
-#if 0
-      /* Write our metadata if we have any */
-      if (wavenc->metadata) {
-        write_metadata (wavenc);
-        write_cues (wavenc);
-        write_labels (wavenc);
+
+      flow = gst_wavenc_write_toc (wavenc);
+      if (flow != GST_FLOW_OK) {
+        GST_WARNING_OBJECT (wavenc, "error pushing toc: %s",
+            gst_flow_get_name (flow));
       }
-#endif
+      flow = gst_wavenc_write_tags (wavenc);
+      if (flow != GST_FLOW_OK) {
+        GST_WARNING_OBJECT (wavenc, "error pushing tags: %s",
+            gst_flow_get_name (flow));
+      }
+
       /* write header with correct length values */
-      gst_wavenc_push_header (wavenc, wavenc->length);
+      gst_wavenc_push_header (wavenc);
 
       /* we're done with this file */
       wavenc->finished_properly = TRUE;
@@ -637,6 +815,30 @@ gst_wavenc_event (GstPad * pad, GstObject * parent, GstEvent * event)
       /* Just drop it, it's probably in TIME format
        * anyway. We'll send our own newsegment event */
       gst_event_unref (event);
+      break;
+    case GST_EVENT_TOC:
+      gst_event_parse_toc (event, &toc, NULL);
+      if (toc) {
+        if (wavenc->toc != toc) {
+          if (wavenc->toc)
+            gst_toc_unref (wavenc->toc);
+          wavenc->toc = toc;
+        } else {
+          gst_toc_unref (toc);
+        }
+      }
+      res = gst_pad_event_default (pad, parent, event);
+      break;
+    case GST_EVENT_TAG:
+      gst_event_parse_tag (event, &tags);
+      if (tags) {
+        if (wavenc->tags != tags) {
+          if (wavenc->tags)
+            gst_tag_list_unref (wavenc->tags);
+          wavenc->tags = gst_tag_list_ref (tags);
+        }
+      }
+      res = gst_pad_event_default (pad, parent, event);
       break;
     default:
       res = gst_pad_event_default (pad, parent, event);
@@ -654,17 +856,18 @@ gst_wavenc_chain (GstPad * pad, GstObject * parent, GstBuffer * buf)
 
   g_return_val_if_fail (wavenc->channels > 0, GST_FLOW_FLUSHING);
 
-  if (!wavenc->sent_header) {
-    /* use bogus size initially, we'll write the real
-     * header when we get EOS and know the exact length */
-    flow = gst_wavenc_push_header (wavenc, 0x7FFF0000);
-
+  if (G_UNLIKELY (!wavenc->sent_header)) {
     /* starting a file, means we have to finish it properly */
     wavenc->finished_properly = FALSE;
 
-    if (flow != GST_FLOW_OK)
+    /* use bogus size initially, we'll write the real
+     * header when we get EOS and know the exact length */
+    flow = gst_wavenc_push_header (wavenc);
+    if (flow != GST_FLOW_OK) {
+      GST_WARNING_OBJECT (wavenc, "error pushing header: %s",
+          gst_flow_get_name (flow));
       return flow;
-
+    }
     GST_DEBUG_OBJECT (wavenc, "wrote dummy header");
     wavenc->sent_header = TRUE;
   }
@@ -675,10 +878,10 @@ gst_wavenc_chain (GstPad * pad, GstObject * parent, GstBuffer * buf)
 
   buf = gst_buffer_make_writable (buf);
 
-  GST_BUFFER_OFFSET (buf) = WAV_HEADER_LEN + wavenc->length;
+  GST_BUFFER_OFFSET (buf) = WAV_HEADER_LEN + wavenc->audio_length;
   GST_BUFFER_OFFSET_END (buf) = GST_BUFFER_OFFSET_NONE;
 
-  wavenc->length += gst_buffer_get_size (buf);
+  wavenc->audio_length += gst_buffer_get_size (buf);
 
   flow = gst_pad_push (wavenc->srcpad, buf);
 
@@ -697,7 +900,8 @@ gst_wavenc_change_state (GstElement * element, GstStateChange transition)
       wavenc->channels = 0;
       wavenc->width = 0;
       wavenc->rate = 0;
-      wavenc->length = 0;
+      wavenc->audio_length = 0;
+      wavenc->meta_length = 0;
       wavenc->sent_header = FALSE;
       /* its true because we haven't writen anything */
       wavenc->finished_properly = TRUE;
@@ -718,6 +922,20 @@ gst_wavenc_change_state (GstElement * element, GstStateChange transition)
             ("Wav stream not finished properly, no EOS received "
                 "before shutdown"));
       }
+      break;
+    case GST_STATE_CHANGE_READY_TO_NULL:
+      GST_DEBUG_OBJECT (wavenc, "tags: %p", wavenc->tags);
+      if (wavenc->tags) {
+        gst_tag_list_unref (wavenc->tags);
+        wavenc->tags = NULL;
+      }
+      GST_DEBUG_OBJECT (wavenc, "toc: %p", wavenc->toc);
+      if (wavenc->toc) {
+        gst_toc_unref (wavenc->toc);
+        wavenc->toc = NULL;
+      }
+      gst_tag_setter_reset_tags (GST_TAG_SETTER (wavenc));
+      gst_toc_setter_reset (GST_TOC_SETTER (wavenc));
       break;
     default:
       break;

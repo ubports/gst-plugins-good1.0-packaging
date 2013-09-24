@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 0.10.28.2\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2013-08-28 15:03+0100\n"
+"POT-Creation-Date: 2013-09-19 10:18+0200\n"
 "PO-Revision-Date: 2012-04-16 03:04+0200\n"
 "Last-Translator: Tomislav Krznar <tomislav.krznar@gmail.com>\n"
 "Language-Team: Croatian <lokalizacija@linux.hr>\n"
@@ -17,16 +17,22 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
 
+msgid "Jack server not found"
+msgstr ""
+
+msgid "Failed to decode JPEG image"
+msgstr "Nisam uspio dekodirati JPEG sliku"
+
 #. TRANSLATORS: 'song title' by 'artist name'
 #, c-format
 msgid "'%s' by '%s'"
 msgstr "„%s” („%s”)"
 
-msgid "Failed to decode JPEG image"
-msgstr "Nisam uspio dekodirati JPEG sliku"
-
 msgid "Could not connect to server"
 msgstr "Ne mogu se spojiti na poslužitelj"
+
+msgid "No URL set."
+msgstr "Nije postavljen URL."
 
 msgid "Server does not support seeking."
 msgstr "Poslužitelj ne podržava traženje"
@@ -48,9 +54,6 @@ msgstr ""
 msgid "Server sent bad data."
 msgstr "Poslužitelj je poslao neispravne podatke."
 
-msgid "No URL set."
-msgstr "Nije postavljen URL."
-
 msgid "Internal data stream error."
 msgstr "Greška unutarnjeg niza podataka."
 
@@ -62,6 +65,9 @@ msgstr "Datoteka ne sadrži nizove koji se mogu reproducirati."
 
 msgid "This file is invalid and cannot be played."
 msgstr "Datoteka je neispravna i ne može se reproducirati."
+
+msgid "Cannot play stream because it is encrypted with PlayReady DRM."
+msgstr ""
 
 msgid "This file is corrupt and cannot be played."
 msgstr "Datoteka je oštećena i ne može se reproducirati."
@@ -115,16 +121,6 @@ msgid "Could not open audio device for playback."
 msgstr "Ne mogu otvoriti zvučni uređaj za reprodukciju."
 
 msgid ""
-"Could not open audio device for recording. You don't have permission to open "
-"the device."
-msgstr ""
-"Ne mogu otvoriti zvučni uređaj za snimanje. Nemate dozvole za otvaranje "
-"uređaja."
-
-msgid "Could not open audio device for recording."
-msgstr "Ne mogu otvoriti zvučni uređaj za snimanje."
-
-msgid ""
 "Could not open audio device for playback. This version of the Open Sound "
 "System is not supported by this element."
 msgstr ""
@@ -142,6 +138,45 @@ msgstr "Ovaj zvučni uređaj ne podržava snimanje."
 
 msgid "Error recording from audio device."
 msgstr "Greška snimanja sa zvučnog uređaja."
+
+msgid ""
+"Could not open audio device for recording. You don't have permission to open "
+"the device."
+msgstr ""
+"Ne mogu otvoriti zvučni uređaj za snimanje. Nemate dozvole za otvaranje "
+"uređaja."
+
+msgid "Could not open audio device for recording."
+msgstr "Ne mogu otvoriti zvučni uređaj za snimanje."
+
+msgid "Record Source"
+msgstr "Izvor snimanja"
+
+msgid "Microphone"
+msgstr "Mikrofon"
+
+msgid "Line In"
+msgstr "Linijski ulaz"
+
+msgid "Internal CD"
+msgstr "Interni CD"
+
+msgid "SPDIF In"
+msgstr "SPDIF ulaz"
+
+msgid "AUX 1 In"
+msgstr "AUX 1 ulaz"
+
+msgid "AUX 2 In"
+msgstr "AUX 2 ulaz"
+
+#, fuzzy
+msgid "Codec Loopback"
+msgstr "Povratna petlja"
+
+#, fuzzy
+msgid "SunVTS Loopback"
+msgstr "Povratna petlja"
 
 msgid "Volume"
 msgstr "Glasnoća"
@@ -242,6 +277,10 @@ msgid "Failed to change mute state for device '%s'."
 msgstr "Nisam uspio dobiti snagu signala za uređaj „%s”."
 
 #, c-format
+msgid "Cannot identify device '%s'."
+msgstr "Ne mogu identificirati uređaj „%s”."
+
+#, c-format
 msgid ""
 "Error getting capabilities for device '%s': It isn't a v4l2 driver. Check if "
 "it is a v4l1 driver."
@@ -264,10 +303,6 @@ msgstr "Nisam uspio ispitati norm na uređaju „%s”."
 #, c-format
 msgid "Failed getting controls attributes on device '%s'."
 msgstr "Nisam uspio dobiti svojstva upravljanja na uređaju „%s”."
-
-#, c-format
-msgid "Cannot identify device '%s'."
-msgstr "Ne mogu identificirati uređaj „%s”."
 
 #, c-format
 msgid "This isn't a device '%s'."
@@ -354,9 +389,6 @@ msgstr "Ne mogu raditi bez takta"
 
 #~ msgid "Line-in"
 #~ msgstr "Ulazna linija"
-
-#~ msgid "Microphone"
-#~ msgstr "Mikrofon"
 
 #~ msgid "CD"
 #~ msgstr "CD"
@@ -455,20 +487,8 @@ msgstr "Ne mogu raditi bez takta"
 #~ msgid "Telephone"
 #~ msgstr "Telefon"
 
-#~ msgid "Line In"
-#~ msgstr "Linijski ulaz"
-
-#~ msgid "Internal CD"
-#~ msgstr "Interni CD"
-
 #~ msgid "Video In"
 #~ msgstr "Video ulaz"
-
-#~ msgid "AUX 1 In"
-#~ msgstr "AUX 1 ulaz"
-
-#~ msgid "AUX 2 In"
-#~ msgstr "AUX 2 ulaz"
 
 #~ msgid "AUX In"
 #~ msgstr "AUX ulaz"
@@ -482,9 +502,6 @@ msgstr "Ne mogu raditi bez takta"
 #~ msgid "Microphone Boost"
 #~ msgstr "Pojačanje mikrofona"
 
-#~ msgid "Loopback"
-#~ msgstr "Povratna petlja"
-
 #~ msgid "Diagnostic"
 #~ msgstr "Dijagnostika"
 
@@ -496,9 +513,6 @@ msgstr "Ne mogu raditi bez takta"
 
 #~ msgid "Input"
 #~ msgstr "Ulaz"
-
-#~ msgid "Record Source"
-#~ msgstr "Izvor snimanja"
 
 #~ msgid "Monitor Source"
 #~ msgstr "Izvor nadziranja"
@@ -538,9 +552,6 @@ msgstr "Ne mogu raditi bez takta"
 
 #~ msgid "Input Mix"
 #~ msgstr "Ulazni mikser"
-
-#~ msgid "SPDIF In"
-#~ msgstr "SPDIF ulaz"
 
 #~ msgid "Microphone 1"
 #~ msgstr "Mikrofon 1"

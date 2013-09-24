@@ -13,13 +13,15 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include <gst/tag/tag.h>
 
 #include "gstrtpac3depay.h"
 #include "gstrtpac3pay.h"
@@ -66,6 +68,8 @@
 #include "gstrtpjpegpay.h"
 #include "gstrtpL16depay.h"
 #include "gstrtpL16pay.h"
+#include "gstrtpL24depay.h"
+#include "gstrtpL24pay.h"
 #include "gstasteriskh263.h"
 #include "gstrtpmp1sdepay.h"
 #include "gstrtpmp2tdepay.h"
@@ -78,6 +82,8 @@
 #include "gstrtpmp4gpay.h"
 #include "gstrtpqcelpdepay.h"
 #include "gstrtpqdmdepay.h"
+#include "gstrtpsbcdepay.h"
+#include "gstrtpsbcpay.h"
 #include "gstrtpsirenpay.h"
 #include "gstrtpsirendepay.h"
 #include "gstrtpspeexpay.h"
@@ -87,12 +93,16 @@
 #include "gstrtptheorapay.h"
 #include "gstrtpvorbisdepay.h"
 #include "gstrtpvorbispay.h"
+#include "gstrtpvp8depay.h"
+#include "gstrtpvp8pay.h"
 #include "gstrtpvrawdepay.h"
 #include "gstrtpvrawpay.h"
 
 static gboolean
 plugin_init (GstPlugin * plugin)
 {
+  gst_tag_image_type_get_type ();
+
   if (!gst_rtp_ac3_depay_plugin_init (plugin))
     return FALSE;
 
@@ -228,6 +238,12 @@ plugin_init (GstPlugin * plugin)
   if (!gst_rtp_L16_depay_plugin_init (plugin))
     return FALSE;
 
+  if (!gst_rtp_L24_pay_plugin_init (plugin))
+    return FALSE;
+
+  if (!gst_rtp_L24_depay_plugin_init (plugin))
+    return FALSE;
+
   if (!gst_asteriskh263_plugin_init (plugin))
     return FALSE;
 
@@ -264,6 +280,12 @@ plugin_init (GstPlugin * plugin)
   if (!gst_rtp_qdm2_depay_plugin_init (plugin))
     return FALSE;
 
+  if (!gst_rtp_sbc_depay_plugin_init (plugin))
+    return FALSE;
+
+  if (!gst_rtp_sbc_pay_plugin_init (plugin))
+    return FALSE;
+
   if (!gst_rtp_siren_pay_plugin_init (plugin))
     return FALSE;
 
@@ -289,6 +311,12 @@ plugin_init (GstPlugin * plugin)
     return FALSE;
 
   if (!gst_rtp_vorbis_pay_plugin_init (plugin))
+    return FALSE;
+
+  if (!gst_rtp_vp8_depay_plugin_init (plugin))
+    return FALSE;
+
+  if (!gst_rtp_vp8_pay_plugin_init (plugin))
     return FALSE;
 
   if (!gst_rtp_vraw_depay_plugin_init (plugin))

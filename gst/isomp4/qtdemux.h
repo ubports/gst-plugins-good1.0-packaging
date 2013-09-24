@@ -13,8 +13,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 
@@ -64,6 +64,9 @@ struct _GstQTDemux {
   gint     n_audio_streams;
   gint     n_sub_streams;
 
+  gboolean have_group_id;
+  guint group_id;
+
   guint  major_brand;
   GstBuffer *comp_brands;
   GNode *moov_node;
@@ -101,6 +104,10 @@ struct _GstQTDemux {
   /* configured playback region */
   GstSegment segment;
   GstEvent *pending_newsegment;
+  gboolean upstream_newsegment;
+  gint64 seek_offset;
+  gint64 push_seek_start;
+  gint64 push_seek_stop;
 
 #if 0
   /* gst index support */
@@ -108,11 +115,19 @@ struct _GstQTDemux {
   gint index_id;
 #endif
 
-  gint64 requested_seek_time;
-  guint64 seek_offset;
-
   gboolean upstream_seekable;
   gint64 upstream_size;
+
+  /* MSS streams have a single media that is unspecified at the atoms, so
+   * upstream provides it at the caps */
+  GstCaps *media_caps;
+  gboolean exposed;
+  gboolean mss_mode; /* flag to indicate that we're working with a smoothstreaming fragment */
+  guint64 fragment_start;
+    
+  gint64 chapters_track_id;
+
+  GstClockTime min_elst_offset;
 };
 
 struct _GstQTDemuxClass {

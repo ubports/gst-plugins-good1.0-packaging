@@ -4,32 +4,39 @@
 # Артём Попов <artfwo@gmail.com>, 2009.
 # Pavel Maryanov <acid_jack@ukr.net>, 2009.
 # Yuri Kozlov <yuray@komyakino.ru>, 2011, 2012.
+# Pavel Maryanov <acid@jack.kiev.ua>, 2013.
 msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.0.3\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2013-08-28 15:03+0100\n"
-"PO-Revision-Date: 2012-12-01 13:23+0400\n"
-"Last-Translator: Yuri Kozlov <yuray@komyakino.ru>\n"
+"POT-Creation-Date: 2013-09-19 10:18+0200\n"
+"PO-Revision-Date: 2013-03-09 17:09+0200\n"
+"Last-Translator: Pavel Maryanov <acid@jack.kiev.ua>\n"
 "Language-Team: Russian <gnu@mx.ru>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Lokalize 1.4\n"
+"X-Generator: Poedit 1.5.5\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
-#. TRANSLATORS: 'song title' by 'artist name'
-#, c-format
-msgid "'%s' by '%s'"
-msgstr "«%s» исполняет «%s»"
+msgid "Jack server not found"
+msgstr ""
 
 msgid "Failed to decode JPEG image"
 msgstr "Не удалось декодировать JPEG-изображение"
 
+#. TRANSLATORS: 'song title' by 'artist name'
+#, c-format
+msgid "'%s' by '%s'"
+msgstr "«%s», «%s»"
+
 msgid "Could not connect to server"
 msgstr "Не удалось соединиться с сервером"
+
+msgid "No URL set."
+msgstr "URL не задан."
 
 msgid "Server does not support seeking."
 msgstr "Сервер не поддерживает поиск."
@@ -50,9 +57,6 @@ msgstr "Произошла сетевая ошибка или сервер не�
 msgid "Server sent bad data."
 msgstr "Сервер прислал некорректные данные."
 
-msgid "No URL set."
-msgstr "URL не задан."
-
 msgid "Internal data stream error."
 msgstr "Внутренняя ошибка потока данных."
 
@@ -66,6 +70,9 @@ msgstr "Файл не содержит воспроизводимых поток
 
 msgid "This file is invalid and cannot be played."
 msgstr "Файл некорректен и не может быть воспроизведён."
+
+msgid "Cannot play stream because it is encrypted with PlayReady DRM."
+msgstr ""
 
 msgid "This file is corrupt and cannot be played."
 msgstr "Файл повреждён и не может быть воспроизведён."
@@ -120,16 +127,6 @@ msgid "Could not open audio device for playback."
 msgstr "Не удалось открыть аудио-устройство для воспроизведения."
 
 msgid ""
-"Could not open audio device for recording. You don't have permission to open "
-"the device."
-msgstr ""
-"Не удалось открыть аудио-устройство для записи. Отсутствуют права доступа к "
-"устройству."
-
-msgid "Could not open audio device for recording."
-msgstr "Не удалось открыть аудио-устройство для записи."
-
-msgid ""
 "Could not open audio device for playback. This version of the Open Sound "
 "System is not supported by this element."
 msgstr ""
@@ -147,6 +144,45 @@ msgstr "Запись не поддерживается данным аудио-�
 
 msgid "Error recording from audio device."
 msgstr "Ошибка записи с аудио-устройства."
+
+msgid ""
+"Could not open audio device for recording. You don't have permission to open "
+"the device."
+msgstr ""
+"Не удалось открыть аудио-устройство для записи. Отсутствуют права доступа к "
+"устройству."
+
+msgid "Could not open audio device for recording."
+msgstr "Не удалось открыть аудио-устройство для записи."
+
+msgid "Record Source"
+msgstr "Устройство записи"
+
+msgid "Microphone"
+msgstr "Микрофон"
+
+msgid "Line In"
+msgstr "Линейный вход"
+
+msgid "Internal CD"
+msgstr "Внутренний CD"
+
+msgid "SPDIF In"
+msgstr "Вход SPDIF"
+
+msgid "AUX 1 In"
+msgstr "Вход AUX 1"
+
+msgid "AUX 2 In"
+msgstr "Вход AUX 2"
+
+#, fuzzy
+msgid "Codec Loopback"
+msgstr "Петля"
+
+#, fuzzy
+msgid "SunVTS Loopback"
+msgstr "Петля"
 
 msgid "Volume"
 msgstr "Уровень"
@@ -250,6 +286,10 @@ msgid "Failed to change mute state for device '%s'."
 msgstr "Не удалось изменить состояние приглушения для устройства «%s»."
 
 #, c-format
+msgid "Cannot identify device '%s'."
+msgstr "Не удаётся распознать устройство «%s»."
+
+#, c-format
 msgid ""
 "Error getting capabilities for device '%s': It isn't a v4l2 driver. Check if "
 "it is a v4l1 driver."
@@ -272,10 +312,6 @@ msgstr "Ошибка запроса стандарта устройства «%s
 #, c-format
 msgid "Failed getting controls attributes on device '%s'."
 msgstr "Ошибка получения атрибутов управления устройства «%s»."
-
-#, c-format
-msgid "Cannot identify device '%s'."
-msgstr "Не удаётся распознать устройство «%s»."
 
 #, c-format
 msgid "This isn't a device '%s'."
@@ -366,9 +402,6 @@ msgstr "Операция невозможна без часов"
 
 #~ msgid "Line-in"
 #~ msgstr "Линейный вход"
-
-#~ msgid "Microphone"
-#~ msgstr "Микрофон"
 
 #~ msgid "CD"
 #~ msgstr "CD"
@@ -468,20 +501,8 @@ msgstr "Операция невозможна без часов"
 #~ msgid "Telephone"
 #~ msgstr "Телефон"
 
-#~ msgid "Line In"
-#~ msgstr "Линейный вход"
-
-#~ msgid "Internal CD"
-#~ msgstr "Внутренний CD"
-
 #~ msgid "Video In"
 #~ msgstr "Видео вход"
-
-#~ msgid "AUX 1 In"
-#~ msgstr "Вход AUX 1"
-
-#~ msgid "AUX 2 In"
-#~ msgstr "Вход AUX 2"
 
 #~ msgid "AUX In"
 #~ msgstr "Вход AUX"
@@ -495,9 +516,6 @@ msgstr "Операция невозможна без часов"
 #~ msgid "Microphone Boost"
 #~ msgstr "Микрофонный усилитель"
 
-#~ msgid "Loopback"
-#~ msgstr "Петля"
-
 #~ msgid "Diagnostic"
 #~ msgstr "Диагностика"
 
@@ -509,9 +527,6 @@ msgstr "Операция невозможна без часов"
 
 #~ msgid "Input"
 #~ msgstr "Вход"
-
-#~ msgid "Record Source"
-#~ msgstr "Устройство записи"
 
 #~ msgid "Monitor Source"
 #~ msgstr "Устройство вывода"
@@ -551,9 +566,6 @@ msgstr "Операция невозможна без часов"
 
 #~ msgid "Input Mix"
 #~ msgstr "Микширование входа"
-
-#~ msgid "SPDIF In"
-#~ msgstr "Вход SPDIF"
 
 #~ msgid "Microphone 1"
 #~ msgstr "Микрофон 1"

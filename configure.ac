@@ -1,18 +1,16 @@
-AC_PREREQ(2.62)
+AC_PREREQ([2.68])
 
 dnl please read gstreamer/docs/random/autotools before changing this file
 
 dnl initialize autoconf
 dnl releases only do -Wall, git and prerelease does -Werror too
 dnl use a three digit version number for releases, and four for git/pre
-AC_INIT(GStreamer Good Plug-ins, 1.0.10,
-    http://bugzilla.gnome.org/enter_bug.cgi?product=GStreamer,
-    gst-plugins-good)
+AC_INIT([GStreamer Good Plug-ins],[1.1.90],[http://bugzilla.gnome.org/enter_bug.cgi?product=GStreamer],[gst-plugins-good])
 
 AG_GST_INIT
 
 dnl initialize automake
-AM_INIT_AUTOMAKE([-Wno-portability 1.11 no-dist-gzip dist-xz tar-ustar])
+AM_INIT_AUTOMAKE([-Wno-portability 1.11 no-dist-gzip dist-xz tar-ustar subdir-objects])
 
 dnl define PACKAGE_VERSION_* variables
 AS_VERSION
@@ -45,11 +43,11 @@ AC_DEFINE_UNQUOTED(GST_API_VERSION, "$GST_API_VERSION",
   [GStreamer API Version])
 
 AG_GST_LIBTOOL_PREPARE
-AS_LIBTOOL(GST, 9, 0, 9)
+AS_LIBTOOL(GST, 190, 0, 190)
 
 dnl *** required versions of GStreamer stuff ***
-GST_REQ=1.0.0
-GSTPB_REQ=1.0.0
+GST_REQ=1.1.90
+GSTPB_REQ=1.1.90
 
 dnl *** autotools stuff ****
 
@@ -128,14 +126,21 @@ AM_CONDITIONAL(HAVE_VALGRIND, test ! "x$VALGRIND_PATH" = "xno")
 
 dnl check for documentation tools
 GTK_DOC_CHECK([1.12])
-AS_PATH_PYTHON([2.1])
-AG_GST_PLUGIN_DOCS([1.3],[2.1])
+AG_GST_PLUGIN_DOCS([1.12])
 
 dnl *** checks for libraries ***
 
 dnl check for libm, for sin()
 LT_LIB_M
 AC_SUBST(LIBM)
+
+AC_CHECK_FUNCS(clock_gettime, [], [
+  AC_CHECK_LIB(rt, clock_gettime, [
+    AC_DEFINE(HAVE_CLOCK_GETTIME, 1)
+    LIBRT="-lrt"
+    AC_SUBST([LIBRT])
+  ])
+])
 
 dnl *** checks for header files ***
 
@@ -202,7 +207,7 @@ GLIB_REQ=2.32.0
 AG_GST_GLIB_CHECK([$GLIB_REQ])
 
 dnl Orc
-ORC_CHECK([0.4.16])
+ORC_CHECK([0.4.17])
 
 dnl checks for gstreamer
 dnl uninstalled is selected preferentially -- see pkg-config(1)
@@ -329,6 +334,7 @@ AG_GST_CHECK_PLUGIN(avi)
 AG_GST_CHECK_PLUGIN(cutter)
 AG_GST_CHECK_PLUGIN(debugutils)
 AG_GST_CHECK_PLUGIN(deinterlace)
+AG_GST_CHECK_PLUGIN(dtmf)
 AG_GST_CHECK_PLUGIN(effectv)
 AG_GST_CHECK_PLUGIN(equalizer)
 AG_GST_CHECK_PLUGIN(flv)
@@ -498,7 +504,7 @@ dnl renamed to GST_V4L2 because of some conflict with kernel headers
 translit(dnm, m, l) AM_CONDITIONAL(USE_GST_V4L2, true)
 AG_GST_CHECK_FEATURE(GST_V4L2, [Video 4 Linux 2], v4l2src, [
   AC_MSG_CHECKING([Checking for up to date v4l2 installation])
-  AC_TRY_COMPILE([
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <sys/types.h>
 #ifdef __sun /* Solaris */
 #include <sys/types.h>
@@ -514,12 +520,12 @@ AG_GST_CHECK_FEATURE(GST_V4L2, [Video 4 Linux 2], v4l2src, [
 #if defined(V4L2_MAJOR_VERSION) || defined(V4L2_MINOR_VERSION)
 #error too early v4l2 version or no v4l2 at all
 #endif
-    ], [
+    ]], [[
 return 0;
-    ], [
+    ]])],[
       HAVE_GST_V4L2="yes"
       AC_MSG_RESULT(yes)
-    ], [
+    ],[
       HAVE_GST_V4L2="no"
       AC_MSG_RESULT(no)
 
@@ -541,7 +547,7 @@ return 0;
     dnl check for missing v4l2_buffer declaration (see #135919)
     MISSING_DECL=0
     AC_MSG_CHECKING(struct v4l2_buffer declaration)
-    AC_TRY_COMPILE([
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <sys/types.h>
 #ifdef __sun /* Solaris */
 #include <sys/types.h>
@@ -554,11 +560,11 @@ return 0;
 #define __user
 #include <linux/videodev2.h>
 #endif
-    ],[
+    ]], [[
 struct v4l2_buffer buf;
 buf.index = 0;
 return 0;
-    ], [ AC_MSG_RESULT(yes) ], [ MISSING_DECL=1 && AC_MSG_RESULT(no) ])
+    ]])],[ AC_MSG_RESULT(yes) ],[ MISSING_DECL=1 && AC_MSG_RESULT(no) ])
     if [ test x$MISSING_DECL = x1 ]; then
       AC_DEFINE(GST_V4L2_MISSING_BUFDECL, 1, [struct v4l2_buffer missing])
     fi
@@ -570,8 +576,7 @@ return 0;
 
 # Optional gudev for device probing
 AC_ARG_WITH([gudev],
-  AC_HELP_STRING([--with-gudev],
-    [device detection with gudev]),
+  AS_HELP_STRING([--with-gudev],[device detection with gudev]),
   [],
   [with_gudev=check])
 if test x$HAVE_GST_V4L2 = xyes; then
@@ -593,8 +598,7 @@ AC_SUBST(GUDEV_LIBS)
 
 # Make libv4l2 non-automagic
 AC_ARG_WITH([libv4l2],
-  AC_HELP_STRING([--with-libv4l2],
-    [support video buffer conversion using libv4l2]),
+  AS_HELP_STRING([--with-libv4l2],[support video buffer conversion using libv4l2]),
   [],
   [with_libv4l2=check])
 if test x$HAVE_GST_V4L2 = xyes; then
@@ -609,6 +613,24 @@ if test x$HAVE_GST_V4L2 = xyes; then
   else
     have_libv4l2=no
   fi
+fi
+
+# Check if v4l2 support dmabuf
+if test x$HAVE_GST_V4L2 = xyes; then
+	AC_CHECK_DECLS(V4L2_MEMORY_DMABUF,,,[
+					#include <sys/types.h>
+					#ifdef __sun /* Solaris */
+					#include <sys/types.h>
+					#include <sys/videodev2.h>
+					#elif __FreeBSD__
+					#include <linux/videodev2.h>
+					#else /* Linux */
+					#include <linux/types.h>
+					#define _LINUX_TIME_H
+					#define __user
+					#include <linux/videodev2.h>
+					#endif
+					])
 fi
 
 dnl Check for X11
@@ -790,7 +812,7 @@ AG_GST_CHECK_FEATURE(PULSE, [pulseaudio plug-in], pulseaudio, [
   dnl used in ext/pulse/pulseutil.c
   AC_CHECK_HEADERS([process.h])
 
-  AG_GST_PKG_CHECK_MODULES(PULSE, libpulse >= 1.0)
+  AG_GST_PKG_CHECK_MODULES(PULSE, libpulse >= 2.0)
 ])
 
 dnl *** dv1394 ***
@@ -853,14 +875,7 @@ AG_GST_CHECK_FEATURE(SHOUT2, [Shoutcast/Icecast client library], shout2, [
 dnl *** soup ***
 translit(dnm, m, l) AM_CONDITIONAL(USE_SOUP, true)
 AG_GST_CHECK_FEATURE(SOUP, [soup http client plugin (2.4)], souphttpsrc, [
-  PKG_CHECK_MODULES(SOUP, libsoup-gnome-2.4 >= 2.3.2, [
-    HAVE_SOUP="yes"
-    AC_DEFINE(HAVE_LIBSOUP_GNOME, 1, [soup gnome integration])
-  ],[
-    PKG_CHECK_MODULES(SOUP, libsoup-2.4 >= 2.26.1, HAVE_SOUP="yes", [
-      HAVE_SOUP="no"
-    ])
-  ])
+  PKG_CHECK_MODULES(SOUP, libsoup-2.4 >= 2.38, [HAVE_SOUP="yes"], [HAVE_SOUP="no"])
   AC_SUBST(SOUP_CFLAGS)
   AC_SUBST(SOUP_LIBS)
 ])
@@ -930,6 +945,8 @@ dnl *** vpx ***
 translit(dnm, m, l) AM_CONDITIONAL(USE_VPX, vpx)
 AG_GST_CHECK_FEATURE(VPX, [VPX decoder], vpx, [
   PKG_CHECK_MODULES(VPX, vpx >= 1.1.0, [HAVE_VPX="yes"], [HAVE_VPX="no"])
+  HAVE_VP8=no
+  HAVE_VP9=no
 
   if test $HAVE_VPX = "yes"; then
     OLD_LIBS="$LIBS"
@@ -944,6 +961,16 @@ AG_GST_CHECK_FEATURE(VPX, [VPX decoder], vpx, [
       HAVE_VP8=yes
       AC_DEFINE(HAVE_VP8_DECODER, 1, [Defined if the VP8 decoder is available])
     ])
+    if test "x$BUILD_EXPERIMENTAL" = "xyes"; then
+      AC_CHECK_LIB(vpx, vpx_codec_vp9_cx_algo, [
+        HAVE_VP9=yes
+        AC_DEFINE(HAVE_VP9_ENCODER, 1, [Defined if the VP9 encoder is available])
+      ])
+      AC_CHECK_LIB(vpx, vpx_codec_vp9_dx_algo, [
+        HAVE_VP9=yes
+        AC_DEFINE(HAVE_VP9_DECODER, 1, [Defined if the VP9 decoder is available])
+      ])
+    fi
     LIBS="$OLD_LIBS"
     CFLAGS="$OLD_CFLAGS"
   fi
@@ -1091,6 +1118,8 @@ AC_SUBST(GST_PLUGIN_LDFLAGS)
 
 dnl *** output files ***
 
+$MKDIR_P tests/check/orc
+
 dnl keep this alphabetic per directory, please
 AC_CONFIG_FILES(
 Makefile
@@ -1104,6 +1133,7 @@ gst/autodetect/Makefile
 gst/avi/Makefile
 gst/cutter/Makefile
 gst/deinterlace/Makefile
+gst/dtmf/Makefile
 gst/debugutils/Makefile
 gst/effectv/Makefile
 gst/equalizer/Makefile

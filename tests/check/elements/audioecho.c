@@ -14,8 +14,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #include <gst/check/gstcheck.h>
@@ -100,7 +100,7 @@ GST_START_TEST (test_passthrough)
       "could not set to playing");
 
   caps = gst_caps_from_string (ECHO_CAPS_STRING);
-  fail_unless (gst_pad_set_caps (mysrcpad, caps));
+  gst_check_setup_events (mysrcpad, echo, caps, GST_FORMAT_TIME);
   gst_caps_unref (caps);
 
   inbuffer =
@@ -146,7 +146,7 @@ GST_START_TEST (test_echo)
       "could not set to playing");
 
   caps = gst_caps_from_string (ECHO_CAPS_STRING);
-  fail_unless (gst_pad_set_caps (mysrcpad, caps));
+  gst_check_setup_events (mysrcpad, echo, caps, GST_FORMAT_TIME);
   gst_caps_unref (caps);
 
   inbuffer =
@@ -193,7 +193,7 @@ GST_START_TEST (test_feedback)
       "could not set to playing");
 
   caps = gst_caps_from_string (ECHO_CAPS_STRING);
-  fail_unless (gst_pad_set_caps (mysrcpad, caps));
+  gst_check_setup_events (mysrcpad, echo, caps, GST_FORMAT_TIME);
   gst_caps_unref (caps);
 
   inbuffer =

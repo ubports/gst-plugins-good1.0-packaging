@@ -49,6 +49,7 @@ struct _GstSoupHTTPSrc {
   GstPushSrc element;
 
   gchar *location;             /* Full URI. */
+  gchar *redirection_uri;      /* Full URI after redirections. */
   gchar *user_agent;           /* User-Agent HTTP header. */
   gboolean automatic_redirect; /* Follow redirects. */
   SoupURI *proxy;              /* HTTP proxy URI. */
@@ -68,6 +69,7 @@ struct _GstSoupHTTPSrc {
   gboolean interrupted;        /* Signal unlock(). */
   gboolean retry;              /* Should attempt to reconnect. */
 
+  gboolean got_headers;        /* Already received headers from the server */
   gboolean have_size;          /* Received and parsed Content-Length
                                   header. */
   guint64 content_size;        /* Value of Content-Length header. */
@@ -75,6 +77,7 @@ struct _GstSoupHTTPSrc {
   gboolean seekable;           /* FALSE if the server does not support
                                   Range. */
   guint64 request_position;    /* Seek to this position. */
+  guint64 stop_position;       /* Stop at this position. */
 
   /* Shoutcast/icecast metadata extraction handling. */
   gboolean iradio_mode;
@@ -86,6 +89,9 @@ struct _GstSoupHTTPSrc {
   GstStructure *extra_headers;
 
   guint timeout;
+
+  GMutex mutex;
+  GCond request_finished_cond;
 };
 
 struct _GstSoupHTTPSrcClass {

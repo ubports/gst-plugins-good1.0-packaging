@@ -14,8 +14,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #ifndef __GST_AVI_DEMUX_H__
@@ -162,6 +162,9 @@ typedef struct _GstAviDemux {
   guint          num_t_streams;  /* subtitle text streams */
 
   guint          main_stream; /* used for seeking */
+
+  gboolean       have_group_id;
+  guint          group_id;
 
   /* for streaming mode */
   gboolean       streaming;

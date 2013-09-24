@@ -15,8 +15,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 
@@ -82,14 +82,6 @@ struct _GstJpegDec {
   /* properties */
   gint     idct_method;
   gint     max_errors;  /* ATOMIC */
-
-  /* current error (the message is the debug message) */
-  gchar       *error_msg;
-  int          error_line;
-  const gchar *error_func;
-
-  /* number of errors since start or last successfully decoded image */
-  guint     error_count;
 
   struct jpeg_decompress_struct cinfo;
   struct GstJpegDecErrorMgr     jerr;

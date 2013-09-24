@@ -13,8 +13,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 /*
  * Unless otherwise indicated, Source Code is licensed under MIT license.
@@ -108,9 +108,6 @@ struct _GstQTPad
   /* store the first timestamp for comparing with other streams and
    * know if there are late streams */
   GstClockTime first_ts;
-  GstClockTime ts_entries[QTMUX_NO_OF_TS + 2];
-  guint ts_n_entries;
-  GstBuffer *buf_entries[QTMUX_NO_OF_TS + 2];
   guint buf_head;
   guint buf_tail;
 
@@ -186,7 +183,9 @@ struct _GstQTMux
   AtomsTreeFlavor flavor;
   gboolean fast_start;
   gboolean guess_pts;
+#ifndef GST_REMOVE_DEPRECATED
   gint dts_method;
+#endif
   gchar *fast_start_file_path;
   gchar *moov_recov_file_path;
   guint32 fragment_duration;

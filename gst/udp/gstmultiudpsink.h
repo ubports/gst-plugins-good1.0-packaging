@@ -13,8 +13,8 @@
  *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #ifndef __GST_MULTIUDPSINK_H__
@@ -27,7 +27,6 @@
 G_BEGIN_DECLS
 
 #include "gstudpnetutils.h"
-#include "gstudp.h"
 
 #define GST_TYPE_MULTIUDPSINK            (gst_multiudpsink_get_type())
 #define GST_MULTIUDPSINK(obj)            (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_MULTIUDPSINK,GstMultiUDPSink))
@@ -57,16 +56,19 @@ typedef struct {
 struct _GstMultiUDPSink {
   GstBaseSink parent;
 
-  GSocket       *used_socket;
+  GSocket       *used_socket, *used_socket_v6;
   GCancellable  *cancellable;
 
   GMutex         client_lock;
   GList         *clients;
 
+  GOutputVector *vec;
+  GstMapInfo *map;
+
   /* properties */
   guint64        bytes_to_serve;
   guint64        bytes_served;
-  GSocket       *socket;
+  GSocket       *socket, *socket_v6;
   gboolean       close_socket;
 
   gboolean       external_socket;
@@ -81,6 +83,8 @@ struct _GstMultiUDPSink {
 
   gboolean       send_duplicates;
   gint           buffer_size;
+  gchar         *bind_address;
+  gint           bind_port;
 };
 
 struct _GstMultiUDPSinkClass {

@@ -686,8 +686,32 @@ guint64  arg3
 <FLAGS>l</FLAGS>
 GstV4l2Src *gstv4l2src
 gint  arg1
-guint  arg2
-guint  arg3
-guint  arg4
+GstCaps *arg2
+</SIGNAL>
+
+<SIGNAL>
+<NAME>GstRTSPSrc::handle-request</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS></FLAGS>
+GstRTSPSrc *gstrtspsrc
+gpointer  arg1
+gpointer  arg2
+</SIGNAL>
+
+<SIGNAL>
+<NAME>GstRTSPSrc::on-sdp</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS></FLAGS>
+GstRTSPSrc *gstrtspsrc
+GstSDPMessage *arg1
+</SIGNAL>
+
+<SIGNAL>
+<NAME>GstRTSPSrc::select-stream</NAME>
+<RETURNS>gboolean</RETURNS>
+<FLAGS>fc</FLAGS>
+GstRTSPSrc *gstrtspsrc
+guint  arg1
+GstCaps *arg2
 </SIGNAL>
 

@@ -14,8 +14,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the
- * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA 02110-1301, USA.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -40,30 +40,30 @@ typedef GstDeinterlaceSimpleMethodClass GstDeinterlaceMethodScalerBobClass;
 
 static void
 deinterlace_scanline_scaler_bob_packed (GstDeinterlaceSimpleMethod * self,
-    guint8 * out, const GstDeinterlaceScanlineData * scanlines)
+    guint8 * out, const GstDeinterlaceScanlineData * scanlines, guint size)
 {
-  memcpy (out, scanlines->t0, self->parent.row_stride[0]);
+  memcpy (out, scanlines->t0, size);
 }
 
 static void
 deinterlace_scanline_scaler_bob_planar_y (GstDeinterlaceSimpleMethod * self,
-    guint8 * out, const GstDeinterlaceScanlineData * scanlines)
+    guint8 * out, const GstDeinterlaceScanlineData * scanlines, guint size)
 {
-  memcpy (out, scanlines->t0, self->parent.row_stride[0]);
+  memcpy (out, scanlines->t0, size);
 }
 
 static void
 deinterlace_scanline_scaler_bob_planar_u (GstDeinterlaceSimpleMethod * self,
-    guint8 * out, const GstDeinterlaceScanlineData * scanlines)
+    guint8 * out, const GstDeinterlaceScanlineData * scanlines, guint size)
 {
-  memcpy (out, scanlines->t0, self->parent.row_stride[1]);
+  memcpy (out, scanlines->t0, size);
 }
 
 static void
 deinterlace_scanline_scaler_bob_planar_v (GstDeinterlaceSimpleMethod * self,
-    guint8 * out, const GstDeinterlaceScanlineData * scanlines)
+    guint8 * out, const GstDeinterlaceScanlineData * scanlines, guint size)
 {
-  memcpy (out, scanlines->t0, self->parent.row_stride[2]);
+  memcpy (out, scanlines->t0, size);
 }
 
 G_DEFINE_TYPE (GstDeinterlaceMethodScalerBob, gst_deinterlace_method_scaler_bob,
