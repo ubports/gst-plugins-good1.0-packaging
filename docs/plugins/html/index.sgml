@@ -874,11 +874,9 @@
 <ANCHOR id="GstMJ2Mux--trak-timescale" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-mj2mux.html#GstMJ2Mux--trak-timescale">
 <ANCHOR id="gst-plugins-good-plugins-monoscope" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-monoscope.html">
 <ANCHOR id="gst-plugins-good-plugins-monoscope.synopsis" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-monoscope.html#gst-plugins-good-plugins-monoscope.synopsis">
-<ANCHOR id="GstMonoscope" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-monoscope.html#GstMonoscope">
-<ANCHOR id="gst-plugins-good-plugins-monoscope.object-hierarchy" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-monoscope.html#gst-plugins-good-plugins-monoscope.object-hierarchy">
 <ANCHOR id="gst-plugins-good-plugins-monoscope.description" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-monoscope.html#gst-plugins-good-plugins-monoscope.description">
 <ANCHOR id="gst-plugins-good-plugins-monoscope.details" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-monoscope.html#gst-plugins-good-plugins-monoscope.details">
-<ANCHOR id="GstMonoscope-struct" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-monoscope.html#GstMonoscope-struct">
+<ANCHOR id="GstMonoscope" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-monoscope.html#GstMonoscope">
 <ANCHOR id="gst-plugins-good-plugins-monoscope.see-also" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-monoscope.html#gst-plugins-good-plugins-monoscope.see-also">
 <ANCHOR id="gst-plugins-good-plugins-mpegaudioparse" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-mpegaudioparse.html">
 <ANCHOR id="gst-plugins-good-plugins-mpegaudioparse.synopsis" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-mpegaudioparse.html#gst-plugins-good-plugins-mpegaudioparse.synopsis">
@@ -1621,6 +1619,7 @@
 <ANCHOR id="GstRtpSession-on-ssrc-validated" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpsession.html#GstRtpSession-on-ssrc-validated">
 <ANCHOR id="GstRtpSession-on-timeout" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpsession.html#GstRtpSession-on-timeout">
 <ANCHOR id="GstRtpSession-request-pt-map" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpsession.html#GstRtpSession-request-pt-map">
+<ANCHOR id="gst-plugins-good-plugins-rtpsession.see-also" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpsession.html#gst-plugins-good-plugins-rtpsession.see-also">
 <ANCHOR id="gst-plugins-good-plugins-rtpssrcdemux" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpssrcdemux.html">
 <ANCHOR id="gst-plugins-good-plugins-rtpssrcdemux.synopsis" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpssrcdemux.html#gst-plugins-good-plugins-rtpssrcdemux.synopsis">
 <ANCHOR id="GstRtpSsrcDemux" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpssrcdemux.html#GstRtpSsrcDemux">

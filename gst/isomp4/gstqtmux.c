@@ -196,7 +196,7 @@ enum
 #define DEFAULT_FAST_START_TEMP_FILE    NULL
 #define DEFAULT_MOOV_RECOV_FILE         NULL
 #define DEFAULT_FRAGMENT_DURATION       0
-#define DEFAULT_STREAMABLE              FALSE
+#define DEFAULT_STREAMABLE              TRUE
 #ifndef GST_REMOVE_DEPRECATED
 #define DEFAULT_DTS_METHOD              DTS_METHOD_REORDER
 #endif
@@ -278,6 +278,10 @@ gst_qt_mux_class_init (GstQTMuxClass * klass)
 {
   GObjectClass *gobject_class;
   GstElementClass *gstelement_class;
+  const gchar *streamable_desc;
+  gboolean streamable;
+#define STREAMABLE_DESC "If set to true, the output should be as if it is to "\
+  "be streamed and hence no indexes written or duration written."
 
   gobject_class = (GObjectClass *) klass;
   gstelement_class = (GstElementClass *) klass;
@@ -287,6 +291,15 @@ gst_qt_mux_class_init (GstQTMuxClass * klass)
   gobject_class->finalize = gst_qt_mux_finalize;
   gobject_class->get_property = gst_qt_mux_get_property;
   gobject_class->set_property = gst_qt_mux_set_property;
+
+  if (klass->format == GST_QT_MUX_FORMAT_ISML) {
+    streamable_desc = STREAMABLE_DESC;
+    streamable = DEFAULT_STREAMABLE;
+  } else {
+    streamable_desc =
+        STREAMABLE_DESC " (DEPRECATED, only valid for fragmented MP4)";
+    streamable = FALSE;
+  }
 
   g_object_class_install_property (gobject_class, PROP_MOVIE_TIMESCALE,
       g_param_spec_uint ("movie-timescale", "Movie timescale",
@@ -337,10 +350,8 @@ gst_qt_mux_class_init (GstQTMuxClass * klass)
           2000 : DEFAULT_FRAGMENT_DURATION,
           G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (gobject_class, PROP_STREAMABLE,
-      g_param_spec_boolean ("streamable", "Streamable",
-          "If set to true, the output should be as if it is to be streamed "
-          "and hence no indexes written or duration written.",
-          DEFAULT_STREAMABLE,
+      g_param_spec_boolean ("streamable", "Streamable", streamable_desc,
+          streamable,
           G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS));
 
   gstelement_class->request_new_pad =
@@ -1604,6 +1615,7 @@ serialize_error:
 static GstFlowReturn
 gst_qt_mux_start_file (GstQTMux * qtmux)
 {
+  GstQTMuxClass *qtmux_klass = (GstQTMuxClass *) (G_OBJECT_GET_CLASS (qtmux));
   GstFlowReturn ret = GST_FLOW_OK;
   GstCaps *caps;
   GstSegment segment;
@@ -1637,14 +1649,20 @@ gst_qt_mux_start_file (GstQTMux * qtmux)
       GST_WARNING_OBJECT (qtmux, "downstream did not handle seeking query");
       seekable = FALSE;
     }
-    if (!seekable) {
-      qtmux->streamable = TRUE;
-      g_object_notify (G_OBJECT (qtmux), "streamable");
-      GST_WARNING_OBJECT (qtmux, "downstream is not seekable, but "
-          "streamable=false. Will ignore that and create streamable output "
-          "instead");
-    }
     gst_query_unref (query);
+    if (!seekable) {
+      if (qtmux_klass->format != GST_QT_MUX_FORMAT_ISML) {
+        if (!qtmux->fast_start) {
+          goto not_seekable_error;
+        }
+      } else {
+        GST_WARNING_OBJECT (qtmux, "downstream is not seekable, but "
+            "streamable=false. Will ignore that and create streamable output "
+            "instead");
+        qtmux->streamable = TRUE;
+        g_object_notify (G_OBJECT (qtmux), "streamable");
+      }
+    }
   }
 
   /* let downstream know we think in BYTES and expect to do seeking later on */
@@ -1755,6 +1773,15 @@ gst_qt_mux_start_file (GstQTMux * qtmux)
 
 exit:
   return ret;
+
+not_seekable_error:
+  {
+    GST_ELEMENT_ERROR (qtmux, STREAM, FAILED,
+        ("Downstream is not seekable and headers can't be rewritten"),
+        GST_ERROR_SYSTEM);
+    GST_OBJECT_UNLOCK (qtmux);
+    return GST_FLOW_ERROR;
+  }
 
   /* ERRORS */
 open_failed:
@@ -3399,9 +3426,14 @@ gst_qt_mux_set_property (GObject * object,
     case PROP_FRAGMENT_DURATION:
       qtmux->fragment_duration = g_value_get_uint (value);
       break;
-    case PROP_STREAMABLE:
-      qtmux->streamable = g_value_get_boolean (value);
+    case PROP_STREAMABLE:{
+      GstQTMuxClass *qtmux_klass =
+          (GstQTMuxClass *) (G_OBJECT_GET_CLASS (qtmux));
+      if (qtmux_klass->format == GST_QT_MUX_FORMAT_ISML) {
+        qtmux->streamable = g_value_get_boolean (value);
+      }
       break;
+    }
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
