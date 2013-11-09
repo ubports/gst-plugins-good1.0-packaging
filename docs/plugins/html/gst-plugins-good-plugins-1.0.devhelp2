@@ -1064,6 +1064,7 @@
     <keyword type="property" name="The &quot;ntp-sync&quot; property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--ntp-sync"/>
     <keyword type="property" name="The &quot;use-pipeline-clock&quot; property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--use-pipeline-clock"/>
     <keyword type="property" name="The &quot;sdes&quot; property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--sdes"/>
+    <keyword type="property" name="The &quot;tls-validation-flags&quot; property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--tls-validation-flags"/>
     <keyword type="signal" name="The &quot;handle-request&quot; signal" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc-handle-request"/>
     <keyword type="signal" name="The &quot;on-sdp&quot; signal" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc-on-sdp"/>
     <keyword type="signal" name="The &quot;select-stream&quot; signal" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc-select-stream"/>

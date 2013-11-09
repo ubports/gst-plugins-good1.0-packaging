@@ -182,11 +182,8 @@ rtp_jitter_buffer_set_clock_rate (RTPJitterBuffer * jbuf, guint32 clock_rate)
       GST_WARNING ("Clock rate changed from %" G_GUINT32_FORMAT " to %"
           G_GUINT32_FORMAT, jbuf->clock_rate, clock_rate);
     }
-    jbuf->base_time = -1;
-    jbuf->base_rtptime = -1;
     jbuf->clock_rate = clock_rate;
-    jbuf->prev_out_time = -1;
-    jbuf->prev_send_diff = -1;
+    rtp_jitter_buffer_reset_skew (jbuf);
   }
 }
 
@@ -216,7 +213,6 @@ rtp_jitter_buffer_reset_skew (RTPJitterBuffer * jbuf)
   jbuf->base_time = -1;
   jbuf->base_rtptime = -1;
   jbuf->base_extrtp = -1;
-  jbuf->clock_rate = -1;
   jbuf->ext_rtptime = -1;
   jbuf->last_rtptime = -1;
   jbuf->window_pos = 0;
@@ -684,6 +680,9 @@ rtp_jitter_buffer_insert (RTPJitterBuffer * jbuf, RTPJitterBufferItem * item,
 
   dts = item->dts;
   rtptime = item->rtptime;
+
+  if (rtptime == -1)
+    goto append;
 
   /* rtp time jumps are checked for during skew calculation, but bypassed
    * in other mode, so mind those here and reset jb if needed.

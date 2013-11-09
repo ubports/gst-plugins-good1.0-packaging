@@ -531,6 +531,8 @@ gst_qtdemux_init (GstQTDemux * qtdemux)
   qtdemux->got_moov = FALSE;
   qtdemux->mdatoffset = GST_CLOCK_TIME_NONE;
   qtdemux->mdatbuffer = NULL;
+  qtdemux->restoredata_buffer = NULL;
+  qtdemux->restoredata_offset = GST_CLOCK_TIME_NONE;
   qtdemux->fragment_start = -1;
   qtdemux->media_caps = NULL;
   qtdemux->exposed = FALSE;
@@ -1803,9 +1805,13 @@ gst_qtdemux_reset (GstQTDemux * qtdemux, gboolean hard)
     qtdemux->first_mdat = -1;
     qtdemux->header_size = 0;
     qtdemux->mdatoffset = GST_CLOCK_TIME_NONE;
+    qtdemux->restoredata_offset = GST_CLOCK_TIME_NONE;
     if (qtdemux->mdatbuffer)
       gst_buffer_unref (qtdemux->mdatbuffer);
+    if (qtdemux->restoredata_buffer)
+      gst_buffer_unref (qtdemux->restoredata_buffer);
     qtdemux->mdatbuffer = NULL;
+    qtdemux->restoredata_buffer = NULL;
     qtdemux->mdatleft = 0;
     if (qtdemux->comp_brands)
       gst_buffer_unref (qtdemux->comp_brands);
@@ -3745,7 +3751,8 @@ gst_qtdemux_sync_streams (GstQTDemux * demux)
     GST_LOG_OBJECT (demux, "current position: %" GST_TIME_FORMAT
         ", stream end: %" GST_TIME_FORMAT,
         GST_TIME_ARGS (demux->segment.position), GST_TIME_ARGS (end_time));
-    if (end_time + 2 * GST_SECOND < demux->segment.position) {
+    if (GST_CLOCK_TIME_IS_VALID (end_time)
+        && (end_time + 2 * GST_SECOND < demux->segment.position)) {
       GST_DEBUG_OBJECT (demux, "sending EOS for stream %s",
           GST_PAD_NAME (stream->pad));
       stream->sent_eos = TRUE;
@@ -4600,10 +4607,11 @@ gst_qtdemux_chain (GstPad * sinkpad, GstObject * parent, GstBuffer * inbuf)
           break;
         }
         if (fourcc == FOURCC_mdat) {
-          if (demux->n_streams > 0) {
+          gint next_entry = next_entry_size (demux);
+          if (demux->n_streams > 0 && (next_entry != -1 || !demux->fragmented)) {
             /* we have the headers, start playback */
             demux->state = QTDEMUX_STATE_MOVIE;
-            demux->neededbytes = next_entry_size (demux);
+            demux->neededbytes = next_entry;
             demux->mdatleft = size;
           } else {
             /* no headers yet, try to get them */
@@ -4667,7 +4675,8 @@ gst_qtdemux_chain (GstPad * sinkpad, GstObject * parent, GstBuffer * inbuf)
         } else {
           /* this means we already started buffering and still no moov header,
            * let's continue buffering everything till we get moov */
-          if (demux->mdatbuffer && (fourcc != FOURCC_moov))
+          if (demux->mdatbuffer && !(fourcc == FOURCC_moov
+                  || fourcc == FOURCC_moof))
             goto buffer_data;
           demux->neededbytes = size;
           demux->state = QTDEMUX_STATE_HEADER;
@@ -4768,13 +4777,29 @@ gst_qtdemux_chain (GstPad * sinkpad, GstObject * parent, GstBuffer * inbuf)
         data = NULL;
 
         if (demux->mdatbuffer && demux->n_streams) {
+          gsize remaining_data_size = 0;
+
           /* the mdat was before the header */
           GST_DEBUG_OBJECT (demux, "We have n_streams:%d and mdatbuffer:%p",
               demux->n_streams, demux->mdatbuffer);
           /* restore our adapter/offset view of things with upstream;
            * put preceding buffered data ahead of current moov data.
            * This should also handle evil mdat, moov, mdat cases and alike */
-          gst_adapter_clear (demux->adapter);
+          gst_adapter_flush (demux->adapter, demux->neededbytes);
+
+          /* Store any remaining data after the mdat for later usage */
+          remaining_data_size = gst_adapter_available (demux->adapter);
+          if (remaining_data_size > 0) {
+            g_assert (demux->restoredata_buffer == NULL);
+            demux->restoredata_buffer =
+                gst_adapter_take_buffer (demux->adapter, remaining_data_size);
+            demux->restoredata_offset = demux->offset + demux->neededbytes;
+            GST_DEBUG_OBJECT (demux,
+                "Stored %" G_GSIZE_FORMAT " post mdat bytes at offset %"
+                G_GUINT64_FORMAT, remaining_data_size,
+                demux->restoredata_offset);
+          }
+
           gst_adapter_push (demux->adapter, demux->mdatbuffer);
           demux->mdatbuffer = NULL;
           demux->offset = demux->mdatoffset;
@@ -4859,6 +4884,16 @@ gst_qtdemux_chain (GstPad * sinkpad, GstObject * parent, GstBuffer * inbuf)
             /* need to resume atom parsing so we do not miss any other pieces */
             demux->state = QTDEMUX_STATE_INITIAL;
             demux->neededbytes = 16;
+
+            /* check if there was any stored post mdat data from previous buffers */
+            if (demux->restoredata_buffer) {
+              g_assert (gst_adapter_available (demux->adapter) == 0);
+
+              gst_adapter_push (demux->adapter, demux->restoredata_buffer);
+              demux->restoredata_buffer = NULL;
+              demux->offset = demux->restoredata_offset;
+            }
+
             break;
           }
         }
@@ -9842,7 +9877,8 @@ qtdemux_parse_tree (GstQTDemux * qtdemux)
 
   /* Moving qt creation time (secs since 1904) to unix time */
   if (creation_time != 0) {
-    if (creation_time > QTDEMUX_SECONDS_FROM_1904_TO_1970) {
+    /* Try to use epoch first as it should be faster and more commonly found */
+    if (creation_time >= QTDEMUX_SECONDS_FROM_1904_TO_1970) {
       GTimeVal now;
 
       creation_time -= QTDEMUX_SECONDS_FROM_1904_TO_1970;
@@ -9851,11 +9887,18 @@ qtdemux_parse_tree (GstQTDemux * qtdemux)
       if (now.tv_sec + 24 * 3600 < creation_time) {
         GST_DEBUG_OBJECT (qtdemux, "discarding bogus future creation time");
       } else {
-        datetime = gst_date_time_new_from_unix_epoch_local_time (creation_time);
+        datetime = gst_date_time_new_from_unix_epoch_utc (creation_time);
       }
     } else {
-      GST_WARNING_OBJECT (qtdemux, "Can't handle datetimes before 1970 yet, "
-          "please file a bug at http://bugzilla.gnome.org");
+      GDateTime *base_dt = g_date_time_new_utc (1904, 1, 1, 0, 0, 0);
+      GDateTime *dt, *dt_local;
+
+      dt = g_date_time_add_seconds (base_dt, creation_time);
+      dt_local = g_date_time_to_local (dt);
+      datetime = gst_date_time_new_from_g_date_time (dt_local);
+
+      g_date_time_unref (base_dt);
+      g_date_time_unref (dt);
     }
   }
   if (datetime) {
@@ -10323,6 +10366,7 @@ qtdemux_video_caps (GstQTDemux * qtdemux, QtDemuxStream * stream,
     case GST_MAKE_FOURCC ('x', 'd', 'h', '2'): /* XDCAM HD422 540p */
     case GST_MAKE_FOURCC ('A', 'V', 'm', 'p'): /* AVID IMX PAL */
     case GST_MAKE_FOURCC ('m', 'p', 'g', '2'): /* AVID IMX PAL */
+    case GST_MAKE_FOURCC ('m', 'p', '2', 'v'): /* AVID IMX PAL */
       _codec ("MPEG-2 video");
       caps = gst_caps_new_simple ("video/mpeg", "mpegversion", G_TYPE_INT, 2,
           "systemstream", G_TYPE_BOOLEAN, FALSE, NULL);

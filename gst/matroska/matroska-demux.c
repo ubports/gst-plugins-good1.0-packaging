@@ -3006,6 +3006,23 @@ gst_matroska_demux_check_subtitle_buffer (GstElement * element,
   if (!gst_buffer_get_size (*buf) || !gst_buffer_map (*buf, &map, GST_MAP_READ))
     return GST_FLOW_OK;
 
+  /* Need \0-terminator at the end */
+  if (map.data[map.size - 1] != '\0') {
+    newbuf = gst_buffer_new_and_alloc (map.size + 1);
+
+    /* Copy old buffer and add a 0 at the end */
+    gst_buffer_fill (newbuf, 0, map.data, map.size);
+    gst_buffer_memset (newbuf, map.size, 0, 1);
+    gst_buffer_unmap (*buf, &map);
+
+    gst_buffer_copy_into (newbuf, *buf,
+        GST_BUFFER_COPY_TIMESTAMPS | GST_BUFFER_COPY_FLAGS |
+        GST_BUFFER_COPY_META, 0, -1);
+    gst_buffer_unref (*buf);
+    *buf = newbuf;
+    gst_buffer_map (*buf, &map, GST_MAP_READ);
+  }
+
   if (!sub_stream->invalid_utf8) {
     if (g_utf8_validate ((gchar *) map.data, map.size - 1, NULL)) {
       goto next;
@@ -3060,22 +3077,6 @@ gst_matroska_demux_check_subtitle_buffer (GstElement * element,
   gst_buffer_map (*buf, &map, GST_MAP_READ);
 
 next:
-  /* Need \0-terminator at the end */
-  if (map.data[map.size - 1] != '\0') {
-    newbuf = gst_buffer_new_and_alloc (map.size + 1);
-
-    /* Copy old buffer and add a 0 at the end */
-    gst_buffer_fill (newbuf, 0, map.data, map.size);
-    gst_buffer_memset (newbuf, map.size, 0, 1);
-    gst_buffer_unmap (*buf, &map);
-
-    gst_buffer_copy_into (newbuf, *buf,
-        GST_BUFFER_COPY_TIMESTAMPS | GST_BUFFER_COPY_FLAGS |
-        GST_BUFFER_COPY_META, 0, -1);
-    gst_buffer_unref (*buf);
-    *buf = newbuf;
-    gst_buffer_map (*buf, &map, GST_MAP_READ);
-  }
 
   if (sub_stream->check_markup) {
     /* caps claim markup text, so we need to escape text,
@@ -3467,7 +3468,7 @@ gst_matroska_demux_parse_blockgroup_or_simpleblock (GstMatroskaDemux * demux,
       segment_event = gst_event_new_segment (segment);
       if (demux->segment_seqnum)
         gst_event_set_seqnum (segment_event, demux->segment_seqnum);
-      gst_matroska_demux_send_event (demux, gst_event_new_segment (segment));
+      gst_matroska_demux_send_event (demux, segment_event);
       demux->need_segment = FALSE;
       demux->segment_seqnum = 0;
     }
@@ -3752,6 +3753,12 @@ gst_matroska_demux_parse_blockgroup_or_simpleblock (GstMatroskaDemux * demux,
          Therefore, create an aligned copy if necessary. */
       g_assert (stream->alignment <= G_MEM_ALIGN);
       sub = gst_matroska_demux_align_buffer (demux, sub, stream->alignment);
+
+      if (GST_BUFFER_PTS_IS_VALID (sub)) {
+        stream->pos = GST_BUFFER_PTS (sub);
+        if (GST_BUFFER_DURATION_IS_VALID (sub))
+          stream->pos += GST_BUFFER_DURATION (sub);
+      }
 
       ret = gst_pad_push (stream->pad, sub);
 
