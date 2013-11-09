@@ -1,8 +1,14 @@
-gst-plugins-good1.0 (1.2.0-2) UNRELEASED; urgency=low
+gst-plugins-good1.0 (1.2.1-1) unstable; urgency=low
 
+  [ Fabian Greffrath ]
   * Team upload.
   * Add Vcs-* and Homepage fields to debian/control[,.in}.
   * Turn versioned Conflicts into Breaks to simplify lockstep upgrades.
+
+  [ Sebastian Dröge ]
+  * New upstream bugfix release:
+    + debian/build-deps.in:
+      - Build-depend on gst-plugins-base >= 1.2.1.
 
  -- Fabian Greffrath <fabian+debian@greffrath.com>  Thu, 24 Oct 2013 09:55:18 +0200
 
