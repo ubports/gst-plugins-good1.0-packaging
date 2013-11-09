@@ -5,9 +5,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: gst-plugins-good 1.2.0\n"
+"Project-Id-Version: gst-plugins-good 1.2.1\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2013-09-24 14:19+0200\n"
+"POT-Creation-Date: 2013-11-09 15:36+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -20,10 +20,10 @@ msgstr ""
 msgid "Jack server not found"
 msgstr ""
 
-#: ext/jpeg/gstjpegdec.c:924 ext/jpeg/gstjpegdec.c:1172
-#: ext/jpeg/gstjpegdec.c:1184 ext/jpeg/gstjpegdec.c:1213
-#: ext/jpeg/gstjpegdec.c:1222 ext/jpeg/gstjpegdec.c:1231
-#: ext/jpeg/gstjpegdec.c:1239
+#: ext/jpeg/gstjpegdec.c:921 ext/jpeg/gstjpegdec.c:1169
+#: ext/jpeg/gstjpegdec.c:1181 ext/jpeg/gstjpegdec.c:1210
+#: ext/jpeg/gstjpegdec.c:1219 ext/jpeg/gstjpegdec.c:1228
+#: ext/jpeg/gstjpegdec.c:1236
 msgid "Failed to decode JPEG image"
 msgstr ""
 
@@ -37,32 +37,32 @@ msgstr ""
 msgid "Could not connect to server"
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:658
+#: ext/soup/gstsouphttpsrc.c:659
 msgid "No URL set."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:886
+#: ext/soup/gstsouphttpsrc.c:887
 msgid "Server does not support seeking."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1134
+#: ext/soup/gstsouphttpsrc.c:1142
 msgid "Could not resolve server name."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1140
+#: ext/soup/gstsouphttpsrc.c:1148
 msgid "Could not establish connection to server."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1145
+#: ext/soup/gstsouphttpsrc.c:1153
 msgid "Secure connection setup failed."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1150
+#: ext/soup/gstsouphttpsrc.c:1158
 msgid ""
 "A network error occured, or the server closed the connection unexpectedly."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1156
+#: ext/soup/gstsouphttpsrc.c:1164
 msgid "Server sent bad data."
 msgstr ""
 
@@ -74,51 +74,51 @@ msgstr ""
 msgid "No or invalid input audio, AVI stream will be corrupt."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:565 gst/isomp4/qtdemux.c:569
+#: gst/isomp4/qtdemux.c:567 gst/isomp4/qtdemux.c:571
 msgid "This file contains no playable streams."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:615 gst/isomp4/qtdemux.c:4596
-#: gst/isomp4/qtdemux.c:4662 gst/isomp4/qtdemux.c:4847
+#: gst/isomp4/qtdemux.c:617 gst/isomp4/qtdemux.c:4603
+#: gst/isomp4/qtdemux.c:4670 gst/isomp4/qtdemux.c:4872
 msgid "This file is invalid and cannot be played."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:2276
+#: gst/isomp4/qtdemux.c:2282
 msgid "Cannot play stream because it is encrypted with PlayReady DRM."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:2841 gst/isomp4/qtdemux.c:2917
-#: gst/isomp4/qtdemux.c:2960 gst/isomp4/qtdemux.c:5513
-#: gst/isomp4/qtdemux.c:5520 gst/isomp4/qtdemux.c:6162
-#: gst/isomp4/qtdemux.c:6598 gst/isomp4/qtdemux.c:6605
-#: gst/isomp4/qtdemux.c:8409
+#: gst/isomp4/qtdemux.c:2847 gst/isomp4/qtdemux.c:2923
+#: gst/isomp4/qtdemux.c:2966 gst/isomp4/qtdemux.c:5548
+#: gst/isomp4/qtdemux.c:5555 gst/isomp4/qtdemux.c:6197
+#: gst/isomp4/qtdemux.c:6633 gst/isomp4/qtdemux.c:6640
+#: gst/isomp4/qtdemux.c:8444
 msgid "This file is corrupt and cannot be played."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:3051
+#: gst/isomp4/qtdemux.c:3057
 msgid "Invalid atom size."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:3119
+#: gst/isomp4/qtdemux.c:3125
 msgid "This file is incomplete and cannot be played."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:7261
+#: gst/isomp4/qtdemux.c:7296
 msgid "The video in this file might not play correctly."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:8446
+#: gst/isomp4/qtdemux.c:8481
 #, c-format
 msgid "This file contains too many streams. Only playing first %d"
 msgstr ""
 
-#: gst/rtsp/gstrtspsrc.c:5755
+#: gst/rtsp/gstrtspsrc.c:5788
 msgid ""
 "No supported stream was found. You might need to install a GStreamer RTSP "
 "extension plugin for Real media streams."
 msgstr ""
 
-#: gst/rtsp/gstrtspsrc.c:5760
+#: gst/rtsp/gstrtspsrc.c:5793
 msgid ""
 "No supported stream was found. You might need to allow more transport "
 "protocols or may otherwise be missing the right GStreamer RTSP extension "
@@ -252,7 +252,7 @@ msgstr ""
 msgid "AUX 2 Out"
 msgstr ""
 
-#: sys/v4l2/gstv4l2bufferpool.c:1164
+#: sys/v4l2/gstv4l2bufferpool.c:1168
 #, c-format
 msgid "Error reading %d bytes from device '%s'."
 msgstr ""
