@@ -62,6 +62,7 @@
 #include <gst/audio/audio.h>
 #include <gst/tag/tag.h>
 #include <gst/pbutils/pbutils.h>
+#include <gst/video/video.h>
 
 #include "matroska-demux.h"
 #include "matroska-ids.h"
@@ -1872,12 +1873,17 @@ retry:
       GST_TIME_FORMAT, opos, GST_TIME_ARGS (otime),
       GST_TIME_ARGS (otime - demux->stream_start_time),
       GST_TIME_ARGS (demux->stream_start_time), GST_TIME_ARGS (time));
-  newpos =
-      gst_util_uint64_scale (opos - demux->common.ebml_segment_start,
-      time - demux->stream_start_time,
-      otime - demux->stream_start_time) - chunk;
-  if (newpos < 0)
+
+  if (otime <= demux->stream_start_time) {
     newpos = 0;
+  } else {
+    newpos =
+        gst_util_uint64_scale (opos - demux->common.ebml_segment_start,
+        time - demux->stream_start_time,
+        otime - demux->stream_start_time) - chunk;
+    if (newpos < 0)
+      newpos = 0;
+  }
   /* favour undershoot */
   newpos = newpos * 90 / 100;
   newpos += demux->common.ebml_segment_start;
@@ -4924,7 +4930,7 @@ gst_duration_to_fraction (guint64 duration, gint * dest_n, gint * dest_d)
     d = common_den[i];
     n = floor (0.5 + (d * 1e9) / duration);
     a = gst_util_uint64_scale_int (1000000000, d, n);
-    if (duration >= a - 1 && duration <= a + 1) {
+    if (duration >= a - 2 && duration <= a + 2) {
       goto out;
     }
   }
@@ -5016,28 +5022,25 @@ gst_matroska_demux_video_caps (GstMatroskaTrackVideoContext *
         g_free (vids);
     }
   } else if (!strcmp (codec_id, GST_MATROSKA_CODEC_ID_VIDEO_UNCOMPRESSED)) {
-    const gchar *format = NULL;
+    GstVideoInfo info;
+    GstVideoFormat format;
 
+    gst_video_info_init (&info);
     switch (videocontext->fourcc) {
       case GST_MAKE_FOURCC ('I', '4', '2', '0'):
-        *codec_name = g_strdup ("Raw planar YUV 4:2:0");
-        format = "I420";
+        format = GST_VIDEO_FORMAT_I420;
         break;
       case GST_MAKE_FOURCC ('Y', 'U', 'Y', '2'):
-        *codec_name = g_strdup ("Raw packed YUV 4:2:2");
-        format = "YUY2";
+        format = GST_VIDEO_FORMAT_YUY2;
         break;
       case GST_MAKE_FOURCC ('Y', 'V', '1', '2'):
-        *codec_name = g_strdup ("Raw packed YUV 4:2:0");
-        format = "YV12";
+        format = GST_VIDEO_FORMAT_YV12;
         break;
       case GST_MAKE_FOURCC ('U', 'Y', 'V', 'Y'):
-        *codec_name = g_strdup ("Raw packed YUV 4:2:2");
-        format = "UYVY";
+        format = GST_VIDEO_FORMAT_UYVY;
         break;
       case GST_MAKE_FOURCC ('A', 'Y', 'U', 'V'):
-        *codec_name = g_strdup ("Raw packed YUV 4:4:4 with alpha channel");
-        format = "AYUV";
+        format = GST_VIDEO_FORMAT_AYUV;
         break;
 
       default:
@@ -5046,8 +5049,10 @@ gst_matroska_demux_video_caps (GstMatroskaTrackVideoContext *
         return NULL;
     }
 
-    caps = gst_caps_new_simple ("video/x-raw",
-        "format", G_TYPE_STRING, format, NULL);
+    gst_video_info_set_format (&info, format, videocontext->pixel_width,
+        videocontext->pixel_height);
+    caps = gst_video_info_to_caps (&info);
+    *codec_name = gst_pb_utils_get_codec_description (caps);
   } else if (!strcmp (codec_id, GST_MATROSKA_CODEC_ID_VIDEO_MPEG4_SP)) {
     caps = gst_caps_new_simple ("video/x-divx",
         "divxversion", G_TYPE_INT, 4, NULL);
@@ -5432,8 +5437,8 @@ gst_matroska_demux_audio_caps (GstMatroskaTrackAudioContext *
   } else if (!strcmp (codec_id, GST_MATROSKA_CODEC_ID_AUDIO_ACM)) {
     gst_riff_strf_auds auds;
 
-    if (data) {
-      GstBuffer *codec_data;
+    if (data && size >= 18) {
+      GstBuffer *codec_data = NULL;
 
       /* little-endian -> byte-order */
       auds.format = GST_READ_UINT16_LE (data);
@@ -5444,8 +5449,10 @@ gst_matroska_demux_audio_caps (GstMatroskaTrackAudioContext *
       auds.bits_per_sample = GST_READ_UINT16_LE (data + 16);
 
       /* 18 is the waveformatex size */
-      codec_data = gst_buffer_new_wrapped_full (GST_MEMORY_FLAG_READONLY,
-          data + 18, auds.bits_per_sample, 0, auds.bits_per_sample, NULL, NULL);
+      if (size > 18) {
+        codec_data = gst_buffer_new_wrapped_full (GST_MEMORY_FLAG_READONLY,
+            data + 18, size - 18, 0, size - 18, NULL, NULL);
+      }
 
       if (riff_audio_fmt)
         *riff_audio_fmt = auds.format;
@@ -5453,11 +5460,14 @@ gst_matroska_demux_audio_caps (GstMatroskaTrackAudioContext *
       /* FIXME: Handle reorder map */
       caps = gst_riff_create_audio_caps (auds.format, NULL, &auds, NULL,
           codec_data, codec_name, NULL);
-      gst_buffer_unref (codec_data);
+      if (codec_data)
+        gst_buffer_unref (codec_data);
 
       if (caps == NULL) {
         GST_WARNING ("Unhandled RIFF audio format 0x%02x", auds.format);
       }
+    } else {
+      GST_WARNING ("Invalid codec data size (%d expected, got %d)", 18, size);
     }
   } else if (g_str_has_prefix (codec_id, GST_MATROSKA_CODEC_ID_AUDIO_AAC)) {
     GstBuffer *priv = NULL;
