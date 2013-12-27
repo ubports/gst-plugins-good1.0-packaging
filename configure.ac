@@ -5,7 +5,7 @@ dnl please read gstreamer/docs/random/autotools before changing this file
 dnl initialize autoconf
 dnl releases only do -Wall, git and prerelease does -Werror too
 dnl use a three digit version number for releases, and four for git/pre
-AC_INIT([GStreamer Good Plug-ins],[1.2.1],[http://bugzilla.gnome.org/enter_bug.cgi?product=GStreamer],[gst-plugins-good])
+AC_INIT([GStreamer Good Plug-ins],[1.2.2],[http://bugzilla.gnome.org/enter_bug.cgi?product=GStreamer],[gst-plugins-good])
 
 AG_GST_INIT
 
@@ -43,7 +43,7 @@ AC_DEFINE_UNQUOTED(GST_API_VERSION, "$GST_API_VERSION",
   [GStreamer API Version])
 
 AG_GST_LIBTOOL_PREPARE
-AS_LIBTOOL(GST, 201, 0, 201)
+AS_LIBTOOL(GST, 202, 0, 202)
 
 dnl *** required versions of GStreamer stuff ***
 GST_REQ=1.2.0
@@ -961,7 +961,8 @@ AG_GST_CHECK_FEATURE(VPX, [VPX decoder], vpx, [
       HAVE_VP8=yes
       AC_DEFINE(HAVE_VP8_DECODER, 1, [Defined if the VP8 decoder is available])
     ])
-    if test "x$BUILD_EXPERIMENTAL" = "xyes"; then
+
+    PKG_CHECK_MODULES(VPX_130, vpx >= 1.3.0, [
       AC_CHECK_LIB(vpx, vpx_codec_vp9_cx_algo, [
         HAVE_VP9=yes
         AC_DEFINE(HAVE_VP9_ENCODER, 1, [Defined if the VP9 encoder is available])
@@ -970,7 +971,7 @@ AG_GST_CHECK_FEATURE(VPX, [VPX decoder], vpx, [
         HAVE_VP9=yes
         AC_DEFINE(HAVE_VP9_DECODER, 1, [Defined if the VP9 decoder is available])
       ])
-    fi
+    ], [true])
     LIBS="$OLD_LIBS"
     CFLAGS="$OLD_CFLAGS"
   fi

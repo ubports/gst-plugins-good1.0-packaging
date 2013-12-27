@@ -918,8 +918,6 @@ gst_rtp_jitter_buffer_clear_pt_map (GstRtpJitterBuffer * jitterbuffer)
   /* do not clear current content, but refresh state for new arrival */
   GST_DEBUG_OBJECT (jitterbuffer, "reset jitterbuffer");
   rtp_jitter_buffer_reset_skew (priv->jbuf);
-  priv->last_popped_seqnum = -1;
-  priv->next_seqnum = -1;
   JBUF_UNLOCK (priv);
 }
 
@@ -2084,6 +2082,7 @@ gst_rtp_jitter_buffer_chain (GstPad * pad, GstObject * parent,
       old_item = rtp_jitter_buffer_pop (priv->jbuf, &percent);
       GST_DEBUG_OBJECT (jitterbuffer, "Queue full, dropping old packet %p",
           old_item);
+      priv->next_seqnum = (old_item->seqnum + 1) & 0xffff;
       free_item (old_item);
     }
   }
@@ -2105,7 +2104,7 @@ gst_rtp_jitter_buffer_chain (GstPad * pad, GstObject * parent,
     do_handle_sync (jitterbuffer);
 
   /* signal addition of new buffer when the _loop is waiting. */
-  if (priv->active && priv->waiting_timer)
+  if (priv->active)
     JBUF_SIGNAL_EVENT (priv);
 
   /* let's unschedule and unblock any waiting buffers. We only want to do this
@@ -2453,9 +2452,6 @@ do_expected_timeout (GstRtpJitterBuffer * jitterbuffer, TimerData * timer,
   priv->num_rtx_requests++;
   timer->num_rtx_retry++;
   timer->rtx_last = now;
-  JBUF_UNLOCK (priv);
-  gst_pad_push_event (priv->sinkpad, event);
-  JBUF_LOCK (priv);
 
   /* calculate the timeout for the next retransmission attempt */
   timer->rtx_retry += (priv->rtx_retry_timeout * GST_MSECOND);
@@ -2475,6 +2471,10 @@ do_expected_timeout (GstRtpJitterBuffer * jitterbuffer, TimerData * timer,
   }
   reschedule_timer (jitterbuffer, timer, timer->seqnum,
       timer->rtx_base + timer->rtx_retry, timer->rtx_delay, FALSE);
+
+  JBUF_UNLOCK (priv);
+  gst_pad_push_event (priv->sinkpad, event);
+  JBUF_LOCK (priv);
 
   return FALSE;
 }
@@ -2729,6 +2729,8 @@ gst_rtp_jitter_buffer_loop (GstRtpJitterBuffer * jitterbuffer)
     }
   }
   while (result == GST_FLOW_OK);
+  /* store result for upstream */
+  priv->srcresult = result;
   JBUF_UNLOCK (priv);
 
   /* if we get here we need to pause */
