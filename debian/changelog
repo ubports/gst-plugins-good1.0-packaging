@@ -1,3 +1,10 @@
+gst-plugins-good1.0 (1.2.2-2) UNRELEASED; urgency=medium
+
+  * Drop ltmain-as-needed patch and do the same with dh_autoreconf
+    --as-needed.
+
+ -- Iain Lane <laney@debian.org>  Thu, 09 Jan 2014 17:20:15 +0000
+
 gst-plugins-good1.0 (1.2.2-1) unstable; urgency=medium
 
   * New upstream bugfix release.
