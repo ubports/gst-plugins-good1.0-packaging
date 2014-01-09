@@ -2,6 +2,7 @@ gst-plugins-good1.0 (1.2.2-2) UNRELEASED; urgency=medium
 
   * Drop ltmain-as-needed patch and do the same with dh_autoreconf
     --as-needed.
+  * Enable parallel builds 
 
  -- Iain Lane <laney@debian.org>  Thu, 09 Jan 2014 17:20:15 +0000
 
