@@ -941,8 +941,9 @@
     <keyword type="property" name="The &quot;interval&quot; property" link="gst-plugins-good-plugins-radioactv.html#GstRadioacTV--interval"/>
     <keyword type="property" name="The &quot;mode&quot; property" link="gst-plugins-good-plugins-radioactv.html#GstRadioacTV--mode"/>
     <keyword type="property" name="The &quot;trigger&quot; property" link="gst-plugins-good-plugins-radioactv.html#GstRadioacTV--trigger"/>
-    <keyword type="" name="Element Information" link="gst-plugins-good-plugins-revtv.html#id-1.2.106.6.2.1"/>
-    <keyword type="" name="Element Pads" link="gst-plugins-good-plugins-revtv.html#id-1.2.106.6.2.2"/>
+    <keyword type="" name="Example launch line" link="gst-plugins-good-plugins-revtv.html#id-1.2.106.6.3.1"/>
+    <keyword type="" name="Element Information" link="gst-plugins-good-plugins-revtv.html#id-1.2.106.6.4.1"/>
+    <keyword type="" name="Element Pads" link="gst-plugins-good-plugins-revtv.html#id-1.2.106.6.4.2"/>
     <keyword type="struct" name="struct GstRevTV" link="gst-plugins-good-plugins-revtv.html#GstRevTV-struct"/>
     <keyword type="property" name="The &quot;delay&quot; property" link="gst-plugins-good-plugins-revtv.html#GstRevTV--delay"/>
     <keyword type="property" name="The &quot;gain&quot; property" link="gst-plugins-good-plugins-revtv.html#GstRevTV--gain"/>
