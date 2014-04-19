@@ -1,3 +1,11 @@
+gst-plugins-good1.0 (1.2.4-1) unstable; urgency=medium
+
+  * New upstream bugfix release:
+    + debian/rules:
+      - Build-depend on gstreamer >= 1.2.4.
+
+ -- Sebastian Dröge <slomo@debian.org>  Sat, 19 Apr 2014 15:56:43 +0200
+
 gst-plugins-good1.0 (1.2.3-1) unstable; urgency=medium
 
   [ Iain Lane ]
