@@ -943,7 +943,7 @@ gst_soup_http_src_finished_cb (SoupMessage * msg, GstSoupHTTPSrc * src)
      * was complete. Do nothing */
   } else if (src->session_io_status ==
       GST_SOUP_HTTP_SRC_SESSION_IO_STATUS_RUNNING && src->read_position > 0 &&
-      (!src->have_size || src->read_position < src->content_size)) {
+      (src->have_size && src->read_position < src->content_size)) {
     /* The server disconnected while streaming. Reconnect and seeking to the
      * last location. */
     src->retry = TRUE;
@@ -954,10 +954,7 @@ gst_soup_http_src_finished_cb (SoupMessage * msg, GstSoupHTTPSrc * src)
       GST_DEBUG_OBJECT (src, "Ignoring error %d:%s during HEAD request",
           msg->status_code, msg->reason_phrase);
     } else {
-      /* FIXME: reason_phrase is not translated, add proper error message */
-      GST_ELEMENT_ERROR (src, RESOURCE, NOT_FOUND,
-          ("%s", msg->reason_phrase),
-          ("libsoup status code %d", msg->status_code));
+      gst_soup_http_src_parse_status (msg, src);
     }
   }
   if (src->loop)
@@ -1111,7 +1108,8 @@ gst_soup_http_src_response_cb (SoupSession * session, SoupMessage * msg,
   GST_DEBUG_OBJECT (src, "got response %d: %s", msg->status_code,
       msg->reason_phrase);
   if (src->session_io_status == GST_SOUP_HTTP_SRC_SESSION_IO_STATUS_RUNNING &&
-      src->read_position > 0) {
+      src->read_position > 0 && (src->have_size
+          && src->read_position < src->content_size)) {
     /* The server disconnected while streaming. Reconnect and seeking to the
      * last location. */
     src->retry = TRUE;
@@ -1177,7 +1175,7 @@ gst_soup_http_src_parse_status (SoupMessage * msg, GstSoupHTTPSrc * src)
      * a body message, requests that go beyond the content limits will result
      * in an error. Here we convert those to EOS */
     if (msg->status_code == SOUP_STATUS_REQUESTED_RANGE_NOT_SATISFIABLE &&
-        src->have_body && src->have_size) {
+        src->have_body && !src->have_size) {
       GST_DEBUG_OBJECT (src, "Requested range out of limits and received full "
           "body, returning EOS");
       src->ret = GST_FLOW_EOS;
@@ -1186,11 +1184,26 @@ gst_soup_http_src_parse_status (SoupMessage * msg, GstSoupHTTPSrc * src)
 
     /* FIXME: reason_phrase is not translated and not suitable for user
      * error dialog according to libsoup documentation.
-     * FIXME: error code (OPEN_READ vs. READ) should depend on http status? */
-    GST_ELEMENT_ERROR (src, RESOURCE, OPEN_READ,
-        ("%s", msg->reason_phrase),
-        ("%s (%d), URL: %s", msg->reason_phrase, msg->status_code,
-            src->location));
+     */
+    if (msg->status_code == SOUP_STATUS_NOT_FOUND) {
+      GST_ELEMENT_ERROR (src, RESOURCE, NOT_FOUND,
+          ("%s", msg->reason_phrase),
+          ("%s (%d), URL: %s", msg->reason_phrase, msg->status_code,
+              src->location));
+    } else if (msg->status_code == SOUP_STATUS_UNAUTHORIZED ||
+        msg->status_code == SOUP_STATUS_PAYMENT_REQUIRED ||
+        msg->status_code == SOUP_STATUS_FORBIDDEN ||
+        msg->status_code == SOUP_STATUS_PROXY_AUTHENTICATION_REQUIRED) {
+      GST_ELEMENT_ERROR (src, RESOURCE, NOT_AUTHORIZED,
+          ("%s", msg->reason_phrase),
+          ("%s (%d), URL: %s", msg->reason_phrase, msg->status_code,
+              src->location));
+    } else {
+      GST_ELEMENT_ERROR (src, RESOURCE, OPEN_READ,
+          ("%s", msg->reason_phrase),
+          ("%s (%d), URL: %s", msg->reason_phrase, msg->status_code,
+              src->location));
+    }
     src->ret = GST_FLOW_ERROR;
   }
 }

@@ -57,9 +57,9 @@
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-rtpssrcdemux.signals"></a><h2>Signals</h2>
 <pre class="synopsis">
-  "<a class="link" href="gst-plugins-good-plugins-rtpssrcdemux.html#GstRtpSsrcDemux-clear-ssrc" title='The "clear-ssrc" signal'>clear-ssrc</a>"                                     : <a href="http://library.gnome.org/devel/gobject/unstable/gobject-Signals.html#G-SIGNAL-ACTION:CAPS"><code class="literal">Action</code></a>
-  "<a class="link" href="gst-plugins-good-plugins-rtpssrcdemux.html#GstRtpSsrcDemux-new-ssrc-pad" title='The "new-ssrc-pad" signal'>new-ssrc-pad</a>"                                   : <a href="http://library.gnome.org/devel/gobject/unstable/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS"><code class="literal">Run Last</code></a>
-  "<a class="link" href="gst-plugins-good-plugins-rtpssrcdemux.html#GstRtpSsrcDemux-removed-ssrc-pad" title='The "removed-ssrc-pad" signal'>removed-ssrc-pad</a>"                               : <a href="http://library.gnome.org/devel/gobject/unstable/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS"><code class="literal">Run Last</code></a>
+  "<a class="link" href="gst-plugins-good-plugins-rtpssrcdemux.html#GstRtpSsrcDemux-clear-ssrc" title='The "clear-ssrc" signal'>clear-ssrc</a>"                                     : <code class="literal">Action</code>
+  "<a class="link" href="gst-plugins-good-plugins-rtpssrcdemux.html#GstRtpSsrcDemux-new-ssrc-pad" title='The "new-ssrc-pad" signal'>new-ssrc-pad</a>"                                   : <code class="literal">Run Last</code>
+  "<a class="link" href="gst-plugins-good-plugins-rtpssrcdemux.html#GstRtpSsrcDemux-removed-ssrc-pad" title='The "removed-ssrc-pad" signal'>removed-ssrc-pad</a>"                               : <code class="literal">Run Last</code>
 </pre>
 </div>
 <div class="refsect1">
@@ -241,7 +241,7 @@ Last reviewed on 2007-05-28 (0.10.5)
 <a name="GstRtpSsrcDemux-clear-ssrc"></a><h3>The <code class="literal">"clear-ssrc"</code> signal</h3>
 <pre class="programlisting"><span class="returnvalue">void</span>                user_function                      (<a class="link" href="gst-plugins-good-plugins-rtpssrcdemux.html#GstRtpSsrcDemux"><span class="type">GstRtpSsrcDemux</span></a> *demux,
                                                         <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a>            ssrc,
-                                                        <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>         user_data)      : <a href="http://library.gnome.org/devel/gobject/unstable/gobject-Signals.html#G-SIGNAL-ACTION:CAPS"><code class="literal">Action</code></a></pre>
+                                                        <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>         user_data)      : <code class="literal">Action</code></pre>
 <p>
 Action signal to remove the pad for SSRC.
 </p>
@@ -272,7 +272,7 @@ Action signal to remove the pad for SSRC.
 <pre class="programlisting"><span class="returnvalue">void</span>                user_function                      (<a class="link" href="gst-plugins-good-plugins-rtpssrcdemux.html#GstRtpSsrcDemux"><span class="type">GstRtpSsrcDemux</span></a> *demux,
                                                         <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a>            ssrc,
                                                         <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstPad.html"><span class="type">GstPad</span></a>          *pad,
-                                                        <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>         user_data)      : <a href="http://library.gnome.org/devel/gobject/unstable/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS"><code class="literal">Run Last</code></a></pre>
+                                                        <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>         user_data)      : <code class="literal">Run Last</code></pre>
 <p>
 Emited when a new SSRC pad has been created.
 </p>
@@ -307,7 +307,7 @@ Emited when a new SSRC pad has been created.
 <pre class="programlisting"><span class="returnvalue">void</span>                user_function                      (<a class="link" href="gst-plugins-good-plugins-rtpssrcdemux.html#GstRtpSsrcDemux"><span class="type">GstRtpSsrcDemux</span></a> *demux,
                                                         <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a>            ssrc,
                                                         <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstPad.html"><span class="type">GstPad</span></a>          *pad,
-                                                        <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>         user_data)      : <a href="http://library.gnome.org/devel/gobject/unstable/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS"><code class="literal">Run Last</code></a></pre>
+                                                        <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>         user_data)      : <code class="literal">Run Last</code></pre>
 <p>
 Emited when a SSRC pad has been removed.
 </p>
