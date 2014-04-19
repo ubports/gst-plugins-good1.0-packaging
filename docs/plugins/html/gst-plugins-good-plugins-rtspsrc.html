@@ -104,7 +104,7 @@ GstRTSPSrc implements
 <pre class="synopsis">
   "<a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc-handle-request" title='The "handle-request" signal'>handle-request</a>"                                 
   "<a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc-on-sdp" title='The "on-sdp" signal'>on-sdp</a>"                                         
-  "<a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc-select-stream" title='The "select-stream" signal'>select-stream</a>"                                  : <a href="http://library.gnome.org/devel/gobject/unstable/gobject-Signals.html#G-SIGNAL-RUN-FIRST:CAPS"><code class="literal">Run First</code></a>
+  "<a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc-select-stream" title='The "select-stream" signal'>select-stream</a>"                                  : <code class="literal">Run First</code>
 </pre>
 </div>
 <div class="refsect1">
@@ -533,7 +533,7 @@ in some other way.
 <pre class="programlisting"><a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>            user_function                      (<a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc"><span class="type">GstRTSPSrc</span></a> *rtspsrc,
                                                         <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a>       num,
                                                         <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstCaps.html#GstCaps"><span class="type">GstCaps</span></a>    *caps,
-                                                        <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>    user_data)      : <a href="http://library.gnome.org/devel/gobject/unstable/gobject-Signals.html#G-SIGNAL-RUN-FIRST:CAPS"><code class="literal">Run First</code></a></pre>
+                                                        <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>    user_data)      : <code class="literal">Run First</code></pre>
 <p>
 Emited before the client decides to configure the stream <em class="parameter"><code>num</code></em> with
 <em class="parameter"><code>caps</code></em>.
