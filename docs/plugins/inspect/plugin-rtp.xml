@@ -3,7 +3,7 @@
   <description>Real-time protocol plugins</description>
   <filename>../../gst/rtp/.libs/libgstrtp.so</filename>
   <basename>libgstrtp.so</basename>
-  <version>1.2.4</version>
+  <version>1.3.1</version>
   <license>LGPL</license>
   <source>gst-plugins-good</source>
   <package>GStreamer Good Plug-ins source release</package>
@@ -1371,6 +1371,48 @@
           <direction>source</direction>
           <presence>always</presence>
           <details>application/x-rtp, media=(string)audio, payload=(int)[ 96, 127 ], clock-rate=(int)[ 6000, 48000 ], encoding-name=(string)SPEEX, encoding-params=(string)1</details>
+        </caps>
+      </pads>
+    </element>
+    <element>
+      <name>rtpstreamdepay</name>
+      <longname>RTP Stream Depayloading</longname>
+      <class>Codec/Depayloader/Network</class>
+      <description>Depayloads RTP/RTCP packets for streaming protocols according to RFC4571</description>
+      <author>Sebastian Dröge &lt;sebastian@centricular.com&gt;</author>
+      <pads>
+        <caps>
+          <name>sink</name>
+          <direction>sink</direction>
+          <presence>always</presence>
+          <details>application/x-rtp-stream; application/x-rtcp-stream; application/x-srtp-stream; application/x-srtcp-stream</details>
+        </caps>
+        <caps>
+          <name>src</name>
+          <direction>source</direction>
+          <presence>always</presence>
+          <details>application/x-rtp; application/x-rtcp; application/x-srtp; application/x-srtcp</details>
+        </caps>
+      </pads>
+    </element>
+    <element>
+      <name>rtpstreampay</name>
+      <longname>RTP Stream Payloading</longname>
+      <class>Codec/Payloader/Network</class>
+      <description>Payloads RTP/RTCP packets for streaming protocols according to RFC4571</description>
+      <author>Sebastian Dröge &lt;sebastian@centricular.com&gt;</author>
+      <pads>
+        <caps>
+          <name>sink</name>
+          <direction>sink</direction>
+          <presence>always</presence>
+          <details>application/x-rtp; application/x-rtcp; application/x-srtp; application/x-srtcp</details>
+        </caps>
+        <caps>
+          <name>src</name>
+          <direction>source</direction>
+          <presence>always</presence>
+          <details>application/x-rtp-stream; application/x-rtcp-stream; application/x-srtp-stream; application/x-srtcp-stream</details>
         </caps>
       </pads>
     </element>

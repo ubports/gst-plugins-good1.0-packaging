@@ -74,7 +74,26 @@ struct _GstV4l2BufferPoolClass
 struct _GstV4l2Meta {
   GstMeta meta;
 
-  gpointer mem;
+  /* number of v4l2 planes
+   * In MPLANE and non MPLANE case it can be one so
+   * it contains all yuv planes
+   * In MPLANE mode it can be one per yuv plane.
+   * For example, 2 for NV12 and 3 for I420
+   *
+   * In non MPLANE mode it's always equal to 1
+   * In MPLANE mode it's equivalent to vbuffer.length
+   */
+  guint n_planes;
+
+  /* only useful in GST_V4L2_IO_MMAP case.
+   * it contains address at which the mapping
+   * was placed for each v4l2 plane */
+  gpointer mem[GST_VIDEO_MAX_PLANES];
+
+  /* plane info for multi-planar buffers */
+  struct v4l2_plane vplanes[GST_VIDEO_MAX_PLANES];
+
+  /* video buffer info */
   struct v4l2_buffer vbuffer;
 };
 
@@ -88,6 +107,8 @@ GType gst_v4l2_buffer_pool_get_type (void);
 GstBufferPool *     gst_v4l2_buffer_pool_new     (GstV4l2Object *obj, GstCaps *caps);
 
 GstFlowReturn       gst_v4l2_buffer_pool_process (GstV4l2BufferPool * bpool, GstBuffer * buf);
+
+gboolean gst_v4l2_buffer_pool_flush (GstV4l2BufferPool * pool);
 
 G_END_DECLS
 

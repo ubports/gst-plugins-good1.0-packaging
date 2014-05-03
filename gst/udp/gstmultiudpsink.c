@@ -309,7 +309,7 @@ gst_multiudpsink_class_init (GstMultiUDPSinkClass * klass)
           " FALSE = disable", DEFAULT_LOOP,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
   /**
-   * GstMultiUDPSink::force-ipv4
+   * GstMultiUDPSink::force-ipv4:
    *
    * Force the use of an IPv4 socket.
    *
@@ -326,12 +326,10 @@ gst_multiudpsink_class_init (GstMultiUDPSinkClass * klass)
           -1, 63, DEFAULT_QOS_DSCP,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
   /**
-   * GstMultiUDPSink::send-duplicates
+   * GstMultiUDPSink::send-duplicates:
    *
    * When a host/port pair is added mutliple times, send the packet to the host
    * multiple times as well.
-   *
-   * Since: 0.10.26
    */
   g_object_class_install_property (G_OBJECT_CLASS (klass), PROP_SEND_DUPLICATES,
       g_param_spec_boolean ("send-duplicates", "Send Duplicates",
@@ -537,8 +535,8 @@ gst_multiudpsink_render (GstBaseSink * bsink, GstBuffer * buffer)
   if (n_mem == 0)
     goto no_data;
 
-  /* allocated on the stack, the max number of memory blocks is limited so this
-   * should not cause stack overflows */
+  /* pre-allocated, the max number of memory blocks is limited so this
+   * should not cause overflows */
   vec = sink->vec;
   map = sink->map;
 
@@ -1141,12 +1139,18 @@ gst_multiudpsink_start (GstBaseSink * bsink)
 #ifdef SO_BINDTODEVICE
   if (sink->multi_iface) {
     if (sink->used_socket) {
-      setsockopt (g_socket_get_fd (sink->used_socket), SOL_SOCKET,
-          SO_BINDTODEVICE, sink->multi_iface, strlen (sink->multi_iface));
+      if (setsockopt (g_socket_get_fd (sink->used_socket), SOL_SOCKET,
+              SO_BINDTODEVICE, sink->multi_iface,
+              strlen (sink->multi_iface)) < 0)
+        GST_WARNING_OBJECT (sink, "setsockopt SO_BINDTODEVICE failed: %s",
+            strerror (errno));
     }
     if (sink->used_socket_v6) {
-      setsockopt (g_socket_get_fd (sink->used_socket_v6), SOL_SOCKET,
-          SO_BINDTODEVICE, sink->multi_iface, strlen (sink->multi_iface));
+      if (setsockopt (g_socket_get_fd (sink->used_socket_v6), SOL_SOCKET,
+              SO_BINDTODEVICE, sink->multi_iface,
+              strlen (sink->multi_iface)) < 0)
+        GST_WARNING_OBJECT (sink, "setsockopt SO_BINDTODEVICE failed (v6): %s",
+            strerror (errno));
     }
   }
 #endif

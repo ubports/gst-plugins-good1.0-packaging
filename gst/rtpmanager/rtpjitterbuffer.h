@@ -45,6 +45,10 @@ typedef struct _RTPJitterBufferItem RTPJitterBufferItem;
  *    low latency communications.
  * RTP_JITTER_BUFFER_MODE_BUFFER: buffer packets between low/high watermarks.
  *    This mode is good for streaming communication.
+ * RTP_JITTER_BUFFER_MODE_SYNCED: sender and receiver clocks are synchronized,
+ *    like #RTP_JITTER_BUFFER_MODE_SLAVE but skew is assumed to be 0. Good for
+ *    low latency communication when sender and receiver clocks are
+ *    synchronized and there is thus no clock skew.
  * RTP_JITTER_BUFFER_MODE_LAST: last buffer mode.
  *
  * The different buffer modes for a jitterbuffer.
@@ -53,6 +57,8 @@ typedef enum {
   RTP_JITTER_BUFFER_MODE_NONE    = 0,
   RTP_JITTER_BUFFER_MODE_SLAVE   = 1,
   RTP_JITTER_BUFFER_MODE_BUFFER  = 2,
+  /* FIXME 3 is missing because it was used for 'auto' in jitterbuffer */
+  RTP_JITTER_BUFFER_MODE_SYNCED  = 4,
   RTP_JITTER_BUFFER_MODE_LAST
 } RTPJitterBufferMode;
 
@@ -106,10 +112,12 @@ struct _RTPJitterBufferClass {
  * @data: the data of the item
  * @next: pointer to next item
  * @prev: pointer to previous item
- * @type: the type of @data
+ * @type: the type of @data, used freely by caller
  * @dts: input DTS
  * @pts: output PTS
- * @seqnum: seqnum
+ * @seqnum: seqnum, the seqnum is used to insert the item in the
+ *   right position in the jitterbuffer and detect duplicates. Use -1 to
+ *   append.
  * @count: amount of seqnum in this item
  * @rtptime: rtp timestamp
  *
@@ -145,7 +153,7 @@ void                  rtp_jitter_buffer_reset_skew       (RTPJitterBuffer *jbuf)
 
 gboolean              rtp_jitter_buffer_insert           (RTPJitterBuffer *jbuf,
                                                           RTPJitterBufferItem *item,
-                                                          gboolean *tail, gint *percent);
+                                                          gboolean *head, gint *percent);
 
 void                  rtp_jitter_buffer_disable_buffering (RTPJitterBuffer *jbuf, gboolean disabled);
 

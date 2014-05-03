@@ -53,6 +53,8 @@ rtp_jitter_buffer_mode_get_type (void)
     {RTP_JITTER_BUFFER_MODE_SLAVE, "Slave receiver to sender clock", "slave"},
     {RTP_JITTER_BUFFER_MODE_BUFFER, "Do low/high watermark buffering",
         "buffer"},
+    {RTP_JITTER_BUFFER_MODE_SYNCED, "Synchronized sender and receiver clocks",
+        "synced"},
     {0, NULL, NULL},
   };
 
@@ -262,20 +264,20 @@ get_buffer_level (RTPJitterBuffer * jbuf)
   guint64 level;
 
   /* first first buffer with timestamp */
-  high_buf = (RTPJitterBufferItem *) g_queue_peek_head_link (jbuf->packets);
+  high_buf = (RTPJitterBufferItem *) g_queue_peek_tail_link (jbuf->packets);
   while (high_buf) {
-    if (high_buf->dts != -1)
+    if (high_buf->dts != -1 || high_buf->pts != -1)
       break;
 
-    high_buf = (RTPJitterBufferItem *) g_list_next (high_buf);
+    high_buf = (RTPJitterBufferItem *) g_list_previous (high_buf);
   }
 
-  low_buf = (RTPJitterBufferItem *) g_queue_peek_tail_link (jbuf->packets);
+  low_buf = (RTPJitterBufferItem *) g_queue_peek_head_link (jbuf->packets);
   while (low_buf) {
-    if (low_buf->dts != -1)
+    if (low_buf->dts != -1 || low_buf->pts != -1)
       break;
 
-    low_buf = (RTPJitterBufferItem *) g_list_previous (low_buf);
+    low_buf = (RTPJitterBufferItem *) g_list_next (low_buf);
   }
 
   if (!high_buf || !low_buf || high_buf == low_buf) {
@@ -283,8 +285,8 @@ get_buffer_level (RTPJitterBuffer * jbuf)
   } else {
     guint64 high_ts, low_ts;
 
-    high_ts = high_buf->dts;
-    low_ts = low_buf->dts;
+    high_ts = high_buf->dts != -1 ? high_buf->dts : high_buf->pts;
+    low_ts = low_buf->dts != -1 ? low_buf->dts : low_buf->pts;
 
     if (high_ts > low_ts)
       level = high_ts - low_ts;
@@ -624,23 +626,20 @@ queue_do_insert (RTPJitterBuffer * jbuf, GList * list, GList * item)
 {
   GQueue *queue = jbuf->packets;
 
-  /* It's more likely that the packet was inserted in the front of the buffer */
+  /* It's more likely that the packet was inserted at the tail of the queue */
   if (G_LIKELY (list)) {
-    item->prev = list->prev;
-    item->next = list;
-    list->prev = item;
-    if (item->prev) {
-      item->prev->next = item;
-    } else {
-      queue->head = item;
-    }
+    item->prev = list;
+    item->next = list->next;
+    list->next = item;
   } else {
-    queue->tail = g_list_concat (queue->tail, item);
-    if (queue->tail->next)
-      queue->tail = queue->tail->next;
-    else
-      queue->head = queue->tail;
+    item->prev = NULL;
+    item->next = queue->head;
+    queue->head = item;
   }
+  if (item->next)
+    item->next->prev = item;
+  else
+    queue->tail = item;
   queue->length++;
 }
 
@@ -648,20 +647,24 @@ queue_do_insert (RTPJitterBuffer * jbuf, GList * list, GList * item)
  * rtp_jitter_buffer_insert:
  * @jbuf: an #RTPJitterBuffer
  * @item: an #RTPJitterBufferItem to insert
- * @tail: TRUE when the tail element changed.
+ * @head: TRUE when the head element changed.
  * @percent: the buffering percent after insertion
  *
  * Inserts @item into the packet queue of @jbuf. The sequence number of the
  * packet will be used to sort the packets. This function takes ownerhip of
  * @buf when the function returns %TRUE.
  *
+ * When @head is %TRUE, the new packet was added at the head of the queue and
+ * will be available with the next call to rtp_jitter_buffer_pop() and
+ * rtp_jitter_buffer_peek().
+ *
  * Returns: %FALSE if a packet with the same number already existed.
  */
 gboolean
 rtp_jitter_buffer_insert (RTPJitterBuffer * jbuf, RTPJitterBufferItem * item,
-    gboolean * tail, gint * percent)
+    gboolean * head, gint * percent)
 {
-  GList *list = NULL;
+  GList *list;
   guint32 rtptime;
   guint16 seqnum;
   GstClockTime dts;
@@ -669,20 +672,24 @@ rtp_jitter_buffer_insert (RTPJitterBuffer * jbuf, RTPJitterBufferItem * item,
   g_return_val_if_fail (jbuf != NULL, FALSE);
   g_return_val_if_fail (item != NULL, FALSE);
 
-  seqnum = item->seqnum;
+  list = jbuf->packets->tail;
+
   /* no seqnum, simply append then */
-  if (seqnum == -1)
+  if (item->seqnum == -1)
     goto append;
 
-  /* loop the list to skip strictly smaller seqnum buffers */
-  for (list = jbuf->packets->head; list; list = g_list_next (list)) {
+  seqnum = item->seqnum;
+
+  /* loop the list to skip strictly larger seqnum buffers */
+  for (; list; list = g_list_previous (list)) {
     guint16 qseq;
     gint gap;
     RTPJitterBufferItem *qitem = (RTPJitterBufferItem *) list;
 
+    if (qitem->seqnum == -1)
+      break;
+
     qseq = qitem->seqnum;
-    if (qseq == -1)
-      continue;
 
     /* compare the new seqnum to the one in the buffer */
     gap = gst_rtp_buffer_compare_seqnum (seqnum, qseq);
@@ -697,10 +704,10 @@ rtp_jitter_buffer_insert (RTPJitterBuffer * jbuf, RTPJitterBufferItem * item,
   }
 
   dts = item->dts;
-  rtptime = item->rtptime;
-
-  if (rtptime == -1)
+  if (item->rtptime == -1)
     goto append;
+
+  rtptime = item->rtptime;
 
   /* rtp time jumps are checked for during skew calculation, but bypassed
    * in other mode, so mind those here and reset jb if needed.
@@ -734,6 +741,12 @@ rtp_jitter_buffer_insert (RTPJitterBuffer * jbuf, RTPJitterBufferItem * item,
       else
         dts = -1;
       break;
+    case RTP_JITTER_BUFFER_MODE_SYNCED:
+      /* synchronized clocks, take first timestamp as base, use RTP timestamps
+       * to interpolate */
+      if (jbuf->base_time != -1)
+        dts = -1;
+      break;
     case RTP_JITTER_BUFFER_MODE_SLAVE:
     default:
       break;
@@ -751,10 +764,10 @@ append:
   else if (percent)
     *percent = -1;
 
-  /* tail was changed when we did not find a previous packet, we set the return
+  /* head was changed when we did not find a previous packet, we set the return
    * flag when requested. */
-  if (G_LIKELY (tail))
-    *tail = (list == NULL);
+  if (G_LIKELY (head))
+    *head = (list == NULL);
 
   return TRUE;
 
@@ -787,13 +800,13 @@ rtp_jitter_buffer_pop (RTPJitterBuffer * jbuf, gint * percent)
 
   queue = jbuf->packets;
 
-  item = queue->tail;
+  item = queue->head;
   if (item) {
-    queue->tail = item->prev;
-    if (queue->tail)
-      queue->tail->next = NULL;
+    queue->head = item->next;
+    if (queue->head)
+      queue->head->prev = NULL;
     else
-      queue->head = NULL;
+      queue->tail = NULL;
     queue->length--;
   }
 
@@ -810,9 +823,10 @@ rtp_jitter_buffer_pop (RTPJitterBuffer * jbuf, gint * percent)
  * rtp_jitter_buffer_peek:
  * @jbuf: an #RTPJitterBuffer
  *
- * Peek the oldest buffer from the packet queue of @jbuf. Register a callback
- * with rtp_jitter_buffer_set_tail_changed() to be notified when an older packet
- * was inserted in the queue.
+ * Peek the oldest buffer from the packet queue of @jbuf.
+ *
+ * See rtp_jitter_buffer_insert() to check when an older packet was
+ * added.
  *
  * Returns: a #GstBuffer or %NULL when there was no packet in the queue.
  */
@@ -821,7 +835,7 @@ rtp_jitter_buffer_peek (RTPJitterBuffer * jbuf)
 {
   g_return_val_if_fail (jbuf != NULL, NULL);
 
-  return (RTPJitterBufferItem *) jbuf->packets->tail;
+  return (RTPJitterBufferItem *) jbuf->packets->head;
 }
 
 /**

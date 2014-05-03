@@ -224,6 +224,7 @@ rtp_source_reset (RTPSource * src)
     g_free (src->bye_reason);
   src->bye_reason = NULL;
   src->sent_bye = FALSE;
+  g_hash_table_remove_all (src->reported_in_sr_of);
 
   src->stats.cycles = -1;
   src->stats.jitter = 0;
@@ -260,6 +261,8 @@ rtp_source_init (RTPSource * src)
 
   src->retained_feedback = g_queue_new ();
   src->nacks = g_array_new (FALSE, FALSE, sizeof (guint32));
+
+  src->reported_in_sr_of = g_hash_table_new (g_direct_hash, g_direct_equal);
 
   rtp_source_reset (src);
 }
@@ -303,6 +306,8 @@ rtp_source_finalize (GObject * object)
     g_object_unref (src->rtp_from);
   if (src->rtcp_from)
     g_object_unref (src->rtcp_from);
+
+  g_hash_table_unref (src->reported_in_sr_of);
 
   G_OBJECT_CLASS (rtp_source_parent_class)->finalize (object);
 }
@@ -977,25 +982,12 @@ do_bitrate_estimation (RTPSource * src, GstClockTime running_time,
   }
 }
 
-/**
- * rtp_source_process_rtp:
- * @src: an #RTPSource
- * @pinfo: an #RTPPacketInfo
- *
- * Let @src handle the incomming RTP packet described in @pinfo.
- *
- * Returns: a #GstFlowReturn.
- */
-GstFlowReturn
-rtp_source_process_rtp (RTPSource * src, RTPPacketInfo * pinfo)
+static gboolean
+update_receiver_stats (RTPSource * src, RTPPacketInfo * pinfo)
 {
-  GstFlowReturn result = GST_FLOW_OK;
   guint16 seqnr, udelta;
   RTPSourceStats *stats;
   guint16 expected;
-
-  g_return_val_if_fail (RTP_IS_SOURCE (src), GST_FLOW_ERROR);
-  g_return_val_if_fail (pinfo != NULL, GST_FLOW_ERROR);
 
   stats = &src->stats;
 
@@ -1071,14 +1063,56 @@ rtp_source_process_rtp (RTPSource * src, RTPPacketInfo * pinfo)
   src->stats.packets_received++;
   /* for the bitrate estimation */
   src->bytes_received += pinfo->payload_len;
+
+  GST_LOG ("seq %d, PC: %" G_GUINT64_FORMAT ", OC: %" G_GUINT64_FORMAT,
+      seqnr, src->stats.packets_received, src->stats.octets_received);
+
+  return TRUE;
+
+  /* ERRORS */
+done:
+  {
+    return FALSE;
+  }
+bad_sequence:
+  {
+    GST_WARNING ("unacceptable seqnum received");
+    return FALSE;
+  }
+probation_seqnum:
+  {
+    GST_WARNING ("probation: seqnr %d != expected %d", seqnr, expected);
+    src->curr_probation = src->probation;
+    src->stats.max_seq = seqnr;
+    return FALSE;
+  }
+}
+
+/**
+ * rtp_source_process_rtp:
+ * @src: an #RTPSource
+ * @pinfo: an #RTPPacketInfo
+ *
+ * Let @src handle the incomming RTP packet described in @pinfo.
+ *
+ * Returns: a #GstFlowReturn.
+ */
+GstFlowReturn
+rtp_source_process_rtp (RTPSource * src, RTPPacketInfo * pinfo)
+{
+  GstFlowReturn result;
+
+  g_return_val_if_fail (RTP_IS_SOURCE (src), GST_FLOW_ERROR);
+  g_return_val_if_fail (pinfo != NULL, GST_FLOW_ERROR);
+
+  if (!update_receiver_stats (src, pinfo))
+    return GST_FLOW_OK;
+
   /* the source that sent the packet must be a sender */
   src->is_sender = TRUE;
   src->validated = TRUE;
 
   do_bitrate_estimation (src, pinfo->running_time, &src->bytes_received);
-
-  GST_LOG ("seq %d, PC: %" G_GUINT64_FORMAT ", OC: %" G_GUINT64_FORMAT,
-      seqnr, src->stats.packets_received, src->stats.octets_received);
 
   /* calculate jitter for the stats */
   calculate_jitter (src, pinfo);
@@ -1087,22 +1121,7 @@ rtp_source_process_rtp (RTPSource * src, RTPPacketInfo * pinfo)
   result = push_packet (src, pinfo->data);
   pinfo->data = NULL;
 
-done:
   return result;
-
-  /* ERRORS */
-bad_sequence:
-  {
-    GST_WARNING ("unacceptable seqnum received");
-    return GST_FLOW_OK;
-  }
-probation_seqnum:
-  {
-    GST_WARNING ("probation: seqnr %d != expected %d", seqnr, expected);
-    src->curr_probation = src->probation;
-    src->stats.max_seq = seqnr;
-    return GST_FLOW_OK;
-  }
 }
 
 /**
@@ -1160,6 +1179,8 @@ rtp_source_send_rtp (RTPSource * src, RTPPacketInfo * pinfo)
   src->stats.packets_sent += pinfo->packets;
   src->stats.octets_sent += pinfo->payload_len;
   src->bytes_sent += pinfo->payload_len;
+  /* we are also a receiver of our packets */
+  update_receiver_stats (src, pinfo);
 
   running_time = pinfo->running_time;
 
