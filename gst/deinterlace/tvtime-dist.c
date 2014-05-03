@@ -133,8 +133,8 @@ void deinterlace_line_greedy (orc_uint8 * ORC_RESTRICT d1,
 #define ORC_CLAMP_UW(x) ORC_CLAMP(x,ORC_UW_MIN,ORC_UW_MAX)
 #define ORC_CLAMP_SL(x) ORC_CLAMP(x,ORC_SL_MIN,ORC_SL_MAX)
 #define ORC_CLAMP_UL(x) ORC_CLAMP(x,ORC_UL_MIN,ORC_UL_MAX)
-#define ORC_SWAP_W(x) ((((x)&0xff)<<8) | (((x)&0xff00)>>8))
-#define ORC_SWAP_L(x) ((((x)&0xff)<<24) | (((x)&0xff00)<<8) | (((x)&0xff0000)>>8) | (((x)&0xff000000)>>24))
+#define ORC_SWAP_W(x) ((((x)&0xffU)<<8) | (((x)&0xff00U)>>8))
+#define ORC_SWAP_L(x) ((((x)&0xffU)<<24) | (((x)&0xff00U)<<8) | (((x)&0xff0000U)>>8) | (((x)&0xff000000U)>>24))
 #define ORC_SWAP_Q(x) ((((x)&ORC_UINT64_C(0xff))<<56) | (((x)&ORC_UINT64_C(0xff00))<<40) | (((x)&ORC_UINT64_C(0xff0000))<<24) | (((x)&ORC_UINT64_C(0xff000000))<<8) | (((x)&ORC_UINT64_C(0xff00000000))>>8) | (((x)&ORC_UINT64_C(0xff0000000000))>>24) | (((x)&ORC_UINT64_C(0xff000000000000))>>40) | (((x)&ORC_UINT64_C(0xff00000000000000))>>56))
 #define ORC_PTR_OFFSET(ptr,offset) ((void *)(((unsigned char *)(ptr)) + (offset)))
 #define ORC_DENORMAL(x) ((x) & ((((x)&0x7f800000) == 0) ? 0xff800000 : 0xffffffff))
@@ -713,7 +713,7 @@ deinterlace_line_linear_blend (guint8 * ORC_RESTRICT d1,
       static const orc_uint8 bc[] = {
         1, 9, 29, 100, 101, 105, 110, 116, 101, 114, 108, 97, 99, 101, 95, 108,
         105, 110, 101, 95, 108, 105, 110, 101, 97, 114, 95, 98, 108, 101, 110,
-        100,
+            100,
         11, 1, 1, 12, 1, 1, 12, 1, 1, 12, 1, 1, 14, 4, 2, 0,
         0, 0, 20, 2, 20, 2, 20, 2, 150, 32, 4, 150, 33, 5, 150, 34,
         6, 70, 32, 32, 33, 70, 34, 34, 34, 70, 32, 32, 34, 70, 32, 32,

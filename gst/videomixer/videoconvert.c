@@ -605,7 +605,7 @@ videomixer_videoconvert_convert_generic (VideoConvert * convert,
       for (j = 0; j < down_n_lines; j += lines) {
         idx = down_offset + j;
 
-        if (idx >= 0 && idx < height) {
+        if (idx < height) {
           GST_DEBUG ("packing line %d %d %d", j + start, down_offset, idx);
           /* FIXME, not correct if lines > 1 */
           PACK_FRAME (dest, out_tmplines[j + start], idx, width);
@@ -1254,31 +1254,13 @@ convert_I420_BGRA (VideoConvert * convert, GstVideoFrame * dest,
     const GstVideoFrame * src)
 {
   int i;
-  int quality = 0;
   gint width = convert->width;
   gint height = convert->height;
 
-  if (quality > 3) {
-    for (i = 0; i < height; i++) {
-      if (i & 1) {
-        videomixer_video_convert_orc_convert_I420_BGRA_avg (FRAME_GET_LINE
-            (dest, i), FRAME_GET_Y_LINE (src, i), FRAME_GET_U_LINE (src,
-                i >> 1), FRAME_GET_U_LINE (src, (i >> 1) + 1),
-            FRAME_GET_V_LINE (src, i >> 1), FRAME_GET_V_LINE (src,
-                (i >> 1) + 1), width);
-      } else {
-        videomixer_video_convert_orc_convert_I420_BGRA (FRAME_GET_LINE (dest,
-                i), FRAME_GET_Y_LINE (src, i), FRAME_GET_U_LINE (src, i >> 1),
-            FRAME_GET_V_LINE (src, i >> 1), width);
-      }
-    }
-  } else {
-    for (i = 0; i < height; i++) {
-      videomixer_video_convert_orc_convert_I420_BGRA (FRAME_GET_LINE (dest, i),
-          FRAME_GET_Y_LINE (src, i),
-          FRAME_GET_U_LINE (src, i >> 1),
-          FRAME_GET_V_LINE (src, i >> 1), width);
-    }
+  for (i = 0; i < height; i++) {
+    videomixer_video_convert_orc_convert_I420_BGRA (FRAME_GET_LINE (dest, i),
+        FRAME_GET_Y_LINE (src, i),
+        FRAME_GET_U_LINE (src, i >> 1), FRAME_GET_V_LINE (src, i >> 1), width);
   }
 }
 #endif

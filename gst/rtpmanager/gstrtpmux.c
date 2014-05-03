@@ -46,8 +46,6 @@
  * generated, both are encoded into different payload types and muxed together
  * so they can be sent on the same port.
  * </refsect2>
- *
- * Last reviewed on 2010-09-30 (0.10.21)
  */
 
 #ifdef HAVE_CONFIG_H
@@ -412,7 +410,6 @@ gst_rtp_mux_chain_list (GstPad * pad, GstObject * parent,
   GstRTPMux *rtp_mux;
   GstFlowReturn ret;
   GstRTPMuxPadPrivate *padpriv;
-  gboolean drop = TRUE;
   struct BufferListData bd;
 
   rtp_mux = GST_RTP_MUX (parent);
@@ -436,7 +433,7 @@ gst_rtp_mux_chain_list (GstPad * pad, GstObject * parent,
 
   GST_OBJECT_UNLOCK (rtp_mux);
 
-  if (drop) {
+  if (bd.drop) {
     gst_buffer_list_unref (bufferlist);
     ret = GST_FLOW_OK;
   } else {

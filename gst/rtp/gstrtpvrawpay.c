@@ -152,6 +152,7 @@ gst_rtp_vraw_pay_setcaps (GstRTPBasePayload * payload, GstCaps * caps)
     case GST_VIDEO_FORMAT_RGB:
       samplingstr = "RGB";
       pgroup = 3;
+      break;
     case GST_VIDEO_FORMAT_BGR:
       samplingstr = "BGR";
       pgroup = 3;
@@ -239,7 +240,7 @@ gst_rtp_vraw_pay_handle_buffer (GstRTPBasePayload * payload, GstBuffer * buffer)
   GstRtpVRawPay *rtpvrawpay;
   GstFlowReturn ret = GST_FLOW_OK;
   guint line, offset;
-  guint8 *yp, *up, *vp;
+  guint8 *p0, *yp, *up, *vp;
   guint ystride, uvstride;
   guint pgroup;
   guint mtu;
@@ -257,6 +258,7 @@ gst_rtp_vraw_pay_handle_buffer (GstRTPBasePayload * payload, GstBuffer * buffer)
       gst_buffer_get_size (buffer));
 
   /* get pointer and strides of the planes */
+  p0 = GST_VIDEO_FRAME_PLANE_DATA (&frame, 0);
   yp = GST_VIDEO_FRAME_COMP_DATA (&frame, 0);
   up = GST_VIDEO_FRAME_COMP_DATA (&frame, 1);
   vp = GST_VIDEO_FRAME_COMP_DATA (&frame, 2);
@@ -328,6 +330,13 @@ gst_rtp_vraw_pay_handle_buffer (GstRTPBasePayload * payload, GstBuffer * buffer)
 
       /* the headers start here */
       headers = outdata;
+
+      /* make sure we can fit at least *one* header and pixel */
+      if (!(left > (6 + pgroup))) {
+        gst_rtp_buffer_unmap (&rtp);
+        gst_buffer_unref (out);
+        goto too_small;
+      }
 
       /* while we can fit at least one header and one pixel */
       while (left > (6 + pgroup)) {
@@ -411,7 +420,7 @@ gst_rtp_vraw_pay_handle_buffer (GstRTPBasePayload * payload, GstBuffer * buffer)
           case GST_VIDEO_FORMAT_UYVY:
           case GST_VIDEO_FORMAT_UYVP:
             offs /= rtpvrawpay->xinc;
-            memcpy (outdata, yp + (lin * ystride) + (offs * pgroup), length);
+            memcpy (outdata, p0 + (lin * ystride) + (offs * pgroup), length);
             outdata += length;
             break;
           case GST_VIDEO_FORMAT_AYUV:
@@ -419,7 +428,7 @@ gst_rtp_vraw_pay_handle_buffer (GstRTPBasePayload * payload, GstBuffer * buffer)
             gint i;
             guint8 *datap;
 
-            datap = yp + (lin * ystride) + (offs * 4);
+            datap = p0 + (lin * ystride) + (offs * 4);
 
             for (i = 0; i < pixels; i++) {
               *outdata++ = datap[2];
@@ -510,6 +519,14 @@ unknown_sampling:
   {
     GST_ELEMENT_ERROR (payload, STREAM, FORMAT,
         (NULL), ("unimplemented sampling"));
+    gst_video_frame_unmap (&frame);
+    gst_buffer_unref (buffer);
+    return GST_FLOW_NOT_SUPPORTED;
+  }
+too_small:
+  {
+    GST_ELEMENT_ERROR (payload, RESOURCE, NO_SPACE_LEFT,
+        (NULL), ("not enough space to send at least one pixel"));
     gst_video_frame_unmap (&frame);
     gst_buffer_unref (buffer);
     return GST_FLOW_NOT_SUPPORTED;
