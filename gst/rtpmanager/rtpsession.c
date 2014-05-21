@@ -100,11 +100,6 @@ enum
    (avg) = ((val) + (15 * (avg))) >> 4;
 
 
-/* The number RTCP intervals after which to timeout entries in the
- * collision table
- */
-#define RTCP_INTERVAL_COLLISION_TIMEOUT 10
-
 /* GObject vmethods */
 static void rtp_session_finalize (GObject * object);
 static void rtp_session_set_property (GObject * object, guint prop_id,
@@ -122,7 +117,7 @@ static guint32 rtp_session_create_new_ssrc (RTPSession * sess);
 static RTPSource *obtain_source (RTPSession * sess, guint32 ssrc,
     gboolean * created, RTPPacketInfo * pinfo, gboolean rtp);
 static RTPSource *obtain_internal_source (RTPSession * sess,
-    guint32 ssrc, gboolean * created);
+    guint32 ssrc, gboolean * created, GstClockTime current_time);
 static GstFlowReturn rtp_session_schedule_bye_locked (RTPSession * sess,
     GstClockTime current_time);
 static GstClockTime calculate_rtcp_interval (RTPSession * sess,
@@ -545,6 +540,9 @@ rtp_session_finalize (GObject * object)
   sess = RTP_SESSION_CAST (object);
 
   gst_structure_free (sess->sdes);
+
+  g_list_free_full (sess->conflicting_addresses,
+      (GDestroyNotify) rtp_conflicting_address_free);
 
   for (i = 0; i < 32; i++)
     g_hash_table_destroy (sess->ssrcs[i]);
@@ -1207,6 +1205,43 @@ static RTPSourceCallbacks callbacks = {
   (RTPSourceClockRate) source_clock_rate,
 };
 
+
+/**
+ * rtp_session_find_conflicting_address:
+ * @session: The session the packet came in
+ * @address: address to check for
+ * @time: The time when the packet that is possibly in conflict arrived
+ *
+ * Checks if an address which has a conflict is already known. If it is
+ * a known conflict, remember the time
+ *
+ * Returns: TRUE if it was a known conflict, FALSE otherwise
+ */
+static gboolean
+rtp_session_find_conflicting_address (RTPSession * session,
+    GSocketAddress * address, GstClockTime time)
+{
+  return find_conflicting_address (session->conflicting_addresses, address,
+      time);
+}
+
+/**
+ * rtp_session_add_conflicting_address:
+ * @session: The session the packet came in
+ * @address: address to remember
+ * @time: The time when the packet that is in conflict arrived
+ *
+ * Adds a new conflict address
+ */
+static void
+rtp_session_add_conflicting_address (RTPSession * sess,
+    GSocketAddress * address, GstClockTime time)
+{
+  sess->conflicting_addresses =
+      add_conflicting_address (sess->conflicting_addresses, address, time);
+}
+
+
 static gboolean
 check_collision (RTPSession * sess, RTPSource * source,
     RTPPacketInfo * pinfo, gboolean rtp)
@@ -1292,7 +1327,7 @@ check_collision (RTPSession * sess, RTPSource * source,
      */
   } else {
     /* This is sending with our ssrc, is it an address we already know */
-    if (rtp_source_find_conflicting_address (source, pinfo->address,
+    if (rtp_session_find_conflicting_address (sess, pinfo->address,
             pinfo->current_time)) {
       /* Its a known conflict, its probably a loop, not a collision
        * lets just drop the incoming packet
@@ -1300,7 +1335,7 @@ check_collision (RTPSession * sess, RTPSource * source,
       GST_DEBUG ("Our packets are being looped back to us, dropping");
     } else {
       /* Its a new collision, lets change our SSRC */
-      rtp_source_add_conflicting_address (source, pinfo->address,
+      rtp_session_add_conflicting_address (sess, pinfo->address,
           pinfo->current_time);
 
       GST_DEBUG ("Collision for SSRC %x", ssrc);
@@ -1491,7 +1526,8 @@ obtain_source (RTPSession * sess, guint32 ssrc, gboolean * created,
 /* must be called with the session lock, the returned source needs to be
  * unreffed after usage. */
 static RTPSource *
-obtain_internal_source (RTPSession * sess, guint32 ssrc, gboolean * created)
+obtain_internal_source (RTPSession * sess, guint32 ssrc, gboolean * created,
+    GstClockTime current_time)
 {
   RTPSource *source;
 
@@ -1512,6 +1548,11 @@ obtain_internal_source (RTPSession * sess, guint32 ssrc, gboolean * created)
     *created = TRUE;
   } else {
     *created = FALSE;
+  }
+  /* update last activity */
+  if (current_time != GST_CLOCK_TIME_NONE) {
+    source->last_activity = current_time;
+    source->last_rtp_activity = current_time;
   }
   g_object_ref (source);
 
@@ -2602,7 +2643,7 @@ rtp_session_update_send_caps (RTPSession * sess, GstCaps * caps)
     gboolean created;
 
     RTP_SESSION_LOCK (sess);
-    source = obtain_internal_source (sess, ssrc, &created);
+    source = obtain_internal_source (sess, ssrc, &created, GST_CLOCK_TIME_NONE);
     if (source) {
       rtp_source_update_caps (source, caps);
       g_object_unref (source);
@@ -2645,10 +2686,7 @@ rtp_session_send_rtp (RTPSession * sess, gpointer data, gboolean is_list,
           current_time, running_time, -1))
     goto invalid_packet;
 
-  source = obtain_internal_source (sess, pinfo.ssrc, &created);
-
-  /* update last activity */
-  source->last_rtp_activity = current_time;
+  source = obtain_internal_source (sess, pinfo.ssrc, &created, current_time);
 
   prevsender = RTP_SOURCE_IS_SENDER (source);
   oldrate = source->bitrate;
@@ -3179,8 +3217,6 @@ session_cleanup (const gchar * key, RTPSource * source, ReportData * data)
   if (source->internal) {
     GST_DEBUG ("Timing out collisions for %x", source->ssrc);
     rtp_source_timeout (source, data->current_time,
-        /* "a relatively long time" -- RFC 3550 section 8.2 */
-        RTP_STATS_MIN_INTERVAL * GST_SECOND * 10,
         data->running_time - sess->rtcp_feedback_retention_window);
   }
 
@@ -3214,26 +3250,41 @@ session_cleanup (const gchar * key, RTPSource * source, ReportData * data)
   GST_LOG ("timeout base interval %" GST_TIME_FORMAT,
       GST_TIME_ARGS (binterval));
 
-  if (!source->internal) {
-    if (source->marked_bye) {
-      /* if we received a BYE from the source, remove the source after some
-       * time. */
-      if (data->current_time > source->bye_time &&
-          data->current_time - source->bye_time > sess->stats.bye_timeout) {
-        GST_DEBUG ("removing BYE source %08x", source->ssrc);
-        remove = TRUE;
-        byetimeout = TRUE;
-      }
+  if (!source->internal && source->marked_bye) {
+    /* if we received a BYE from the source, remove the source after some
+     * time. */
+    if (data->current_time > source->bye_time &&
+        data->current_time - source->bye_time > sess->stats.bye_timeout) {
+      GST_DEBUG ("removing BYE source %08x", source->ssrc);
+      remove = TRUE;
+      byetimeout = TRUE;
     }
-    /* sources that were inactive for more than 5 times the deterministic reporting
-     * interval get timed out. the min timeout is 5 seconds. */
-    /* mind old time that might pre-date last time going to PLAYING */
-    btime = MAX (source->last_activity, sess->start_time);
-    if (data->current_time > btime) {
-      interval = MAX (binterval * 5, 5 * GST_SECOND);
-      if (data->current_time - btime > interval) {
-        GST_DEBUG ("removing timeout source %08x, last %" GST_TIME_FORMAT,
-            source->ssrc, GST_TIME_ARGS (btime));
+  }
+
+  if (source->internal && source->sent_bye) {
+    GST_DEBUG ("removing internal source that has sent BYE %08x", source->ssrc);
+    remove = TRUE;
+  }
+
+  /* sources that were inactive for more than 5 times the deterministic reporting
+   * interval get timed out. the min timeout is 5 seconds. */
+  /* mind old time that might pre-date last time going to PLAYING */
+  btime = MAX (source->last_activity, sess->start_time);
+  if (data->current_time > btime) {
+    interval = MAX (binterval * 5, 5 * GST_SECOND);
+    if (data->current_time - btime > interval) {
+      GST_DEBUG ("removing timeout source %08x, last %" GST_TIME_FORMAT,
+          source->ssrc, GST_TIME_ARGS (btime));
+      if (source->internal) {
+        /* this is an internal source that is not using our suggested ssrc.
+         * since there must be another source using this ssrc, we can remove
+         * this one instead of making it a receiver forever */
+        if (source->ssrc != sess->suggested_ssrc) {
+          rtp_source_mark_bye (source, "timed out");
+          /* do not schedule bye here, since we are inside the RTCP timeout
+           * processing and scheduling bye will interfere with SR/RR sending */
+        }
+      } else {
         remove = TRUE;
       }
     }
@@ -3247,16 +3298,9 @@ session_cleanup (const gchar * key, RTPSource * source, ReportData * data)
     if (data->current_time > btime) {
       interval = MAX (binterval * 2, 5 * GST_SECOND);
       if (data->current_time - btime > interval) {
-        if (source->internal && source->sent_bye) {
-          /* an internal source is BYE and stopped sending RTP, remove */
-          GST_DEBUG ("internal BYE source %08x timed out, last %"
-              GST_TIME_FORMAT, source->ssrc, GST_TIME_ARGS (btime));
-          remove = TRUE;
-        } else {
-          GST_DEBUG ("sender source %08x timed out and became receiver, last %"
-              GST_TIME_FORMAT, source->ssrc, GST_TIME_ARGS (btime));
-          sendertimeout = TRUE;
-        }
+        GST_DEBUG ("sender source %08x timed out and became receiver, last %"
+            GST_TIME_FORMAT, source->ssrc, GST_TIME_ARGS (btime));
+        sendertimeout = TRUE;
       }
     }
   }
@@ -3618,9 +3662,13 @@ rtp_session_on_timeout (RTPSession * sess, GstClockTime current_time,
     RTPSource *source;
     gboolean created;
 
-    source = obtain_internal_source (sess, sess->suggested_ssrc, &created);
+    source = obtain_internal_source (sess, sess->suggested_ssrc, &created,
+        current_time);
     g_object_unref (source);
   }
+
+  sess->conflicting_addresses =
+      timeout_conflicting_addresses (sess->conflicting_addresses, current_time);
 
   /* Make a local copy of the hashtable. We need to do this because the
    * cleanup stage below releases the session lock. */
