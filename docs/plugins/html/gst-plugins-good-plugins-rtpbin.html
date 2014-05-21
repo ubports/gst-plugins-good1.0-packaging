@@ -312,7 +312,7 @@ internal source and other sources.</p>
 <a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin-request-rtp-decoder" title="The “request-rtp-decoder” signal"><span class="type">“request-rtp-decoder”</span></a>, <a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin-request-rtcp-encoder" title="The “request-rtcp-encoder” signal"><span class="type">“request-rtcp-encoder”</span></a> and
 <a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin-request-rtp-decoder" title="The “request-rtp-decoder” signal"><span class="type">“request-rtp-decoder”</span></a>) to dynamically request for RTP and RTCP encoders
 and decoders in order to support SRTP. The encoders must provide the pads
-rtp_sink_%d and rtp_src_%d for RTP and rtcp_sink_%d and rtcp_src_%d for
+rtp_sink_%u and rtp_src_%u for RTP and rtcp_sink_%u and rtcp_src_%u for
 RTCP. The session number will be used in the pad name. The decoders must provide
 rtp_sink and rtp_src for RTP and rtcp_sink and rtcp_src for RTCP. The decoders will
 be placed before the <a class="link" href="gst-plugins-good-plugins-rtpsession.html#GstRtpSession"><span class="type">GstRtpSession</span></a> element, thus they must support SSRC demuxing

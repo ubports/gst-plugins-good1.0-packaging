@@ -5,9 +5,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: gst-plugins-good 1.3.1\n"
+"Project-Id-Version: gst-plugins-good 1.3.2\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2014-05-03 18:00+0200\n"
+"POT-Creation-Date: 2014-05-21 12:10+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -37,32 +37,32 @@ msgstr ""
 msgid "Could not connect to server"
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:850
+#: ext/soup/gstsouphttpsrc.c:859
 msgid "No URL set."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1103
+#: ext/soup/gstsouphttpsrc.c:1146
 msgid "Server does not support seeking."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1377
+#: ext/soup/gstsouphttpsrc.c:1420
 msgid "Could not resolve server name."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1383
+#: ext/soup/gstsouphttpsrc.c:1426
 msgid "Could not establish connection to server."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1388
+#: ext/soup/gstsouphttpsrc.c:1431
 msgid "Secure connection setup failed."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1398
+#: ext/soup/gstsouphttpsrc.c:1441
 msgid ""
 "A network error occured, or the server closed the connection unexpectedly."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1405
+#: ext/soup/gstsouphttpsrc.c:1448
 msgid "Server sent bad data."
 msgstr ""
 
@@ -78,36 +78,36 @@ msgstr ""
 msgid "This file contains no playable streams."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:621 gst/isomp4/qtdemux.c:4700
-#: gst/isomp4/qtdemux.c:4767 gst/isomp4/qtdemux.c:5003
+#: gst/isomp4/qtdemux.c:621 gst/isomp4/qtdemux.c:4705
+#: gst/isomp4/qtdemux.c:4772 gst/isomp4/qtdemux.c:5008
 msgid "This file is invalid and cannot be played."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:2296
+#: gst/isomp4/qtdemux.c:2301
 msgid "Cannot play stream because it is encrypted with PlayReady DRM."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:2859 gst/isomp4/qtdemux.c:2935
-#: gst/isomp4/qtdemux.c:2978 gst/isomp4/qtdemux.c:5705
-#: gst/isomp4/qtdemux.c:5712 gst/isomp4/qtdemux.c:6354
-#: gst/isomp4/qtdemux.c:6783 gst/isomp4/qtdemux.c:6790
-#: gst/isomp4/qtdemux.c:8620
+#: gst/isomp4/qtdemux.c:2864 gst/isomp4/qtdemux.c:2940
+#: gst/isomp4/qtdemux.c:2983 gst/isomp4/qtdemux.c:5710
+#: gst/isomp4/qtdemux.c:5717 gst/isomp4/qtdemux.c:6359
+#: gst/isomp4/qtdemux.c:6788 gst/isomp4/qtdemux.c:6795
+#: gst/isomp4/qtdemux.c:8627
 msgid "This file is corrupt and cannot be played."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:3069
+#: gst/isomp4/qtdemux.c:3074
 msgid "Invalid atom size."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:3137
+#: gst/isomp4/qtdemux.c:3142
 msgid "This file is incomplete and cannot be played."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:7443
+#: gst/isomp4/qtdemux.c:7448
 msgid "The video in this file might not play correctly."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:8661
+#: gst/isomp4/qtdemux.c:8668
 #, c-format
 msgid "This file contains too many streams. Only playing first %d"
 msgstr ""
@@ -252,83 +252,91 @@ msgstr ""
 msgid "AUX 2 Out"
 msgstr ""
 
-#: sys/v4l2/gstv4l2bufferpool.c:1401
+#: sys/v4l2/gstv4l2bufferpool.c:1476
 #, c-format
 msgid "Error reading %d bytes from device '%s'."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:1032
+#: sys/v4l2/gstv4l2object.c:1062
 #, c-format
 msgid "Failed to enumerate possible video formats device '%s' can work with"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2210
+#: sys/v4l2/gstv4l2object.c:2297
 #, c-format
 msgid "Could not map buffers from device '%s'"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2218
+#: sys/v4l2/gstv4l2object.c:2305
 #, c-format
 msgid "The driver of device '%s' does not support the IO method %d"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2225
+#: sys/v4l2/gstv4l2object.c:2312
 #, c-format
 msgid "The driver of device '%s' does not support any known IO method."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2559
+#: sys/v4l2/gstv4l2object.c:2805
 #, c-format
 msgid "Device '%s' does not support video capture"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2568
+#: sys/v4l2/gstv4l2object.c:2814
 #, c-format
 msgid "Device '%s' is busy"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2574 sys/v4l2/gstv4l2object.c:2585
+#: sys/v4l2/gstv4l2object.c:2820 sys/v4l2/gstv4l2object.c:2831
 #, c-format
 msgid "Device '%s' cannot capture at %dx%d"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2594
+#: sys/v4l2/gstv4l2object.c:2840
 #, c-format
 msgid "Device '%s' cannot capture in the specified format"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2605
+#: sys/v4l2/gstv4l2object.c:2851
 #, c-format
 msgid "Device '%s' does support non-contiguous planes"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2615
+#: sys/v4l2/gstv4l2object.c:2861
 #, c-format
 msgid "Could not get parameters on device '%s'"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2623
+#: sys/v4l2/gstv4l2object.c:2869
 msgid "Video device did not accept new frame rate setting."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2630 sys/v4l2/gstv4l2object.c:3029
-msgid "Video device could not create buffer pool."
-msgstr ""
-
-#: sys/v4l2/gstv4l2object.c:2725
+#: sys/v4l2/gstv4l2object.c:2962
 msgid "Video device did not provide output format."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2731
+#: sys/v4l2/gstv4l2object.c:2968
 msgid "Video device returned invalid dimensions."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2739
+#: sys/v4l2/gstv4l2object.c:2976
 msgid "Video devices uses an unsupported interlacing method."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2746
+#: sys/v4l2/gstv4l2object.c:2983
 msgid "Video devices uses an unsupported pixel format."
+msgstr ""
+
+#: sys/v4l2/gstv4l2object.c:3364
+msgid "Failed to configure internal buffer pool."
+msgstr ""
+
+#: sys/v4l2/gstv4l2object.c:3370
+msgid "Video device did not suggest any buffer size."
+msgstr ""
+
+#: sys/v4l2/gstv4l2object.c:3382
+msgid "No downstream pool to import from."
 msgstr ""
 
 #: sys/v4l2/gstv4l2radio.c:138
@@ -351,7 +359,7 @@ msgstr ""
 msgid "Failed to get radio input on device '%s'. "
 msgstr ""
 
-#: sys/v4l2/gstv4l2radio.c:202 sys/v4l2/v4l2_calls.c:1089
+#: sys/v4l2/gstv4l2radio.c:202 sys/v4l2/v4l2_calls.c:1092
 #, c-format
 msgid "Failed to set input %d on device %s."
 msgstr ""
@@ -383,88 +391,88 @@ msgstr ""
 msgid "Failed to query norm on device '%s'."
 msgstr ""
 
-#: sys/v4l2/v4l2_calls.c:408
+#: sys/v4l2/v4l2_calls.c:411
 #, c-format
 msgid "Failed getting controls attributes on device '%s'."
 msgstr ""
 
-#: sys/v4l2/v4l2_calls.c:613
+#: sys/v4l2/v4l2_calls.c:616
 #, c-format
 msgid "Cannot identify device '%s'."
 msgstr ""
 
-#: sys/v4l2/v4l2_calls.c:620
+#: sys/v4l2/v4l2_calls.c:623
 #, c-format
 msgid "This isn't a device '%s'."
 msgstr ""
 
-#: sys/v4l2/v4l2_calls.c:627
+#: sys/v4l2/v4l2_calls.c:630
 #, c-format
 msgid "Could not open device '%s' for reading and writing."
 msgstr ""
 
-#: sys/v4l2/v4l2_calls.c:634
+#: sys/v4l2/v4l2_calls.c:637
 #, c-format
 msgid "Device '%s' is not a capture device."
 msgstr ""
 
-#: sys/v4l2/v4l2_calls.c:642
+#: sys/v4l2/v4l2_calls.c:645
 #, c-format
 msgid "Device '%s' is not a output device."
 msgstr ""
 
-#: sys/v4l2/v4l2_calls.c:650
+#: sys/v4l2/v4l2_calls.c:653
 #, c-format
 msgid "Device '%s' is not a M2M device."
 msgstr ""
 
-#: sys/v4l2/v4l2_calls.c:712
+#: sys/v4l2/v4l2_calls.c:715
 #, c-format
 msgid "Could not dup device '%s' for reading and writing."
 msgstr ""
 
-#: sys/v4l2/v4l2_calls.c:799
+#: sys/v4l2/v4l2_calls.c:802
 #, c-format
 msgid "Failed to set norm for device '%s'."
 msgstr ""
 
-#: sys/v4l2/v4l2_calls.c:837
+#: sys/v4l2/v4l2_calls.c:840
 #, c-format
 msgid "Failed to get current tuner frequency for device '%s'."
 msgstr ""
 
-#: sys/v4l2/v4l2_calls.c:879
+#: sys/v4l2/v4l2_calls.c:882
 #, c-format
 msgid "Failed to set current tuner frequency for device '%s' to %lu Hz."
 msgstr ""
 
-#: sys/v4l2/v4l2_calls.c:913
+#: sys/v4l2/v4l2_calls.c:916
 #, c-format
 msgid "Failed to get signal strength for device '%s'."
 msgstr ""
 
-#: sys/v4l2/v4l2_calls.c:949
+#: sys/v4l2/v4l2_calls.c:952
 #, c-format
 msgid "Failed to get value for control %d on device '%s'."
 msgstr ""
 
-#: sys/v4l2/v4l2_calls.c:984
+#: sys/v4l2/v4l2_calls.c:987
 #, c-format
 msgid "Failed to set value %d for control %d on device '%s'."
 msgstr ""
 
-#: sys/v4l2/v4l2_calls.c:1064
+#: sys/v4l2/v4l2_calls.c:1067
 #, c-format
 msgid "Failed to get current input on device '%s'. May be it is a radio device"
 msgstr ""
 
-#: sys/v4l2/v4l2_calls.c:1121
+#: sys/v4l2/v4l2_calls.c:1124
 #, c-format
 msgid ""
 "Failed to get current output on device '%s'. May be it is a radio device"
 msgstr ""
 
-#: sys/v4l2/v4l2_calls.c:1146
+#: sys/v4l2/v4l2_calls.c:1149
 #, c-format
 msgid "Failed to set output %d on device %s."
 msgstr ""
