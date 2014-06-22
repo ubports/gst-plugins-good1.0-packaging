@@ -294,9 +294,6 @@ struct _QtDemuxStream
   GstSegment segment;
   guint32 segment_seqnum;       /* segment event seqnum obtained from seek */
 
-  /* last GstFlowReturn */
-  GstFlowReturn last_ret;
-
   /* quicktime segments */
   guint32 n_segments;
   QtDemuxSegment *segments;
@@ -467,7 +464,8 @@ static gboolean qtdemux_parse_samples (GstQTDemux * qtdemux,
 static GstFlowReturn qtdemux_expose_streams (GstQTDemux * qtdemux);
 static void gst_qtdemux_stream_free (GstQTDemux * qtdemux,
     QtDemuxStream * stream);
-static void gst_qtdemux_stream_clear (QtDemuxStream * stream);
+static void gst_qtdemux_stream_clear (GstQTDemux * qtdemux,
+    QtDemuxStream * stream);
 static void gst_qtdemux_remove_stream (GstQTDemux * qtdemux, int index);
 static GstFlowReturn qtdemux_prepare_streams (GstQTDemux * qtdemux);
 static void qtdemux_do_allocation (GstQTDemux * qtdemux,
@@ -546,6 +544,7 @@ gst_qtdemux_init (GstQTDemux * qtdemux)
   qtdemux->have_group_id = FALSE;
   qtdemux->group_id = G_MAXUINT;
   gst_segment_init (&qtdemux->segment, GST_FORMAT_TIME);
+  qtdemux->flowcombiner = gst_flow_combiner_new ();
 
   GST_OBJECT_FLAG_SET (qtdemux, GST_ELEMENT_FLAG_INDEXABLE);
 }
@@ -559,6 +558,7 @@ gst_qtdemux_dispose (GObject * object)
     g_object_unref (G_OBJECT (qtdemux->adapter));
     qtdemux->adapter = NULL;
   }
+  gst_flow_combiner_free (qtdemux->flowcombiner);
 
   G_OBJECT_CLASS (parent_class)->dispose (object);
 }
@@ -1397,7 +1397,6 @@ gst_qtdemux_perform_seek (GstQTDemux * qtdemux, GstSegment * segment,
     stream->sample_index = -1;
     stream->offset_in_sample = 0;
     stream->segment_index = -1;
-    stream->last_ret = GST_FLOW_OK;
     stream->sent_eos = FALSE;
     stream->segment_seqnum = seqnum;
 
@@ -1427,7 +1426,6 @@ gst_qtdemux_do_seek (GstQTDemux * qtdemux, GstPad * pad, GstEvent * event)
   gboolean flush;
   gboolean update;
   GstSegment seeksegment;
-  int i;
   guint32 seqnum = 0;
   GstEvent *flush_event;
 
@@ -1504,10 +1502,6 @@ gst_qtdemux_do_seek (GstQTDemux * qtdemux, GstPad * pad, GstEvent * event)
     gst_element_post_message (GST_ELEMENT_CAST (qtdemux), msg);
   }
 
-  /* restart streaming, NEWSEGMENT will be sent from the streaming thread. */
-  for (i = 0; i < qtdemux->n_streams; i++)
-    qtdemux->streams[i]->last_ret = GST_FLOW_OK;
-
   gst_pad_start_task (qtdemux->sinkpad, (GstTaskFunction) gst_qtdemux_loop,
       qtdemux->sinkpad, NULL);
 
@@ -1562,10 +1556,10 @@ gst_qtdemux_handle_src_event (GstPad * pad, GstObject * parent,
       GstClockTime ts = gst_util_get_timestamp ();
 #endif
 
-      if (qtdemux->upstream_newsegment || qtdemux->fragmented) {
+      if (qtdemux->upstream_newsegment && qtdemux->fragmented) {
         /* seek should be handled by upstream, we might need to re-download fragments */
         GST_DEBUG_OBJECT (qtdemux,
-            "leting upstream handle seek for smoothstreaming");
+            "let upstream handle seek for fragmented playback");
         goto upstream;
       }
 
@@ -1715,7 +1709,6 @@ _create_stream (void)
   stream->time_position = 0;
   stream->sample_index = -1;
   stream->offset_in_sample = 0;
-  stream->last_ret = GST_FLOW_OK;
   stream->new_stream = TRUE;
   return stream;
 }
@@ -1879,10 +1872,9 @@ gst_qtdemux_reset (GstQTDemux * qtdemux, gboolean hard)
     qtdemux->got_moov = FALSE;
   } else if (qtdemux->mss_mode) {
     for (n = 0; n < qtdemux->n_streams; n++)
-      gst_qtdemux_stream_clear (qtdemux->streams[n]);
+      gst_qtdemux_stream_clear (qtdemux, qtdemux->streams[n]);
   } else {
     for (n = 0; n < qtdemux->n_streams; n++) {
-      qtdemux->streams[n]->last_ret = GST_FLOW_OK;
       qtdemux->streams[n]->sent_eos = FALSE;
       qtdemux->streams[n]->segment_seqnum = 0;
       qtdemux->streams[n]->time_position = 0;
@@ -2130,7 +2122,7 @@ gst_qtdemux_stbl_free (QtDemuxStream * stream)
 }
 
 static void
-gst_qtdemux_stream_clear (QtDemuxStream * stream)
+gst_qtdemux_stream_clear (GstQTDemux * qtdemux, QtDemuxStream * stream)
 {
   if (stream->allocator)
     gst_object_unref (stream->allocator);
@@ -2154,7 +2146,6 @@ gst_qtdemux_stream_clear (QtDemuxStream * stream)
   /* free stbl sub-atoms */
   gst_qtdemux_stbl_free (stream);
 
-  stream->last_ret = GST_FLOW_OK;
   stream->sent_eos = FALSE;
   stream->segment_index = -1;
   stream->time_position = 0;
@@ -2167,12 +2158,14 @@ gst_qtdemux_stream_clear (QtDemuxStream * stream)
 static void
 gst_qtdemux_stream_free (GstQTDemux * qtdemux, QtDemuxStream * stream)
 {
-  gst_qtdemux_stream_clear (stream);
+  gst_qtdemux_stream_clear (qtdemux, stream);
   if (stream->caps)
     gst_caps_unref (stream->caps);
   stream->caps = NULL;
-  if (stream->pad)
+  if (stream->pad) {
     gst_element_remove_pad (GST_ELEMENT_CAST (qtdemux), stream->pad);
+    gst_flow_combiner_remove_pad (qtdemux->flowcombiner, stream->pad);
+  }
   g_free (stream);
 }
 
@@ -3511,8 +3504,6 @@ gst_qtdemux_activate_segment (GstQTDemux * qtdemux, QtDemuxStream * stream,
       stream->segment_seqnum = 0;
     }
     gst_pad_push_event (stream->pad, event);
-    /* assume we can send more data now */
-    stream->last_ret = GST_FLOW_OK;
     /* clear to send tags on this pad now */
     gst_qtdemux_push_tags (qtdemux, stream);
   }
@@ -3817,42 +3808,12 @@ gst_qtdemux_sync_streams (GstQTDemux * demux)
  *  GST_FLOW_EOS: when all pads EOS or NOT_LINKED.
  */
 static GstFlowReturn
-gst_qtdemux_combine_flows (GstQTDemux * demux, QtDemuxStream * stream,
-    GstFlowReturn ret)
+gst_qtdemux_combine_flows (GstQTDemux * demux, GstFlowReturn ret)
 {
-  gint i;
-  gboolean unexpected = FALSE, not_linked = TRUE;
-
   GST_LOG_OBJECT (demux, "flow return: %s", gst_flow_get_name (ret));
 
-  /* store the value */
-  stream->last_ret = ret;
+  ret = gst_flow_combiner_update_flow (demux->flowcombiner, ret);
 
-  /* any other error that is not-linked or eos can be returned right away */
-  if (G_LIKELY (ret != GST_FLOW_EOS && ret != GST_FLOW_NOT_LINKED))
-    goto done;
-
-  /* only return NOT_LINKED if all other pads returned NOT_LINKED */
-  for (i = 0; i < demux->n_streams; i++) {
-    QtDemuxStream *ostream = demux->streams[i];
-
-    ret = ostream->last_ret;
-
-    /* no unexpected or unlinked, return */
-    if (G_LIKELY (ret != GST_FLOW_EOS && ret != GST_FLOW_NOT_LINKED))
-      goto done;
-
-    /* we check to see if we have at least 1 unexpected or all unlinked */
-    unexpected |= (ret == GST_FLOW_EOS);
-    not_linked &= (ret == GST_FLOW_NOT_LINKED);
-  }
-
-  /* when we get here, we all have unlinked or unexpected */
-  if (not_linked)
-    ret = GST_FLOW_NOT_LINKED;
-  else if (unexpected)
-    ret = GST_FLOW_EOS;
-done:
   GST_LOG_OBJECT (demux, "combined flow return: %s", gst_flow_get_name (ret));
   return ret;
 }
@@ -4287,7 +4248,7 @@ gst_qtdemux_loop_state_movie (GstQTDemux * qtdemux)
     goto next;
 
   /* last pushed sample was out of boundary, goto next sample */
-  if (G_UNLIKELY (stream->last_ret == GST_FLOW_EOS))
+  if (G_UNLIKELY (GST_PAD_LAST_FLOW_RETURN (stream->pad) == GST_FLOW_EOS))
     goto next;
 
   if (stream->max_buffer_size == 0 || sample_size <= stream->max_buffer_size) {
@@ -4346,7 +4307,7 @@ gst_qtdemux_loop_state_movie (GstQTDemux * qtdemux)
   }
 
   /* combine flows */
-  ret = gst_qtdemux_combine_flows (qtdemux, stream, ret);
+  ret = gst_qtdemux_combine_flows (qtdemux, ret);
   /* ignore unlinked, we will not push on the pad anymore and we will EOS when
    * we have no more data for the pad to push */
   if (ret == GST_FLOW_EOS)
@@ -5121,7 +5082,7 @@ gst_qtdemux_process_adapter (GstQTDemux * demux, gboolean force)
           }
 
           /* combine flows */
-          ret = gst_qtdemux_combine_flows (demux, stream, ret);
+          ret = gst_qtdemux_combine_flows (demux, ret);
         } else {
           /* skip this data, stream is EOS */
           gst_adapter_flush (demux->adapter, demux->neededbytes);
@@ -6020,6 +5981,7 @@ gst_qtdemux_add_stream (GstQTDemux * qtdemux,
     GST_DEBUG_OBJECT (qtdemux, "adding pad %s %p to qtdemux %p",
         GST_OBJECT_NAME (stream->pad), stream->pad, qtdemux);
     gst_element_add_pad (GST_ELEMENT_CAST (qtdemux), stream->pad);
+    gst_flow_combiner_add_pad (qtdemux->flowcombiner, stream->pad);
 
     if (stream->pending_tags)
       gst_tag_list_unref (stream->pending_tags);
@@ -6952,6 +6914,12 @@ qtdemux_parse_svq3_stsd_data (GstQTDemux * qtdemux, GNode * stsd,
         fourcc = QT_FOURCC (stsd_data + 4);
         data = stsd_data + 8;
 
+        if (size == 0) {
+          GST_WARNING_OBJECT (qtdemux, "Atom of size 0 found, aborting "
+              "svq3 atom parsing");
+          goto end;
+        }
+
         switch (fourcc) {
           case FOURCC_gama:{
             if (size == 12) {
@@ -7170,6 +7138,93 @@ bad_data:
   return 0;
 }
 
+static gboolean
+qtdemux_parse_transformation_matrix (GstQTDemux * qtdemux,
+    GstByteReader * reader, guint32 * matrix, const gchar * atom)
+{
+  /*
+   * 9 values of 32 bits (fixed point 16.16, except 2 5 and 8 that are 2.30)
+   * [0 1 2]
+   * [3 4 5]
+   * [6 7 8]
+   */
+
+  if (gst_byte_reader_get_remaining (reader) < 36)
+    return FALSE;
+
+  matrix[0] = gst_byte_reader_get_uint32_be_unchecked (reader);
+  matrix[1] = gst_byte_reader_get_uint32_be_unchecked (reader);
+  matrix[2] = gst_byte_reader_get_uint32_be_unchecked (reader);
+  matrix[3] = gst_byte_reader_get_uint32_be_unchecked (reader);
+  matrix[4] = gst_byte_reader_get_uint32_be_unchecked (reader);
+  matrix[5] = gst_byte_reader_get_uint32_be_unchecked (reader);
+  matrix[6] = gst_byte_reader_get_uint32_be_unchecked (reader);
+  matrix[7] = gst_byte_reader_get_uint32_be_unchecked (reader);
+  matrix[8] = gst_byte_reader_get_uint32_be_unchecked (reader);
+
+  GST_DEBUG_OBJECT (qtdemux, "Transformation matrix from atom %s", atom);
+  GST_DEBUG_OBJECT (qtdemux, "%u.%u %u.%u %u.%u", matrix[0] >> 16,
+      matrix[0] & 0xFFFF, matrix[1] >> 16, matrix[1] & 0xFF, matrix[2] >> 16,
+      matrix[2] & 0xFF);
+  GST_DEBUG_OBJECT (qtdemux, "%u.%u %u.%u %u.%u", matrix[3] >> 16,
+      matrix[3] & 0xFFFF, matrix[4] >> 16, matrix[4] & 0xFF, matrix[5] >> 16,
+      matrix[5] & 0xFF);
+  GST_DEBUG_OBJECT (qtdemux, "%u.%u %u.%u %u.%u", matrix[6] >> 16,
+      matrix[6] & 0xFFFF, matrix[7] >> 16, matrix[7] & 0xFF, matrix[8] >> 16,
+      matrix[8] & 0xFF);
+
+  return TRUE;
+}
+
+static void
+qtdemux_inspect_transformation_matrix (GstQTDemux * qtdemux,
+    QtDemuxStream * stream, guint32 * matrix, GstTagList ** taglist)
+{
+
+/* [a b c]
+ * [d e f]
+ * [g h i]
+ *
+ * This macro will only compare value abdegh, it expects cfi to have already
+ * been checked
+ */
+#define QTCHECK_MATRIX(m,a,b,d,e,g,h) ((m)[0] == (a << 16) && (m)[1] == (b << 16) && \
+                                       (m)[3] == (d << 16) && (m)[4] == (e << 16) && \
+                                       (m)[6] == (g << 16) && (m)[7] == (h << 16))
+
+  /* only handle the cases where the last column has standard values */
+  if (matrix[2] == 0 && matrix[5] == 0 && matrix[8] == 1 << 30) {
+    const gchar *rotation_tag = NULL;
+
+    /* no rotation needed */
+    if (QTCHECK_MATRIX (matrix, 1, 0, 0, 1, 0, 0)) {
+      /* NOP */
+    } else if (QTCHECK_MATRIX (matrix, 0, 1, G_MAXUINT16, 0,
+            stream->display_height, 0)) {
+      rotation_tag = "rotate-90";
+    } else if (QTCHECK_MATRIX (matrix, G_MAXUINT16, 0, 0, G_MAXUINT16,
+            stream->display_width, stream->display_height)) {
+      rotation_tag = "rotate-180";
+    } else if (QTCHECK_MATRIX (matrix, 0, G_MAXUINT16, 1, 0, 0,
+            stream->display_width)) {
+      rotation_tag = "rotate-270";
+    } else {
+      GST_FIXME_OBJECT (qtdemux, "Unhandled transformation matrix values");
+    }
+
+    GST_DEBUG_OBJECT (qtdemux, "Transformation matrix rotation %s",
+        rotation_tag);
+    if (rotation_tag != NULL) {
+      if (*taglist == NULL)
+        *taglist = gst_tag_list_new_empty ();
+      gst_tag_list_add (*taglist, GST_TAG_MERGE_REPLACE,
+          GST_TAG_IMAGE_ORIENTATION, rotation_tag, NULL);
+    }
+  } else {
+    GST_FIXME_OBJECT (qtdemux, "Unhandled transformation matrix values");
+  }
+}
+
 /* parse the traks.
  * With each track we associate a new QtDemuxStream that contains all the info
  * about the trak.
@@ -7380,18 +7435,26 @@ qtdemux_parse_trak (GstQTDemux * qtdemux, GNode * trak)
     guint32 w = 0, h = 0;
     gboolean gray;
     gint depth, palette_size, palette_count;
+    guint32 matrix[9];
     guint32 *palette_data = NULL;
 
     stream->sampled = TRUE;
 
     /* version 1 uses some 64-bit ints */
-    if (!gst_byte_reader_skip (&tkhd, 56 + value_size)
-        || !gst_byte_reader_get_uint32_be (&tkhd, &w)
+    if (!gst_byte_reader_skip (&tkhd, 20 + value_size))
+      goto corrupt_file;
+
+    if (!qtdemux_parse_transformation_matrix (qtdemux, &tkhd, matrix, "tkhd"))
+      goto corrupt_file;
+
+    if (!gst_byte_reader_get_uint32_be (&tkhd, &w)
         || !gst_byte_reader_get_uint32_be (&tkhd, &h))
       goto corrupt_file;
 
     stream->display_width = w >> 16;
     stream->display_height = h >> 16;
+
+    qtdemux_inspect_transformation_matrix (qtdemux, stream, matrix, &list);
 
     offset = 16;
     if (len < 86)
@@ -7496,7 +7559,8 @@ qtdemux_parse_trak (GstQTDemux * qtdemux, GNode * trak)
     }
 
     if (codec) {
-      list = gst_tag_list_new_empty ();
+      if (list == NULL)
+        list = gst_tag_list_new_empty ();
       gst_tag_list_add (list, GST_TAG_MERGE_REPLACE,
           GST_TAG_VIDEO_CODEC, codec, NULL);
       g_free (codec);
@@ -8276,7 +8340,8 @@ qtdemux_parse_trak (GstQTDemux * qtdemux, GNode * trak)
       GstStructure *s;
       gint bitrate = 0;
 
-      list = gst_tag_list_new_empty ();
+      if (list == NULL)
+        list = gst_tag_list_new_empty ();
       gst_tag_list_add (list, GST_TAG_MERGE_REPLACE,
           GST_TAG_AUDIO_CODEC, codec, NULL);
       g_free (codec);
@@ -8886,6 +8951,7 @@ qtdemux_expose_streams (GstQTDemux * qtdemux)
     gst_pad_push_event (oldpad, gst_event_new_eos ());
     gst_pad_set_active (oldpad, FALSE);
     gst_element_remove_pad (GST_ELEMENT (qtdemux), oldpad);
+    gst_flow_combiner_remove_pad (qtdemux->flowcombiner, oldpad);
     gst_object_unref (oldpad);
   }
 
@@ -9728,6 +9794,9 @@ static const struct
   FOURCC_loci, GST_TAG_GEO_LOCATION_NAME, NULL, qtdemux_tag_add_location}, {
   FOURCC_clsf, GST_QT_DEMUX_CLASSIFICATION_TAG, NULL,
         qtdemux_tag_add_classification}, {
+  FOURCC__mak, GST_TAG_DEVICE_MANUFACTURER, NULL, qtdemux_tag_add_str}, {
+  FOURCC__mod, GST_TAG_DEVICE_MODEL, NULL, qtdemux_tag_add_str}, {
+  FOURCC__swr, GST_TAG_APPLICATION_NAME, NULL, qtdemux_tag_add_str}, {
 
     /* This is a special case, some tags are stored in this
      * 'reverse dns naming', according to:

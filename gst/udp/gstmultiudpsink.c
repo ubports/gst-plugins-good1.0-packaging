@@ -29,10 +29,6 @@
  * It can be combined with rtp payload encoders to implement RTP streaming.
  */
 
-/* FIXME 0.11: suppress warnings for deprecated API such as GValueArray
- * with newer GLib versions (>= 2.31.0) */
-#define GLIB_DISABLE_DEPRECATION_WARNINGS
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -356,7 +352,8 @@ gst_multiudpsink_class_init (GstMultiUDPSinkClass * klass)
 
   gst_element_class_set_static_metadata (gstelement_class, "UDP packet sender",
       "Sink/Network",
-      "Send data over the network via UDP",
+      "Send data over the network via UDP to one or multiple recipients "
+      "which can be added or removed at runtime using action signals",
       "Wim Taymans <wim.taymans@gmail.com>");
 
   gstbasesink_class->render = gst_multiudpsink_render;
@@ -529,7 +526,7 @@ gst_multiudpsink_render (GstBaseSink * bsink, GstBuffer * buffer)
   gint num, no_clients;
   GError *err = NULL;
 
-  sink = GST_MULTIUDPSINK (bsink);
+  sink = GST_MULTIUDPSINK_CAST (bsink);
 
   n_mem = gst_buffer_n_memory (buffer);
   if (n_mem == 0)
@@ -542,7 +539,7 @@ gst_multiudpsink_render (GstBaseSink * bsink, GstBuffer * buffer)
 
   size = 0;
   for (i = 0; i < n_mem; i++) {
-    mem = gst_buffer_get_memory (buffer, i);
+    mem = gst_buffer_peek_memory (buffer, i);
     gst_memory_map (mem, &map[i], GST_MAP_READ);
 
     vec[i].buffer = map[i].data;
@@ -616,10 +613,8 @@ gst_multiudpsink_render (GstBaseSink * bsink, GstBuffer * buffer)
   g_mutex_unlock (&sink->client_lock);
 
   /* unmap all memory again */
-  for (i = 0; i < n_mem; i++) {
+  for (i = 0; i < n_mem; i++)
     gst_memory_unmap (map[i].memory, &map[i]);
-    gst_memory_unref (map[i].memory);
-  }
 
   GST_LOG_OBJECT (sink, "sent %" G_GSIZE_FORMAT " bytes to %d (of %d) clients",
       size, num, no_clients);
@@ -637,10 +632,8 @@ flushing:
     g_clear_error (&err);
 
     /* unmap all memory */
-    for (i = 0; i < n_mem; i++) {
+    for (i = 0; i < n_mem; i++)
       gst_memory_unmap (map[i].memory, &map[i]);
-      gst_memory_unref (map[i].memory);
-    }
 
     return GST_FLOW_FLUSHING;
   }
@@ -1330,9 +1323,8 @@ gst_multiudpsink_remove (GstMultiUDPSink * sink, const gchar * host, gint port)
   client->refcount--;
   if (client->refcount == 0) {
     GInetSocketAddress *saddr = G_INET_SOCKET_ADDRESS (client->addr);
+    GSocketFamily family = g_socket_address_get_family (client->addr);
     GInetAddress *addr = g_inet_socket_address_get_address (saddr);
-    GSocketFamily family =
-        g_socket_address_get_family (G_SOCKET_ADDRESS (saddr));
     GSocket *socket;
 
     /* Select socket to send from for this address */

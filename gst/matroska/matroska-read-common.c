@@ -1213,7 +1213,7 @@ gst_matroska_read_common_parse_header (GstMatroskaReadCommon * common,
         if (num != GST_EBML_VERSION) {
           GST_ERROR_OBJECT (ebml, "Unsupported EBML version %" G_GUINT64_FORMAT,
               num);
-          return GST_FLOW_ERROR;
+          goto exit_error;
         }
 
         GST_DEBUG_OBJECT (ebml, "EbmlReadVersion: %" G_GUINT64_FORMAT, num);
@@ -2959,8 +2959,6 @@ gst_matroska_read_common_reset_streams (GstMatroskaReadCommon * common,
     context->set_discont = TRUE;
     context->eos = FALSE;
     context->from_time = GST_CLOCK_TIME_NONE;
-    if (full)
-      context->last_flow = GST_FLOW_OK;
     if (context->type == GST_MATROSKA_TRACK_TYPE_VIDEO) {
       GstMatroskaTrackVideoContext *videocontext =
           (GstMatroskaTrackVideoContext *) context;

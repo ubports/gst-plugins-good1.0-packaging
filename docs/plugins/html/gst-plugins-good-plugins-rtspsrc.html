@@ -236,6 +236,12 @@
 <td class="signal_name"><a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc-new-manager" title="The “new-manager” signal">new-manager</a></td>
 <td class="signal_flags">Run First</td>
 </tr>
+<tr>
+<td class="signal_type">
+<a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstCaps.html#GstCaps"><span class="returnvalue">GstCaps</span></a>*</td>
+<td class="signal_name"><a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc-request-rtcp-key" title="The “request-rtcp-key” signal">request-rtcp-key</a></td>
+<td class="signal_flags">Run Last</td>
+</tr>
 </tbody>
 </table></div>
 </div>
@@ -817,6 +823,46 @@ properties were configured.</p>
 </table></div>
 </div>
 <p>Flags: Run First</p>
+<p class="since">Since 1.4</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRTSPSrc-request-rtcp-key"></a><h3>The <code class="literal">“request-rtcp-key”</code> signal</h3>
+<pre class="programlisting"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstCaps.html#GstCaps"><span class="returnvalue">GstCaps</span></a>*
+user_function (<a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc"><span class="type">GstRTSPSrc</span></a> *rtspsrc,
+               <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a>       num,
+               <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>    user_data)</pre>
+<p>Signal emited to get the crypto parameters relevant to the RTCP
+stream. User should provide the key and the RTCP encryption ciphers
+and authentication, and return them wrapped in a GstCaps.</p>
+<div class="refsect3">
+<a name="id-1.2.123.13.6.5"></a><h4>Parameters</h4>
+<div class="informaltable"><table width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>rtspsrc</p></td>
+<td class="parameter_description"><p>a <a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc"><span class="type">GstRTSPSrc</span></a></p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>num</p></td>
+<td class="parameter_description"><p>the stream number</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>user_data</p></td>
+<td class="parameter_description"><p>user data set when the signal handler was connected.</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<p>Flags: Run Last</p>
 <p class="since">Since 1.4</p>
 </div>
 </div>

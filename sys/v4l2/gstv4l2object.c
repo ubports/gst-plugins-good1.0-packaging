@@ -431,7 +431,6 @@ gst_v4l2_object_new (GstElement * element,
   v4l2object->update_fps_func = update_fps_func;
 
   v4l2object->video_fd = -1;
-  v4l2object->poll = gst_poll_new (TRUE);
   v4l2object->active = FALSE;
   v4l2object->videodev = g_strdup (default_device);
 
@@ -460,9 +459,6 @@ gst_v4l2_object_destroy (GstV4l2Object * v4l2object)
 
   if (v4l2object->videodev)
     g_free (v4l2object->videodev);
-
-  if (v4l2object->poll)
-    gst_poll_free (v4l2object->poll);
 
   if (v4l2object->channel)
     g_free (v4l2object->channel);
@@ -3043,19 +3039,27 @@ gst_v4l2_object_caps_equal (GstV4l2Object * v4l2object, GstCaps * caps)
 gboolean
 gst_v4l2_object_unlock (GstV4l2Object * v4l2object)
 {
-  GST_LOG_OBJECT (v4l2object->element, "flush poll");
-  gst_poll_set_flushing (v4l2object->poll, TRUE);
+  gboolean ret = TRUE;
 
-  return TRUE;
+  GST_LOG_OBJECT (v4l2object->element, "start flushing");
+
+  if (v4l2object->pool && gst_buffer_pool_is_active (v4l2object->pool))
+    gst_buffer_pool_set_flushing (v4l2object->pool, TRUE);
+
+  return ret;
 }
 
 gboolean
 gst_v4l2_object_unlock_stop (GstV4l2Object * v4l2object)
 {
-  GST_LOG_OBJECT (v4l2object->element, "flush stop poll");
-  gst_poll_set_flushing (v4l2object->poll, FALSE);
+  gboolean ret = TRUE;
 
-  return TRUE;
+  GST_LOG_OBJECT (v4l2object->element, "stop flushing");
+
+  if (v4l2object->pool && gst_buffer_pool_is_active (v4l2object->pool))
+    gst_buffer_pool_set_flushing (v4l2object->pool, FALSE);
+
+  return ret;
 }
 
 gboolean
@@ -3143,6 +3147,8 @@ gst_v4l2_object_decide_allocation (GstV4l2Object * obj, GstQuery * query)
   gboolean has_video_meta;
   gboolean can_share_own_pool, pushing_from_our_pool = FALSE;
   struct v4l2_control ctl = { 0, };
+  GstAllocator *allocator = NULL;
+  GstAllocationParams params = { 0 };
 
   GST_DEBUG_OBJECT (obj->element, "decide allocation");
 
@@ -3155,6 +3161,9 @@ gst_v4l2_object_decide_allocation (GstV4l2Object * obj, GstQuery * query)
     if (!gst_v4l2_object_setup_pool (obj, caps))
       goto pool_failed;
   }
+
+  if (gst_query_get_n_allocation_params (query) > 0)
+    gst_query_parse_nth_allocation_param (query, 0, &allocator, &params);
 
   if (gst_query_get_n_allocation_pools (query) > 0) {
     gst_query_parse_nth_allocation_pool (query, 0, &pool, &size, &min, &max);
@@ -3259,19 +3268,20 @@ gst_v4l2_object_decide_allocation (GstV4l2Object * obj, GstQuery * query)
      * driver and 1 more, so we don't endup up with everything downstream or
      * held by the decoder. */
     own_min = min + obj->min_buffers_for_capture + 1;
-
-    /* Update min/max so the base class does not reset our settings */
-    min = own_min;
-    max = 0;
   } else {
     /* In this case we'll have to configure two buffer pool. For our buffer
      * pool, we'll need what the driver one, and one more, so we can dequeu */
     own_min = obj->min_buffers_for_capture + 1;
+    own_min = MAX (own_min, GST_V4L2_MIN_BUFFERS);
 
     /* for the downstream pool, we keep what downstream wants, though ensure
      * at least a minimum if downstream didn't suggest anything (we are
      * expecting the base class to create a default one for the context) */
     min = MAX (min, GST_V4L2_MIN_BUFFERS);
+
+    /* To import we need the other pool to hold at least own_min */
+    if (obj->pool == pool)
+      min += own_min;
   }
 
   /* Request a bigger max, if one was suggested but it's too small */
@@ -3285,16 +3295,17 @@ gst_v4l2_object_decide_allocation (GstV4l2Object * obj, GstQuery * query)
   /* If already configured/active, skip it */
   /* FIXME not entirely correct, See bug 728268 */
   if (gst_buffer_pool_is_active (obj->pool)) {
-    gst_buffer_pool_config_get_params (config, NULL, &size, &min, &max);
+    gst_structure_free (config);
     goto setup_other_pool;
   }
 
-  if (obj->need_video_meta) {
+  if (obj->need_video_meta || has_video_meta) {
     GST_DEBUG_OBJECT (obj->element, "activate Video Meta");
     gst_buffer_pool_config_add_option (config,
         GST_BUFFER_POOL_OPTION_VIDEO_META);
   }
 
+  gst_buffer_pool_config_set_allocator (config, allocator, &params);
   gst_buffer_pool_config_set_params (config, caps, size, own_min, 0);
 
   GST_DEBUG_OBJECT (obj->element, "setting own pool config to %"
@@ -3308,9 +3319,6 @@ gst_v4l2_object_decide_allocation (GstV4l2Object * obj, GstQuery * query)
         GST_PTR_FORMAT, config);
 
     /* our pool will adjust the maximum buffer, which we are fine with */
-    if (obj->pool == pool)
-      gst_buffer_pool_config_get_params (config, NULL, &size, &min, &max);
-
     if (!gst_buffer_pool_set_config (obj->pool, config))
       goto config_failed;
   }
@@ -3322,10 +3330,11 @@ setup_other_pool:
     other_pool = pool;
 
   if (other_pool) {
-    if (gst_buffer_pool_is_active (obj->pool))
+    if (gst_buffer_pool_is_active (other_pool))
       goto done;
 
-    config = gst_buffer_pool_get_config (pool);
+    config = gst_buffer_pool_get_config (other_pool);
+    gst_buffer_pool_config_set_allocator (config, allocator, &params);
     gst_buffer_pool_config_set_params (config, caps, size, min, max);
 
     GST_DEBUG_OBJECT (obj->element, "setting other pool config to %"
@@ -3338,15 +3347,34 @@ setup_other_pool:
           GST_BUFFER_POOL_OPTION_VIDEO_META);
     }
 
-    /* TODO check return value, validate changes and confirm */
-    gst_buffer_pool_set_config (pool, config);
+    if (!gst_buffer_pool_set_config (other_pool, config)) {
+      config = gst_buffer_pool_get_config (other_pool);
+
+      if (!gst_buffer_pool_config_validate_params (config, caps, size, min,
+              max)) {
+        gst_structure_free (config);
+        goto config_failed;
+      }
+
+      if (!gst_buffer_pool_set_config (other_pool, config))
+        goto config_failed;
+    }
   }
+
+  /* For simplicity, simply read back the active configuration, so our base
+   * class get the right information */
+  config = gst_buffer_pool_get_config (pool);
+  gst_buffer_pool_config_get_params (config, NULL, &size, &min, &max);
+  gst_structure_free (config);
 
 done:
   if (update)
     gst_query_set_nth_allocation_pool (query, 0, pool, size, min, max);
   else
     gst_query_add_allocation_pool (query, pool, size, min, max);
+
+  if (allocator)
+    gst_object_unref (allocator);
 
   if (pool)
     gst_object_unref (pool);
@@ -3372,6 +3400,9 @@ no_size:
   }
 cleanup:
   {
+    if (allocator)
+      gst_object_unref (allocator);
+
     if (pool)
       gst_object_unref (pool);
     return FALSE;

@@ -1089,6 +1089,7 @@
     <keyword type="signal" name="The “on-sdp” signal" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc-on-sdp"/>
     <keyword type="signal" name="The “select-stream” signal" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc-select-stream"/>
     <keyword type="signal" name="The “new-manager” signal" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc-new-manager"/>
+    <keyword type="signal" name="The “request-rtcp-key” signal" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc-request-rtcp-key"/>
     <keyword type="" name="Example pipelines" link="gst-plugins-good-plugins-rtpbin.html#id-1.2.124.9.12"/>
     <keyword type="" name="Element Information" link="gst-plugins-good-plugins-rtpbin.html#id-1.2.124.9.13.1"/>
     <keyword type="" name="Element Pads" link="gst-plugins-good-plugins-rtpbin.html#id-1.2.124.9.13.2"/>
