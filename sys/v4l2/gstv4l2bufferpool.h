@@ -50,6 +50,8 @@ struct _GstV4l2BufferPool
 
   GstV4l2Object *obj;        /* the v4l2 object */
   gint video_fd;             /* a dup(2) of the v4l2object's video_fd */
+  GstPoll *poll;             /* a poll for video_fd */
+  gboolean can_poll_device;
 
   GstV4l2Allocator *vallocator;
   GstAllocator *allocator;
@@ -60,7 +62,8 @@ struct _GstV4l2BufferPool
 
   gboolean add_videometa;    /* set if video meta should be added */
 
-  guint num_buffers;         /* number of buffers we use */
+  guint min_latency;         /* number of buffers we will hold */
+  guint max_latency;         /* number of buffers we can hold */
   guint num_queued;          /* number of buffers queued in the driver */
   guint copy_threshold;      /* when our pool runs lower, start handing out copies */
 
@@ -83,9 +86,6 @@ GType gst_v4l2_buffer_pool_get_type (void);
 GstBufferPool *     gst_v4l2_buffer_pool_new     (GstV4l2Object *obj, GstCaps *caps);
 
 GstFlowReturn       gst_v4l2_buffer_pool_process (GstV4l2BufferPool * bpool, GstBuffer ** buf);
-
-gboolean            gst_v4l2_buffer_pool_stop_streaming   (GstV4l2BufferPool * pool);
-gboolean            gst_v4l2_buffer_pool_start_streaming  (GstV4l2BufferPool * pool);
 
 void                gst_v4l2_buffer_pool_set_other_pool (GstV4l2BufferPool * pool,
                                                          GstBufferPool * other_pool);

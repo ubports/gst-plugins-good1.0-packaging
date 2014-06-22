@@ -259,23 +259,23 @@ gst_v4l2_video_dec_flush (GstVideoDecoder * decoder)
 {
   GstV4l2VideoDec *self = GST_V4L2_VIDEO_DEC (decoder);
 
-  GST_DEBUG_OBJECT (self, "Flushing");
+  GST_DEBUG_OBJECT (self, "Flushed");
 
-  /* Wait for capture thread to stop */
-  GST_VIDEO_DECODER_STREAM_UNLOCK (decoder);
-  gst_v4l2_object_unlock (self->v4l2capture);
-  gst_pad_stop_task (decoder->srcpad);
-  GST_VIDEO_DECODER_STREAM_LOCK (decoder);
+  /* Ensure the processing thread has stopped for the reverse playback
+   * discount case */
+  if (g_atomic_int_get (&self->processing)) {
+    GST_VIDEO_DECODER_STREAM_UNLOCK (decoder);
+
+    gst_v4l2_object_unlock (self->v4l2output);
+    gst_v4l2_object_unlock (self->v4l2capture);
+    gst_pad_stop_task (decoder->srcpad);
+    GST_VIDEO_DECODER_STREAM_UNLOCK (decoder);
+  }
 
   self->output_flow = GST_FLOW_OK;
 
-  if (self->v4l2output->pool)
-    gst_v4l2_buffer_pool_stop_streaming (GST_V4L2_BUFFER_POOL
-        (self->v4l2output->pool));
-
-  if (self->v4l2capture->pool)
-    gst_v4l2_buffer_pool_stop_streaming (GST_V4L2_BUFFER_POOL
-        (self->v4l2capture->pool));
+  gst_v4l2_object_unlock_stop (self->v4l2output);
+  gst_v4l2_object_unlock_stop (self->v4l2capture);
 
   return TRUE;
 }
@@ -293,7 +293,7 @@ gst_v4l2_video_dec_finish (GstVideoDecoder * decoder)
   GstFlowReturn ret = GST_FLOW_OK;
   GstBuffer *buffer;
 
-  if (!self->processing)
+  if (!g_atomic_int_get (&self->processing))
     goto done;
 
   GST_DEBUG_OBJECT (self, "Finishing decoding");
@@ -308,14 +308,12 @@ gst_v4l2_video_dec_finish (GstVideoDecoder * decoder)
             v4l2output->pool), &buffer);
     gst_buffer_unref (buffer);
   }
-  GST_VIDEO_DECODER_STREAM_LOCK (decoder);
 
-  /* Ensure the processing thread has stopped */
-  if (g_atomic_int_get (&self->processing)) {
-    gst_v4l2_object_unlock (self->v4l2capture);
-    gst_pad_stop_task (decoder->srcpad);
-    g_assert (g_atomic_int_get (&self->processing) == FALSE);
-  }
+  /* and ensure the processing thread has stopped in case another error
+   * occured. */
+  gst_v4l2_object_unlock (self->v4l2capture);
+  gst_pad_stop_task (decoder->srcpad);
+  GST_VIDEO_DECODER_STREAM_LOCK (decoder);
 
   if (ret == GST_FLOW_FLUSHING)
     ret = self->output_flow;
@@ -420,6 +418,20 @@ beach:
   gst_pad_pause_task (decoder->srcpad);
 }
 
+static void
+gst_v4l2_video_dec_loop_stopped (GstV4l2VideoDec * self)
+{
+  /* When flushing, decoding thread may never run */
+  if (g_atomic_int_get (&self->processing)) {
+    GST_DEBUG_OBJECT (self, "Early stop of decoding thread");
+    self->output_flow = GST_FLOW_FLUSHING;
+    g_atomic_int_set (&self->processing, FALSE);
+  }
+
+  GST_DEBUG_OBJECT (self, "Decoding task destroyed: %s",
+      gst_flow_get_name (self->output_flow));
+}
+
 static GstFlowReturn
 gst_v4l2_video_dec_handle_frame (GstVideoDecoder * decoder,
     GstVideoCodecFrame * frame)
@@ -475,11 +487,9 @@ gst_v4l2_video_dec_handle_frame (GstVideoDecoder * decoder,
     }
 
     GST_VIDEO_DECODER_STREAM_UNLOCK (decoder);
-    gst_v4l2_object_unlock_stop (self->v4l2output);
     ret =
         gst_v4l2_buffer_pool_process (GST_V4L2_BUFFER_POOL (self->
             v4l2output->pool), &codec_data);
-    gst_v4l2_object_unlock (self->v4l2output);
     GST_VIDEO_DECODER_STREAM_LOCK (decoder);
 
     gst_buffer_unref (codec_data);
@@ -508,8 +518,9 @@ gst_v4l2_video_dec_handle_frame (GstVideoDecoder * decoder,
   }
 
   if (g_atomic_int_get (&self->processing) == FALSE) {
-    /* It possible that the processing thread stopped due to an error */
-    if (self->output_flow != GST_FLOW_OK) {
+    /* It's possible that the processing thread stopped due to an error */
+    if (self->output_flow != GST_FLOW_OK &&
+        self->output_flow != GST_FLOW_FLUSHING) {
       GST_DEBUG_OBJECT (self, "Processing loop stopped with error, leaving");
       ret = self->output_flow;
       goto drop;
@@ -517,19 +528,13 @@ gst_v4l2_video_dec_handle_frame (GstVideoDecoder * decoder,
 
     GST_DEBUG_OBJECT (self, "Starting decoding thread");
 
-    /* Enable processing input */
-    if (!gst_v4l2_buffer_pool_start_streaming (GST_V4L2_BUFFER_POOL
-            (self->v4l2capture->pool)))
-      goto start_streaming_failed;
-
-    gst_v4l2_object_unlock_stop (self->v4l2output);
-    gst_v4l2_object_unlock_stop (self->v4l2capture);
-
     /* Start the processing task, when it quits, the task will disable input
      * processing to unlock input if draining, or prevent potential block */
     g_atomic_int_set (&self->processing, TRUE);
-    gst_pad_start_task (decoder->srcpad,
-        (GstTaskFunction) gst_v4l2_video_dec_loop, self, NULL);
+    if (!gst_pad_start_task (decoder->srcpad,
+            (GstTaskFunction) gst_v4l2_video_dec_loop, self,
+            (GDestroyNotify) gst_v4l2_video_dec_loop_stopped))
+      goto start_task_failed;
   }
 
   if (frame->input_buffer) {
@@ -542,6 +547,9 @@ gst_v4l2_video_dec_handle_frame (GstVideoDecoder * decoder,
     if (ret == GST_FLOW_FLUSHING) {
       if (g_atomic_int_get (&self->processing) == FALSE)
         ret = self->output_flow;
+      goto drop;
+    } else if (ret != GST_FLOW_OK) {
+      goto process_failed;
     }
 
     /* No need to keep input arround */
@@ -558,23 +566,34 @@ not_negotiated:
     ret = GST_FLOW_NOT_NEGOTIATED;
     goto drop;
   }
-start_streaming_failed:
-  {
-    GST_ELEMENT_ERROR (self, RESOURCE, SETTINGS,
-        (_("Failed to re-enabled decoder.")),
-        ("Could not re-enqueue and start streaming on decide."));
-    return GST_FLOW_ERROR;
-  }
 activate_failed:
   {
     GST_ELEMENT_ERROR (self, RESOURCE, SETTINGS,
         (_("Failed to allocate required memory.")),
         ("Buffer pool activation failed"));
-    return GST_FLOW_ERROR;
+    ret = GST_FLOW_ERROR;
+    goto drop;
   }
 flushing:
   {
     ret = GST_FLOW_FLUSHING;
+    goto drop;
+  }
+
+start_task_failed:
+  {
+    GST_ELEMENT_ERROR (self, RESOURCE, FAILED,
+        (_("Failed to start decoding thread.")), (NULL));
+    g_atomic_int_set (&self->processing, FALSE);
+    ret = GST_FLOW_ERROR;
+    goto drop;
+  }
+process_failed:
+  {
+    GST_ELEMENT_ERROR (self, RESOURCE, FAILED,
+        (_("Failed to process frame.")),
+        ("Maybe be due to not enough memory or failing driver"));
+    ret = GST_FLOW_ERROR;
     goto drop;
   }
 drop:
@@ -686,16 +705,31 @@ static gboolean
 gst_v4l2_video_dec_sink_event (GstVideoDecoder * decoder, GstEvent * event)
 {
   GstV4l2VideoDec *self = GST_V4L2_VIDEO_DEC (decoder);
+  gboolean ret;
 
   switch (GST_EVENT_TYPE (event)) {
     case GST_EVENT_FLUSH_START:
+      GST_DEBUG_OBJECT (self, "flush start");
       gst_v4l2_object_unlock (self->v4l2output);
       gst_v4l2_object_unlock (self->v4l2capture);
+      break;
     default:
       break;
   }
 
-  return GST_VIDEO_DECODER_CLASS (parent_class)->sink_event (decoder, event);
+  ret = GST_VIDEO_DECODER_CLASS (parent_class)->sink_event (decoder, event);
+
+  switch (GST_EVENT_TYPE (event)) {
+    case GST_EVENT_FLUSH_START:
+      /* The processing thread should stop now, wait for it */
+      gst_pad_stop_task (decoder->srcpad);
+      GST_DEBUG_OBJECT (self, "flush start done");
+      break;
+    default:
+      break;
+  }
+
+  return ret;
 }
 
 static GstStateChangeReturn
@@ -703,11 +737,13 @@ gst_v4l2_video_dec_change_state (GstElement * element,
     GstStateChange transition)
 {
   GstV4l2VideoDec *self = GST_V4L2_VIDEO_DEC (element);
+  GstVideoDecoder *decoder = GST_VIDEO_DECODER (element);
 
   if (transition == GST_STATE_CHANGE_PAUSED_TO_READY) {
     g_atomic_int_set (&self->active, FALSE);
     gst_v4l2_object_unlock (self->v4l2output);
     gst_v4l2_object_unlock (self->v4l2capture);
+    gst_pad_stop_task (decoder->srcpad);
   }
 
   return GST_ELEMENT_CLASS (parent_class)->change_state (element, transition);
