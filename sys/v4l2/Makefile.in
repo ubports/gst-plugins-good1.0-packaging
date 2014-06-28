@@ -169,7 +169,7 @@ libgstvideo4linux2_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 am_libgstvideo4linux2_la_OBJECTS = libgstvideo4linux2_la-gstv4l2.lo \
 	libgstvideo4linux2_la-gstv4l2allocator.lo \
 	libgstvideo4linux2_la-gstv4l2colorbalance.lo \
-	libgstvideo4linux2_la-gstv4l2devicemonitor.lo \
+	libgstvideo4linux2_la-gstv4l2deviceprovider.lo \
 	libgstvideo4linux2_la-gstv4l2object.lo \
 	libgstvideo4linux2_la-gstv4l2bufferpool.lo \
 	libgstvideo4linux2_la-gstv4l2sink.lo \
@@ -586,7 +586,7 @@ enum_headers = $(foreach h,$(glib_enum_headers),\n\#include \"$(h)\")
 libgstvideo4linux2_la_SOURCES = gstv4l2.c \
 				gstv4l2allocator.c \
 				gstv4l2colorbalance.c \
-				gstv4l2devicemonitor.c \
+				gstv4l2deviceprovider.c \
 				gstv4l2object.c \
 				gstv4l2bufferpool.c \
 				gstv4l2sink.c \
@@ -628,7 +628,7 @@ noinst_HEADERS = \
 	gstv4l2allocator.h \
 	gstv4l2bufferpool.h \
 	gstv4l2colorbalance.h \
-	gstv4l2devicemonitor.h \
+	gstv4l2deviceprovider.h \
 	gstv4l2object.h \
 	gstv4l2sink.h \
 	gstv4l2src.h \
@@ -727,7 +727,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstvideo4linux2_la-gstv4l2allocator.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstvideo4linux2_la-gstv4l2bufferpool.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstvideo4linux2_la-gstv4l2colorbalance.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstvideo4linux2_la-gstv4l2devicemonitor.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstvideo4linux2_la-gstv4l2deviceprovider.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstvideo4linux2_la-gstv4l2object.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstvideo4linux2_la-gstv4l2radio.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstvideo4linux2_la-gstv4l2sink.Plo@am__quote@
@@ -787,12 +787,12 @@ libgstvideo4linux2_la-gstv4l2colorbalance.lo: gstv4l2colorbalance.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstvideo4linux2_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstvideo4linux2_la_CFLAGS) $(CFLAGS) -c -o libgstvideo4linux2_la-gstv4l2colorbalance.lo `test -f 'gstv4l2colorbalance.c' || echo '$(srcdir)/'`gstv4l2colorbalance.c
 
-libgstvideo4linux2_la-gstv4l2devicemonitor.lo: gstv4l2devicemonitor.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstvideo4linux2_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstvideo4linux2_la_CFLAGS) $(CFLAGS) -MT libgstvideo4linux2_la-gstv4l2devicemonitor.lo -MD -MP -MF $(DEPDIR)/libgstvideo4linux2_la-gstv4l2devicemonitor.Tpo -c -o libgstvideo4linux2_la-gstv4l2devicemonitor.lo `test -f 'gstv4l2devicemonitor.c' || echo '$(srcdir)/'`gstv4l2devicemonitor.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstvideo4linux2_la-gstv4l2devicemonitor.Tpo $(DEPDIR)/libgstvideo4linux2_la-gstv4l2devicemonitor.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstv4l2devicemonitor.c' object='libgstvideo4linux2_la-gstv4l2devicemonitor.lo' libtool=yes @AMDEPBACKSLASH@
+libgstvideo4linux2_la-gstv4l2deviceprovider.lo: gstv4l2deviceprovider.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstvideo4linux2_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstvideo4linux2_la_CFLAGS) $(CFLAGS) -MT libgstvideo4linux2_la-gstv4l2deviceprovider.lo -MD -MP -MF $(DEPDIR)/libgstvideo4linux2_la-gstv4l2deviceprovider.Tpo -c -o libgstvideo4linux2_la-gstv4l2deviceprovider.lo `test -f 'gstv4l2deviceprovider.c' || echo '$(srcdir)/'`gstv4l2deviceprovider.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstvideo4linux2_la-gstv4l2deviceprovider.Tpo $(DEPDIR)/libgstvideo4linux2_la-gstv4l2deviceprovider.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstv4l2deviceprovider.c' object='libgstvideo4linux2_la-gstv4l2deviceprovider.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstvideo4linux2_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstvideo4linux2_la_CFLAGS) $(CFLAGS) -c -o libgstvideo4linux2_la-gstv4l2devicemonitor.lo `test -f 'gstv4l2devicemonitor.c' || echo '$(srcdir)/'`gstv4l2devicemonitor.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstvideo4linux2_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstvideo4linux2_la_CFLAGS) $(CFLAGS) -c -o libgstvideo4linux2_la-gstv4l2deviceprovider.lo `test -f 'gstv4l2deviceprovider.c' || echo '$(srcdir)/'`gstv4l2deviceprovider.c
 
 libgstvideo4linux2_la-gstv4l2object.lo: gstv4l2object.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstvideo4linux2_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstvideo4linux2_la_CFLAGS) $(CFLAGS) -MT libgstvideo4linux2_la-gstv4l2object.lo -MD -MP -MF $(DEPDIR)/libgstvideo4linux2_la-gstv4l2object.Tpo -c -o libgstvideo4linux2_la-gstv4l2object.lo `test -f 'gstv4l2object.c' || echo '$(srcdir)/'`gstv4l2object.c

@@ -98,7 +98,7 @@ check_PROGRAMS = generic/states$(EXEEXT) \
 	$(am__EXEEXT_32) $(am__EXEEXT_33) $(am__EXEEXT_34) \
 	$(am__EXEEXT_35) $(am__EXEEXT_36) $(am__EXEEXT_37) \
 	$(am__EXEEXT_38) $(am__EXEEXT_39) $(am__EXEEXT_40) \
-	$(am__EXEEXT_41)
+	$(am__EXEEXT_41) $(am__EXEEXT_42)
 subdir = tests/check
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/common/m4/as-ac-expand.m4 \
@@ -228,22 +228,23 @@ libparser_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 @USE_TAGLIB_TRUE@	elements/apev2mux$(EXEEXT)
 @USE_PLUGIN_UDP_TRUE@am__EXEEXT_32 = elements/udpsink$(EXEEXT) \
 @USE_PLUGIN_UDP_TRUE@	elements/udpsrc$(EXEEXT)
-@USE_PLUGIN_VIDEOCROP_TRUE@am__EXEEXT_33 =  \
+@USE_PLUGIN_VIDEOBOX_TRUE@am__EXEEXT_33 = elements/videobox$(EXEEXT)
+@USE_PLUGIN_VIDEOCROP_TRUE@am__EXEEXT_34 =  \
 @USE_PLUGIN_VIDEOCROP_TRUE@	elements/aspectratiocrop$(EXEEXT) \
 @USE_PLUGIN_VIDEOCROP_TRUE@	elements/videocrop$(EXEEXT)
-@USE_PLUGIN_VIDEOFILTER_TRUE@am__EXEEXT_34 =  \
+@USE_PLUGIN_VIDEOFILTER_TRUE@am__EXEEXT_35 =  \
 @USE_PLUGIN_VIDEOFILTER_TRUE@	elements/videofilter$(EXEEXT)
-@USE_PLUGIN_VIDEOMIXER_TRUE@am__EXEEXT_35 =  \
+@USE_PLUGIN_VIDEOMIXER_TRUE@am__EXEEXT_36 =  \
 @USE_PLUGIN_VIDEOMIXER_TRUE@	elements/videomixer$(EXEEXT)
-@USE_VPX_TRUE@am__EXEEXT_36 = elements/vp8enc$(EXEEXT) \
+@USE_VPX_TRUE@am__EXEEXT_37 = elements/vp8enc$(EXEEXT) \
 @USE_VPX_TRUE@	elements/vp8dec$(EXEEXT)
-@USE_PLUGIN_WAVENC_TRUE@am__EXEEXT_37 = pipelines/wavenc$(EXEEXT)
-@USE_WAVPACK_TRUE@am__EXEEXT_38 = elements/wavpackdec$(EXEEXT) \
+@USE_PLUGIN_WAVENC_TRUE@am__EXEEXT_38 = pipelines/wavenc$(EXEEXT)
+@USE_WAVPACK_TRUE@am__EXEEXT_39 = elements/wavpackdec$(EXEEXT) \
 @USE_WAVPACK_TRUE@	elements/wavpackenc$(EXEEXT) \
 @USE_WAVPACK_TRUE@	pipelines/wavpack$(EXEEXT)
-@USE_PLUGIN_WAVPARSE_TRUE@am__EXEEXT_39 = elements/wavparse$(EXEEXT)
-@USE_PLUGIN_Y4M_TRUE@am__EXEEXT_40 = elements/y4menc$(EXEEXT)
-@HAVE_ORC_TRUE@am__EXEEXT_41 = orc/deinterlace$(EXEEXT) \
+@USE_PLUGIN_WAVPARSE_TRUE@am__EXEEXT_40 = elements/wavparse$(EXEEXT)
+@USE_PLUGIN_Y4M_TRUE@am__EXEEXT_41 = elements/y4menc$(EXEEXT)
+@HAVE_ORC_TRUE@am__EXEEXT_42 = orc/deinterlace$(EXEEXT) \
 @HAVE_ORC_TRUE@	orc/videomixer$(EXEEXT) orc/videobox$(EXEEXT)
 elements_aacparse_SOURCES = elements/aacparse.c
 elements_aacparse_OBJECTS = elements/aacparse.$(OBJEXT)
@@ -678,6 +679,10 @@ elements_udpsrc_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(elements_udpsrc_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
 	-o $@
+elements_videobox_SOURCES = elements/videobox.c
+elements_videobox_OBJECTS = elements/videobox.$(OBJEXT)
+elements_videobox_LDADD = $(LDADD)
+elements_videobox_DEPENDENCIES = $(am__DEPENDENCIES_1)
 elements_videocrop_SOURCES = elements/videocrop.c
 elements_videocrop_OBJECTS =  \
 	elements/elements_videocrop-videocrop.$(OBJEXT)
@@ -859,9 +864,10 @@ SOURCES = $(libparser_la_SOURCES) elements/aacparse.c \
 	elements/rtpjitterbuffer.c elements/rtpmux.c elements/rtprtx.c \
 	elements/rtpsession.c elements/shapewipe.c \
 	elements/souphttpsrc.c elements/spectrum.c elements/sunaudio.c \
-	elements/udpsink.c elements/udpsrc.c elements/videocrop.c \
-	elements/videofilter.c elements/videomixer.c elements/vp8dec.c \
-	elements/vp8enc.c elements/wavpackdec.c elements/wavpackenc.c \
+	elements/udpsink.c elements/udpsrc.c elements/videobox.c \
+	elements/videocrop.c elements/videofilter.c \
+	elements/videomixer.c elements/vp8dec.c elements/vp8enc.c \
+	elements/wavpackdec.c elements/wavpackenc.c \
 	elements/wavpackparse.c elements/wavparse.c elements/y4menc.c \
 	generic/states.c $(nodist_orc_deinterlace_SOURCES) \
 	$(nodist_orc_videobox_SOURCES) \
@@ -894,9 +900,10 @@ DIST_SOURCES = $(libparser_la_SOURCES) elements/aacparse.c \
 	elements/rtpjitterbuffer.c elements/rtpmux.c elements/rtprtx.c \
 	elements/rtpsession.c elements/shapewipe.c \
 	elements/souphttpsrc.c elements/spectrum.c elements/sunaudio.c \
-	elements/udpsink.c elements/udpsrc.c elements/videocrop.c \
-	elements/videofilter.c elements/videomixer.c elements/vp8dec.c \
-	elements/vp8enc.c elements/wavpackdec.c elements/wavpackenc.c \
+	elements/udpsink.c elements/udpsrc.c elements/videobox.c \
+	elements/videocrop.c elements/videofilter.c \
+	elements/videomixer.c elements/vp8dec.c elements/vp8enc.c \
+	elements/wavpackdec.c elements/wavpackenc.c \
 	elements/wavpackparse.c elements/wavparse.c elements/y4menc.c \
 	generic/states.c pipelines/effectv.c pipelines/flacdec.c \
 	pipelines/simple-launch-lines.c pipelines/tagschecking.c \
@@ -1611,6 +1618,8 @@ CLEANFILES = core.* test-registry.*
 @USE_PLUGIN_UDP_TRUE@        elements/udpsink \
 @USE_PLUGIN_UDP_TRUE@        elements/udpsrc
 
+@USE_PLUGIN_VIDEOBOX_FALSE@check_videobox = 
+@USE_PLUGIN_VIDEOBOX_TRUE@check_videobox = elements/videobox
 @USE_PLUGIN_VIDEOCROP_FALSE@check_videocrop = 
 @USE_PLUGIN_VIDEOCROP_TRUE@check_videocrop = \
 @USE_PLUGIN_VIDEOCROP_TRUE@	elements/aspectratiocrop \
@@ -2233,6 +2242,12 @@ elements/elements_udpsrc-udpsrc.$(OBJEXT): elements/$(am__dirstamp) \
 elements/udpsrc$(EXEEXT): $(elements_udpsrc_OBJECTS) $(elements_udpsrc_DEPENDENCIES) $(EXTRA_elements_udpsrc_DEPENDENCIES) elements/$(am__dirstamp)
 	@rm -f elements/udpsrc$(EXEEXT)
 	$(AM_V_CCLD)$(elements_udpsrc_LINK) $(elements_udpsrc_OBJECTS) $(elements_udpsrc_LDADD) $(LIBS)
+elements/videobox.$(OBJEXT): elements/$(am__dirstamp) \
+	elements/$(DEPDIR)/$(am__dirstamp)
+
+elements/videobox$(EXEEXT): $(elements_videobox_OBJECTS) $(elements_videobox_DEPENDENCIES) $(EXTRA_elements_videobox_DEPENDENCIES) elements/$(am__dirstamp)
+	@rm -f elements/videobox$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(elements_videobox_OBJECTS) $(elements_videobox_LDADD) $(LIBS)
 elements/elements_videocrop-videocrop.$(OBJEXT):  \
 	elements/$(am__dirstamp) elements/$(DEPDIR)/$(am__dirstamp)
 
@@ -2449,6 +2464,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/rtpbin.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/shapewipe.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/udpsink.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/videobox.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/vp8dec.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/vp8enc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/wavpackdec.Po@am__quote@
@@ -3824,6 +3840,13 @@ elements/udpsink.log: elements/udpsink$(EXEEXT)
 elements/udpsrc.log: elements/udpsrc$(EXEEXT)
 	@p='elements/udpsrc$(EXEEXT)'; \
 	b='elements/udpsrc'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+elements/videobox.log: elements/videobox$(EXEEXT)
+	@p='elements/videobox$(EXEEXT)'; \
+	b='elements/videobox'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
