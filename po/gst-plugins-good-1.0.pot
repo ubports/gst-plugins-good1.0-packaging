@@ -5,9 +5,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: gst-plugins-good 1.3.90\n"
+"Project-Id-Version: gst-plugins-good 1.3.91\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2014-06-28 11:04+0200\n"
+"POT-Creation-Date: 2014-07-11 10:49+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -66,7 +66,7 @@ msgstr ""
 msgid "Server sent bad data."
 msgstr ""
 
-#: gst/avi/gstavidemux.c:5678
+#: gst/avi/gstavidemux.c:5677
 msgid "Internal data stream error."
 msgstr ""
 
@@ -112,20 +112,20 @@ msgstr ""
 msgid "This file contains too many streams. Only playing first %d"
 msgstr ""
 
-#: gst/rtsp/gstrtspsrc.c:6465
+#: gst/rtsp/gstrtspsrc.c:6469
 msgid ""
 "No supported stream was found. You might need to install a GStreamer RTSP "
 "extension plugin for Real media streams."
 msgstr ""
 
-#: gst/rtsp/gstrtspsrc.c:6470
+#: gst/rtsp/gstrtspsrc.c:6474
 msgid ""
 "No supported stream was found. You might need to allow more transport "
 "protocols or may otherwise be missing the right GStreamer RTSP extension "
 "plugin."
 msgstr ""
 
-#: gst/wavparse/gstwavparse.c:2178
+#: gst/wavparse/gstwavparse.c:2177
 msgid "Internal data flow error."
 msgstr ""
 
@@ -252,7 +252,7 @@ msgstr ""
 msgid "AUX 2 Out"
 msgstr ""
 
-#: sys/v4l2/gstv4l2bufferpool.c:1496
+#: sys/v4l2/gstv4l2bufferpool.c:1527
 #, c-format
 msgid "Error reading %d bytes from device '%s'."
 msgstr ""
@@ -262,80 +262,80 @@ msgstr ""
 msgid "Failed to enumerate possible video formats device '%s' can work with"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2293
+#: sys/v4l2/gstv4l2object.c:2292
 #, c-format
 msgid "Could not map buffers from device '%s'"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2301
+#: sys/v4l2/gstv4l2object.c:2300
 #, c-format
 msgid "The driver of device '%s' does not support the IO method %d"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2308
+#: sys/v4l2/gstv4l2object.c:2307
 #, c-format
 msgid "The driver of device '%s' does not support any known IO method."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2801
+#: sys/v4l2/gstv4l2object.c:2800
 #, c-format
 msgid "Device '%s' does not support video capture"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2810
+#: sys/v4l2/gstv4l2object.c:2809
 #, c-format
 msgid "Device '%s' is busy"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2816 sys/v4l2/gstv4l2object.c:2827
+#: sys/v4l2/gstv4l2object.c:2815 sys/v4l2/gstv4l2object.c:2826
 #, c-format
 msgid "Device '%s' cannot capture at %dx%d"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2836
+#: sys/v4l2/gstv4l2object.c:2835
 #, c-format
 msgid "Device '%s' cannot capture in the specified format"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2847
+#: sys/v4l2/gstv4l2object.c:2846
 #, c-format
 msgid "Device '%s' does support non-contiguous planes"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2857
+#: sys/v4l2/gstv4l2object.c:2856
 #, c-format
 msgid "Could not get parameters on device '%s'"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2865
+#: sys/v4l2/gstv4l2object.c:2864
 msgid "Video device did not accept new frame rate setting."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2958
+#: sys/v4l2/gstv4l2object.c:2957
 msgid "Video device did not provide output format."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2964
+#: sys/v4l2/gstv4l2object.c:2963
 msgid "Video device returned invalid dimensions."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2972
+#: sys/v4l2/gstv4l2object.c:2971
 msgid "Video devices uses an unsupported interlacing method."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2979
+#: sys/v4l2/gstv4l2object.c:2978
 msgid "Video devices uses an unsupported pixel format."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3392
+#: sys/v4l2/gstv4l2object.c:3393
 msgid "Failed to configure internal buffer pool."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3398
+#: sys/v4l2/gstv4l2object.c:3399
 msgid "Video device did not suggest any buffer size."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3413
+#: sys/v4l2/gstv4l2object.c:3414
 msgid "No downstream pool to import from."
 msgstr ""
 
