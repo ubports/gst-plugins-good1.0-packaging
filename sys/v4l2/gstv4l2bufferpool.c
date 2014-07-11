@@ -78,9 +78,10 @@ gst_v4l2_is_buffer_valid (GstBuffer * buffer, GstV4l2MemoryGroup ** group)
     goto done;
 
   if (gst_is_dmabuf_memory (mem))
-    mem = mem->parent;
+    mem = gst_mini_object_get_qdata (GST_MINI_OBJECT (mem),
+        GST_V4L2_MEMORY_QUARK);
 
-  if (gst_is_v4l2_memory (mem)) {
+  if (mem && gst_is_v4l2_memory (mem)) {
     GstV4l2Memory *vmem = (GstV4l2Memory *) mem;
     valid = TRUE;
     if (group)
@@ -718,6 +719,12 @@ gst_v4l2_buffer_pool_start (GstBufferPool * bpool)
   else
     max_latency = min_buffers;
 
+  /* FIXME Encoder don't negotiate amount of buffers. If we can't grow the
+   * pool, or the minimum is at V4L2 maximum, enabled copy on threshold
+   * https://bugzilla.gnome.org/show_bug.cgi?id=732288 */
+  if (!can_allocate || min_buffers == VIDEO_MAX_FRAME)
+    copy_threshold = min_latency;
+
   pool->size = size;
   pool->copy_threshold = copy_threshold;
   pool->max_latency = max_latency;
@@ -846,6 +853,11 @@ gst_v4l2_buffer_pool_flush_start (GstBufferPool * bpool)
 
   gst_poll_set_flushing (pool->poll, TRUE);
 
+  GST_OBJECT_LOCK (pool);
+  pool->empty = FALSE;
+  g_cond_broadcast (&pool->empty_cond);
+  GST_OBJECT_UNLOCK (pool);
+
   if (pool->other_pool)
     gst_buffer_pool_set_flushing (pool->other_pool, TRUE);
 }
@@ -934,6 +946,11 @@ gst_v4l2_buffer_pool_poll (GstV4l2BufferPool * pool)
 {
   gint ret;
 
+  GST_OBJECT_LOCK (pool);
+  while (pool->empty)
+    g_cond_wait (&pool->empty_cond, GST_OBJECT_GET_LOCK (pool));
+  GST_OBJECT_UNLOCK (pool);
+
   if (!pool->can_poll_device)
     goto done;
 
@@ -958,6 +975,9 @@ again:
         goto select_error;
     }
   }
+
+  if (gst_poll_fd_has_error (pool->poll, &pool->pollfd))
+    goto select_error;
 
 done:
   return GST_FLOW_OK;
@@ -1000,6 +1020,11 @@ gst_v4l2_buffer_pool_qbuf (GstV4l2BufferPool * pool, GstBuffer * buf)
 
   if (!gst_v4l2_allocator_qbuf (pool->vallocator, group))
     goto queue_failed;
+
+  GST_OBJECT_LOCK (pool);
+  pool->empty = FALSE;
+  g_cond_signal (&pool->empty_cond);
+  GST_OBJECT_UNLOCK (pool);
 
   return GST_FLOW_OK;
 
@@ -1047,7 +1072,11 @@ gst_v4l2_buffer_pool_dqbuf (GstV4l2BufferPool * pool, GstBuffer ** buffer)
 
   /* mark the buffer outstanding */
   pool->buffers[group->buffer.index] = NULL;
-  g_atomic_int_add (&pool->num_queued, -1);
+  if (g_atomic_int_dec_and_test (&pool->num_queued)) {
+    GST_OBJECT_LOCK (pool);
+    pool->empty = TRUE;
+    GST_OBJECT_UNLOCK (pool);
+  }
 
   timestamp = GST_TIMEVAL_TO_TIME (group->buffer.timestamp);
 
@@ -1354,6 +1383,8 @@ gst_v4l2_buffer_pool_init (GstV4l2BufferPool * pool)
 {
   pool->poll = gst_poll_new (TRUE);
   pool->can_poll_device = TRUE;
+  g_cond_init (&pool->empty_cond);
+  pool->empty = TRUE;
 }
 
 static void
@@ -1389,7 +1420,6 @@ gst_v4l2_buffer_pool_new (GstV4l2Object * obj, GstCaps * caps)
   GstStructure *config;
   gchar *name, *parent_name;
   gint fd;
-  GstPollFD pollfd = GST_POLL_FD_INIT;
 
   fd = v4l2_dup (obj->video_fd);
   if (fd < 0)
@@ -1405,12 +1435,13 @@ gst_v4l2_buffer_pool_new (GstV4l2Object * obj, GstCaps * caps)
       "name", name, NULL);
   g_free (name);
 
-  pollfd.fd = fd;
-  gst_poll_add_fd (pool->poll, &pollfd);
+  gst_poll_fd_init (&pool->pollfd);
+  pool->pollfd.fd = fd;
+  gst_poll_add_fd (pool->poll, &pool->pollfd);
   if (V4L2_TYPE_IS_OUTPUT (obj->type))
-    gst_poll_fd_ctl_write (pool->poll, &pollfd, TRUE);
+    gst_poll_fd_ctl_write (pool->poll, &pool->pollfd, TRUE);
   else
-    gst_poll_fd_ctl_read (pool->poll, &pollfd, TRUE);
+    gst_poll_fd_ctl_read (pool->poll, &pool->pollfd, TRUE);
 
   pool->video_fd = fd;
   pool->obj = obj;

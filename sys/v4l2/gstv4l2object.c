@@ -1948,6 +1948,8 @@ gst_v4l2_object_probe_caps_for_format (GstV4l2Object * v4l2object,
     GST_DEBUG_OBJECT (v4l2object->element,
         "done iterating discrete frame sizes");
   } else if (size.type == V4L2_FRMSIZE_TYPE_STEPWISE) {
+    guint32 maxw, maxh, step_w, step_h;
+
     GST_DEBUG_OBJECT (v4l2object->element, "we have stepwise frame sizes:");
     GST_DEBUG_OBJECT (v4l2object->element, "min width:   %d",
         size.stepwise.min_width);
@@ -1962,21 +1964,34 @@ gst_v4l2_object_probe_caps_for_format (GstV4l2Object * v4l2object,
     GST_DEBUG_OBJECT (v4l2object->element, "step height: %d",
         size.stepwise.step_height);
 
-    for (w = size.stepwise.min_width, h = size.stepwise.min_height;
-        w <= size.stepwise.max_width && h <= size.stepwise.max_height;
-        w += size.stepwise.step_width, h += size.stepwise.step_height) {
-      if (w == 0 || h == 0)
-        continue;
+    w = MAX (size.stepwise.min_width, 1);
+    h = MAX (size.stepwise.min_height, 1);
+    maxw = MIN (size.stepwise.max_width, G_MAXINT);
+    maxh = MIN (size.stepwise.max_height, G_MAXINT);
 
-      tmp =
-          gst_v4l2_object_probe_caps_for_format_and_size (v4l2object,
-          pixelformat, w, h, template);
+    step_w = MAX (size.stepwise.step_width, 1);
+    step_h = MAX (size.stepwise.step_height, 1);
 
-      if (tmp)
-        results = g_list_prepend (results, tmp);
+    /* FIXME: check for sanity and that min/max are multiples of the steps */
+
+    /* we only query details for the max width/height since it's likely the
+     * most restricted if there are any resolution-dependent restrictions */
+    tmp = gst_v4l2_object_probe_caps_for_format_and_size (v4l2object,
+        pixelformat, maxw, maxh, template);
+
+    if (tmp) {
+      GValue step_range = G_VALUE_INIT;
+
+      g_value_init (&step_range, GST_TYPE_INT_RANGE);
+      gst_value_set_int_range_step (&step_range, w, maxw, step_w);
+      gst_structure_set_value (tmp, "width", &step_range);
+
+      gst_value_set_int_range_step (&step_range, h, maxh, step_h);
+      gst_structure_take_value (tmp, "height", &step_range);
+
+      /* no point using the results list here, since there's only one struct */
+      gst_v4l2_object_update_and_append (v4l2object, pixelformat, ret, tmp);
     }
-    GST_DEBUG_OBJECT (v4l2object->element,
-        "done iterating stepwise frame sizes");
   } else if (size.type == V4L2_FRMSIZE_TYPE_CONTINUOUS) {
     guint32 maxw, maxh;
 
@@ -2129,10 +2144,9 @@ static gboolean
 gst_v4l2_object_get_nearest_size (GstV4l2Object * v4l2object,
     guint32 pixelformat, gint * width, gint * height, gboolean * interlaced)
 {
-  struct v4l2_format fmt, prevfmt;
+  struct v4l2_format fmt;
   int fd;
   int r;
-  int prevfmt_valid = FALSE;
   gboolean ret = FALSE;
 
   g_return_val_if_fail (width != NULL, FALSE);
@@ -2145,15 +2159,6 @@ gst_v4l2_object_get_nearest_size (GstV4l2Object * v4l2object,
   fd = v4l2object->video_fd;
 
   memset (&fmt, 0, sizeof (struct v4l2_format));
-  memset (&prevfmt, 0, sizeof (struct v4l2_format));
-
-  /* Some drivers are buggy and will modify the currently set format
-     when processing VIDIOC_TRY_FMT, so we remember what is set at the
-     minute, and will reset it when done. */
-  if (!v4l2object->no_initial_format) {
-    prevfmt.type = v4l2object->type;
-    prevfmt_valid = (v4l2_ioctl (fd, VIDIOC_G_FMT, &prevfmt) >= 0);
-  }
 
   /* get size delimiters */
   memset (&fmt, 0, sizeof (fmt));
@@ -2234,12 +2239,6 @@ error:
     GST_WARNING_OBJECT (v4l2object->element,
         "Unable to try format: %s", g_strerror (errno));
   }
-  if (prevfmt_valid)
-    if (v4l2_ioctl (fd, VIDIOC_S_FMT, &prevfmt) < 0) {
-      GST_WARNING_OBJECT (v4l2object->element,
-          "Unable to restore format after trying format: %s",
-          g_strerror (errno));
-    }
 
   return ret;
 }
@@ -3361,11 +3360,13 @@ setup_other_pool:
     }
   }
 
-  /* For simplicity, simply read back the active configuration, so our base
-   * class get the right information */
-  config = gst_buffer_pool_get_config (pool);
-  gst_buffer_pool_config_get_params (config, NULL, &size, &min, &max);
-  gst_structure_free (config);
+  if (pool) {
+    /* For simplicity, simply read back the active configuration, so our base
+     * class get the right information */
+    config = gst_buffer_pool_get_config (pool);
+    gst_buffer_pool_config_get_params (config, NULL, &size, &min, &max);
+    gst_structure_free (config);
+  }
 
 done:
   if (update)
