@@ -8,15 +8,15 @@
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-souphttpsrc.html" title="souphttpsrc">
 <link rel="next" href="gst-plugins-good-plugins-speexenc.html" title="speexenc">
-<meta name="generator" content="GTK-Doc V1.20 (XML mode)">
+<meta name="generator" content="GTK-Doc V1.21 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
-<table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="10"><tr valign="middle">
+<table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="5"><tr valign="middle">
 <td width="100%" align="left" class="shortcuts">
-<a href="#" class="shortcut">Top</a><span id="nav_description"> <span class="dim">|</span> 
-                  <a href="#gst-plugins-good-plugins-spectrum.description" class="shortcut">Description</a></span><span id="nav_hierarchy"> <span class="dim">|</span> 
-                  <a href="#gst-plugins-good-plugins-spectrum.object-hierarchy" class="shortcut">Object Hierarchy</a></span><span id="nav_properties"> <span class="dim">|</span> 
+<a href="#" class="shortcut">Top</a><span id="nav_description">  <span class="dim">|</span> 
+                  <a href="#gst-plugins-good-plugins-spectrum.description" class="shortcut">Description</a></span><span id="nav_hierarchy">  <span class="dim">|</span> 
+                  <a href="#gst-plugins-good-plugins-spectrum.object-hierarchy" class="shortcut">Object Hierarchy</a></span><span id="nav_properties">  <span class="dim">|</span> 
                   <a href="#gst-plugins-good-plugins-spectrum.properties" class="shortcut">Properties</a></span>
 </td>
 <td><a accesskey="h" href="index.html"><img src="home.png" width="16" height="16" border="0" alt="Home"></a></td>
@@ -325,8 +325,8 @@ channels and the second dimension are the values.</p>
 <span class="function">message_handler</span> <span class="gtkdoc opt">(</span>GstBus <span class="gtkdoc opt">*</span> bus<span class="gtkdoc opt">,</span> GstMessage <span class="gtkdoc opt">*</span> message<span class="gtkdoc opt">,</span> gpointer data<span class="gtkdoc opt">)</span>
 <span class="gtkdoc opt">{</span>
   <span class="keyword">if</span> <span class="gtkdoc opt">(</span>message<span class="gtkdoc opt">-&gt;</span>type <span class="gtkdoc opt">==</span> GST_MESSAGE_ELEMENT<span class="gtkdoc opt">) {</span>
-    <span class="gtkdoc kwb">const</span> GstStructure <span class="gtkdoc opt">*</span>s <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstMessage.html#gst-message-get-structure">gst_message_get_structure</a></span> <span class="gtkdoc opt">(</span>message<span class="gtkdoc opt">);</span>
-    <span class="gtkdoc kwb">const</span> gchar <span class="gtkdoc opt">*</span>name <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstStructure.html#gst-structure-get-name">gst_structure_get_name</a></span> <span class="gtkdoc opt">(</span>s<span class="gtkdoc opt">);</span>
+    <span class="gtkdoc kwb">const</span> GstStructure <span class="gtkdoc opt">*</span>s <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstMessage.html#gst-message-get-structure">gst_message_get_structure</a></span> <span class="gtkdoc opt">(</span>message<span class="gtkdoc opt">);</span>
+    <span class="gtkdoc kwb">const</span> gchar <span class="gtkdoc opt">*</span>name <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstStructure.html#gst-structure-get-name">gst_structure_get_name</a></span> <span class="gtkdoc opt">(</span>s<span class="gtkdoc opt">);</span>
     GstClockTime endtime<span class="gtkdoc opt">;</span>
 
     <span class="keyword">if</span> <span class="gtkdoc opt">(</span><span class="function">strcmp</span> <span class="gtkdoc opt">(</span>name<span class="gtkdoc opt">,</span> <span class="string">&quot;spectrum&quot;</span><span class="gtkdoc opt">) ==</span> <span class="number">0</span><span class="gtkdoc opt">) {</span>
@@ -336,14 +336,14 @@ channels and the second dimension are the values.</p>
       gdouble freq<span class="gtkdoc opt">;</span>
       guint i<span class="gtkdoc opt">;</span>
 
-      <span class="keyword">if</span> <span class="gtkdoc opt">(!</span><span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstStructure.html#gst-structure-get-clock-time">gst_structure_get_clock_time</a></span> <span class="gtkdoc opt">(</span>s<span class="gtkdoc opt">,</span> <span class="string">&quot;endtime&quot;</span><span class="gtkdoc opt">, &amp;</span>endtime<span class="gtkdoc opt">))</span>
+      <span class="keyword">if</span> <span class="gtkdoc opt">(!</span><span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstStructure.html#gst-structure-get-clock-time">gst_structure_get_clock_time</a></span> <span class="gtkdoc opt">(</span>s<span class="gtkdoc opt">,</span> <span class="string">&quot;endtime&quot;</span><span class="gtkdoc opt">, &amp;</span>endtime<span class="gtkdoc opt">))</span>
         endtime <span class="gtkdoc opt">=</span> GST_CLOCK_TIME_NONE<span class="gtkdoc opt">;</span>
 
       <span class="function"><a href="http://library.gnome.org/devel/glib/unstable/glib-Warnings-and-Assertions.html#g-print">g_print</a></span> <span class="gtkdoc opt">(</span><span class="string">&quot;New spectrum message, endtime %&quot;</span> GST_TIME_FORMAT <span class="string">&quot;</span><span class="gtkdoc esc">\n</span><span class="string">&quot;</span><span class="gtkdoc opt">,</span>
           <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstInfo.html#GST-TIME-ARGS:CAPS">GST_TIME_ARGS</a></span> <span class="gtkdoc opt">(</span>endtime<span class="gtkdoc opt">));</span>
 
-      magnitudes <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstStructure.html#gst-structure-get-value">gst_structure_get_value</a></span> <span class="gtkdoc opt">(</span>s<span class="gtkdoc opt">,</span> <span class="string">&quot;magnitude&quot;</span><span class="gtkdoc opt">);</span>
-      phases <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstStructure.html#gst-structure-get-value">gst_structure_get_value</a></span> <span class="gtkdoc opt">(</span>s<span class="gtkdoc opt">,</span> <span class="string">&quot;phase&quot;</span><span class="gtkdoc opt">);</span>
+      magnitudes <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstStructure.html#gst-structure-get-value">gst_structure_get_value</a></span> <span class="gtkdoc opt">(</span>s<span class="gtkdoc opt">,</span> <span class="string">&quot;magnitude&quot;</span><span class="gtkdoc opt">);</span>
+      phases <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstStructure.html#gst-structure-get-value">gst_structure_get_value</a></span> <span class="gtkdoc opt">(</span>s<span class="gtkdoc opt">,</span> <span class="string">&quot;phase&quot;</span><span class="gtkdoc opt">);</span>
 
       <span class="keyword">for</span> <span class="gtkdoc opt">(</span>i <span class="gtkdoc opt">=</span> <span class="number">0</span><span class="gtkdoc opt">;</span> i <span class="gtkdoc opt">&lt;</span> spect_bands<span class="gtkdoc opt">; ++</span>i<span class="gtkdoc opt">) {</span>
         freq <span class="gtkdoc opt">= (</span>gdouble<span class="gtkdoc opt">) ((</span>AUDIOFREQ <span class="gtkdoc opt">/</span> <span class="number">2</span><span class="gtkdoc opt">) *</span> i <span class="gtkdoc opt">+</span> AUDIOFREQ <span class="gtkdoc opt">/</span> <span class="number">4</span><span class="gtkdoc opt">) /</span> spect_bands<span class="gtkdoc opt">;</span>
@@ -388,7 +388,7 @@ channels and the second dimension are the values.</p>
 
   <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstBin.html#gst-bin-add-many">gst_bin_add_many</a></span> <span class="gtkdoc opt">(</span><span class="function">GST_BIN</span> <span class="gtkdoc opt">(</span>bin<span class="gtkdoc opt">),</span> src<span class="gtkdoc opt">,</span> audioconvert<span class="gtkdoc opt">,</span> spectrum<span class="gtkdoc opt">,</span> sink<span class="gtkdoc opt">,</span> NULL<span class="gtkdoc opt">);</span>
 
-  caps <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstCaps.html#gst-caps-new-simple">gst_caps_new_simple</a></span> <span class="gtkdoc opt">(</span><span class="string">&quot;audio/x-raw&quot;</span><span class="gtkdoc opt">,</span>
+  caps <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstCaps.html#gst-caps-new-simple">gst_caps_new_simple</a></span> <span class="gtkdoc opt">(</span><span class="string">&quot;audio/x-raw&quot;</span><span class="gtkdoc opt">,</span>
       <span class="string">&quot;rate&quot;</span><span class="gtkdoc opt">,</span> G_TYPE_INT<span class="gtkdoc opt">,</span> AUDIOFREQ<span class="gtkdoc opt">,</span> NULL<span class="gtkdoc opt">);</span>
 
   <span class="keyword">if</span> <span class="gtkdoc opt">(!</span><span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstElement.html#gst-element-link">gst_element_link</a></span> <span class="gtkdoc opt">(</span>src<span class="gtkdoc opt">,</span> audioconvert<span class="gtkdoc opt">) ||</span>
@@ -397,7 +397,7 @@ channels and the second dimension are the values.</p>
     <span class="function">fprintf</span> <span class="gtkdoc opt">(</span>stderr<span class="gtkdoc opt">,</span> <span class="string">&quot;can't link elements</span><span class="gtkdoc esc">\n</span><span class="string">&quot;</span><span class="gtkdoc opt">);</span>
     <span class="function">exit</span> <span class="gtkdoc opt">(</span><span class="number">1</span><span class="gtkdoc opt">);</span>
   <span class="gtkdoc opt">}</span>
-  <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstCaps.html#gst-caps-unref">gst_caps_unref</a></span> <span class="gtkdoc opt">(</span>caps<span class="gtkdoc opt">);</span>
+  <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstCaps.html#gst-caps-unref">gst_caps_unref</a></span> <span class="gtkdoc opt">(</span>caps<span class="gtkdoc opt">);</span>
 
   bus <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstElement.html#gst-element-get-bus">gst_element_get_bus</a></span> <span class="gtkdoc opt">(</span>bin<span class="gtkdoc opt">);</span>
   <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstBus.html#gst-bus-add-watch">gst_bus_add_watch</a></span> <span class="gtkdoc opt">(</span>bus<span class="gtkdoc opt">,</span> message_handler<span class="gtkdoc opt">,</span> NULL<span class="gtkdoc opt">);</span>
@@ -587,6 +587,6 @@ channels and the second dimension are the values.</p>
 </div>
 <div class="footer">
 <hr>
-          Generated by GTK-Doc V1.20</div>
+          Generated by GTK-Doc V1.21</div>
 </body>
 </html>

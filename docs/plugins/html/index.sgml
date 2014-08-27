@@ -530,7 +530,6 @@
 <ANCHOR id="GstDiceTV-reset" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-dicetv.html#GstDiceTV-reset">
 <ANCHOR id="gst-plugins-good-plugins-directsoundsink" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-directsoundsink.html">
 <ANCHOR id="gst-plugins-good-plugins-directsoundsink.other" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-directsoundsink.html#gst-plugins-good-plugins-directsoundsink.other">
-<ANCHOR id="gst-plugins-good-plugins-directsoundsink.object-hierarchy" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-directsoundsink.html#gst-plugins-good-plugins-directsoundsink.object-hierarchy">
 <ANCHOR id="gst-plugins-good-plugins-directsoundsink.description" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-directsoundsink.html#gst-plugins-good-plugins-directsoundsink.description">
 <ANCHOR id="gst-plugins-good-plugins-directsoundsink.functions_details" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-directsoundsink.html#gst-plugins-good-plugins-directsoundsink.functions_details">
 <ANCHOR id="gst-plugins-good-plugins-directsoundsink.other_details" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-directsoundsink.html#gst-plugins-good-plugins-directsoundsink.other_details">
@@ -978,7 +977,6 @@
 <ANCHOR id="GstMJ2Mux--trak-timescale" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-mj2mux.html#GstMJ2Mux--trak-timescale">
 <ANCHOR id="gst-plugins-good-plugins-monoscope" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-monoscope.html">
 <ANCHOR id="gst-plugins-good-plugins-monoscope.other" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-monoscope.html#gst-plugins-good-plugins-monoscope.other">
-<ANCHOR id="gst-plugins-good-plugins-monoscope.object-hierarchy" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-monoscope.html#gst-plugins-good-plugins-monoscope.object-hierarchy">
 <ANCHOR id="gst-plugins-good-plugins-monoscope.description" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-monoscope.html#gst-plugins-good-plugins-monoscope.description">
 <ANCHOR id="gst-plugins-good-plugins-monoscope.functions_details" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-monoscope.html#gst-plugins-good-plugins-monoscope.functions_details">
 <ANCHOR id="gst-plugins-good-plugins-monoscope.other_details" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-monoscope.html#gst-plugins-good-plugins-monoscope.other_details">
@@ -1199,7 +1197,6 @@
 <ANCHOR id="gst-plugins-good-plugins-osxaudiosink" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-osxaudiosink.html">
 <ANCHOR id="gst-plugins-good-plugins-osxaudiosink.properties" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-osxaudiosink.html#gst-plugins-good-plugins-osxaudiosink.properties">
 <ANCHOR id="gst-plugins-good-plugins-osxaudiosink.other" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-osxaudiosink.html#gst-plugins-good-plugins-osxaudiosink.other">
-<ANCHOR id="gst-plugins-good-plugins-osxaudiosink.object-hierarchy" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-osxaudiosink.html#gst-plugins-good-plugins-osxaudiosink.object-hierarchy">
 <ANCHOR id="gst-plugins-good-plugins-osxaudiosink.description" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-osxaudiosink.html#gst-plugins-good-plugins-osxaudiosink.description">
 <ANCHOR id="gst-plugins-good-plugins-osxaudiosink.functions_details" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-osxaudiosink.html#gst-plugins-good-plugins-osxaudiosink.functions_details">
 <ANCHOR id="gst-plugins-good-plugins-osxaudiosink.other_details" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-osxaudiosink.html#gst-plugins-good-plugins-osxaudiosink.other_details">
@@ -1209,7 +1206,6 @@
 <ANCHOR id="gst-plugins-good-plugins-osxaudiosrc" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-osxaudiosrc.html">
 <ANCHOR id="gst-plugins-good-plugins-osxaudiosrc.properties" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-osxaudiosrc.html#gst-plugins-good-plugins-osxaudiosrc.properties">
 <ANCHOR id="gst-plugins-good-plugins-osxaudiosrc.other" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-osxaudiosrc.html#gst-plugins-good-plugins-osxaudiosrc.other">
-<ANCHOR id="gst-plugins-good-plugins-osxaudiosrc.object-hierarchy" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-osxaudiosrc.html#gst-plugins-good-plugins-osxaudiosrc.object-hierarchy">
 <ANCHOR id="gst-plugins-good-plugins-osxaudiosrc.description" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-osxaudiosrc.html#gst-plugins-good-plugins-osxaudiosrc.description">
 <ANCHOR id="gst-plugins-good-plugins-osxaudiosrc.functions_details" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-osxaudiosrc.html#gst-plugins-good-plugins-osxaudiosrc.functions_details">
 <ANCHOR id="gst-plugins-good-plugins-osxaudiosrc.other_details" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-osxaudiosrc.html#gst-plugins-good-plugins-osxaudiosrc.other_details">
@@ -1219,7 +1215,6 @@
 <ANCHOR id="gst-plugins-good-plugins-osxvideosink" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-osxvideosink.html">
 <ANCHOR id="gst-plugins-good-plugins-osxvideosink.properties" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-osxvideosink.html#gst-plugins-good-plugins-osxvideosink.properties">
 <ANCHOR id="gst-plugins-good-plugins-osxvideosink.other" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-osxvideosink.html#gst-plugins-good-plugins-osxvideosink.other">
-<ANCHOR id="gst-plugins-good-plugins-osxvideosink.object-hierarchy" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-osxvideosink.html#gst-plugins-good-plugins-osxvideosink.object-hierarchy">
 <ANCHOR id="gst-plugins-good-plugins-osxvideosink.description" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-osxvideosink.html#gst-plugins-good-plugins-osxvideosink.description">
 <ANCHOR id="gst-plugins-good-plugins-osxvideosink.functions_details" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-osxvideosink.html#gst-plugins-good-plugins-osxvideosink.functions_details">
 <ANCHOR id="gst-plugins-good-plugins-osxvideosink.other_details" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-osxvideosink.html#gst-plugins-good-plugins-osxvideosink.other_details">
@@ -1507,13 +1502,11 @@
 <ANCHOR id="GstRtpAMRPay-struct" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpamrpay.html#GstRtpAMRPay-struct">
 <ANCHOR id="gst-plugins-good-plugins-rtpamrpay.see-also" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpamrpay.html#gst-plugins-good-plugins-rtpamrpay.see-also">
 <ANCHOR id="gst-plugins-good-plugins-rtpbvdepay" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbvdepay.html">
-<ANCHOR id="gst-plugins-good-plugins-rtpbvdepay.object-hierarchy" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbvdepay.html#gst-plugins-good-plugins-rtpbvdepay.object-hierarchy">
 <ANCHOR id="gst-plugins-good-plugins-rtpbvdepay.description" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbvdepay.html#gst-plugins-good-plugins-rtpbvdepay.description">
 <ANCHOR id="gst-plugins-good-plugins-rtpbvdepay.functions_details" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbvdepay.html#gst-plugins-good-plugins-rtpbvdepay.functions_details">
 <ANCHOR id="gst-plugins-good-plugins-rtpbvdepay.other_details" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbvdepay.html#gst-plugins-good-plugins-rtpbvdepay.other_details">
 <ANCHOR id="gst-plugins-good-plugins-rtpbvdepay.see-also" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbvdepay.html#gst-plugins-good-plugins-rtpbvdepay.see-also">
 <ANCHOR id="gst-plugins-good-plugins-rtpbvpay" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbvpay.html">
-<ANCHOR id="gst-plugins-good-plugins-rtpbvpay.object-hierarchy" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbvpay.html#gst-plugins-good-plugins-rtpbvpay.object-hierarchy">
 <ANCHOR id="gst-plugins-good-plugins-rtpbvpay.description" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbvpay.html#gst-plugins-good-plugins-rtpbvpay.description">
 <ANCHOR id="gst-plugins-good-plugins-rtpbvpay.functions_details" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbvpay.html#gst-plugins-good-plugins-rtpbvpay.functions_details">
 <ANCHOR id="gst-plugins-good-plugins-rtpbvpay.other_details" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbvpay.html#gst-plugins-good-plugins-rtpbvpay.other_details">
@@ -2255,7 +2248,6 @@
 <ANCHOR id="gst-plugins-good-plugins-videoflip.property-details" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-videoflip.html#gst-plugins-good-plugins-videoflip.property-details">
 <ANCHOR id="GstVideoFlip--method" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-videoflip.html#GstVideoFlip--method">
 <ANCHOR id="gst-plugins-good-plugins-videomixer" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-videomixer.html">
-<ANCHOR id="gst-plugins-good-plugins-videomixer.object-hierarchy" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-videomixer.html#gst-plugins-good-plugins-videomixer.object-hierarchy">
 <ANCHOR id="gst-plugins-good-plugins-videomixer.description" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-videomixer.html#gst-plugins-good-plugins-videomixer.description">
 <ANCHOR id="gst-plugins-good-plugins-videomixer.functions_details" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-videomixer.html#gst-plugins-good-plugins-videomixer.functions_details">
 <ANCHOR id="gst-plugins-good-plugins-videomixer.other_details" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-videomixer.html#gst-plugins-good-plugins-videomixer.other_details">
@@ -2363,7 +2355,6 @@
 <ANCHOR id="GstWavEnc-struct" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-wavenc.html#GstWavEnc-struct">
 <ANCHOR id="gst-plugins-good-plugins-waveformsink" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-waveformsink.html">
 <ANCHOR id="gst-plugins-good-plugins-waveformsink.other" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-waveformsink.html#gst-plugins-good-plugins-waveformsink.other">
-<ANCHOR id="gst-plugins-good-plugins-waveformsink.object-hierarchy" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-waveformsink.html#gst-plugins-good-plugins-waveformsink.object-hierarchy">
 <ANCHOR id="gst-plugins-good-plugins-waveformsink.description" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-waveformsink.html#gst-plugins-good-plugins-waveformsink.description">
 <ANCHOR id="gst-plugins-good-plugins-waveformsink.functions_details" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-waveformsink.html#gst-plugins-good-plugins-waveformsink.functions_details">
 <ANCHOR id="gst-plugins-good-plugins-waveformsink.other_details" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-waveformsink.html#gst-plugins-good-plugins-waveformsink.other_details">
@@ -2601,7 +2592,6 @@
 <ANCHOR id="GstIirEqualizer.other_details" href="gst-plugins-good-plugins-1.0/GstIirEqualizer.html#GstIirEqualizer.other_details">
 <ANCHOR id="GstIirEqualizer-struct" href="gst-plugins-good-plugins-1.0/GstIirEqualizer.html#GstIirEqualizer-struct">
 <ANCHOR id="gst-plugins-good-plugins-GstVideoMixerPad" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-GstVideoMixerPad.html">
-<ANCHOR id="gst-plugins-good-plugins-GstVideoMixerPad.object-hierarchy" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-GstVideoMixerPad.html#gst-plugins-good-plugins-GstVideoMixerPad.object-hierarchy">
 <ANCHOR id="gst-plugins-good-plugins-GstVideoMixerPad.description" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-GstVideoMixerPad.html#gst-plugins-good-plugins-GstVideoMixerPad.description">
 <ANCHOR id="gst-plugins-good-plugins-GstVideoMixerPad.functions_details" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-GstVideoMixerPad.html#gst-plugins-good-plugins-GstVideoMixerPad.functions_details">
 <ANCHOR id="gst-plugins-good-plugins-GstVideoMixerPad.other_details" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-GstVideoMixerPad.html#gst-plugins-good-plugins-GstVideoMixerPad.other_details">

@@ -8,17 +8,17 @@
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-rtpsbcpay.html" title="rtpsbcpay">
 <link rel="next" href="gst-plugins-good-plugins-rtpbin.html" title="rtpbin">
-<meta name="generator" content="GTK-Doc V1.20 (XML mode)">
+<meta name="generator" content="GTK-Doc V1.21 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
-<table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="10"><tr valign="middle">
+<table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="5"><tr valign="middle">
 <td width="100%" align="left" class="shortcuts">
-<a href="#" class="shortcut">Top</a><span id="nav_description"> <span class="dim">|</span> 
-                  <a href="#gst-plugins-good-plugins-rtspsrc.description" class="shortcut">Description</a></span><span id="nav_hierarchy"> <span class="dim">|</span> 
-                  <a href="#gst-plugins-good-plugins-rtspsrc.object-hierarchy" class="shortcut">Object Hierarchy</a></span><span id="nav_interfaces"> <span class="dim">|</span> 
-                  <a href="#gst-plugins-good-plugins-rtspsrc.implemented-interfaces" class="shortcut">Implemented Interfaces</a></span><span id="nav_properties"> <span class="dim">|</span> 
-                  <a href="#gst-plugins-good-plugins-rtspsrc.properties" class="shortcut">Properties</a></span><span id="nav_signals"> <span class="dim">|</span> 
+<a href="#" class="shortcut">Top</a><span id="nav_description">  <span class="dim">|</span> 
+                  <a href="#gst-plugins-good-plugins-rtspsrc.description" class="shortcut">Description</a></span><span id="nav_hierarchy">  <span class="dim">|</span> 
+                  <a href="#gst-plugins-good-plugins-rtspsrc.object-hierarchy" class="shortcut">Object Hierarchy</a></span><span id="nav_interfaces">  <span class="dim">|</span> 
+                  <a href="#gst-plugins-good-plugins-rtspsrc.implemented-interfaces" class="shortcut">Implemented Interfaces</a></span><span id="nav_properties">  <span class="dim">|</span> 
+                  <a href="#gst-plugins-good-plugins-rtspsrc.properties" class="shortcut">Properties</a></span><span id="nav_signals">  <span class="dim">|</span> 
                   <a href="#gst-plugins-good-plugins-rtspsrc.signals" class="shortcut">Signals</a></span>
 </td>
 <td><a accesskey="h" href="index.html"><img src="home.png" width="16" height="16" border="0" alt="Home"></a></td>
@@ -189,7 +189,7 @@
 </tr>
 <tr>
 <td class="property_type">
-<a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstStructure.html#GstStructure"><span class="type">GstStructure</span></a> *</td>
+<a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstStructure.html"><span class="type">GstStructure</span></a> *</td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--sdes" title="The “sdes” property">sdes</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
@@ -238,7 +238,7 @@
 </tr>
 <tr>
 <td class="signal_type">
-<a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstCaps.html#GstCaps"><span class="returnvalue">GstCaps</span></a>*</td>
+<a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstCaps.html"><span class="returnvalue">GstCaps</span></a>*</td>
 <td class="signal_name"><a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc-request-rtcp-key" title="The “request-rtcp-key” signal">request-rtcp-key</a></td>
 <td class="signal_flags">Run Last</td>
 </tr>
@@ -616,7 +616,7 @@ keep alive and then this property needs to be set to FALSE.</p>
 <hr>
 <div class="refsect2">
 <a name="GstRTSPSrc--sdes"></a><h3>The <code class="literal">“sdes”</code> property</h3>
-<pre class="programlisting">  “sdes”                     <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstStructure.html#GstStructure"><span class="type">GstStructure</span></a> *</pre>
+<pre class="programlisting">  “sdes”                     <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstStructure.html"><span class="type">GstStructure</span></a> *</pre>
 <p>The SDES items of this session.</p>
 <p>Flags: Read / Write</p>
 </div>
@@ -652,7 +652,7 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRT
 do any state changes on <em class="parameter"><code>rtspsrc</code></em>
  because this might deadlock. If you want
 to modify the state as a result of this signal, post a
-<a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstMessage.html#GST-MESSAGE-REQUEST-STATE:CAPS"><span class="type">GST_MESSAGE_REQUEST_STATE</span></a> message on the bus or signal the main thread
+<span class="type">GST_MESSAGE_REQUEST_STATE</span> message on the bus or signal the main thread
 in some other way.</p>
 <div class="refsect3">
 <a name="id-1.2.123.13.2.6"></a><h4>Parameters</h4>
@@ -702,7 +702,7 @@ streams in the SDP. <em class="parameter"><code>sdp</code></em>
 do any state changes on <em class="parameter"><code>rtspsrc</code></em>
  because this might deadlock. If you want
 to modify the state as a result of this signal, post a
-<a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstMessage.html#GST-MESSAGE-REQUEST-STATE:CAPS"><span class="type">GST_MESSAGE_REQUEST_STATE</span></a> message on the bus or signal the main thread
+<span class="type">GST_MESSAGE_REQUEST_STATE</span> message on the bus or signal the main thread
 in some other way.</p>
 <div class="refsect3">
 <a name="id-1.2.123.13.3.6"></a><h4>Parameters</h4>
@@ -739,7 +739,7 @@ in some other way.</p>
 <pre class="programlisting"><a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a>
 user_function (<a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc"><span class="type">GstRTSPSrc</span></a> *rtspsrc,
                <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a>       num,
-               <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstCaps.html#GstCaps"><span class="type">GstCaps</span></a>    *caps,
+               <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstCaps.html"><span class="type">GstCaps</span></a>    *caps,
                <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>    user_data)</pre>
 <p>Emited before the client decides to configure the stream <em class="parameter"><code>num</code></em>
  with
@@ -828,7 +828,7 @@ properties were configured.</p>
 <hr>
 <div class="refsect2">
 <a name="GstRTSPSrc-request-rtcp-key"></a><h3>The <code class="literal">“request-rtcp-key”</code> signal</h3>
-<pre class="programlisting"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstCaps.html#GstCaps"><span class="returnvalue">GstCaps</span></a>*
+<pre class="programlisting"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstCaps.html"><span class="returnvalue">GstCaps</span></a>*
 user_function (<a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc"><span class="type">GstRTSPSrc</span></a> *rtspsrc,
                <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a>       num,
                <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>    user_data)</pre>
@@ -869,6 +869,6 @@ and authentication, and return them wrapped in a GstCaps.</p>
 </div>
 <div class="footer">
 <hr>
-          Generated by GTK-Doc V1.20</div>
+          Generated by GTK-Doc V1.21</div>
 </body>
 </html>
