@@ -8,15 +8,15 @@
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-jpegenc.html" title="jpegenc">
 <link rel="next" href="gst-plugins-good-plugins-matroskamux.html" title="matroskamux">
-<meta name="generator" content="GTK-Doc V1.20 (XML mode)">
+<meta name="generator" content="GTK-Doc V1.21 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
-<table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="10"><tr valign="middle">
+<table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="5"><tr valign="middle">
 <td width="100%" align="left" class="shortcuts">
-<a href="#" class="shortcut">Top</a><span id="nav_description"> <span class="dim">|</span> 
-                  <a href="#gst-plugins-good-plugins-level.description" class="shortcut">Description</a></span><span id="nav_hierarchy"> <span class="dim">|</span> 
-                  <a href="#gst-plugins-good-plugins-level.object-hierarchy" class="shortcut">Object Hierarchy</a></span><span id="nav_properties"> <span class="dim">|</span> 
+<a href="#" class="shortcut">Top</a><span id="nav_description">  <span class="dim">|</span> 
+                  <a href="#gst-plugins-good-plugins-level.description" class="shortcut">Description</a></span><span id="nav_hierarchy">  <span class="dim">|</span> 
+                  <a href="#gst-plugins-good-plugins-level.object-hierarchy" class="shortcut">Object Hierarchy</a></span><span id="nav_properties">  <span class="dim">|</span> 
                   <a href="#gst-plugins-good-plugins-level.properties" class="shortcut">Properties</a></span>
 </td>
 <td><a accesskey="h" href="index.html"><img src="home.png" width="16" height="16" border="0" alt="Home"></a></td>
@@ -325,8 +325,8 @@ The message's structure contains these fields:</p>
 <span class="gtkdoc opt">{</span>
 
   <span class="keyword">if</span> <span class="gtkdoc opt">(</span>message<span class="gtkdoc opt">-&gt;</span>type <span class="gtkdoc opt">==</span> GST_MESSAGE_ELEMENT<span class="gtkdoc opt">) {</span>
-    <span class="gtkdoc kwb">const</span> GstStructure <span class="gtkdoc opt">*</span>s <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstMessage.html#gst-message-get-structure">gst_message_get_structure</a></span> <span class="gtkdoc opt">(</span>message<span class="gtkdoc opt">);</span>
-    <span class="gtkdoc kwb">const</span> gchar <span class="gtkdoc opt">*</span>name <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstStructure.html#gst-structure-get-name">gst_structure_get_name</a></span> <span class="gtkdoc opt">(</span>s<span class="gtkdoc opt">);</span>
+    <span class="gtkdoc kwb">const</span> GstStructure <span class="gtkdoc opt">*</span>s <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstMessage.html#gst-message-get-structure">gst_message_get_structure</a></span> <span class="gtkdoc opt">(</span>message<span class="gtkdoc opt">);</span>
+    <span class="gtkdoc kwb">const</span> gchar <span class="gtkdoc opt">*</span>name <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstStructure.html#gst-structure-get-name">gst_structure_get_name</a></span> <span class="gtkdoc opt">(</span>s<span class="gtkdoc opt">);</span>
 
     <span class="keyword">if</span> <span class="gtkdoc opt">(</span><span class="function">strcmp</span> <span class="gtkdoc opt">(</span>name<span class="gtkdoc opt">,</span> <span class="string">&quot;level&quot;</span><span class="gtkdoc opt">) ==</span> <span class="number">0</span><span class="gtkdoc opt">) {</span>
       gint channels<span class="gtkdoc opt">;</span>
@@ -338,17 +338,17 @@ The message's structure contains these fields:</p>
       GValueArray <span class="gtkdoc opt">*</span>rms_arr<span class="gtkdoc opt">, *</span>peak_arr<span class="gtkdoc opt">, *</span>decay_arr<span class="gtkdoc opt">;</span>
       gint i<span class="gtkdoc opt">;</span>
 
-      <span class="keyword">if</span> <span class="gtkdoc opt">(!</span><span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstStructure.html#gst-structure-get-clock-time">gst_structure_get_clock_time</a></span> <span class="gtkdoc opt">(</span>s<span class="gtkdoc opt">,</span> <span class="string">&quot;endtime&quot;</span><span class="gtkdoc opt">, &amp;</span>endtime<span class="gtkdoc opt">))</span>
+      <span class="keyword">if</span> <span class="gtkdoc opt">(!</span><span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstStructure.html#gst-structure-get-clock-time">gst_structure_get_clock_time</a></span> <span class="gtkdoc opt">(</span>s<span class="gtkdoc opt">,</span> <span class="string">&quot;endtime&quot;</span><span class="gtkdoc opt">, &amp;</span>endtime<span class="gtkdoc opt">))</span>
         <span class="function"><a href="http://library.gnome.org/devel/glib/unstable/glib-Message-Logging.html#g-warning">g_warning</a></span> <span class="gtkdoc opt">(</span><span class="string">&quot;Could not parse endtime&quot;</span><span class="gtkdoc opt">);</span>
 
       <span class="comment">/* the values are packed into GValueArrays with the value per channel */</span>
-      array_val <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstStructure.html#gst-structure-get-value">gst_structure_get_value</a></span> <span class="gtkdoc opt">(</span>s<span class="gtkdoc opt">,</span> <span class="string">&quot;rms&quot;</span><span class="gtkdoc opt">);</span>
+      array_val <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstStructure.html#gst-structure-get-value">gst_structure_get_value</a></span> <span class="gtkdoc opt">(</span>s<span class="gtkdoc opt">,</span> <span class="string">&quot;rms&quot;</span><span class="gtkdoc opt">);</span>
       rms_arr <span class="gtkdoc opt">= (</span>GValueArray <span class="gtkdoc opt">*)</span> <span class="function"><a href="http://library.gnome.org/devel/gobject/unstable/gobject-Standard-Parameter-and-Value-Types.html#g-value-get-boxed">g_value_get_boxed</a></span> <span class="gtkdoc opt">(</span>array_val<span class="gtkdoc opt">);</span>
 
-      array_val <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstStructure.html#gst-structure-get-value">gst_structure_get_value</a></span> <span class="gtkdoc opt">(</span>s<span class="gtkdoc opt">,</span> <span class="string">&quot;peak&quot;</span><span class="gtkdoc opt">);</span>
+      array_val <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstStructure.html#gst-structure-get-value">gst_structure_get_value</a></span> <span class="gtkdoc opt">(</span>s<span class="gtkdoc opt">,</span> <span class="string">&quot;peak&quot;</span><span class="gtkdoc opt">);</span>
       peak_arr <span class="gtkdoc opt">= (</span>GValueArray <span class="gtkdoc opt">*)</span> <span class="function"><a href="http://library.gnome.org/devel/gobject/unstable/gobject-Standard-Parameter-and-Value-Types.html#g-value-get-boxed">g_value_get_boxed</a></span> <span class="gtkdoc opt">(</span>array_val<span class="gtkdoc opt">);</span>
 
-      array_val <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstStructure.html#gst-structure-get-value">gst_structure_get_value</a></span> <span class="gtkdoc opt">(</span>s<span class="gtkdoc opt">,</span> <span class="string">&quot;decay&quot;</span><span class="gtkdoc opt">);</span>
+      array_val <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstStructure.html#gst-structure-get-value">gst_structure_get_value</a></span> <span class="gtkdoc opt">(</span>s<span class="gtkdoc opt">,</span> <span class="string">&quot;decay&quot;</span><span class="gtkdoc opt">);</span>
       decay_arr <span class="gtkdoc opt">= (</span>GValueArray <span class="gtkdoc opt">*)</span> <span class="function"><a href="http://library.gnome.org/devel/gobject/unstable/gobject-Standard-Parameter-and-Value-Types.html#g-value-get-boxed">g_value_get_boxed</a></span> <span class="gtkdoc opt">(</span>array_val<span class="gtkdoc opt">);</span>
 
       <span class="comment">/* we can get the number of channels as the length of any of the value</span>
@@ -393,7 +393,7 @@ The message's structure contains these fields:</p>
 
   <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-Gst.html#gst-init">gst_init</a></span> <span class="gtkdoc opt">(&amp;</span>argc<span class="gtkdoc opt">, &amp;</span>argv<span class="gtkdoc opt">);</span>
 
-  caps <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstCaps.html#gst-caps-from-string">gst_caps_from_string</a></span> <span class="gtkdoc opt">(</span><span class="string">&quot;audio/x-raw,channels=2&quot;</span><span class="gtkdoc opt">);</span>
+  caps <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstCaps.html#gst-caps-from-string">gst_caps_from_string</a></span> <span class="gtkdoc opt">(</span><span class="string">&quot;audio/x-raw,channels=2&quot;</span><span class="gtkdoc opt">);</span>
 
   pipeline <span class="gtkdoc opt">=</span> <span class="function"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstPipeline.html#gst-pipeline-new">gst_pipeline_new</a></span> <span class="gtkdoc opt">(</span>NULL<span class="gtkdoc opt">);</span>
   <span class="function"><a href="http://library.gnome.org/devel/glib/unstable/glib-Testing.html#g-assert">g_assert</a></span> <span class="gtkdoc opt">(</span>pipeline<span class="gtkdoc opt">);</span>
@@ -585,6 +585,6 @@ The message's structure contains these fields:</p>
 </div>
 <div class="footer">
 <hr>
-          Generated by GTK-Doc V1.20</div>
+          Generated by GTK-Doc V1.21</div>
 </body>
 </html>

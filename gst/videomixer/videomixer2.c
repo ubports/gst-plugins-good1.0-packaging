@@ -248,7 +248,7 @@ gst_videomixer2_update_src_caps (GstVideoMixer2 * mix)
     caps = gst_video_info_to_caps (&info);
 
     peercaps = gst_pad_peer_query_caps (mix->srcpad, NULL);
-    if (peercaps) {
+    if (peercaps && !gst_caps_can_intersect (peercaps, caps)) {
       GstCaps *tmp;
 
       s = gst_caps_get_structure (caps, 0);
@@ -316,8 +316,11 @@ gst_videomixer2_update_converters (GstVideoMixer2 * mix)
 
   downstream_caps = gst_pad_get_allowed_caps (mix->srcpad);
 
-  if (!downstream_caps || gst_caps_is_empty (downstream_caps))
+  if (!downstream_caps || gst_caps_is_empty (downstream_caps)) {
+    if (downstream_caps)
+      gst_caps_unref (downstream_caps);
     return FALSE;
+  }
 
   formats_table = g_hash_table_new (g_direct_hash, g_direct_equal);
 
@@ -2116,6 +2119,7 @@ gst_videomixer2_release_pad (GstElement * element, GstPad * pad)
 
   if (mixpad->convert)
     videomixer_videoconvert_convert_free (mixpad->convert);
+  mixpad->convert = NULL;
 
   mix->sinkpads = g_slist_remove (mix->sinkpads, pad);
   gst_child_proxy_child_removed (GST_CHILD_PROXY (mix), G_OBJECT (mixpad),
@@ -2164,6 +2168,7 @@ gst_videomixer2_dispose (GObject * o)
 
     if (mixpad->convert)
       videomixer_videoconvert_convert_free (mixpad->convert);
+    mixpad->convert = NULL;
   }
 
   if (mix->pending_tags) {

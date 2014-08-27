@@ -8,15 +8,15 @@
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-revtv.html" title="revtv">
 <link rel="next" href="gst-plugins-good-plugins-rglimiter.html" title="rglimiter">
-<meta name="generator" content="GTK-Doc V1.20 (XML mode)">
+<meta name="generator" content="GTK-Doc V1.21 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
-<table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="10"><tr valign="middle">
+<table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="5"><tr valign="middle">
 <td width="100%" align="left" class="shortcuts">
-<a href="#" class="shortcut">Top</a><span id="nav_description"> <span class="dim">|</span> 
-                  <a href="#gst-plugins-good-plugins-rganalysis.description" class="shortcut">Description</a></span><span id="nav_hierarchy"> <span class="dim">|</span> 
-                  <a href="#gst-plugins-good-plugins-rganalysis.object-hierarchy" class="shortcut">Object Hierarchy</a></span><span id="nav_properties"> <span class="dim">|</span> 
+<a href="#" class="shortcut">Top</a><span id="nav_description">  <span class="dim">|</span> 
+                  <a href="#gst-plugins-good-plugins-rganalysis.description" class="shortcut">Description</a></span><span id="nav_hierarchy">  <span class="dim">|</span> 
+                  <a href="#gst-plugins-good-plugins-rganalysis.object-hierarchy" class="shortcut">Object Hierarchy</a></span><span id="nav_properties">  <span class="dim">|</span> 
                   <a href="#gst-plugins-good-plugins-rganalysis.properties" class="shortcut">Properties</a></span>
 </td>
 <td><a accesskey="h" href="index.html"><img src="home.png" width="16" height="16" border="0" alt="Home"></a></td>
@@ -98,7 +98,7 @@ receives an EOS event, it finalizes the ongoing analysis and generates a tag
 list containing the results.  It is sent downstream with a tag event and
 posted on the message bus with a tag message.  The EOS event is forwarded as
 normal afterwards.  Result tag lists at least contain the tags
-<a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstTagList.html#GST-TAG-TRACK-GAIN:CAPS"><span class="type">GST_TAG_TRACK_GAIN</span></a>, <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstTagList.html#GST-TAG-TRACK-PEAK:CAPS"><span class="type">GST_TAG_TRACK_PEAK</span></a> and <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstTagList.html#GST-TAG-REFERENCE-LEVEL:CAPS"><span class="type">GST_TAG_REFERENCE_LEVEL</span></a>.</p>
+<a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstTagList.html#GST-TAG-TRACK-GAIN:CAPS"><span class="type">GST_TAG_TRACK_GAIN</span></a>, <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstTagList.html#GST-TAG-TRACK-PEAK:CAPS"><span class="type">GST_TAG_TRACK_PEAK</span></a> and <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstTagList.html#GST-TAG-REFERENCE-LEVEL:CAPS"><span class="type">GST_TAG_REFERENCE_LEVEL</span></a>.</p>
 <p>Because the generated metadata tags become available at the end of streams,
 downstream muxer and encoder elements are normally unable to save them in
 their output since they generally save metadata in the file header.
@@ -297,7 +297,7 @@ will be processed as album tracks.</p>
 <p>Every time an EOS event is received, the value of this property is
 decremented by one.  As it reaches zero, it is assumed that the last track
 of the album finished.  The tag list for the final stream will contain the
-additional tags <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstTagList.html#GST-TAG-ALBUM-GAIN:CAPS"><span class="type">GST_TAG_ALBUM_GAIN</span></a> and <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstTagList.html#GST-TAG-ALBUM-PEAK:CAPS"><span class="type">GST_TAG_ALBUM_PEAK</span></a>.  All other
+additional tags <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstTagList.html#GST-TAG-ALBUM-GAIN:CAPS"><span class="type">GST_TAG_ALBUM_GAIN</span></a> and <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstTagList.html#GST-TAG-ALBUM-PEAK:CAPS"><span class="type">GST_TAG_ALBUM_PEAK</span></a>.  All other
 streams just get the two track tags posted because the values for the album
 tags are not known before all tracks are analyzed.  Applications need to
 ensure that the album gain and peak values are also associated with the
@@ -333,7 +333,7 @@ that the algorithm has the general tendency to produce adjustment values
 that are 6 dB too low.  Bumping the reference level by 6 dB compensated for
 this.</p>
 <p>The problem of the reference level being ambiguous for lack of concise
-standardization is to be solved by adopting the <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/gstreamer-GstTagList.html#GST-TAG-REFERENCE-LEVEL:CAPS"><span class="type">GST_TAG_REFERENCE_LEVEL</span></a>
+standardization is to be solved by adopting the <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstTagList.html#GST-TAG-REFERENCE-LEVEL:CAPS"><span class="type">GST_TAG_REFERENCE_LEVEL</span></a>
 tag, which allows to store the used value alongside the gain values.</p>
 <p>Flags: Read / Write</p>
 <p>Allowed values: [0,150]</p>
@@ -355,6 +355,6 @@ tag, which allows to store the used value alongside the gain values.</p>
 </div>
 <div class="footer">
 <hr>
-          Generated by GTK-Doc V1.20</div>
+          Generated by GTK-Doc V1.21</div>
 </body>
 </html>
