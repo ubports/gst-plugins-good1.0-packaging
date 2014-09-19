@@ -5,9 +5,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: gst-plugins-good 1.4.1\n"
+"Project-Id-Version: gst-plugins-good 1.4.2\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2014-08-27 14:30+0300\n"
+"POT-Creation-Date: 2014-09-19 10:57+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -41,28 +41,28 @@ msgstr ""
 msgid "No URL set."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1205
+#: ext/soup/gstsouphttpsrc.c:1216
 msgid "Server does not support seeking."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1479
+#: ext/soup/gstsouphttpsrc.c:1491
 msgid "Could not resolve server name."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1485
+#: ext/soup/gstsouphttpsrc.c:1497
 msgid "Could not establish connection to server."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1490
+#: ext/soup/gstsouphttpsrc.c:1502
 msgid "Secure connection setup failed."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1500
+#: ext/soup/gstsouphttpsrc.c:1512
 msgid ""
 "A network error occured, or the server closed the connection unexpectedly."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1507
+#: ext/soup/gstsouphttpsrc.c:1519
 msgid "Server sent bad data."
 msgstr ""
 
@@ -125,7 +125,7 @@ msgid ""
 "plugin."
 msgstr ""
 
-#: gst/wavparse/gstwavparse.c:2177
+#: gst/wavparse/gstwavparse.c:2185
 msgid "Internal data flow error."
 msgstr ""
 
@@ -262,80 +262,80 @@ msgstr ""
 msgid "Failed to enumerate possible video formats device '%s' can work with"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2292
+#: sys/v4l2/gstv4l2object.c:2310
 #, c-format
 msgid "Could not map buffers from device '%s'"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2300
+#: sys/v4l2/gstv4l2object.c:2318
 #, c-format
 msgid "The driver of device '%s' does not support the IO method %d"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2307
+#: sys/v4l2/gstv4l2object.c:2325
 #, c-format
 msgid "The driver of device '%s' does not support any known IO method."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2800
+#: sys/v4l2/gstv4l2object.c:2818
 #, c-format
 msgid "Device '%s' does not support video capture"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2809
+#: sys/v4l2/gstv4l2object.c:2827
 #, c-format
 msgid "Device '%s' is busy"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2815 sys/v4l2/gstv4l2object.c:2826
+#: sys/v4l2/gstv4l2object.c:2833 sys/v4l2/gstv4l2object.c:2844
 #, c-format
 msgid "Device '%s' cannot capture at %dx%d"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2835
+#: sys/v4l2/gstv4l2object.c:2853
 #, c-format
 msgid "Device '%s' cannot capture in the specified format"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2846
+#: sys/v4l2/gstv4l2object.c:2864
 #, c-format
 msgid "Device '%s' does support non-contiguous planes"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2856
+#: sys/v4l2/gstv4l2object.c:2874
 #, c-format
 msgid "Could not get parameters on device '%s'"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2864
+#: sys/v4l2/gstv4l2object.c:2882
 msgid "Video device did not accept new frame rate setting."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2957
+#: sys/v4l2/gstv4l2object.c:2975
 msgid "Video device did not provide output format."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2963
+#: sys/v4l2/gstv4l2object.c:2981
 msgid "Video device returned invalid dimensions."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2971
+#: sys/v4l2/gstv4l2object.c:2989
 msgid "Video devices uses an unsupported interlacing method."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2978
+#: sys/v4l2/gstv4l2object.c:2996
 msgid "Video devices uses an unsupported pixel format."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3393
+#: sys/v4l2/gstv4l2object.c:3411
 msgid "Failed to configure internal buffer pool."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3399
+#: sys/v4l2/gstv4l2object.c:3417
 msgid "Video device did not suggest any buffer size."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3414
+#: sys/v4l2/gstv4l2object.c:3432
 msgid "No downstream pool to import from."
 msgstr ""
 
@@ -369,7 +369,7 @@ msgstr ""
 msgid "Failed to change mute state for device '%s'."
 msgstr ""
 
-#: sys/v4l2/gstv4l2sink.c:605
+#: sys/v4l2/gstv4l2sink.c:606
 msgid "Failed to allocated required memory."
 msgstr ""
 
