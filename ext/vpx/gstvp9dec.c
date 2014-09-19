@@ -318,6 +318,11 @@ gst_vp9_dec_set_format (GstVideoDecoder * decoder, GstVideoCodecState * state)
     vpx_codec_destroy (&gst_vp9_dec->decoder);
   gst_vp9_dec->decoder_inited = FALSE;
 
+  if (gst_vp9_dec->output_state) {
+    gst_video_codec_state_unref (gst_vp9_dec->output_state);
+    gst_vp9_dec->output_state = NULL;
+  }
+
   if (gst_vp9_dec->input_state)
     gst_video_codec_state_unref (gst_vp9_dec->input_state);
   gst_vp9_dec->input_state = gst_video_codec_state_ref (state);
@@ -549,20 +554,17 @@ gst_vp9_dec_handle_frame (GstVideoDecoder * decoder, GstVideoCodecFrame * frame)
         break;
     }
 
-    /* FIXME: Width/height in the img is wrong */
-    if (!dec->output_state || dec->output_state->info.finfo->format != fmt      /*||
-                                                                                   dec->output_state->info.width != img->w ||
-                                                                                   dec->output_state->info.height != img->h */ ) {
+    if (!dec->output_state || dec->output_state->info.finfo->format != fmt ||
+        dec->output_state->info.width != img->d_w ||
+        dec->output_state->info.height != img->d_h) {
       gboolean send_tags = !dec->output_state;
 
       if (dec->output_state)
         gst_video_codec_state_unref (dec->output_state);
 
-      /* FIXME: The width/height in the img is wrong */
       dec->output_state =
           gst_video_decoder_set_output_state (GST_VIDEO_DECODER (dec),
-          fmt, dec->input_state->info.width, dec->input_state->info.height,
-          dec->input_state);
+          fmt, img->d_w, img->d_h, dec->input_state);
       gst_video_decoder_negotiate (GST_VIDEO_DECODER (dec));
 
       if (send_tags)
