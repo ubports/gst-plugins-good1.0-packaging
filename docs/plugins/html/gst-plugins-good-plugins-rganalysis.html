@@ -43,22 +43,22 @@
 </colgroup>
 <tbody>
 <tr>
-<td class="property_type"><a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></td>
+<td class="property_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-rganalysis.html#GstRgAnalysis--forced" title="The “forced” property">forced</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
 <tr>
-<td class="property_type"><a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a></td>
+<td class="property_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-rganalysis.html#GstRgAnalysis--num-tracks" title="The “num-tracks” property">num-tracks</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
 <tr>
-<td class="property_type"><a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gdouble"><span class="type">gdouble</span></a></td>
+<td class="property_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gdouble"><span class="type">gdouble</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-rganalysis.html#GstRgAnalysis--reference-level" title="The “reference-level” property">reference-level</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
 <tr>
-<td class="property_type"><a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></td>
+<td class="property_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-rganalysis.html#GstRgAnalysis--message" title="The “message” property">message</a></td>
 <td class="property_flags">Read / Write / Construct</td>
 </tr>
@@ -80,8 +80,8 @@
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-rganalysis.object-hierarchy"></a><h2>Object Hierarchy</h2>
-<pre class="screen">    <a href="http://library.gnome.org/devel/gobject/unstable/gobject-The-Base-Object-Type.html#GObject">GObject</a>
-    <span class="lineart">╰──</span> <a href="http://library.gnome.org/devel/gobject/unstable/gobject-The-Base-Object-Type.html#GInitiallyUnowned">GInitiallyUnowned</a>
+<pre class="screen">    <a href="https://developer.gnome.org/gobject/unstable/gobject-The-Base-Object-Type.html#GObject">GObject</a>
+    <span class="lineart">╰──</span> <a href="https://developer.gnome.org/gobject/unstable/gobject-The-Base-Object-Type.html#GInitiallyUnowned">GInitiallyUnowned</a>
         <span class="lineart">╰──</span> <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstObject.html">GstObject</a>
             <span class="lineart">╰──</span> <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstElement.html">GstElement</a>
                 <span class="lineart">╰──</span> <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer-libs/html/GstBaseTransform.html">GstBaseTransform</a>
@@ -267,13 +267,13 @@ and Frank Klemm.
 <a name="gst-plugins-good-plugins-rganalysis.property-details"></a><h2>Property Details</h2>
 <div class="refsect2">
 <a name="GstRgAnalysis--forced"></a><h3>The <code class="literal">“forced”</code> property</h3>
-<pre class="programlisting">  “forced”                   <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
+<pre class="programlisting">  “forced”                   <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
 <p>Whether to analyze streams even when ReplayGain tags exist.</p>
 <p>For assisting transcoder/converter applications, the element can silently
 skip the processing of streams that already contain the necessary tags.
 Data will flow as usual but the element will not consume CPU time and will
 not generate result tags.  To enable possible skipping, set this property
-to <a href="http://library.gnome.org/devel/glib/unstable/glib-Standard-Macros.html#FALSE:CAPS"><span class="type">FALSE</span></a>.</p>
+to <a href="https://developer.gnome.org/glib/unstable/glib-Standard-Macros.html#FALSE:CAPS"><span class="type">FALSE</span></a>.</p>
 <p>If used in conjunction with <a class="link" href="gst-plugins-good-plugins-rganalysis.html#GstRgAnalysis--num-tracks" title="The “num-tracks” property">album
 processing</a>, the element will skip the number of remaining album
 tracks if a full set of tags is found for the first track.  If a subsequent
@@ -286,7 +286,7 @@ forcing of processing if needed.</p>
 <hr>
 <div class="refsect2">
 <a name="GstRgAnalysis--num-tracks"></a><h3>The <code class="literal">“num-tracks”</code> property</h3>
-<pre class="programlisting">  “num-tracks”               <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a></pre>
+<pre class="programlisting">  “num-tracks”               <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a></pre>
 <p>Number of remaining album tracks.</p>
 <p>Analyzing several streams sequentially and assigning them a common result
 gain is known as "album processing".  If this gain is used during playback
@@ -317,7 +317,7 @@ PAUSED or PLAYING.</p>
 <hr>
 <div class="refsect2">
 <a name="GstRgAnalysis--reference-level"></a><h3>The <code class="literal">“reference-level”</code> property</h3>
-<pre class="programlisting">  “reference-level”          <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gdouble"><span class="type">gdouble</span></a></pre>
+<pre class="programlisting">  “reference-level”          <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gdouble"><span class="type">gdouble</span></a></pre>
 <p>Reference level [dB].</p>
 <p>Analyzing the ReplayGain pink noise reference waveform computes a result of
 +6 dB instead of the expected 0 dB.  This is because the default reference
@@ -342,7 +342,7 @@ tag, which allows to store the used value alongside the gain values.</p>
 <hr>
 <div class="refsect2">
 <a name="GstRgAnalysis--message"></a><h3>The <code class="literal">“message”</code> property</h3>
-<pre class="programlisting">  “message”                  <a href="http://library.gnome.org/devel/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
+<pre class="programlisting">  “message”                  <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
 <p>Post statics messages.</p>
 <p>Flags: Read / Write / Construct</p>
 <p>Default value: FALSE</p>
