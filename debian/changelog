@@ -1,3 +1,11 @@
+gst-plugins-good1.0 (1.4.3-2) unstable; urgency=medium
+
+  * debian/patches/rtpmux-Don-t-set-PROXY_CAPS-flag-on-the-src-pad.patch
+    + Added. Fix caps negotation in the rtpmux element, fixes Empathy voice
+      calls (Closes: #760964) (From upstream git)
+
+ -- Sjoerd Simons <sjoerd@debian.org>  Fri, 17 Oct 2014 22:35:46 +0200
+
 gst-plugins-good1.0 (1.4.3-1) unstable; urgency=medium
 
   * New upstream bugfix release.

@@ -1,0 +1,32 @@
+From 0ee384b251ae6ee4ac18210f3a0555898543de5f Mon Sep 17 00:00:00 2001
+From: Sjoerd Simons <sjoerd@luon.net>
+Date: Fri, 17 Oct 2014 22:23:27 +0200
+Subject: [PATCH] rtpmux: Don't set PROXY_CAPS flag on the src pad
+
+rtpmux behaves like a funnel in that it forwards whatever upstream is
+sending buffers. So setting proxy caps doesn't make sense as the
+upstream don't have to have compatible caps, thus resulting in an empty
+caps set as a result of a caps query. Instead set fixed caps just
+as funnel does.
+
+https://bugzilla.gnome.org/show_bug.cgi?id=738722
+---
+ gst/rtpmanager/gstrtpmux.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/gst/rtpmanager/gstrtpmux.c b/gst/rtpmanager/gstrtpmux.c
+index 77c2a5c..5cddd04 100644
+--- a/gst/rtpmanager/gstrtpmux.c
++++ b/gst/rtpmanager/gstrtpmux.c
+@@ -245,7 +245,7 @@ gst_rtp_mux_init (GstRTPMux * rtp_mux)
+           "src"), "src");
+   gst_pad_set_event_function (rtp_mux->srcpad,
+       GST_DEBUG_FUNCPTR (gst_rtp_mux_src_event));
+-  GST_PAD_SET_PROXY_CAPS (rtp_mux->srcpad);
++  gst_pad_use_fixed_caps (rtp_mux->srcpad);
+   gst_element_add_pad (GST_ELEMENT (rtp_mux), rtp_mux->srcpad);
+ 
+   rtp_mux->ssrc = DEFAULT_SSRC;
+-- 
+2.1.1
+
