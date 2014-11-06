@@ -3089,6 +3089,7 @@ request_rtcp_encoder (GstElement * rtpbin, guint session,
 
       g_value_unset (&rtcp_cipher);
       g_value_unset (&rtcp_auth);
+      gst_buffer_unref (buf);
     }
   }
   name = g_strdup_printf ("rtcp_sink_%d", session);
@@ -4443,6 +4444,7 @@ gst_rtspsrc_handle_data (GstRTSPSrc * src, GstRTSPMessage * message)
 
     for (streams = src->streams; streams; streams = g_list_next (streams)) {
       GstRTSPStream *ostream = (GstRTSPStream *) streams->data;
+      GstCaps *caps;
 
       stream_id =
           g_strdup_printf ("%s/%d", g_checksum_get_string (cs), ostream->id);
@@ -4451,6 +4453,11 @@ gst_rtspsrc_handle_data (GstRTSPSrc * src, GstRTSPMessage * message)
 
       g_free (stream_id);
       gst_rtspsrc_stream_push_event (src, ostream, event);
+
+      if ((caps = stream_get_caps_for_pt (ostream, ostream->default_pt))) {
+        gst_pad_push_event (ostream->channelpad[0], gst_event_new_caps (caps));
+        gst_caps_unref (caps);
+      }
     }
     g_checksum_free (cs);
 
@@ -5950,6 +5957,8 @@ default_srtcp_params (void)
       "srtp-key", GST_TYPE_BUFFER, buf,
       "srtcp-cipher", G_TYPE_STRING, "aes-128-icm",
       "srtcp-auth", G_TYPE_STRING, "hmac-sha1-80", NULL);
+
+  gst_buffer_unref (buf);
 
   return caps;
 }
