@@ -806,7 +806,8 @@ gst_v4l2_buffer_pool_stop (GstBufferPool * bpool)
   if (!gst_v4l2_buffer_pool_streamoff (pool))
     goto streamoff_failed;
 
-  gst_v4l2_allocator_flush (pool->vallocator);
+  if (pool->vallocator)
+    gst_v4l2_allocator_flush (pool->vallocator);
 
   for (i = 0; i < VIDEO_MAX_FRAME; i++) {
     if (pool->buffers[i]) {
@@ -825,7 +826,7 @@ gst_v4l2_buffer_pool_stop (GstBufferPool * bpool)
 
   ret = GST_BUFFER_POOL_CLASS (parent_class)->stop (bpool);
 
-  if (ret) {
+  if (ret && pool->vallocator) {
     GstV4l2Return vret;
 
     vret = gst_v4l2_allocator_stop (pool->vallocator);
@@ -1325,7 +1326,7 @@ gst_v4l2_buffer_pool_release_buffer (GstBufferPool * bpool, GstBuffer * buffer)
 }
 
 static void
-gst_v4l2_buffer_pool_finalize (GObject * object)
+gst_v4l2_buffer_pool_dispose (GObject * object)
 {
   GstV4l2BufferPool *pool = GST_V4L2_BUFFER_POOL (object);
   gint i;
@@ -1335,21 +1336,35 @@ gst_v4l2_buffer_pool_finalize (GObject * object)
       gst_buffer_replace (&(pool->buffers[i]), NULL);
   }
 
+  if (pool->vallocator)
+    gst_object_unref (pool->vallocator);
+  pool->vallocator = NULL;
+
+  if (pool->allocator)
+    gst_object_unref (pool->allocator);
+  pool->allocator = NULL;
+
+  if (pool->other_pool)
+    gst_object_unref (pool->other_pool);
+  pool->other_pool = NULL;
+
+  G_OBJECT_CLASS (parent_class)->dispose (object);
+}
+
+static void
+gst_v4l2_buffer_pool_finalize (GObject * object)
+{
+  GstV4l2BufferPool *pool = GST_V4L2_BUFFER_POOL (object);
+
   if (pool->video_fd >= 0)
     v4l2_close (pool->video_fd);
 
   gst_poll_free (pool->poll);
 
-  if (pool->vallocator)
-    gst_object_unref (pool->vallocator);
-
-  if (pool->allocator)
-    gst_object_unref (pool->allocator);
-
-  if (pool->other_pool)
-    gst_object_unref (pool->other_pool);
-
-  /* FIXME Is this required to keep around ? */
+  /* FIXME Is this required to keep around ?
+   * This can't be done in dispose method because we must not set pointer
+   * to NULL as it is part of the v4l2object and dispose could be called
+   * multiple times */
   gst_object_unref (pool->obj->element);
 
   /* FIXME have we done enough here ? */
@@ -1372,6 +1387,7 @@ gst_v4l2_buffer_pool_class_init (GstV4l2BufferPoolClass * klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   GstBufferPoolClass *bufferpool_class = GST_BUFFER_POOL_CLASS (klass);
 
+  object_class->dispose = gst_v4l2_buffer_pool_dispose;
   object_class->finalize = gst_v4l2_buffer_pool_finalize;
 
   bufferpool_class->start = gst_v4l2_buffer_pool_start;
@@ -1701,7 +1717,21 @@ gst_v4l2_buffer_pool_process (GstV4l2BufferPool * pool, GstBuffer ** buf)
           /* if we are not streaming yet (this is the first buffer, start
            * streaming now */
           if (!gst_v4l2_buffer_pool_streamon (pool)) {
+            /* don't check return value because qbuf would have failed */
+            gst_v4l2_is_buffer_valid (to_queue, &group);
+
+            /* qbuf has taken the ref of the to_queue buffer but we are no in
+             * streaming state, so the flush logic won't be performed.
+             * To avoid leaks, flush the allocator and restore the queued
+             * buffer as non-queued */
+            gst_v4l2_allocator_flush (pool->vallocator);
+
+            pool->buffers[group->buffer.index] = NULL;
+
+            gst_mini_object_set_qdata (GST_MINI_OBJECT (to_queue),
+                GST_V4L2_IMPORT_QUARK, NULL, NULL);
             gst_buffer_unref (to_queue);
+            g_atomic_int_add (&pool->num_queued, -1);
             goto start_failed;
           }
 

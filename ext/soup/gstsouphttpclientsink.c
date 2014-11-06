@@ -244,6 +244,9 @@ gst_soup_http_client_sink_init (GstSoupHttpClientSink * souphttpsink)
 static void
 gst_soup_http_client_sink_reset (GstSoupHttpClientSink * souphttpsink)
 {
+  g_list_free_full (souphttpsink->queued_buffers,
+      (GDestroyNotify) gst_buffer_unref);
+  souphttpsink->queued_buffers = NULL;
   g_free (souphttpsink->reason_phrase);
   souphttpsink->reason_phrase = NULL;
   souphttpsink->status_code = 0;
@@ -442,6 +445,7 @@ gst_soup_http_client_sink_set_caps (GstBaseSink * sink, GstCaps * caps)
   const GValue *value_array;
   int i, n;
 
+  GST_DEBUG_OBJECT (souphttpsink, "new stream headers set");
   structure = gst_caps_get_structure (caps, 0);
   value_array = gst_structure_get_value (structure, "streamheader");
   if (value_array) {
@@ -636,6 +640,7 @@ send_message_locked (GstSoupHttpClientSink * souphttpsink)
 
   /* If the URI went away, drop all these buffers */
   if (souphttpsink->location == NULL) {
+    GST_DEBUG_OBJECT (souphttpsink, "URI went away, dropping queued buffers");
     free_buffer_list (souphttpsink->queued_buffers);
     souphttpsink->queued_buffers = NULL;
     return;
@@ -649,10 +654,13 @@ send_message_locked (GstSoupHttpClientSink * souphttpsink)
       GstBuffer *buffer = g->data;
       GstMapInfo map;
 
-      /* FIXME, lifetime of the buffer? */
+      GST_DEBUG_OBJECT (souphttpsink, "queueing stream headers");
       gst_buffer_map (buffer, &map, GST_MAP_READ);
+      /* Stream headers are updated whenever ::set_caps is called, so there's
+       * no guarantees about their lifetime and we ask libsoup to copy them 
+       * into the message body with SOUP_MEMORY_COPY. */
       soup_message_body_append (souphttpsink->message->request_body,
-          SOUP_MEMORY_STATIC, map.data, map.size);
+          SOUP_MEMORY_COPY, map.data, map.size);
       n += map.size;
       gst_buffer_unmap (buffer, &map);
     }
@@ -663,10 +671,13 @@ send_message_locked (GstSoupHttpClientSink * souphttpsink)
     if (!GST_BUFFER_FLAG_IS_SET (buffer, GST_BUFFER_FLAG_HEADER)) {
       GstMapInfo map;
 
-      /* FIXME, lifetime of the buffer? */
       gst_buffer_map (buffer, &map, GST_MAP_READ);
+      /* Queued buffers are only freed in the next iteration of the mainloop
+       * after the message body has been written out, so we don't need libsoup
+       * to copy those while appending to the body. However, if the buffer is
+       * used elsewhere, it should be copied. Hence, SOUP_MEMORY_TEMPORARY. */
       soup_message_body_append (souphttpsink->message->request_body,
-          SOUP_MEMORY_STATIC, map.data, map.size);
+          SOUP_MEMORY_TEMPORARY, map.data, map.size);
       n += map.size;
       gst_buffer_unmap (buffer, &map);
     }
@@ -682,6 +693,8 @@ send_message_locked (GstSoupHttpClientSink * souphttpsink)
   }
 
   if (n == 0) {
+    GST_DEBUG_OBJECT (souphttpsink,
+        "total size of buffers queued is 0, freeing everything");
     free_buffer_list (souphttpsink->queued_buffers);
     souphttpsink->queued_buffers = NULL;
     g_object_unref (souphttpsink->message);
@@ -760,6 +773,7 @@ gst_soup_http_client_sink_render (GstBaseSink * sink, GstBuffer * buffer)
         g_list_append (souphttpsink->queued_buffers, gst_buffer_ref (buffer));
 
     if (wake) {
+      GST_DEBUG_OBJECT (souphttpsink, "setting callback for new buffers");
       source = g_idle_source_new ();
       g_source_set_callback (source, (GSourceFunc) (send_message),
           souphttpsink, NULL);

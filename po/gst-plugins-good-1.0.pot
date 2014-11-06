@@ -5,9 +5,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: gst-plugins-good 1.4.3\n"
+"Project-Id-Version: gst-plugins-good 1.4.4\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2014-09-24 11:30+0300\n"
+"POT-Creation-Date: 2014-11-06 12:30+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -28,7 +28,7 @@ msgid "Failed to decode JPEG image"
 msgstr ""
 
 #. TRANSLATORS: 'song title' by 'artist name'
-#: ext/pulse/pulsesink.c:3079
+#: ext/pulse/pulsesink.c:3126
 #, c-format
 msgid "'%s' by '%s'"
 msgstr ""
@@ -112,13 +112,13 @@ msgstr ""
 msgid "This file contains too many streams. Only playing first %d"
 msgstr ""
 
-#: gst/rtsp/gstrtspsrc.c:6469
+#: gst/rtsp/gstrtspsrc.c:6478
 msgid ""
 "No supported stream was found. You might need to install a GStreamer RTSP "
 "extension plugin for Real media streams."
 msgstr ""
 
-#: gst/rtsp/gstrtspsrc.c:6474
+#: gst/rtsp/gstrtspsrc.c:6483
 msgid ""
 "No supported stream was found. You might need to allow more transport "
 "protocols or may otherwise be missing the right GStreamer RTSP extension "
@@ -252,7 +252,7 @@ msgstr ""
 msgid "AUX 2 Out"
 msgstr ""
 
-#: sys/v4l2/gstv4l2bufferpool.c:1506
+#: sys/v4l2/gstv4l2bufferpool.c:1522
 #, c-format
 msgid "Error reading %d bytes from device '%s'."
 msgstr ""
@@ -369,7 +369,7 @@ msgstr ""
 msgid "Failed to change mute state for device '%s'."
 msgstr ""
 
-#: sys/v4l2/gstv4l2sink.c:606
+#: sys/v4l2/gstv4l2sink.c:610
 msgid "Failed to allocated required memory."
 msgstr ""
 
