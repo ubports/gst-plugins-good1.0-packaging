@@ -683,7 +683,8 @@ gst_vp8_enc_class_init (GstVP8EncClass * klass)
       g_param_spec_int ("arnr-type", "AltRef type",
           "AltRef type",
           1, 3, DEFAULT_ARNR_TYPE,
-          (GParamFlags) (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS)));
+          (GParamFlags) (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS |
+              G_PARAM_DEPRECATED)));
 
   g_object_class_install_property (gobject_class, PROP_TUNING,
       g_param_spec_enum ("tuning", "Tuning",
@@ -1127,15 +1128,8 @@ gst_vp8_enc_set_property (GObject * object, guint prop_id,
       break;
     case PROP_ARNR_TYPE:
       gst_vp8_enc->arnr_type = g_value_get_int (value);
-      if (gst_vp8_enc->inited) {
-        status = vpx_codec_control (&gst_vp8_enc->encoder, VP8E_SET_ARNR_TYPE,
-            gst_vp8_enc->arnr_type);
-        if (status != VPX_CODEC_OK) {
-          GST_WARNING_OBJECT (gst_vp8_enc,
-              "Failed to set VP8E_SET_ARNR_TYPE: %s",
-              gst_vpx_error_name (status));
-        }
-      }
+      g_warning ("arnr-type is a no-op since control has been deprecated "
+          "in libvpx");
       break;
     case PROP_TUNING:
       gst_vp8_enc->tuning = g_value_get_enum (value);
@@ -1666,12 +1660,6 @@ gst_vp8_enc_set_format (GstVideoEncoder * video_encoder,
         "Failed to set VP8E_SET_ARNR_STRENGTH: %s",
         gst_vpx_error_name (status));
   }
-  status = vpx_codec_control (&encoder->encoder, VP8E_SET_ARNR_TYPE,
-      encoder->arnr_type);
-  if (status != VPX_CODEC_OK) {
-    GST_WARNING_OBJECT (encoder,
-        "Failed to set VP8E_SET_ARNR_TYPE: %s", gst_vpx_error_name (status));
-  }
   status = vpx_codec_control (&encoder->encoder, VP8E_SET_TUNING,
       encoder->tuning);
   if (status != VPX_CODEC_OK) {
@@ -1693,8 +1681,7 @@ gst_vp8_enc_set_format (GstVideoEncoder * video_encoder,
   }
 
   if (GST_VIDEO_INFO_FPS_D (info) == 0 || GST_VIDEO_INFO_FPS_N (info) == 0) {
-    gst_video_encoder_set_latency (video_encoder, GST_CLOCK_TIME_NONE,
-        GST_CLOCK_TIME_NONE);
+    gst_video_encoder_set_latency (video_encoder, 0, GST_CLOCK_TIME_NONE);
   } else {
     gst_video_encoder_set_latency (video_encoder, 0,
         gst_util_uint64_scale (encoder->cfg.g_lag_in_frames,

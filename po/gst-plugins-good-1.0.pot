@@ -5,9 +5,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: gst-plugins-good 1.4.4\n"
+"Project-Id-Version: gst-plugins-good 1.4.5\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2014-11-06 12:30+0100\n"
+"POT-Creation-Date: 2014-12-18 12:05+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -112,13 +112,13 @@ msgstr ""
 msgid "This file contains too many streams. Only playing first %d"
 msgstr ""
 
-#: gst/rtsp/gstrtspsrc.c:6478
+#: gst/rtsp/gstrtspsrc.c:6479
 msgid ""
 "No supported stream was found. You might need to install a GStreamer RTSP "
 "extension plugin for Real media streams."
 msgstr ""
 
-#: gst/rtsp/gstrtspsrc.c:6483
+#: gst/rtsp/gstrtspsrc.c:6484
 msgid ""
 "No supported stream was found. You might need to allow more transport "
 "protocols or may otherwise be missing the right GStreamer RTSP extension "
@@ -252,7 +252,7 @@ msgstr ""
 msgid "AUX 2 Out"
 msgstr ""
 
-#: sys/v4l2/gstv4l2bufferpool.c:1522
+#: sys/v4l2/gstv4l2bufferpool.c:1574
 #, c-format
 msgid "Error reading %d bytes from device '%s'."
 msgstr ""
@@ -262,80 +262,75 @@ msgstr ""
 msgid "Failed to enumerate possible video formats device '%s' can work with"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2310
+#: sys/v4l2/gstv4l2object.c:2342
 #, c-format
 msgid "Could not map buffers from device '%s'"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2318
+#: sys/v4l2/gstv4l2object.c:2350
 #, c-format
 msgid "The driver of device '%s' does not support the IO method %d"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2325
+#: sys/v4l2/gstv4l2object.c:2357
 #, c-format
 msgid "The driver of device '%s' does not support any known IO method."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2818
-#, c-format
-msgid "Device '%s' does not support video capture"
-msgstr ""
-
-#: sys/v4l2/gstv4l2object.c:2827
+#: sys/v4l2/gstv4l2object.c:2835
 #, c-format
 msgid "Device '%s' is busy"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2833 sys/v4l2/gstv4l2object.c:2844
+#: sys/v4l2/gstv4l2object.c:2841 sys/v4l2/gstv4l2object.c:2852
 #, c-format
 msgid "Device '%s' cannot capture at %dx%d"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2853
+#: sys/v4l2/gstv4l2object.c:2861
 #, c-format
 msgid "Device '%s' cannot capture in the specified format"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2864
+#: sys/v4l2/gstv4l2object.c:2872
 #, c-format
 msgid "Device '%s' does support non-contiguous planes"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2874
+#: sys/v4l2/gstv4l2object.c:2882
 #, c-format
 msgid "Could not get parameters on device '%s'"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2882
+#: sys/v4l2/gstv4l2object.c:2890
 msgid "Video device did not accept new frame rate setting."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2975
+#: sys/v4l2/gstv4l2object.c:2983
 msgid "Video device did not provide output format."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2981
+#: sys/v4l2/gstv4l2object.c:2989
 msgid "Video device returned invalid dimensions."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2989
+#: sys/v4l2/gstv4l2object.c:2997
 msgid "Video devices uses an unsupported interlacing method."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2996
+#: sys/v4l2/gstv4l2object.c:3004
 msgid "Video devices uses an unsupported pixel format."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3411
+#: sys/v4l2/gstv4l2object.c:3419
 msgid "Failed to configure internal buffer pool."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3417
+#: sys/v4l2/gstv4l2object.c:3425
 msgid "Video device did not suggest any buffer size."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3432
+#: sys/v4l2/gstv4l2object.c:3440
 msgid "No downstream pool to import from."
 msgstr ""
 
@@ -373,7 +368,7 @@ msgstr ""
 msgid "Failed to allocated required memory."
 msgstr ""
 
-#: sys/v4l2/gstv4l2src.c:477 sys/v4l2/gstv4l2videodec.c:572
+#: sys/v4l2/gstv4l2src.c:480 sys/v4l2/gstv4l2videodec.c:574
 msgid "Failed to allocate required memory."
 msgstr ""
 
@@ -397,11 +392,11 @@ msgstr ""
 msgid "Encoder on device %s has no supported output format"
 msgstr ""
 
-#: sys/v4l2/gstv4l2videodec.c:586
+#: sys/v4l2/gstv4l2videodec.c:588
 msgid "Failed to start decoding thread."
 msgstr ""
 
-#: sys/v4l2/gstv4l2videodec.c:594
+#: sys/v4l2/gstv4l2videodec.c:596
 msgid "Failed to process frame."
 msgstr ""
 

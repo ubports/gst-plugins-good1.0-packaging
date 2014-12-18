@@ -826,8 +826,10 @@ gst_rtp_h264_pay_payload_nal (GstRTPBasePayload * basepayload,
      * checking when we need to send SPS/PPS but convert to running_time first. */
     rtph264pay->send_spspps = FALSE;
     ret = gst_rtp_h264_pay_send_sps_pps (basepayload, rtph264pay, dts, pts);
-    if (ret != GST_FLOW_OK)
+    if (ret != GST_FLOW_OK) {
+      gst_buffer_unref (paybuf);
       return ret;
+    }
   }
 
   packet_len = gst_rtp_buffer_calc_packet_len (size, 0, 0);
@@ -1325,6 +1327,13 @@ gst_rtp_h264_pay_change_state (GstElement * element, GstStateChange transition)
       rtph264pay->send_spspps = FALSE;
       gst_adapter_clear (rtph264pay->adapter);
       break;
+    default:
+      break;
+  }
+
+  ret = GST_ELEMENT_CLASS (parent_class)->change_state (element, transition);
+
+  switch (transition) {
     case GST_STATE_CHANGE_PAUSED_TO_READY:
       rtph264pay->last_spspps = -1;
       gst_rtp_h264_pay_clear_sps_pps (rtph264pay);
@@ -1332,8 +1341,6 @@ gst_rtp_h264_pay_change_state (GstElement * element, GstStateChange transition)
     default:
       break;
   }
-
-  ret = GST_ELEMENT_CLASS (parent_class)->change_state (element, transition);
 
   return ret;
 }
