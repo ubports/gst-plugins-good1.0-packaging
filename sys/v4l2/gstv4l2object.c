@@ -1562,7 +1562,7 @@ unsupported_format:
 
 static gboolean
 gst_v4l2_object_get_nearest_size (GstV4l2Object * v4l2object,
-    guint32 pixelformat, gint * width, gint * height, gboolean * interlaced);
+    guint32 pixelformat, gint * width, gint * height);
 
 static void
 gst_v4l2_object_add_aspect_ratio (GstV4l2Object * v4l2object, GstStructure * s)
@@ -1625,6 +1625,121 @@ gst_v4l2src_value_simplify (GValue * val)
   return FALSE;
 }
 
+static gboolean
+gst_v4l2_object_get_interlace_mode (enum v4l2_field field,
+    GstVideoInterlaceMode * interlace_mode)
+{
+  /* NB: If you add new return values, please fix mode_strings in
+   * gst_v4l2_object_add_interlace_mode */
+  switch (field) {
+    case V4L2_FIELD_ANY:
+      GST_ERROR
+          ("Driver bug detected - check driver with v4l2-compliance from http://git.linuxtv.org/v4l-utils.git\n");
+      /* fallthrough */
+    case V4L2_FIELD_NONE:
+      *interlace_mode = GST_VIDEO_INTERLACE_MODE_PROGRESSIVE;
+      return TRUE;
+    case V4L2_FIELD_INTERLACED:
+    case V4L2_FIELD_INTERLACED_TB:
+    case V4L2_FIELD_INTERLACED_BT:
+      *interlace_mode = GST_VIDEO_INTERLACE_MODE_INTERLEAVED;
+      return TRUE;
+    default:
+      GST_ERROR ("Unknown enum v4l2_field %d", field);
+      return FALSE;
+  }
+}
+
+static int
+gst_v4l2_object_try_fmt (GstV4l2Object * v4l2object,
+    struct v4l2_format *try_fmt)
+{
+  int fd = v4l2object->video_fd;
+  struct v4l2_format fmt;
+  int r;
+
+  memcpy (&fmt, try_fmt, sizeof (fmt));
+  r = v4l2_ioctl (fd, VIDIOC_TRY_FMT, &fmt);
+
+  if (r < 0 && errno == ENOTTY) {
+    /* The driver might not implement TRY_FMT, in which case we will try
+       S_FMT to probe */
+    if (GST_V4L2_IS_ACTIVE (v4l2object))
+      goto error;
+
+    memcpy (&fmt, try_fmt, sizeof (fmt));
+    r = v4l2_ioctl (fd, VIDIOC_S_FMT, &fmt);
+  }
+  memcpy (try_fmt, &fmt, sizeof (fmt));
+  return r;
+
+error:
+  memcpy (try_fmt, &fmt, sizeof (fmt));
+  GST_WARNING_OBJECT (v4l2object->element,
+      "Unable to try format: %s", g_strerror (errno));
+  return r;
+}
+
+
+static void
+gst_v4l2_object_add_interlace_mode (GstV4l2Object * v4l2object,
+    GstStructure * s, guint32 width, guint32 height, guint32 pixelformat)
+{
+  struct v4l2_format fmt;
+  GValue interlace_formats = { 0, };
+  GstVideoInterlaceMode interlace_mode;
+
+  const gchar *mode_strings[] = { "progressive",
+    "interleaved",
+    "mixed"
+  };
+
+  if (!g_str_equal (gst_structure_get_name (s), "video/x-raw"))
+    return;
+
+  if (v4l2object->never_interlaced) {
+    gst_structure_set (s, "interlace-mode", G_TYPE_STRING, "progressive", NULL);
+    return;
+  }
+
+  g_value_init (&interlace_formats, GST_TYPE_LIST);
+
+  /* Try twice - once for NONE, once for INTERLACED. */
+  memset (&fmt, 0, sizeof (fmt));
+  fmt.type = v4l2object->type;
+  fmt.fmt.pix.width = width;
+  fmt.fmt.pix.height = height;
+  fmt.fmt.pix.pixelformat = pixelformat;
+  fmt.fmt.pix.field = V4L2_FIELD_NONE;
+
+  if (gst_v4l2_object_try_fmt (v4l2object, &fmt) == 0 &&
+      gst_v4l2_object_get_interlace_mode (fmt.fmt.pix.field, &interlace_mode)) {
+    GValue interlace_enum = { 0, };
+    g_value_init (&interlace_enum, G_TYPE_STRING);
+    g_value_set_string (&interlace_enum, mode_strings[interlace_mode]);
+    gst_value_list_append_and_take_value (&interlace_formats, &interlace_enum);
+  }
+
+  memset (&fmt, 0, sizeof (fmt));
+  fmt.type = v4l2object->type;
+  fmt.fmt.pix.width = width;
+  fmt.fmt.pix.height = height;
+  fmt.fmt.pix.pixelformat = pixelformat;
+  fmt.fmt.pix.field = V4L2_FIELD_INTERLACED;
+
+  if (gst_v4l2_object_try_fmt (v4l2object, &fmt) == 0 &&
+      gst_v4l2_object_get_interlace_mode (fmt.fmt.pix.field, &interlace_mode)) {
+    GValue interlace_enum = { 0, };
+    g_value_init (&interlace_enum, G_TYPE_STRING);
+    g_value_set_string (&interlace_enum, mode_strings[interlace_mode]);
+    gst_value_list_append_and_take_value (&interlace_formats, &interlace_enum);
+  }
+
+  gst_v4l2src_value_simplify (&interlace_formats);
+  gst_structure_take_value (s, "interlace-mode", &interlace_formats);
+  return;
+}
+
 /* The frame interval enumeration code first appeared in Linux 2.6.19. */
 static GstStructure *
 gst_v4l2_object_probe_caps_for_format_and_size (GstV4l2Object * v4l2object,
@@ -1636,18 +1751,6 @@ gst_v4l2_object_probe_caps_for_format_and_size (GstV4l2Object * v4l2object,
   guint32 num, denom;
   GstStructure *s;
   GValue rates = { 0, };
-  gboolean interlaced;
-  gint int_width = width;
-  gint int_height = height;
-
-  if (v4l2object->never_interlaced) {
-    interlaced = FALSE;
-  } else {
-    /* Interlaced detection using VIDIOC_TRY/S_FMT */
-    if (!gst_v4l2_object_get_nearest_size (v4l2object, pixelformat,
-            &int_width, &int_height, &interlaced))
-      return NULL;
-  }
 
   memset (&ival, 0, sizeof (struct v4l2_frmivalenum));
   ival.index = 0;
@@ -1807,9 +1910,8 @@ return_data:
   gst_structure_set (s, "width", G_TYPE_INT, (gint) width,
       "height", G_TYPE_INT, (gint) height, NULL);
   gst_v4l2_object_add_aspect_ratio (v4l2object, s);
-  if (g_str_equal (gst_structure_get_name (s), "video/x-raw"))
-    gst_structure_set (s, "interlace-mode", G_TYPE_STRING,
-        (interlaced ? "mixed" : "progressive"), NULL);
+  gst_v4l2_object_add_interlace_mode (v4l2object, s, width, height,
+      pixelformat);
 
   if (G_IS_VALUE (&rates)) {
     gst_v4l2src_value_simplify (&rates);
@@ -2072,19 +2174,18 @@ unknown_type:
 default_frame_sizes:
   {
     gint min_w, max_w, min_h, max_h, fix_num = 0, fix_denom = 0;
-    gboolean interlaced;
 
     /* This code is for Linux < 2.6.19 */
     min_w = min_h = 1;
     max_w = max_h = GST_V4L2_MAX_SIZE;
     if (!gst_v4l2_object_get_nearest_size (v4l2object, pixelformat, &min_w,
-            &min_h, &interlaced)) {
+            &min_h)) {
       GST_WARNING_OBJECT (v4l2object->element,
           "Could not probe minimum capture size for pixelformat %"
           GST_FOURCC_FORMAT, GST_FOURCC_ARGS (pixelformat));
     }
     if (!gst_v4l2_object_get_nearest_size (v4l2object, pixelformat, &max_w,
-            &max_h, &interlaced)) {
+            &max_h)) {
       GST_WARNING_OBJECT (v4l2object->element,
           "Could not probe maximum capture size for pixelformat %"
           GST_FOURCC_FORMAT, GST_FOURCC_ARGS (pixelformat));
@@ -2130,9 +2231,9 @@ default_frame_sizes:
     else
       gst_structure_set (tmp, "height", GST_TYPE_INT_RANGE, min_h, max_h, NULL);
 
-    if (g_str_equal (gst_structure_get_name (tmp), "video/x-raw"))
-      gst_structure_set (tmp, "interlace-mode", G_TYPE_STRING,
-          (interlaced ? "mixed" : "progressive"), NULL);
+    /* We could consider setting interlace mode from min and max. */
+    gst_v4l2_object_add_interlace_mode (v4l2object, tmp, max_w, max_h,
+        pixelformat);
     gst_v4l2_object_add_aspect_ratio (v4l2object, tmp);
 
     gst_v4l2_object_update_and_append (v4l2object, pixelformat, ret, tmp);
@@ -2141,31 +2242,12 @@ default_frame_sizes:
 }
 
 static gboolean
-gst_v4l2_object_get_interlace (int field, gboolean * interlaced)
-{
-  switch (field) {
-    case V4L2_FIELD_ANY:
-    case V4L2_FIELD_NONE:
-      *interlaced = FALSE;
-      return TRUE;
-    case V4L2_FIELD_INTERLACED:
-    case V4L2_FIELD_INTERLACED_TB:
-    case V4L2_FIELD_INTERLACED_BT:
-      *interlaced = TRUE;
-      return TRUE;
-    default:
-      return FALSE;
-  }
-}
-
-static gboolean
 gst_v4l2_object_get_nearest_size (GstV4l2Object * v4l2object,
-    guint32 pixelformat, gint * width, gint * height, gboolean * interlaced)
+    guint32 pixelformat, gint * width, gint * height)
 {
   struct v4l2_format fmt;
-  int fd;
-  int r;
   gboolean ret = FALSE;
+  GstVideoInterlaceMode interlace_mode;
 
   g_return_val_if_fail (width != NULL, FALSE);
   g_return_val_if_fail (height != NULL, FALSE);
@@ -2173,8 +2255,6 @@ gst_v4l2_object_get_nearest_size (GstV4l2Object * v4l2object,
   GST_LOG_OBJECT (v4l2object->element,
       "getting nearest size to %dx%d with format %" GST_FOURCC_FORMAT,
       *width, *height, GST_FOURCC_ARGS (pixelformat));
-
-  fd = v4l2object->video_fd;
 
   memset (&fmt, 0, sizeof (struct v4l2_format));
 
@@ -2184,58 +2264,10 @@ gst_v4l2_object_get_nearest_size (GstV4l2Object * v4l2object,
   fmt.fmt.pix.width = *width;
   fmt.fmt.pix.height = *height;
   fmt.fmt.pix.pixelformat = pixelformat;
-  fmt.fmt.pix.field = V4L2_FIELD_NONE;
+  fmt.fmt.pix.field = V4L2_FIELD_ANY;
 
-  r = v4l2_ioctl (fd, VIDIOC_TRY_FMT, &fmt);
-  if ((r < 0 && errno == EINVAL) ||
-      !gst_v4l2_object_get_interlace (fmt.fmt.pix.field, interlaced)) {
-    /* try again with interlaced video */
-    memset (&fmt, 0, sizeof (fmt));
-    fmt.type = v4l2object->type;
-    fmt.fmt.pix.width = *width;
-    fmt.fmt.pix.height = *height;
-    fmt.fmt.pix.pixelformat = pixelformat;
-    fmt.fmt.pix.field = V4L2_FIELD_INTERLACED;
-    r = v4l2_ioctl (fd, VIDIOC_TRY_FMT, &fmt);
-  }
-
-  if (r < 0) {
-    /* The driver might not implement TRY_FMT, in which case we will try
-       S_FMT to probe */
-    if (errno != ENOTTY)
-      goto error;
-
-    /* Only try S_FMT if we're not actively capturing yet, which we shouldn't
-       be, because we're still probing */
-    if (GST_V4L2_IS_ACTIVE (v4l2object))
-      goto error;
-
-    GST_LOG_OBJECT (v4l2object->element,
-        "Failed to probe size limit with VIDIOC_TRY_FMT, trying VIDIOC_S_FMT");
-
-    memset (&fmt, 0, sizeof (fmt));
-    fmt.type = v4l2object->type;
-    fmt.fmt.pix.width = *width;
-    fmt.fmt.pix.height = *height;
-    fmt.fmt.pix.pixelformat = pixelformat;
-    fmt.fmt.pix.field = V4L2_FIELD_NONE;
-
-    r = v4l2_ioctl (fd, VIDIOC_S_FMT, &fmt);
-    if ((r < 0 && errno == EINVAL) ||
-        !gst_v4l2_object_get_interlace (fmt.fmt.pix.field, interlaced)) {
-      /* try again with interlaced video */
-      memset (&fmt, 0, sizeof (fmt));
-      fmt.type = v4l2object->type;
-      fmt.fmt.pix.width = *width;
-      fmt.fmt.pix.height = *height;
-      fmt.fmt.pix.pixelformat = pixelformat;
-      fmt.fmt.pix.field = V4L2_FIELD_INTERLACED;
-      r = v4l2_ioctl (fd, VIDIOC_S_FMT, &fmt);
-    }
-
-    if (r < 0)
-      goto error;
-  }
+  if (gst_v4l2_object_try_fmt (v4l2object, &fmt) < 0)
+    goto error;
 
   GST_LOG_OBJECT (v4l2object->element,
       "got nearest size %dx%d", fmt.fmt.pix.width, fmt.fmt.pix.height);
@@ -2243,7 +2275,7 @@ gst_v4l2_object_get_nearest_size (GstV4l2Object * v4l2object,
   *width = fmt.fmt.pix.width;
   *height = fmt.fmt.pix.height;
 
-  if (!gst_v4l2_object_get_interlace (fmt.fmt.pix.field, interlaced)) {
+  if (!gst_v4l2_object_get_interlace_mode (fmt.fmt.pix.field, &interlace_mode)) {
     GST_WARNING_OBJECT (v4l2object->element,
         "Unsupported field type for %" GST_FOURCC_FORMAT "@%ux%u: %u",
         GST_FOURCC_ARGS (pixelformat), *width, *height, fmt.fmt.pix.field);
@@ -2536,7 +2568,8 @@ gst_v4l2_object_set_format (GstV4l2Object * v4l2object, GstCaps * caps)
   gint width, height, fps_n, fps_d;
   gint n_v4l_planes;
   gint i = 0;
-  gboolean is_mplane, format_changed;
+  gboolean is_mplane;
+  enum v4l2_colorspace colorspace = 0;
 
   GST_V4L2_CHECK_OPEN (v4l2object);
   GST_V4L2_CHECK_NOT_ACTIVE (v4l2object);
@@ -2572,62 +2605,34 @@ gst_v4l2_object_set_format (GstV4l2Object * v4l2object, GstCaps * caps)
     field = V4L2_FIELD_NONE;
   }
 
+  if (V4L2_TYPE_IS_OUTPUT (v4l2object->type)) {
+    /* We should set colorspace if we have it */
+    if (gst_video_colorimetry_matches (&info.colorimetry, "bt601")) {
+      colorspace = V4L2_COLORSPACE_SMPTE170M;
+    } else if (gst_video_colorimetry_matches (&info.colorimetry, "bt709")) {
+      colorspace = V4L2_COLORSPACE_REC709;
+    } else if (gst_video_colorimetry_matches (&info.colorimetry, "smpte240m")) {
+      colorspace = V4L2_COLORSPACE_SMPTE240M;
+    } else {
+      /* Try to guess colorspace according to pixelformat and size */
+      if (GST_VIDEO_INFO_IS_YUV (&info)) {
+        /* SD streams likely use SMPTE170M and HD streams REC709 */
+        if (width <= 720 && height <= 576)
+          colorspace = V4L2_COLORSPACE_SMPTE170M;
+        else
+          colorspace = V4L2_COLORSPACE_REC709;
+      } else if (GST_VIDEO_INFO_IS_RGB (&info)) {
+        colorspace = V4L2_COLORSPACE_SRGB;
+      }
+    }
+  }
+
   GST_DEBUG_OBJECT (v4l2object->element, "Desired format %dx%d, format "
       "%" GST_FOURCC_FORMAT " stride: %d", width, height,
       GST_FOURCC_ARGS (pixelformat), GST_VIDEO_INFO_PLANE_STRIDE (&info, 0));
 
   memset (&format, 0x00, sizeof (struct v4l2_format));
   format.type = v4l2object->type;
-
-  if (v4l2object->no_initial_format) {
-    format_changed = TRUE;
-  } else {
-    if (v4l2_ioctl (fd, VIDIOC_G_FMT, &format) < 0)
-      goto get_fmt_failed;
-
-    /* Note that four first fields are the same between v4l2_pix_format and
-     * v4l2_pix_format_mplane, so we don't need to duplicate he checks */
-
-    /* If no size in caps, use configured size */
-    if (width == 0 && height == 0) {
-      width = format.fmt.pix_mp.width;
-      height = format.fmt.pix_mp.height;
-    }
-
-    format_changed = format.type != v4l2object->type ||
-        format.fmt.pix_mp.width != width ||
-        format.fmt.pix_mp.height != height ||
-        format.fmt.pix_mp.pixelformat != pixelformat ||
-        format.fmt.pix_mp.field != field;
-  }
-
-#ifndef GST_DISABLE_GST_DEBUG
-  if (is_mplane) {
-    GST_DEBUG_OBJECT (v4l2object->element, "Current size is %dx%d, format "
-        "%" GST_FOURCC_FORMAT " colorspace %d, nb planes %d",
-        format.fmt.pix_mp.width, format.fmt.pix_mp.height,
-        GST_FOURCC_ARGS (format.fmt.pix.pixelformat),
-        format.fmt.pix_mp.colorspace, format.fmt.pix_mp.num_planes);
-
-    for (i = 0; i < format.fmt.pix_mp.num_planes; i++)
-      GST_DEBUG_OBJECT (v4l2object->element, "  stride %d",
-          format.fmt.pix_mp.plane_fmt[i].bytesperline);
-  } else {
-    GST_DEBUG_OBJECT (v4l2object->element, "Current size is %dx%d, format "
-        "%" GST_FOURCC_FORMAT " stride %d, colorspace %d",
-        format.fmt.pix.width, format.fmt.pix.height,
-        GST_FOURCC_ARGS (format.fmt.pix.pixelformat),
-        format.fmt.pix.bytesperline, format.fmt.pix.colorspace);
-  }
-#endif
-
-  /* If nothing changed, we are done */
-  if (!format_changed)
-    goto done;
-
-  /* something different, set the format */
-  GST_DEBUG_OBJECT (v4l2object->element, "Setting format to %dx%d, format "
-      "%" GST_FOURCC_FORMAT, width, height, GST_FOURCC_ARGS (pixelformat));
 
   if (is_mplane) {
     format.type = v4l2object->type;
@@ -2688,14 +2693,25 @@ gst_v4l2_object_set_format (GstV4l2Object * v4l2object, GstCaps * caps)
   }
 #endif
 
+  if (V4L2_TYPE_IS_OUTPUT (v4l2object->type)) {
+    if (is_mplane)
+      format.fmt.pix_mp.colorspace = colorspace;
+    else
+      format.fmt.pix.colorspace = colorspace;
+
+    GST_DEBUG_OBJECT (v4l2object->element, "Desired colorspace is %d",
+        colorspace);
+  }
+
   if (v4l2_ioctl (fd, VIDIOC_S_FMT, &format) < 0)
     goto set_fmt_failed;
 
   GST_DEBUG_OBJECT (v4l2object->element, "Got format of %dx%d, format "
-      "%" GST_FOURCC_FORMAT ", nb planes %d", format.fmt.pix.width,
-      format.fmt.pix_mp.height,
+      "%" GST_FOURCC_FORMAT ", nb planes %d, colorspace %d",
+      format.fmt.pix.width, format.fmt.pix_mp.height,
       GST_FOURCC_ARGS (format.fmt.pix.pixelformat),
-      is_mplane ? format.fmt.pix_mp.num_planes : 1);
+      is_mplane ? format.fmt.pix_mp.num_planes : 1,
+      is_mplane ? format.fmt.pix_mp.colorspace : format.fmt.pix.colorspace);
 
 #ifndef GST_DISABLE_GST_DEBUG
   if (is_mplane) {
@@ -2810,14 +2826,6 @@ invalid_caps:
   {
     GST_DEBUG_OBJECT (v4l2object->element, "can't parse caps %" GST_PTR_FORMAT,
         caps);
-    return FALSE;
-  }
-get_fmt_failed:
-  {
-    GST_ELEMENT_ERROR (v4l2object->element, RESOURCE, SETTINGS,
-        (_("Device '%s' does not support video capture"),
-            v4l2object->videodev),
-        ("Call to G_FMT failed: (%s)", g_strerror (errno)));
     return FALSE;
   }
 set_fmt_failed:
