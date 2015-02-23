@@ -139,6 +139,12 @@ pre-build::
 			> debian/$(gst_pkgname)-$$f; \
 	done
 
+	sed 's/@GST_ABI@/$(gst_abi)/g' debian/libgstreamer-plugins-good.install \
+	                > debian/libgstreamer-plugins-good$(gst_deb_abi).install
+	sed 's/@GST_ABI@/$(gst_abi)/g' debian/libgstreamer-plugins-good-dev.install \
+	                > debian/libgstreamer-plugins-good$(gst_abi)-dev.install
+
+
 maint: debian/control
 
 debian/build-deps: debian/build-deps.in debian/rules
@@ -148,6 +154,7 @@ debian/control:: debian/control.in debian/build-deps debian/mk.control debian/ru
 	perl debian/mk.control | sed \
 		-e 's/@GST_VERSION@/$(gst_version)/g' \
 		-e 's/@GST_ABI@/$(gst_abi)/g' \
+		-e 's/@GST_DEB_ABI@/$(gst_deb_abi)/g' \
 		-e 's/@GST_PKGNAME@/$(gst_pkgname)/g' \
 		-e 's/@GST_LIB@/$(gst_lib)/g' \
 		-e 's/@GST_LIB_DEV@/$(gst_lib_dev)/g' \

@@ -1,7 +1,8 @@
 Source: gst-plugins-good@GST_ABI@
 Section: libs
 Priority: optional
-Maintainer: Maintainers of GStreamer packages <pkg-gstreamer-maintainers@lists.alioth.debian.org>
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+XSBC-Original-Maintainer: Maintainers of GStreamer packages <pkg-gstreamer-maintainers@lists.alioth.debian.org>
 Uploaders: Loic Minier <lool@dooz.org>,
            Sebastian Dröge <slomo@debian.org>,
            Sjoerd Simons <sjoerd@debian.org>
@@ -60,6 +61,7 @@ Depends: ${misc:Depends},
          ${shlibs:Depends},
          @GST_PKGNAME@-pulseaudio | @GST_PKGNAME@-audiosink,
          gstreamer@GST_ABI@-plugins-base,
+         libgstreamer-plugins-good@GST_DEB_ABI@ (= ${binary:Version}),
 Recommends: @GST_PKGNAME@-x
 Replaces: gstreamer1.0-plugins-bad (<< 1.1.2)
 Breaks: gstreamer1.0-plugins-bad (<< 1.1.2)
@@ -103,4 +105,44 @@ Description: GStreamer plugins from the "good" set
  to provide a backtrace with names in a debugger, this makes it somewhat
  easier to interpret core dumps. The libraries are installed in
  /usr/lib/debug and are automatically used by gdb.
+
+Package: libgstreamer-plugins-good@GST_DEB_ABI@
+Architecture: any
+Section: libs
+Priority: extra
+Multi-Arch: same
+Pre-Depends: ${misc:Pre-Depends}
+Depends: ${misc:Depends},
+         ${shlibs:Depends},
+Breaks: libgstreamer-plugins-bad1.0-0 (<< 1.0.3-1ubuntu1)
+Replaces: @GST_PKGNAME@-plugins-good (= 1.0.3-1ubuntu1),
+          libgstreamer-plugins-bad1.0-0 (<< 1.0.3-1ubuntu1)
+Description: GStreamer development files for libraries from the "good" set
+ GStreamer is a streaming media framework, based on graphs of filters
+ which operate on media data.  Applications using this library can do
+ anything from real-time sound processing to playing videos, and just
+ about anything else media-related.  Its plugin-based architecture means
+ that new data types or processing capabilities can be added simply by
+ installing new plug-ins.
+ .
+ This package contains shared GStreamer libraries from the "good" set. The API
+ is not guaranteed to be stable.
+
+Package: libgstreamer-plugins-good@GST_ABI@-dev
+Architecture: any
+Section: libdevel
+Priority: extra
+Depends: ${misc:Depends},
+     libgstreamer-plugins-good@GST_DEB_ABI@ (= ${binary:Version}),
+     libgstreamer1.0-dev
+Description: GStreamer development files for libraries from the "good" set
+ GStreamer is a streaming media framework, based on graphs of filters
+ which operate on media data.  Applications using this library can do
+ anything from real-time sound processing to playing videos, and just
+ about anything else media-related.  Its plugin-based architecture means
+ that new data types or processing capabilities can be added simply by
+ installing new plug-ins.
+ .
+ This package contains development files for GStreamer libraries from the
+ "good" set. The API is not guaranteed to be stable.
 

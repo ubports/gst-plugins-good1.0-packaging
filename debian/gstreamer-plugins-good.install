@@ -11,6 +11,7 @@ debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstauparse.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstautodetect.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstavi.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstcacasink.so
+debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstcamerabin2.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstcairo.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstcutter.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstdebug.so
@@ -31,6 +32,7 @@ debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstinterleave.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstid3demux.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstjack.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstjpeg.so
+debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstjpegformat.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstlevel.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstmatroska.so
 debian/tmp/usr/lib/*/gstreamer-@GST_ABI@/libgstmonoscope.so
