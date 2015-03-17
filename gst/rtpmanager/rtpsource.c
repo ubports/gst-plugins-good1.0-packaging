@@ -238,6 +238,9 @@ rtp_source_reset (RTPSource * src)
   src->stats.last_rtptime = GST_CLOCK_TIME_NONE;
   src->stats.last_rtcptime = GST_CLOCK_TIME_NONE;
   g_array_set_size (src->nacks, 0);
+
+  src->stats.sent_pli_count = 0;
+  src->stats.sent_fir_count = 0;
 }
 
 static void
@@ -256,7 +259,7 @@ rtp_source_init (RTPSource * src)
   src->payload = -1;
   src->clock_rate = -1;
   src->packets = g_queue_new ();
-  src->seqnum_base = -1;
+  src->seqnum_offset = -1;
   src->last_rtptime = -1;
 
   src->retained_feedback = g_queue_new ();
@@ -341,7 +344,7 @@ rtp_source_create_stats (RTPSource * src)
       "received-bye", G_TYPE_BOOLEAN, src->marked_bye,
       "is-csrc", G_TYPE_BOOLEAN, src->is_csrc,
       "is-sender", G_TYPE_BOOLEAN, is_sender,
-      "seqnum-base", G_TYPE_INT, src->seqnum_base,
+      "seqnum-base", G_TYPE_INT, src->seqnum_offset,
       "clock-rate", G_TYPE_INT, src->clock_rate, NULL);
 
   /* add address and port */
@@ -364,7 +367,11 @@ rtp_source_create_stats (RTPSource * src)
       "bitrate", G_TYPE_UINT64, src->bitrate,
       "packets-lost", G_TYPE_INT,
       (gint) rtp_stats_get_packets_lost (&src->stats), "jitter", G_TYPE_UINT,
-      (guint) (src->stats.jitter >> 4), NULL);
+      (guint) (src->stats.jitter >> 4),
+      "sent-pli-count", G_TYPE_UINT, src->stats.sent_pli_count,
+      "recv-pli-count", G_TYPE_UINT, src->stats.recv_pli_count,
+      "sent-fir-count", G_TYPE_UINT, src->stats.sent_fir_count,
+      "recv-fir-count", G_TYPE_UINT, src->stats.recv_fir_count, NULL);
 
   /* get the last SR. */
   have_sr = rtp_source_get_last_sr (src, &time, &ntptime, &rtptime,
@@ -761,12 +768,12 @@ rtp_source_update_caps (RTPSource * src, GstCaps * caps)
 
   GST_DEBUG ("got clock-rate %d", src->clock_rate);
 
-  if (gst_structure_get_uint (s, "seqnum-base", &val))
-    src->seqnum_base = val;
+  if (gst_structure_get_uint (s, "seqnum-offset", &val))
+    src->seqnum_offset = val;
   else
-    src->seqnum_base = -1;
+    src->seqnum_offset = -1;
 
-  GST_DEBUG ("got seqnum-base %" G_GINT32_FORMAT, src->seqnum_base);
+  GST_DEBUG ("got seqnum-offset %" G_GINT32_FORMAT, src->seqnum_offset);
 
   gst_caps_replace (&src->caps, caps);
 }
@@ -942,6 +949,8 @@ init_seq (RTPSource * src, guint16 seq)
   src->stats.bytes_received = 0;
   src->stats.prev_received = 0;
   src->stats.prev_expected = 0;
+  src->stats.recv_pli_count = 0;
+  src->stats.recv_fir_count = 0;
 
   GST_DEBUG ("base_seq %d", seq);
 }

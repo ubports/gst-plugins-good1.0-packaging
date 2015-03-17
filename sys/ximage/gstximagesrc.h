@@ -49,12 +49,13 @@ struct _GstXImageSrc
 
   /* Information on display */
   GstXContext *xcontext;
+  gint x;
+  gint y;
   gint width;
   gint height;
 
   Window xwindow;
   gchar *display_name;
-  guint screen_num;
 
   /* Window selection */
   guint64 xid;

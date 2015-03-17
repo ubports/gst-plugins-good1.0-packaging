@@ -104,7 +104,6 @@ am__aclocal_m4_deps = $(top_srcdir)/common/m4/as-ac-expand.m4 \
 	$(top_srcdir)/common/m4/gst-platform.m4 \
 	$(top_srcdir)/common/m4/gst-plugin-docs.m4 \
 	$(top_srcdir)/common/m4/gst-plugindir.m4 \
-	$(top_srcdir)/common/m4/gst-x11.m4 \
 	$(top_srcdir)/common/m4/gst.m4 \
 	$(top_srcdir)/common/m4/gtk-doc.m4 \
 	$(top_srcdir)/common/m4/orc.m4 $(top_srcdir)/common/m4/pkg.m4 \
@@ -158,7 +157,7 @@ libgstpulse_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_libgstpulse_la_OBJECTS = libgstpulse_la-plugin.lo \
 	libgstpulse_la-pulsesink.lo libgstpulse_la-pulsesrc.lo \
-	libgstpulse_la-pulsedevicemonitor.lo \
+	libgstpulse_la-pulsedeviceprovider.lo \
 	libgstpulse_la-pulseutil.lo
 libgstpulse_la_OBJECTS = $(am_libgstpulse_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -362,9 +361,6 @@ HAVE_AVC1394 = @HAVE_AVC1394@
 HAVE_CXX = @HAVE_CXX@
 HAVE_DIRECTSOUND = @HAVE_DIRECTSOUND@
 HAVE_ROM1394 = @HAVE_ROM1394@
-HAVE_SPEEX = @HAVE_SPEEX@
-HAVE_X = @HAVE_X@
-HAVE_XSHM = @HAVE_XSHM@
 HAVE_ZLIB = @HAVE_ZLIB@
 HTML_DIR = @HTML_DIR@
 INSTALL = @INSTALL@
@@ -482,17 +478,17 @@ WAVPACK_CFLAGS = @WAVPACK_CFLAGS@
 WAVPACK_LIBS = @WAVPACK_LIBS@
 XDAMAGE_CFLAGS = @XDAMAGE_CFLAGS@
 XDAMAGE_LIBS = @XDAMAGE_LIBS@
+XEXT_CFLAGS = @XEXT_CFLAGS@
+XEXT_LIBS = @XEXT_LIBS@
 XFIXES_CFLAGS = @XFIXES_CFLAGS@
 XFIXES_LIBS = @XFIXES_LIBS@
 XGETTEXT = @XGETTEXT@
 XGETTEXT_015 = @XGETTEXT_015@
 XGETTEXT_EXTRA_OPTIONS = @XGETTEXT_EXTRA_OPTIONS@
-XMKMF = @XMKMF@
+XSHM_CFLAGS = @XSHM_CFLAGS@
 XSHM_LIBS = @XSHM_LIBS@
 X_CFLAGS = @X_CFLAGS@
-X_EXTRA_LIBS = @X_EXTRA_LIBS@
 X_LIBS = @X_LIBS@
-X_PRE_LIBS = @X_PRE_LIBS@
 ZLIB_LIBS = @ZLIB_LIBS@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
@@ -562,7 +558,7 @@ libgstpulse_la_SOURCES = \
 	plugin.c \
 	pulsesink.c \
 	pulsesrc.c \
-	pulsedevicemonitor.c \
+	pulsedeviceprovider.c \
 	pulseutil.c
 
 libgstpulse_la_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_BASE_CFLAGS) $(GST_CFLAGS) $(PULSE_CFLAGS)
@@ -575,7 +571,7 @@ libgstpulse_la_LIBTOOLFLAGS = $(GST_PLUGIN_LIBTOOLFLAGS)
 noinst_HEADERS = \
 	pulsesink.h \
 	pulsesrc.h \
-	pulsedevicemonitor.h \
+	pulsedeviceprovider.h \
 	pulseutil.h
 
 all: all-am
@@ -658,7 +654,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstpulse_la-plugin.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstpulse_la-pulsedevicemonitor.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstpulse_la-pulsedeviceprovider.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstpulse_la-pulsesink.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstpulse_la-pulsesrc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstpulse_la-pulseutil.Plo@am__quote@
@@ -708,12 +704,12 @@ libgstpulse_la-pulsesrc.lo: pulsesrc.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstpulse_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstpulse_la_CFLAGS) $(CFLAGS) -c -o libgstpulse_la-pulsesrc.lo `test -f 'pulsesrc.c' || echo '$(srcdir)/'`pulsesrc.c
 
-libgstpulse_la-pulsedevicemonitor.lo: pulsedevicemonitor.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstpulse_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstpulse_la_CFLAGS) $(CFLAGS) -MT libgstpulse_la-pulsedevicemonitor.lo -MD -MP -MF $(DEPDIR)/libgstpulse_la-pulsedevicemonitor.Tpo -c -o libgstpulse_la-pulsedevicemonitor.lo `test -f 'pulsedevicemonitor.c' || echo '$(srcdir)/'`pulsedevicemonitor.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstpulse_la-pulsedevicemonitor.Tpo $(DEPDIR)/libgstpulse_la-pulsedevicemonitor.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='pulsedevicemonitor.c' object='libgstpulse_la-pulsedevicemonitor.lo' libtool=yes @AMDEPBACKSLASH@
+libgstpulse_la-pulsedeviceprovider.lo: pulsedeviceprovider.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstpulse_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstpulse_la_CFLAGS) $(CFLAGS) -MT libgstpulse_la-pulsedeviceprovider.lo -MD -MP -MF $(DEPDIR)/libgstpulse_la-pulsedeviceprovider.Tpo -c -o libgstpulse_la-pulsedeviceprovider.lo `test -f 'pulsedeviceprovider.c' || echo '$(srcdir)/'`pulsedeviceprovider.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstpulse_la-pulsedeviceprovider.Tpo $(DEPDIR)/libgstpulse_la-pulsedeviceprovider.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='pulsedeviceprovider.c' object='libgstpulse_la-pulsedeviceprovider.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstpulse_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstpulse_la_CFLAGS) $(CFLAGS) -c -o libgstpulse_la-pulsedevicemonitor.lo `test -f 'pulsedevicemonitor.c' || echo '$(srcdir)/'`pulsedevicemonitor.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstpulse_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstpulse_la_CFLAGS) $(CFLAGS) -c -o libgstpulse_la-pulsedeviceprovider.lo `test -f 'pulsedeviceprovider.c' || echo '$(srcdir)/'`pulsedeviceprovider.c
 
 libgstpulse_la-pulseutil.lo: pulseutil.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstpulse_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstpulse_la_CFLAGS) $(CFLAGS) -MT libgstpulse_la-pulseutil.lo -MD -MP -MF $(DEPDIR)/libgstpulse_la-pulseutil.Tpo -c -o libgstpulse_la-pulseutil.lo `test -f 'pulseutil.c' || echo '$(srcdir)/'`pulseutil.c

@@ -318,6 +318,11 @@ gst_vp9_dec_set_format (GstVideoDecoder * decoder, GstVideoCodecState * state)
     vpx_codec_destroy (&gst_vp9_dec->decoder);
   gst_vp9_dec->decoder_inited = FALSE;
 
+  if (gst_vp9_dec->output_state) {
+    gst_video_codec_state_unref (gst_vp9_dec->output_state);
+    gst_vp9_dec->output_state = NULL;
+  }
+
   if (gst_vp9_dec->input_state)
     gst_video_codec_state_unref (gst_vp9_dec->input_state);
   gst_vp9_dec->input_state = gst_video_codec_state_ref (state);
@@ -370,12 +375,14 @@ gst_vp9_dec_image_to_buffer (GstVP9Dec * dec, const vpx_image_t * img,
 
   if (!gst_video_frame_map (&frame, info, buffer, GST_MAP_WRITE)) {
     GST_ERROR_OBJECT (dec, "Could not map video buffer");
+    return;
   }
 
   for (comp = 0; comp < 3; comp++) {
     dest = GST_VIDEO_FRAME_COMP_DATA (&frame, comp);
     src = img->planes[comp];
-    width = GST_VIDEO_FRAME_COMP_WIDTH (&frame, comp);
+    width = GST_VIDEO_FRAME_COMP_WIDTH (&frame, comp)
+        * GST_VIDEO_FRAME_COMP_PSTRIDE (&frame, comp);
     height = GST_VIDEO_FRAME_COMP_HEIGHT (&frame, comp);
     deststride = GST_VIDEO_FRAME_COMP_STRIDE (&frame, comp);
     srcstride = img->stride[comp];
@@ -419,12 +426,12 @@ open_codec (GstVP9Dec * dec, GstVideoCodecFrame * frame)
   if (status != VPX_CODEC_OK) {
     GST_WARNING_OBJECT (dec, "VPX preprocessing error: %s",
         gst_vpx_error_name (status));
-    gst_video_decoder_finish_frame (GST_VIDEO_DECODER (dec), frame);
+    gst_video_decoder_drop_frame (GST_VIDEO_DECODER (dec), frame);
     return GST_FLOW_CUSTOM_SUCCESS_1;
   }
   if (!stream_info.is_kf) {
     GST_WARNING_OBJECT (dec, "No keyframe, skipping");
-    gst_video_decoder_finish_frame (GST_VIDEO_DECODER (dec), frame);
+    gst_video_decoder_drop_frame (GST_VIDEO_DECODER (dec), frame);
     return GST_FLOW_CUSTOM_SUCCESS_1;
   }
 
@@ -549,20 +556,17 @@ gst_vp9_dec_handle_frame (GstVideoDecoder * decoder, GstVideoCodecFrame * frame)
         break;
     }
 
-    /* FIXME: Width/height in the img is wrong */
-    if (!dec->output_state || dec->output_state->info.finfo->format != fmt      /*||
-                                                                                   dec->output_state->info.width != img->w ||
-                                                                                   dec->output_state->info.height != img->h */ ) {
+    if (!dec->output_state || dec->output_state->info.finfo->format != fmt ||
+        dec->output_state->info.width != img->d_w ||
+        dec->output_state->info.height != img->d_h) {
       gboolean send_tags = !dec->output_state;
 
       if (dec->output_state)
         gst_video_codec_state_unref (dec->output_state);
 
-      /* FIXME: The width/height in the img is wrong */
       dec->output_state =
           gst_video_decoder_set_output_state (GST_VIDEO_DECODER (dec),
-          fmt, dec->input_state->info.width, dec->input_state->info.height,
-          dec->input_state);
+          fmt, img->d_w, img->d_h, dec->input_state);
       gst_video_decoder_negotiate (GST_VIDEO_DECODER (dec));
 
       if (send_tags)
@@ -580,7 +584,7 @@ gst_vp9_dec_handle_frame (GstVideoDecoder * decoder, GstVideoCodecFrame * frame)
         gst_vp9_dec_image_to_buffer (dec, img, frame->output_buffer);
         ret = gst_video_decoder_finish_frame (decoder, frame);
       } else {
-        gst_video_decoder_finish_frame (decoder, frame);
+        gst_video_decoder_drop_frame (decoder, frame);
       }
     }
 

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good-1.3.2\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2014-06-22 17:33+0200\n"
+"POT-Creation-Date: 2015-03-17 09:11+0100\n"
 "PO-Revision-Date: 2014-06-18 19:56+0200\n"
 "Last-Translator: Мирослав Николић <miroslavnikolic@rocketmail.com>\n"
 "Language-Team: Serbian <(nothing)>\n"
@@ -228,10 +228,6 @@ msgid "The driver of device '%s' does not support any known IO method."
 msgstr "Управљачки програм уређаја „%s“ не подржава ниједан познати УИ начин."
 
 #, c-format
-msgid "Device '%s' does not support video capture"
-msgstr "Уређај „%s“ не подржава видео снимање"
-
-#, c-format
 msgid "Device '%s' is busy"
 msgstr "Уређај „%s“ је заузет"
 
@@ -302,6 +298,9 @@ msgstr "Нисам успео да изменим стање утишаност�
 msgid "Failed to allocated required memory."
 msgstr ""
 
+msgid "Failed to allocate required memory."
+msgstr ""
+
 #, fuzzy, c-format
 msgid "Converter on device %s has no supported input format"
 msgstr "Видео уређаји користе неподржани запис сличице."
@@ -317,9 +316,6 @@ msgstr "Видео уређаји користе неподржани запис
 #, fuzzy, c-format
 msgid "Encoder on device %s has no supported output format"
 msgstr "Видео уређаји користе неподржани запис сличице."
-
-msgid "Failed to allocate required memory."
-msgstr ""
 
 #, fuzzy
 msgid "Failed to start decoding thread."
@@ -426,3 +422,6 @@ msgstr "Промена резолуције приликом извршавањ�
 
 msgid "Cannot operate without a clock"
 msgstr "Не могу да радим без сата"
+
+#~ msgid "Device '%s' does not support video capture"
+#~ msgstr "Уређај „%s“ не подржава видео снимање"

@@ -244,6 +244,9 @@ gst_soup_http_client_sink_init (GstSoupHttpClientSink * souphttpsink)
 static void
 gst_soup_http_client_sink_reset (GstSoupHttpClientSink * souphttpsink)
 {
+  g_list_free_full (souphttpsink->queued_buffers,
+      (GDestroyNotify) gst_buffer_unref);
+  souphttpsink->queued_buffers = NULL;
   g_free (souphttpsink->reason_phrase);
   souphttpsink->reason_phrase = NULL;
   souphttpsink->status_code = 0;
@@ -425,6 +428,7 @@ gst_soup_http_client_sink_finalize (GObject * object)
   if (souphttpsink->proxy)
     soup_uri_free (souphttpsink->proxy);
   g_free (souphttpsink->location);
+  g_strfreev (souphttpsink->cookies);
 
   g_cond_clear (&souphttpsink->cond);
   g_mutex_clear (&souphttpsink->mutex);
@@ -442,6 +446,7 @@ gst_soup_http_client_sink_set_caps (GstBaseSink * sink, GstCaps * caps)
   const GValue *value_array;
   int i, n;
 
+  GST_DEBUG_OBJECT (souphttpsink, "new stream headers set");
   structure = gst_caps_get_structure (caps, 0);
   value_array = gst_structure_get_value (structure, "streamheader");
   if (value_array) {
@@ -531,11 +536,19 @@ gst_soup_http_client_sink_start (GstBaseSink * sink)
     g_mutex_unlock (&souphttpsink->mutex);
     GST_LOG_OBJECT (souphttpsink, "main loop thread running");
 
-    souphttpsink->session =
-        soup_session_async_new_with_options (SOUP_SESSION_ASYNC_CONTEXT,
-        souphttpsink->context, SOUP_SESSION_USER_AGENT,
-        souphttpsink->user_agent, SOUP_SESSION_TIMEOUT, souphttpsink->timeout,
-        NULL);
+    if (souphttpsink->proxy == NULL) {
+      souphttpsink->session =
+          soup_session_async_new_with_options (SOUP_SESSION_ASYNC_CONTEXT,
+          souphttpsink->context, SOUP_SESSION_USER_AGENT,
+          souphttpsink->user_agent, SOUP_SESSION_TIMEOUT, souphttpsink->timeout,
+          NULL);
+    } else {
+      souphttpsink->session =
+          soup_session_async_new_with_options (SOUP_SESSION_ASYNC_CONTEXT,
+          souphttpsink->context, SOUP_SESSION_USER_AGENT,
+          souphttpsink->user_agent, SOUP_SESSION_TIMEOUT, souphttpsink->timeout,
+          SOUP_SESSION_PROXY_URI, souphttpsink->proxy, NULL);
+    }
 
     g_signal_connect (souphttpsink->session, "authenticate",
         G_CALLBACK (authenticate), souphttpsink);
@@ -636,12 +649,24 @@ send_message_locked (GstSoupHttpClientSink * souphttpsink)
 
   /* If the URI went away, drop all these buffers */
   if (souphttpsink->location == NULL) {
+    GST_DEBUG_OBJECT (souphttpsink, "URI went away, dropping queued buffers");
     free_buffer_list (souphttpsink->queued_buffers);
     souphttpsink->queued_buffers = NULL;
     return;
   }
 
   souphttpsink->message = soup_message_new ("PUT", souphttpsink->location);
+  soup_message_set_flags (souphttpsink->message,
+      (souphttpsink->automatic_redirect ? 0 : SOUP_MESSAGE_NO_REDIRECT));
+
+  if (souphttpsink->cookies) {
+    gchar **cookie;
+
+    for (cookie = souphttpsink->cookies; *cookie != NULL; cookie++) {
+      soup_message_headers_append (souphttpsink->message->request_headers,
+          "Cookie", *cookie);
+    }
+  }
 
   n = 0;
   if (souphttpsink->offset == 0) {
@@ -649,10 +674,13 @@ send_message_locked (GstSoupHttpClientSink * souphttpsink)
       GstBuffer *buffer = g->data;
       GstMapInfo map;
 
-      /* FIXME, lifetime of the buffer? */
+      GST_DEBUG_OBJECT (souphttpsink, "queueing stream headers");
       gst_buffer_map (buffer, &map, GST_MAP_READ);
+      /* Stream headers are updated whenever ::set_caps is called, so there's
+       * no guarantees about their lifetime and we ask libsoup to copy them 
+       * into the message body with SOUP_MEMORY_COPY. */
       soup_message_body_append (souphttpsink->message->request_body,
-          SOUP_MEMORY_STATIC, map.data, map.size);
+          SOUP_MEMORY_COPY, map.data, map.size);
       n += map.size;
       gst_buffer_unmap (buffer, &map);
     }
@@ -663,10 +691,13 @@ send_message_locked (GstSoupHttpClientSink * souphttpsink)
     if (!GST_BUFFER_FLAG_IS_SET (buffer, GST_BUFFER_FLAG_HEADER)) {
       GstMapInfo map;
 
-      /* FIXME, lifetime of the buffer? */
       gst_buffer_map (buffer, &map, GST_MAP_READ);
+      /* Queued buffers are only freed in the next iteration of the mainloop
+       * after the message body has been written out, so we don't need libsoup
+       * to copy those while appending to the body. However, if the buffer is
+       * used elsewhere, it should be copied. Hence, SOUP_MEMORY_TEMPORARY. */
       soup_message_body_append (souphttpsink->message->request_body,
-          SOUP_MEMORY_STATIC, map.data, map.size);
+          SOUP_MEMORY_TEMPORARY, map.data, map.size);
       n += map.size;
       gst_buffer_unmap (buffer, &map);
     }
@@ -682,6 +713,8 @@ send_message_locked (GstSoupHttpClientSink * souphttpsink)
   }
 
   if (n == 0) {
+    GST_DEBUG_OBJECT (souphttpsink,
+        "total size of buffers queued is 0, freeing everything");
     free_buffer_list (souphttpsink->queued_buffers);
     souphttpsink->queued_buffers = NULL;
     g_object_unref (souphttpsink->message);
@@ -760,6 +793,7 @@ gst_soup_http_client_sink_render (GstBaseSink * sink, GstBuffer * buffer)
         g_list_append (souphttpsink->queued_buffers, gst_buffer_ref (buffer));
 
     if (wake) {
+      GST_DEBUG_OBJECT (souphttpsink, "setting callback for new buffers");
       source = g_idle_source_new ();
       g_source_set_callback (source, (GSourceFunc) (send_message),
           souphttpsink, NULL);
@@ -779,9 +813,15 @@ authenticate (SoupSession * session, SoupMessage * msg,
   GstSoupHttpClientSink *souphttpsink = GST_SOUP_HTTP_CLIENT_SINK (user_data);
 
   if (!retrying) {
-    if (souphttpsink->user_id && souphttpsink->user_pw) {
-      soup_auth_authenticate (auth,
-          souphttpsink->user_id, souphttpsink->user_pw);
+    /* First time authentication only, if we fail and are called again with retry true fall through */
+    if (msg->status_code == SOUP_STATUS_UNAUTHORIZED) {
+      if (souphttpsink->user_id && souphttpsink->user_pw)
+        soup_auth_authenticate (auth, souphttpsink->user_id,
+            souphttpsink->user_pw);
+    } else if (msg->status_code == SOUP_STATUS_PROXY_AUTHENTICATION_REQUIRED) {
+      if (souphttpsink->proxy_id && souphttpsink->proxy_pw)
+        soup_auth_authenticate (auth, souphttpsink->proxy_id,
+            souphttpsink->proxy_pw);
     }
   }
 }

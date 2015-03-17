@@ -191,7 +191,7 @@ gst_rtp_mux_src_event (GstPad * pad, GstObject * parent, GstEvent * event)
 {
   GstRTPMux *rtp_mux = GST_RTP_MUX (parent);
   GstRTPMuxClass *klass;
-  gboolean ret = FALSE;
+  gboolean ret;
 
   klass = GST_RTP_MUX_GET_CLASS (rtp_mux);
 
@@ -245,7 +245,7 @@ gst_rtp_mux_init (GstRTPMux * rtp_mux)
           "src"), "src");
   gst_pad_set_event_function (rtp_mux->srcpad,
       GST_DEBUG_FUNCPTR (gst_rtp_mux_src_event));
-  GST_PAD_SET_PROXY_CAPS (rtp_mux->srcpad);
+  gst_pad_use_fixed_caps (rtp_mux->srcpad);
   gst_element_add_pad (GST_ELEMENT (rtp_mux), rtp_mux->srcpad);
 
   rtp_mux->ssrc = DEFAULT_SSRC;
@@ -321,7 +321,7 @@ gst_rtp_mux_release_pad (GstElement * element, GstPad * pad)
   }
 }
 
-/* Put our own clock-base on the buffer */
+/* Put our own timestamp-offset on the buffer */
 static void
 gst_rtp_mux_readjust_rtp_timestamp_locked (GstRTPMux * rtp_mux,
     GstRTPMuxPadPrivate * padpriv, GstRTPBuffer * rtpbuffer)
@@ -329,8 +329,8 @@ gst_rtp_mux_readjust_rtp_timestamp_locked (GstRTPMux * rtp_mux,
   guint32 ts;
   guint32 sink_ts_base = 0;
 
-  if (padpriv && padpriv->have_clock_base)
-    sink_ts_base = padpriv->clock_base;
+  if (padpriv && padpriv->have_timestamp_offset)
+    sink_ts_base = padpriv->timestamp_offset;
 
   ts = gst_rtp_buffer_get_timestamp (rtpbuffer) - sink_ts_base +
       rtp_mux->ts_base;
@@ -541,16 +541,17 @@ gst_rtp_mux_setcaps (GstPad * pad, GstRTPMux * rtp_mux, GstCaps * caps)
   GST_OBJECT_LOCK (rtp_mux);
   padpriv = gst_pad_get_element_private (pad);
   if (padpriv &&
-      gst_structure_get_uint (structure, "clock-base", &padpriv->clock_base)) {
-    padpriv->have_clock_base = TRUE;
+      gst_structure_get_uint (structure, "timestamp-offset",
+          &padpriv->timestamp_offset)) {
+    padpriv->have_timestamp_offset = TRUE;
   }
   GST_OBJECT_UNLOCK (rtp_mux);
 
   caps = gst_caps_copy (caps);
 
   gst_caps_set_simple (caps,
-      "clock-base", G_TYPE_UINT, rtp_mux->ts_base,
-      "seqnum-base", G_TYPE_UINT, rtp_mux->seqnum_base, NULL);
+      "timestamp-offset", G_TYPE_UINT, rtp_mux->ts_base,
+      "seqnum-offset", G_TYPE_UINT, rtp_mux->seqnum_base, NULL);
 
   if (rtp_mux->send_stream_start) {
     gchar s_id[32];
@@ -632,21 +633,24 @@ gst_rtp_mux_getcaps (GstPad * pad, GstRTPMux * mux, GstCaps * filter)
   GstIteratorResult res;
   GstCaps *peercaps;
   GstCaps *othercaps;
+  GstCaps *tcaps;
 
   peercaps = gst_pad_peer_query_caps (mux->srcpad, filter);
 
   if (peercaps) {
-    othercaps = gst_caps_intersect_full (peercaps,
-        gst_pad_get_pad_template_caps (pad), GST_CAPS_INTERSECT_FIRST);
+    tcaps = gst_pad_get_pad_template_caps (pad);
+    othercaps = gst_caps_intersect_full (peercaps, tcaps,
+        GST_CAPS_INTERSECT_FIRST);
     gst_caps_unref (peercaps);
   } else {
+    tcaps = gst_pad_get_pad_template_caps (mux->srcpad);
     if (filter)
-      othercaps = gst_caps_intersect_full (filter,
-          gst_pad_get_pad_template_caps (mux->srcpad),
+      othercaps = gst_caps_intersect_full (filter, tcaps,
           GST_CAPS_INTERSECT_FIRST);
     else
-      othercaps = gst_caps_copy (gst_pad_get_pad_template_caps (mux->srcpad));
+      othercaps = gst_caps_copy (tcaps);
   }
+  gst_caps_unref (tcaps);
 
   clear_caps (othercaps, FALSE);
 
@@ -834,7 +838,7 @@ gst_rtp_mux_ready_to_paused (GstRTPMux * rtp_mux)
 
   rtp_mux->last_stop = GST_CLOCK_TIME_NONE;
 
-  GST_DEBUG_OBJECT (rtp_mux, "set clock-base to %u", rtp_mux->ts_base);
+  GST_DEBUG_OBJECT (rtp_mux, "set timestamp-offset to %u", rtp_mux->ts_base);
 
   GST_OBJECT_UNLOCK (rtp_mux);
 }

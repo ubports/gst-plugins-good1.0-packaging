@@ -468,20 +468,23 @@ gst_v4l2_transform_prepare_output_buffer (GstBaseTransform * trans,
   if (G_UNLIKELY (ret != GST_FLOW_OK))
     goto beach;
 
-  pool = gst_base_transform_get_buffer_pool (trans);
+  do {
+    pool = gst_base_transform_get_buffer_pool (trans);
 
-  if (!gst_buffer_pool_set_active (pool, TRUE))
-    goto activate_failed;
+    if (!gst_buffer_pool_set_active (pool, TRUE))
+      goto activate_failed;
 
-  GST_DEBUG_OBJECT (self, "Dequeue output buffer");
-  ret = gst_buffer_pool_acquire_buffer (pool, outbuf, NULL);
-  g_object_unref (pool);
+    GST_DEBUG_OBJECT (self, "Dequeue output buffer");
+    ret = gst_buffer_pool_acquire_buffer (pool, outbuf, NULL);
+    g_object_unref (pool);
 
-  if (ret != GST_FLOW_OK)
-    goto alloc_failed;
+    if (ret != GST_FLOW_OK)
+      goto alloc_failed;
 
-  pool = self->v4l2capture->pool;
-  ret = gst_v4l2_buffer_pool_process (GST_V4L2_BUFFER_POOL (pool), outbuf);
+    pool = self->v4l2capture->pool;
+    ret = gst_v4l2_buffer_pool_process (GST_V4L2_BUFFER_POOL (pool), outbuf);
+
+  } while (ret == GST_V4L2_FLOW_CORRUPTED_BUFFER);
 
   if (ret != GST_FLOW_OK) {
     gst_buffer_unref (*outbuf);
@@ -749,7 +752,7 @@ gst_v4l2_transform_register (GstPlugin * plugin, const gchar * basename,
   type_name = g_strdup_printf ("v4l2%sconvert", basename);
   subtype = g_type_register_static (type, type_name, &type_info, 0);
 
-  gst_element_register (plugin, type_name, GST_RANK_PRIMARY + 1, subtype);
+  gst_element_register (plugin, type_name, GST_RANK_NONE, subtype);
 
   g_free (type_name);
 

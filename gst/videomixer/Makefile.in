@@ -127,7 +127,6 @@ am__aclocal_m4_deps = $(top_srcdir)/common/m4/as-ac-expand.m4 \
 	$(top_srcdir)/common/m4/gst-platform.m4 \
 	$(top_srcdir)/common/m4/gst-plugin-docs.m4 \
 	$(top_srcdir)/common/m4/gst-plugindir.m4 \
-	$(top_srcdir)/common/m4/gst-x11.m4 \
 	$(top_srcdir)/common/m4/gst.m4 \
 	$(top_srcdir)/common/m4/gtk-doc.m4 \
 	$(top_srcdir)/common/m4/orc.m4 $(top_srcdir)/common/m4/pkg.m4 \
@@ -180,8 +179,6 @@ libgstvideomixer_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_libgstvideomixer_la_OBJECTS = libgstvideomixer_la-blend.lo \
-	libgstvideomixer_la-videoconvert.lo \
-	libgstvideomixer_la-gstcms.lo \
 	libgstvideomixer_la-videomixer2.lo
 am__objects_1 = libgstvideomixer_la-tmp-orc.lo
 nodist_libgstvideomixer_la_OBJECTS = $(am__objects_1)
@@ -389,9 +386,6 @@ HAVE_AVC1394 = @HAVE_AVC1394@
 HAVE_CXX = @HAVE_CXX@
 HAVE_DIRECTSOUND = @HAVE_DIRECTSOUND@
 HAVE_ROM1394 = @HAVE_ROM1394@
-HAVE_SPEEX = @HAVE_SPEEX@
-HAVE_X = @HAVE_X@
-HAVE_XSHM = @HAVE_XSHM@
 HAVE_ZLIB = @HAVE_ZLIB@
 HTML_DIR = @HTML_DIR@
 INSTALL = @INSTALL@
@@ -509,17 +503,17 @@ WAVPACK_CFLAGS = @WAVPACK_CFLAGS@
 WAVPACK_LIBS = @WAVPACK_LIBS@
 XDAMAGE_CFLAGS = @XDAMAGE_CFLAGS@
 XDAMAGE_LIBS = @XDAMAGE_LIBS@
+XEXT_CFLAGS = @XEXT_CFLAGS@
+XEXT_LIBS = @XEXT_LIBS@
 XFIXES_CFLAGS = @XFIXES_CFLAGS@
 XFIXES_LIBS = @XFIXES_LIBS@
 XGETTEXT = @XGETTEXT@
 XGETTEXT_015 = @XGETTEXT_015@
 XGETTEXT_EXTRA_OPTIONS = @XGETTEXT_EXTRA_OPTIONS@
-XMKMF = @XMKMF@
+XSHM_CFLAGS = @XSHM_CFLAGS@
 XSHM_LIBS = @XSHM_LIBS@
 X_CFLAGS = @X_CFLAGS@
-X_EXTRA_LIBS = @X_EXTRA_LIBS@
 X_LIBS = @X_LIBS@
-X_PRE_LIBS = @X_PRE_LIBS@
 ZLIB_LIBS = @ZLIB_LIBS@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
@@ -597,8 +591,6 @@ cp_v_gen_ = $(cp_v_gen_$(AM_DEFAULT_VERBOSITY))
 cp_v_gen_0 = @echo "  CP     $@";
 libgstvideomixer_la_SOURCES = \
 	blend.c \
-	videoconvert.c \
-	gstcms.c \
 	videomixer2.c
 
 nodist_libgstvideomixer_la_SOURCES = $(ORC_NODIST_SOURCES)
@@ -616,9 +608,7 @@ libgstvideomixer_la_LIBTOOLFLAGS = $(GST_PLUGIN_LIBTOOLFLAGS)
 noinst_HEADERS = \
 	blend.h \
 	videomixer2.h \
-	videomixer2pad.h \
-	videoconvert.h \
-	gstcms.h
+	videomixer2pad.h
 
 all: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) all-am
@@ -702,9 +692,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstvideomixer_la-blend.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstvideomixer_la-gstcms.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstvideomixer_la-tmp-orc.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstvideomixer_la-videoconvert.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstvideomixer_la-videomixer2.Plo@am__quote@
 
 .c.o:
@@ -737,20 +725,6 @@ libgstvideomixer_la-blend.lo: blend.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='blend.c' object='libgstvideomixer_la-blend.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstvideomixer_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstvideomixer_la_CFLAGS) $(CFLAGS) -c -o libgstvideomixer_la-blend.lo `test -f 'blend.c' || echo '$(srcdir)/'`blend.c
-
-libgstvideomixer_la-videoconvert.lo: videoconvert.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstvideomixer_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstvideomixer_la_CFLAGS) $(CFLAGS) -MT libgstvideomixer_la-videoconvert.lo -MD -MP -MF $(DEPDIR)/libgstvideomixer_la-videoconvert.Tpo -c -o libgstvideomixer_la-videoconvert.lo `test -f 'videoconvert.c' || echo '$(srcdir)/'`videoconvert.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstvideomixer_la-videoconvert.Tpo $(DEPDIR)/libgstvideomixer_la-videoconvert.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='videoconvert.c' object='libgstvideomixer_la-videoconvert.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstvideomixer_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstvideomixer_la_CFLAGS) $(CFLAGS) -c -o libgstvideomixer_la-videoconvert.lo `test -f 'videoconvert.c' || echo '$(srcdir)/'`videoconvert.c
-
-libgstvideomixer_la-gstcms.lo: gstcms.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstvideomixer_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstvideomixer_la_CFLAGS) $(CFLAGS) -MT libgstvideomixer_la-gstcms.lo -MD -MP -MF $(DEPDIR)/libgstvideomixer_la-gstcms.Tpo -c -o libgstvideomixer_la-gstcms.lo `test -f 'gstcms.c' || echo '$(srcdir)/'`gstcms.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstvideomixer_la-gstcms.Tpo $(DEPDIR)/libgstvideomixer_la-gstcms.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstcms.c' object='libgstvideomixer_la-gstcms.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstvideomixer_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstvideomixer_la_CFLAGS) $(CFLAGS) -c -o libgstvideomixer_la-gstcms.lo `test -f 'gstcms.c' || echo '$(srcdir)/'`gstcms.c
 
 libgstvideomixer_la-videomixer2.lo: videomixer2.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstvideomixer_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstvideomixer_la_CFLAGS) $(CFLAGS) -MT libgstvideomixer_la-videomixer2.lo -MD -MP -MF $(DEPDIR)/libgstvideomixer_la-videomixer2.Tpo -c -o libgstvideomixer_la-videomixer2.lo `test -f 'videomixer2.c' || echo '$(srcdir)/'`videomixer2.c

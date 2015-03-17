@@ -93,7 +93,7 @@ static GstStaticPadTemplate video_sink_factory =
     GST_PAD_SINK,
     GST_PAD_REQUEST,
     GST_STATIC_CAPS ("video/x-raw, "
-        "format = (string) { YUY2, I420, BGR, BGRx, BGRA, GRAY8 }, "
+        "format = (string) { YUY2, I420, BGR, BGRx, BGRA, GRAY8, UYVY }, "
         "width = (int) [ 16, 4096 ], "
         "height = (int) [ 16, 4096 ], "
         "framerate = (fraction) [ 0, MAX ]; "
@@ -477,6 +477,10 @@ gst_avi_mux_vidsink_set_caps (GstPad * pad, GstCaps * vscaps)
     switch (fmt) {
       case GST_VIDEO_FORMAT_YUY2:
         avipad->vids.compression = GST_MAKE_FOURCC ('Y', 'U', 'Y', '2');
+        avipad->vids.bit_cnt = 16;
+        break;
+      case GST_VIDEO_FORMAT_UYVY:
+        avipad->vids.compression = GST_MAKE_FOURCC ('U', 'Y', 'V', 'Y');
         avipad->vids.bit_cnt = 16;
         break;
       case GST_VIDEO_FORMAT_I420:
@@ -993,14 +997,14 @@ gst_avi_mux_request_new_pad (GstElement * element,
 
   newpad = gst_pad_new_from_template (templ, pad_name);
 
-  g_free (name);
-
   avipad->collect = gst_collect_pads_add_pad (avimux->collect,
       newpad, sizeof (GstAviCollectData), NULL, TRUE);
   ((GstAviCollectData *) (avipad->collect))->avipad = avipad;
 
   if (!gst_element_add_pad (element, newpad))
     goto pad_add_failed;
+
+  g_free (name);
 
   GST_DEBUG_OBJECT (newpad, "Added new request pad");
 
@@ -1030,6 +1034,7 @@ too_many_video_pads:
 pad_add_failed:
   {
     GST_WARNING_OBJECT (avimux, "Adding the new pad '%s' failed", pad_name);
+    g_free (name);
     gst_object_unref (newpad);
     return NULL;
   }
@@ -1072,16 +1077,15 @@ static inline guint
 gst_avi_mux_start_chunk (GstByteWriter * bw, const gchar * tag, guint32 fourcc)
 {
   guint chunk_offset;
-  gboolean hdl = TRUE;
 
   if (tag)
-    hdl &= gst_byte_writer_put_data (bw, (const guint8 *) tag, 4);
+    gst_byte_writer_put_data (bw, (const guint8 *) tag, 4);
   else
-    hdl &= gst_byte_writer_put_uint32_le (bw, fourcc);
+    gst_byte_writer_put_uint32_le (bw, fourcc);
 
   chunk_offset = gst_byte_writer_get_pos (bw);
   /* real chunk size comes later */
-  hdl &= gst_byte_writer_put_uint32_le (bw, 0);
+  gst_byte_writer_put_uint32_le (bw, 0);
 
   return chunk_offset;
 }
@@ -1090,17 +1094,16 @@ static inline void
 gst_avi_mux_end_chunk (GstByteWriter * bw, guint chunk_offset)
 {
   guint size;
-  gboolean hdl = TRUE;
 
   size = gst_byte_writer_get_pos (bw);
 
   gst_byte_writer_set_pos (bw, chunk_offset);
-  hdl &= gst_byte_writer_put_uint32_le (bw, size - chunk_offset - 4);
+  gst_byte_writer_put_uint32_le (bw, size - chunk_offset - 4);
   gst_byte_writer_set_pos (bw, size);
 
   /* arrange for even padding */
   if (size & 1)
-    hdl &= gst_byte_writer_put_uint8 (bw, 0);
+    gst_byte_writer_put_uint8 (bw, 0);
 }
 
 /* maybe some of these functions should be moved to riff.h? */

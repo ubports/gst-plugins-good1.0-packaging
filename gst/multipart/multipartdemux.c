@@ -322,7 +322,6 @@ gst_multipart_find_pad_by_mime (GstMultipartDemux * demux, gchar * mime,
 
     gst_pad_use_fixed_caps (pad);
     gst_pad_set_active (pad, TRUE);
-    gst_element_add_pad (GST_ELEMENT_CAST (demux), pad);
 
     /* prepare and send stream-start */
     if (!demux->have_group_id) {
@@ -346,14 +345,16 @@ gst_multipart_find_pad_by_mime (GstMultipartDemux * demux, gchar * mime,
     if (demux->have_group_id)
       gst_event_set_group_id (event, demux->group_id);
 
-    gst_pad_push_event (pad, event);
+    gst_pad_store_sticky_event (pad, event);
     g_free (stream_id);
+    gst_event_unref (event);
 
     /* take the mime type, convert it to the caps name */
     capsname = gst_multipart_demux_get_gstname (demux, mime);
     caps = gst_caps_from_string (capsname);
     GST_DEBUG_OBJECT (demux, "caps for pad: %s", capsname);
     gst_pad_set_caps (pad, caps);
+    gst_element_add_pad (GST_ELEMENT_CAST (demux), pad);
     gst_caps_unref (caps);
 
     if (created) {

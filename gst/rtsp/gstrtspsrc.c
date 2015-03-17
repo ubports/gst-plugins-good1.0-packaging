@@ -53,7 +53,7 @@
  * protocols can be controlled with the #GstRTSPSrc:protocols property.
  *
  * rtspsrc currently understands SDP as the format of the session description.
- * For each stream listed in the SDP a new rtp_stream%d pad will be created
+ * For each stream listed in the SDP a new rtp_stream\%d pad will be created
  * with caps derived from the SDP media description. This is a caps of mime type
  * "application/x-rtp" that can be connected to any available RTP depayloader
  * element.
@@ -197,6 +197,7 @@ gst_rtsp_src_buffer_mode_get_type (void)
 #define DEFAULT_USE_PIPELINE_CLOCK       FALSE
 #define DEFAULT_TLS_VALIDATION_FLAGS     G_TLS_CERTIFICATE_VALIDATE_ALL
 #define DEFAULT_TLS_DATABASE     NULL
+#define DEFAULT_DO_RETRANSMISSION        TRUE
 
 enum
 {
@@ -231,6 +232,7 @@ enum
   PROP_SDES,
   PROP_TLS_VALIDATION_FLAGS,
   PROP_TLS_DATABASE,
+  PROP_DO_RETRANSMISSION,
   PROP_LAST
 };
 
@@ -614,6 +616,21 @@ gst_rtspsrc_class_init (GstRTSPSrcClass * klass)
           G_TYPE_TLS_DATABASE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
+   * GstRTSPSrc::do-retransmission:
+   *
+   * Attempt to ask the server to retransmit lost packets according to RFC4588.
+   *
+   * Note: currently only works with SSRC-multiplexed retransmission streams
+   *
+   * Since: 1.6
+   */
+  g_object_class_install_property (gobject_class, PROP_DO_RETRANSMISSION,
+      g_param_spec_boolean ("do-retransmission", "Retransmission",
+          "Ask the server to retransmit lost packets",
+          DEFAULT_DO_RETRANSMISSION,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+  /**
    * GstRTSPSrc::handle-request:
    * @rtspsrc: a #GstRTSPSrc
    * @request: a #GstRTSPMessage
@@ -756,6 +773,7 @@ gst_rtspsrc_init (GstRTSPSrc * src)
   src->sdes = NULL;
   src->tls_validation_flags = DEFAULT_TLS_VALIDATION_FLAGS;
   src->tls_database = DEFAULT_TLS_DATABASE;
+  src->do_retransmission = DEFAULT_DO_RETRANSMISSION;
 
   /* get a list of all extensions */
   src->extensions = gst_rtsp_ext_list_get ();
@@ -1020,6 +1038,9 @@ gst_rtspsrc_set_property (GObject * object, guint prop_id, const GValue * value,
       g_clear_object (&rtspsrc->tls_database);
       rtspsrc->tls_database = g_value_dup_object (value);
       break;
+    case PROP_DO_RETRANSMISSION:
+      rtspsrc->do_retransmission = g_value_get_boolean (value);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -1150,6 +1171,9 @@ gst_rtspsrc_get_property (GObject * object, guint prop_id, GValue * value,
       break;
     case PROP_TLS_DATABASE:
       g_value_set_object (value, rtspsrc->tls_database);
+      break;
+    case PROP_DO_RETRANSMISSION:
+      g_value_set_boolean (value, rtspsrc->do_retransmission);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -1565,6 +1589,8 @@ gst_rtspsrc_stream_free (GstRTSPSrc * src, GstRTSPStream * stream)
     gst_object_unref (stream->rtcppad);
   if (stream->session)
     g_object_unref (stream->session);
+  if (stream->rtx_pt_map)
+    gst_structure_free (stream->rtx_pt_map);
   g_free (stream);
 }
 
@@ -1727,6 +1753,7 @@ parse_keymgmt (const gchar * keymgmt, GstCaps * caps)
     return FALSE;
 
   msg = gst_mikey_message_new_from_data (data, size, NULL, NULL);
+  g_free (data);
   if (msg == NULL)
     return FALSE;
 
@@ -1839,7 +1866,7 @@ parse_keymgmt (const gchar * keymgmt, GstCaps * caps)
 
   res = TRUE;
 done:
-  gst_mikey_message_free (msg);
+  gst_mikey_message_unref (msg);
 
   return res;
 }
@@ -1874,6 +1901,8 @@ gst_rtspsrc_sdp_attributes_to_caps (GArray * attributes, GstCaps * caps)
       if (!strcmp (key, "control"))
         continue;
       if (!strcmp (key, "range"))
+        continue;
+      if (!strcmp (key, "framesize"))
         continue;
       if (g_str_equal (key, "key-mgmt")) {
         parse_keymgmt (attr->value, caps);
@@ -1922,6 +1951,7 @@ rtsp_get_attribute_for_pt (const GstSDPMedia * media, const gchar * name,
  *  Mapping of caps to and from SDP fields:
  *
  *   a=rtpmap:<payload> <encoding_name>/<clock_rate>[/<encoding_params>]
+ *   a=framesize:<payload> <width>-<height>
  *   a=fmtp:<payload> <param>[=<value>];...
  */
 static GstCaps *
@@ -1930,6 +1960,7 @@ gst_rtspsrc_media_to_caps (gint pt, const GstSDPMedia * media)
   GstCaps *caps;
   const gchar *rtpmap;
   const gchar *fmtp;
+  const gchar *framesize;
   gchar *name = NULL;
   gint rate = -1;
   gchar *params = NULL;
@@ -2041,6 +2072,19 @@ gst_rtspsrc_media_to_caps (gint pt, const GstSDPMedia * media)
         }
       }
       g_strfreev (pairs);
+    }
+  }
+
+  /* parse framesize: field */
+  if ((framesize = gst_sdp_media_get_attribute_val (media, "framesize"))) {
+    gchar *p;
+
+    /* p is now of the format <payload> <width>-<height> */
+    p = (gchar *) framesize;
+
+    PARSE_INT (p, " ", payload);
+    if (payload != -1 && payload == pt) {
+      gst_structure_set (s, "a-framesize", G_TYPE_STRING, p, NULL);
     }
   }
   return caps;
@@ -2328,12 +2372,16 @@ gst_rtspsrc_get_position (GstRTSPSrc * src)
         GST_DEBUG_OBJECT (src, "retaining position %" GST_TIME_FORMAT,
             GST_TIME_ARGS (pos));
         src->last_pos = pos;
-        return;
+        goto out;
       }
     }
   }
 
   src->last_pos = 0;
+
+out:
+
+  gst_query_unref (query);
 }
 
 static gboolean
@@ -3085,6 +3133,7 @@ request_rtcp_encoder (GstElement * rtpbin, guint session,
 
       g_value_unset (&rtcp_cipher);
       g_value_unset (&rtcp_auth);
+      gst_buffer_unref (buf);
     }
   }
   name = g_strdup_printf ("rtcp_sink_%d", session);
@@ -3095,6 +3144,104 @@ request_rtcp_encoder (GstElement * rtpbin, guint session,
   return gst_object_ref (stream->srtpenc);
 }
 
+static GstElement *
+request_aux_receiver (GstElement * rtpbin, guint sessid, GstRTSPSrc * src)
+{
+  GstElement *rtx, *bin;
+  GstPad *pad;
+  gchar *name;
+  GstRTSPStream *stream;
+
+  stream = find_stream (src, &sessid, (gpointer) find_stream_by_id);
+  if (!stream) {
+    GST_WARNING_OBJECT (src, "Stream %u not found", sessid);
+    return NULL;
+  }
+
+  GST_INFO_OBJECT (src, "creating retransmision receiver for session %u "
+      "with map %" GST_PTR_FORMAT, sessid, stream->rtx_pt_map);
+  bin = gst_bin_new (NULL);
+  rtx = gst_element_factory_make ("rtprtxreceive", NULL);
+  g_object_set (rtx, "payload-type-map", stream->rtx_pt_map, NULL);
+  gst_bin_add (GST_BIN (bin), rtx);
+
+  pad = gst_element_get_static_pad (rtx, "src");
+  name = g_strdup_printf ("src_%u", sessid);
+  gst_element_add_pad (bin, gst_ghost_pad_new (name, pad));
+  g_free (name);
+  gst_object_unref (pad);
+
+  pad = gst_element_get_static_pad (rtx, "sink");
+  name = g_strdup_printf ("sink_%u", sessid);
+  gst_element_add_pad (bin, gst_ghost_pad_new (name, pad));
+  g_free (name);
+  gst_object_unref (pad);
+
+  return bin;
+}
+
+static void
+add_retransmission (GstRTSPSrc * src, GstRTSPTransport * transport)
+{
+  GList *walk;
+  guint signal_id;
+
+  if (transport->trans != GST_RTSP_TRANS_RTP)
+    return;
+
+  signal_id = g_signal_lookup ("request-aux-receiver",
+      G_OBJECT_TYPE (src->manager));
+  /* there's already something connected */
+  if (g_signal_handler_find (src->manager, G_SIGNAL_MATCH_ID, signal_id, 0,
+          NULL, NULL, NULL) != 0) {
+    GST_DEBUG_OBJECT (src, "Not adding RTX AUX element as "
+        "\"request-aux-receiver\" signal is "
+        "already used by the application");
+    return;
+  }
+
+  /* build the retransmission payload type map */
+  for (walk = src->streams; walk; walk = g_list_next (walk)) {
+    GstRTSPStream *stream = (GstRTSPStream *) walk->data;
+    int i;
+
+    if (stream->rtx_pt_map)
+      gst_structure_free (stream->rtx_pt_map);
+    stream->rtx_pt_map = gst_structure_new_empty ("application/x-rtp-pt-map");
+
+    for (i = 0; i < stream->ptmap->len; i++) {
+      PtMapItem *item = &g_array_index (stream->ptmap, PtMapItem, i);
+      GstStructure *s = gst_caps_get_structure (item->caps, 0);
+      const gchar *encoding;
+
+      /* we only care about RTX streams */
+      if ((encoding = gst_structure_get_string (s, "encoding-name"))
+          && g_strcmp0 (encoding, "RTX") == 0) {
+        const gchar *stream_pt_s;
+        gint rtx_pt;
+
+        if (gst_structure_get_int (s, "payload", &rtx_pt)
+            && (stream_pt_s = gst_structure_get_string (s, "apt"))) {
+
+          if (rtx_pt != 0) {
+            gst_structure_set (stream->rtx_pt_map, stream_pt_s, G_TYPE_UINT,
+                rtx_pt, NULL);
+          }
+        }
+      }
+    }
+
+    GST_DEBUG_OBJECT (src, "built retransmission payload map for stream "
+        "id %i: %" GST_PTR_FORMAT, stream->id, stream->rtx_pt_map);
+  }
+
+  g_object_set (src->manager, "do-retransmission", TRUE, NULL);
+
+  /* enable RFC4588 retransmission handling by setting rtprtxreceive
+   * as the "aux" element of rtpbin */
+  g_signal_connect (src->manager, "request-aux-receiver",
+      (GCallback) request_aux_receiver, src);
+}
 
 /* try to get and configure a manager */
 static gboolean
@@ -3167,7 +3314,7 @@ gst_rtspsrc_stream_configure_manager (GstRTSPSrc * src, GstRTSPStream * stream,
        * so slaving in jitterbuffer does not make much sense
        * (and might mess things up due to bursts) */
       if (GST_CLOCK_TIME_IS_VALID (src->segment.duration) &&
-          src->segment.duration && !stream->container) {
+          src->segment.duration && stream->container) {
         src->use_buffering = TRUE;
       } else {
         src->use_buffering = FALSE;
@@ -3190,6 +3337,9 @@ gst_rtspsrc_stream_configure_manager (GstRTSPSrc * src, GstRTSPStream * stream,
 
       g_signal_emit (src, gst_rtspsrc_signals[SIGNAL_NEW_MANAGER], 0,
           src->manager);
+
+      if (src->do_retransmission)
+        add_retransmission (src, transport);
     }
     g_signal_connect (src->manager, "request-rtp-decoder",
         (GCallback) request_rtp_decoder, stream);
@@ -4431,14 +4581,18 @@ gst_rtspsrc_handle_data (GstRTSPSrc * src, GstRTSPMessage * message)
     gchar *uri;
     GList *streams;
     guint group_id = gst_util_group_id_next ();
+    GstSegment segment;
 
     /* generate an SHA256 sum of the URI */
     cs = g_checksum_new (G_CHECKSUM_SHA256);
     uri = src->conninfo.location;
     g_checksum_update (cs, (const guchar *) uri, strlen (uri));
 
+    gst_segment_init (&segment, GST_FORMAT_TIME);
+
     for (streams = src->streams; streams; streams = g_list_next (streams)) {
       GstRTSPStream *ostream = (GstRTSPStream *) streams->data;
+      GstCaps *caps;
 
       stream_id =
           g_strdup_printf ("%s/%d", g_checksum_get_string (cs), ostream->id);
@@ -4447,12 +4601,51 @@ gst_rtspsrc_handle_data (GstRTSPSrc * src, GstRTSPMessage * message)
 
       g_free (stream_id);
       gst_rtspsrc_stream_push_event (src, ostream, event);
+
+      if ((caps = stream_get_caps_for_pt (ostream, ostream->default_pt))) {
+        /* only streams that have a connection to the outside world */
+        if (ostream->setup) {
+          if (ostream->udpsrc[0]) {
+            gst_element_send_event (ostream->udpsrc[0],
+                gst_event_new_caps (caps));
+          } else if (ostream->channelpad[0]) {
+            if (GST_PAD_IS_SRC (ostream->channelpad[0]))
+              gst_pad_push_event (ostream->channelpad[0],
+                  gst_event_new_caps (caps));
+            else
+              gst_pad_send_event (ostream->channelpad[0],
+                  gst_event_new_caps (caps));
+          }
+
+          caps = gst_caps_new_empty_simple ("application/x-rtcp");
+
+          if (ostream->udpsrc[1]) {
+            gst_element_send_event (ostream->udpsrc[1],
+                gst_event_new_caps (caps));
+          } else if (ostream->channelpad[1]) {
+            if (GST_PAD_IS_SRC (ostream->channelpad[1]))
+              gst_pad_push_event (ostream->channelpad[1],
+                  gst_event_new_caps (caps));
+            else
+              gst_pad_send_event (ostream->channelpad[1],
+                  gst_event_new_caps (caps));
+          }
+        }
+      }
+
+      /* Push a SEGMENT event if we don't have one pending, if we have one
+       * pending we will just send that one a few lines below to all pads
+       */
+      if (!src->start_segment)
+        gst_rtspsrc_stream_push_event (src, ostream,
+            gst_event_new_segment (&segment));
     }
     g_checksum_free (cs);
 
     gst_rtspsrc_activate_streams (src);
     src->need_activate = FALSE;
   }
+
   if ((event = src->start_segment) != NULL) {
     src->start_segment = NULL;
     gst_rtspsrc_push_event (src, event);
@@ -5578,6 +5771,10 @@ error_response:
         GST_ELEMENT_ERROR (src, RESOURCE, NOT_FOUND, (NULL), ("%s",
                 response->type_data.response.reason));
         break;
+      case GST_RTSP_STS_UNAUTHORIZED:
+        GST_ELEMENT_ERROR (src, RESOURCE, NOT_AUTHORIZED, (NULL), ("%s",
+                response->type_data.response.reason));
+        break;
       case GST_RTSP_STS_MOVED_PERMANENTLY:
       case GST_RTSP_STS_MOVE_TEMPORARILY:
       {
@@ -5713,7 +5910,7 @@ no_setup:
 
 /* masks to be kept in sync with the hardcoded protocol order of preference
  * in code below */
-static guint protocol_masks[] = {
+static const guint protocol_masks[] = {
   GST_RTSP_LOWER_TRANS_UDP,
   GST_RTSP_LOWER_TRANS_UDP_MCAST,
   GST_RTSP_LOWER_TRANS_TCP,
@@ -5947,6 +6144,8 @@ default_srtcp_params (void)
       "srtcp-cipher", G_TYPE_STRING, "aes-128-icm",
       "srtcp-auth", G_TYPE_STRING, "hmac-sha1-80", NULL);
 
+  gst_buffer_unref (buf);
+
   return caps;
 }
 
@@ -6036,7 +6235,7 @@ gst_rtspsrc_stream_make_keymgmt (GstRTSPSrc * src, GstRTSPStream * stream)
 
   /* now serialize this to bytes */
   bytes = gst_mikey_message_to_bytes (msg, NULL, NULL);
-  gst_mikey_message_free (msg);
+  gst_mikey_message_unref (msg);
   /* and make it into base64 */
   data = g_bytes_get_data (bytes, &size);
   base64 = g_base64_encode (data, size);
@@ -6246,7 +6445,8 @@ gst_rtspsrc_setup_streams (GstRTSPSrc * src, gboolean async)
               stream->id));
 
     /* handle the code ourselves */
-    if ((res = gst_rtspsrc_send (src, conn, &request, &response, &code) < 0))
+    res = gst_rtspsrc_send (src, conn, &request, &response, &code);
+    if (res < 0)
       goto send_error;
 
     switch (code) {
@@ -6340,7 +6540,7 @@ gst_rtspsrc_setup_streams (GstRTSPSrc * src, gboolean async)
           break;
       }
 
-      if (!stream->container || (!src->interleaved && !retry)) {
+      if (!src->interleaved || !retry) {
         /* now configure the stream with the selected transport */
         if (!gst_rtspsrc_stream_configure_transport (stream, &transport)) {
           GST_DEBUG_OBJECT (src,
@@ -6819,7 +7019,7 @@ restart:
   /* could not be set but since the request returned OK, we assume it
    * was SDP, else check it. */
   if (respcont) {
-    if (!g_ascii_strcasecmp (respcont, "application/sdp") == 0)
+    if (g_ascii_strcasecmp (respcont, "application/sdp") != 0)
       goto wrong_content_type;
   }
 
@@ -7283,8 +7483,6 @@ gst_rtspsrc_play (GstRTSPSrc * src, GstSegment * segment, gboolean async)
   if (src->manager)
     g_signal_emit_by_name (src->manager, "reset-sync", NULL);
 
-  gst_rtspsrc_set_state (src, GST_STATE_PLAYING);
-
   /* construct a control url */
   control = get_aggregate_control (src);
 
@@ -7320,7 +7518,7 @@ gst_rtspsrc_play (GstRTSPSrc * src, GstSegment * segment, gboolean async)
       /* store the newsegment event so it can be sent from the streaming thread. */
       if (src->start_segment)
         gst_event_unref (src->start_segment);
-      src->start_segment = gst_event_new_segment (&src->segment);
+      src->start_segment = gst_event_new_segment (segment);
     }
 
     if (segment->rate != 1.0) {
@@ -7405,6 +7603,11 @@ gst_rtspsrc_play (GstRTSPSrc * src, GstSegment * segment, gboolean async)
   /* configure the caps of the streams after we parsed all headers. Only reset
    * the manager object when we set a new Range header (we did a seek) */
   gst_rtspsrc_configure_caps (src, segment, src->need_range);
+
+  /* set to PLAYING after we have configured the caps, otherwise we
+   * might end up calling request_key (with SRTP) while caps are still
+   * being configured. */
+  gst_rtspsrc_set_state (src, GST_STATE_PLAYING);
 
   /* set again when needed */
   src->need_range = FALSE;
@@ -7920,6 +8123,7 @@ gst_rtspsrc_uri_set_uri (GstURIHandler * handler, const gchar * uri,
 {
   GstRTSPSrc *src;
   GstRTSPResult res;
+  GstSDPResult sres;
   GstRTSPUrl *newurl = NULL;
   GstSDPMessage *sdp = NULL;
 
@@ -7930,11 +8134,13 @@ gst_rtspsrc_uri_set_uri (GstURIHandler * handler, const gchar * uri,
     goto was_ok;
 
   if (g_str_has_prefix (uri, "rtsp-sdp://")) {
-    if ((res = gst_sdp_message_new (&sdp) < 0))
+    sres = gst_sdp_message_new (&sdp);
+    if (sres < 0)
       goto sdp_failed;
 
     GST_DEBUG_OBJECT (src, "parsing SDP message");
-    if ((res = gst_sdp_message_parse_uri (uri, sdp) < 0))
+    sres = gst_sdp_message_parse_uri (uri, sdp);
+    if (sres < 0)
       goto invalid_sdp;
   } else {
     /* try to parse */
@@ -7975,14 +8181,14 @@ was_ok:
   }
 sdp_failed:
   {
-    GST_ERROR_OBJECT (src, "Could not create new SDP (%d)", res);
+    GST_ERROR_OBJECT (src, "Could not create new SDP (%d)", sres);
     g_set_error_literal (error, GST_URI_ERROR, GST_URI_ERROR_BAD_URI,
         "Could not create SDP");
     return FALSE;
   }
 invalid_sdp:
   {
-    GST_ERROR_OBJECT (src, "Not a valid SDP (%d) '%s'", res,
+    GST_ERROR_OBJECT (src, "Not a valid SDP (%d) '%s'", sres,
         GST_STR_NULL (uri));
     gst_sdp_message_free (sdp);
     g_set_error_literal (error, GST_URI_ERROR, GST_URI_ERROR_BAD_URI,

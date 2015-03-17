@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 0.10.28.2\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2014-06-22 17:33+0200\n"
+"POT-Creation-Date: 2015-03-17 09:11+0100\n"
 "PO-Revision-Date: 2012-05-05 19:05+0100\n"
 "Last-Translator: Savvas Radevic <vicedar@gmail.com>\n"
 "Language-Team: Greek <team@lists.gnome.gr>\n"
@@ -228,10 +228,6 @@ msgstr "Ο οδηγός της συσκευής '%s' δεν υποστηρίζε
 msgid "The driver of device '%s' does not support any known IO method."
 msgstr "Ο οδηγός της συσκευής '%s' δεν υποστηρίζει κάποια γνωστή μέθοδο λήψης."
 
-#, fuzzy, c-format
-msgid "Device '%s' does not support video capture"
-msgstr "Η συσκευή '%s' δεν είναι συσκευή εξόδου."
-
 #, c-format
 msgid "Device '%s' is busy"
 msgstr ""
@@ -306,6 +302,9 @@ msgstr "Αποτυχία ανάγνωσης ισχύς σήματος για τ�
 msgid "Failed to allocated required memory."
 msgstr ""
 
+msgid "Failed to allocate required memory."
+msgstr ""
+
 #, fuzzy, c-format
 msgid "Converter on device %s has no supported input format"
 msgstr "Ο οδηγός της συσκευής '%s' δεν υποστηρίζει κάποια γνωστή μέθοδο λήψης."
@@ -320,9 +319,6 @@ msgstr ""
 
 #, c-format
 msgid "Encoder on device %s has no supported output format"
-msgstr ""
-
-msgid "Failed to allocate required memory."
 msgstr ""
 
 #, fuzzy
@@ -436,6 +432,10 @@ msgstr ""
 
 msgid "Cannot operate without a clock"
 msgstr "Δεν είναι δυνατή η λειτουργία χωρίς ρολόι "
+
+#, fuzzy
+#~ msgid "Device '%s' does not support video capture"
+#~ msgstr "Η συσκευή '%s' δεν είναι συσκευή εξόδου."
 
 #~ msgid "Could not establish connection to sound server"
 #~ msgstr "Δεν ήταν δυνατή η σύνδεση με τον διακομιστή ήχου"

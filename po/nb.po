@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.2.1\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2014-06-22 17:33+0200\n"
+"POT-Creation-Date: 2015-03-17 09:11+0100\n"
 "PO-Revision-Date: 2014-01-22 17:49+0100\n"
 "Last-Translator: Johnny A. Solbu <johnny@solbu.net>\n"
 "Language-Team: Norwegian Bokmaal <i18n-nb@lister.ping.uio.no>\n"
@@ -225,10 +225,6 @@ msgid "The driver of device '%s' does not support any known IO method."
 msgstr "Driveren av enheten «%s» støtter ikke noen kjente IO-metoder."
 
 #, c-format
-msgid "Device '%s' does not support video capture"
-msgstr "Enhet «%s» støtter ikke videoopptak"
-
-#, c-format
 msgid "Device '%s' is busy"
 msgstr "Enheten «%s» er opptatt"
 
@@ -303,6 +299,9 @@ msgstr "Klarte ikke å endre dempe-modus for enheten «%s»."
 msgid "Failed to allocated required memory."
 msgstr ""
 
+msgid "Failed to allocate required memory."
+msgstr ""
+
 #, fuzzy, c-format
 msgid "Converter on device %s has no supported input format"
 msgstr "Driveren av enheten «%s» støtter ikke IO metoden %d"
@@ -318,9 +317,6 @@ msgstr "Videoenheten aksepterte ikke ny bildefrekvensinnstilling."
 #, fuzzy, c-format
 msgid "Encoder on device %s has no supported output format"
 msgstr "Videoenheten aksepterte ikke ny bildefrekvensinnstilling."
-
-msgid "Failed to allocate required memory."
-msgstr ""
 
 #, fuzzy
 msgid "Failed to start decoding thread."
@@ -426,6 +422,9 @@ msgstr "Endring av oppløsning under kjøring støttes ikke enda."
 
 msgid "Cannot operate without a clock"
 msgstr "Kan ikke operere uten en klokke"
+
+#~ msgid "Device '%s' does not support video capture"
+#~ msgstr "Enhet «%s» støtter ikke videoopptak"
 
 #~ msgid "Could not establish connection to sound server"
 #~ msgstr "Kunne ikke etablere tilkobling til lydtjener"

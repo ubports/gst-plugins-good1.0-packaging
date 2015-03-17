@@ -5,7 +5,7 @@ dnl please read gstreamer/docs/random/autotools before changing this file
 dnl initialize autoconf
 dnl releases only do -Wall, git and prerelease does -Werror too
 dnl use a three digit version number for releases, and four for git/pre
-AC_INIT([GStreamer Good Plug-ins],[1.3.3],[http://bugzilla.gnome.org/enter_bug.cgi?product=GStreamer],[gst-plugins-good])
+AC_INIT([GStreamer Good Plug-ins],[1.5.0.1],[http://bugzilla.gnome.org/enter_bug.cgi?product=GStreamer],[gst-plugins-good])
 
 AG_GST_INIT
 
@@ -43,11 +43,11 @@ AC_DEFINE_UNQUOTED(GST_API_VERSION, "$GST_API_VERSION",
   [GStreamer API Version])
 
 AG_GST_LIBTOOL_PREPARE
-AS_LIBTOOL(GST, 303, 0, 303)
+AS_LIBTOOL(GST, 501, 0, 501)
 
 dnl *** required versions of GStreamer stuff ***
-GST_REQ=1.3.3
-GSTPB_REQ=1.3.3
+GST_REQ=1.5.0.1
+GSTPB_REQ=1.5.0.1
 
 dnl *** autotools stuff ****
 
@@ -506,7 +506,10 @@ AG_GST_CHECK_FEATURE(GST_V4L2, [Video 4 Linux 2], video4linux2, [
   AC_MSG_CHECKING([Checking for video4linux2 header ...])
   AC_CHECK_HEADER(linux/videodev2.h, [ HAVE_GST_V4L2=yes ],
   [
-    AC_CHECK_HEADER(sys/videodev2.h, [ HAVE_GST_V4L2=yes ])
+    AC_CHECK_HEADER(sys/videodev2.h, [ HAVE_GST_V4L2=yes ],
+    [
+      AC_CHECK_HEADER(sys/videoio.h, [ HAVE_GST_V4L2=yes ])
+    ])
   ])
   if test "x$HAVE_VIDEODEV" = "xno"; then
      AC_MSG_WARN([video4linux2 was not found])
@@ -554,55 +557,29 @@ dnl Check for X11
 translit(dnm, m, l) AM_CONDITIONAL(USE_X, true)
 AG_GST_CHECK_FEATURE(X, [X libraries and plugins],
                   [ximagesrc], [
-  AG_GST_CHECK_X
-
-  if test "x$HAVE_X" = "xyes"
-  then
+  PKG_CHECK_MODULES([X], [x11], [
+    HAVE_X="yes"
     dnl check for Xfixes
-    PKG_CHECK_MODULES(XFIXES, xfixes, HAVE_XFIXES="yes", HAVE_XFIXES="no")
-    if test "x$HAVE_XFIXES" = "xyes"
-    then
-        XFIXES_CFLAGS="-DHAVE_XFIXES $XFIXES_CFLAGS"
-    fi
-    AC_SUBST(XFIXES_LIBS)
-    AC_SUBST(XFIXES_CFLAGS)
+    PKG_CHECK_MODULES([XFIXES], [ xfixes ], [
+      AC_DEFINE(HAVE_XFIXES, 1, [Defined if Xfixes is available])
+    ], [ HAVE_XFIXES="no" ])
 
     dnl check for Xdamage
-    PKG_CHECK_MODULES(XDAMAGE, xdamage, HAVE_XDAMAGE="yes", HAVE_XDAMAGE="no")
-    if test "x$HAVE_XDAMAGE" = "xyes"
-    then
-        XDAMAGE_CFLAGS="-DHAVE_XDAMAGE $XDAMAGE_CFLAGS"
-    fi
-    AC_SUBST(XDAMAGE_LIBS)
-    AC_SUBST(XDAMAGE_CFLAGS)
-  fi
-])
+    PKG_CHECK_MODULES([XDAMAGE], [ xdamage ], [
+      AC_DEFINE(HAVE_XDAMAGE, 1, [Defined if Xdamage is available])
+    ], [ HAVE_XDAMAGE="no" ])
 
-dnl FIXME: this should be rolled into the test above, it's just an additional
-dnl feature of the ximagesrc plug-in
-dnl This is the same as in gst-plugins-base
-dnl check for X Shm
-translit(dnm, m, l) AM_CONDITIONAL(USE_XSHM, true)
-AG_GST_CHECK_FEATURE(XSHM, [X Shared Memory extension], , [
-  if test x$HAVE_X = xyes; then
-    AC_CHECK_LIB(Xext, XShmAttach,
-                 HAVE_XSHM="yes", HAVE_XSHM="no",
-                 $X_LIBS)
-    if test "x$HAVE_XSHM" = "xyes"; then
-      XSHM_LIBS="-lXext"
-    else
-      dnl On AIX, it is in XextSam instead, but we still need -lXext
-      AC_CHECK_LIB(XextSam, XShmAttach,
-                   HAVE_XSHM="yes", HAVE_XSHM="no",
-                   $X_LIBS)
-      if test "x$HAVE_XSHM" = "xyes"; then
-        XSHM_LIBS="-lXext -lXextSam"
-      fi
-    fi
-  fi
-], ,[
-  AC_SUBST(HAVE_XSHM)
-  AC_SUBST(XSHM_LIBS)
+    dnl check for X Shm
+    PKG_CHECK_MODULES([XEXT], [ xext ], [
+      AC_CHECK_LIB([Xext], [ XShmAttach ], [
+        AC_DEFINE(HAVE_XSHM, 1, [Defined if XShm is available])
+        XSHM_LIBS="$XEXT_LIBS"
+        XSHM_CFLAGS="$XEXT_CFLAGS"
+      ], [ HAVE_XEXT="no" ] , [ $X_LIBS ])
+    ])
+    AC_SUBST(XSHM_LIBS)
+    AC_SUBST(XSHM_CFLAGS)
+  ], [ HAVE_X="no" ])
 ])
 
 dnl *** ext plug-ins ***
@@ -769,47 +746,10 @@ AG_GST_CHECK_FEATURE(SOUP, [soup http client plugin (2.4)], souphttpsrc, [
   AC_SUBST(SOUP_LIBS)
 ])
 
-dnl *** speex >= 1.0.4 or >= 1.1.5 ***
-dnl   1.1.4 and earlier were not API/ABI compatible with 1.0
-dnl   1.1.6 is the first to use a .pc/pkg-config file ***
-dnl   speex_jitter.h is 1.1.x only
+dnl *** speex ***
 translit(dnm, m, l) AM_CONDITIONAL(USE_SPEEX, true)
 AG_GST_CHECK_FEATURE(SPEEX, [speex speech codec], speex, [
   AG_GST_PKG_CHECK_MODULES(SPEEX, speex >= 1.1.6)
-  if test $HAVE_SPEEX = no
-  then
-    AG_GST_CHECK_LIBHEADER(SPEEX, speex, speex_bits_init, , speex/speex.h, [
-      AC_CHECK_HEADER(speex/speex_jitter.h, [
-        dnl speex 1.1.x :
-        AG_GST_CHECK_LIBHEADER(SPEEX, speex, speex_encode_int, , speex/speex.h, [
-          dnl speex 1.1.5 or + :
-          HAVE_SPEEX="yes"
-          SPEEX_LIBS="-lspeex"
-          AC_SUBST(SPEEX_CFLAGS)
-          AC_SUBST(SPEEX_LIBS)
-        ],[
-          HAVE_SPEEX="no"
-        ])
-      ],[
-        dnl speex 1.0.x :
-          AC_CHECK_DECL(SPEEX_GET_LOOKAHEAD, [
-            dnl speex 1.0.4
-            HAVE_SPEEX="yes"
-            SPEEX_LIBS="-lspeex"
-            AC_SUBST(SPEEX_CFLAGS)
-            AC_SUBST(SPEEX_LIBS)
-
-            AC_DEFINE_UNQUOTED(SPEEX_1_0, 1,
-              [defined if speex 1.0.x API detected])
-        ],[
-            HAVE_SPEEX="no"
-            AC_MSG_NOTICE(You need at least 1.0.4 to compile the speex plugin)
-        ], [
-#include <speex/speex.h>
-        ])
-      ])
-    ])
-  fi
 ])
 
 dnl *** taglib ***
@@ -871,16 +811,7 @@ AG_GST_CHECK_FEATURE(VPX, [VPX decoder], vpx, [
 dnl *** wavpack ***
 translit(dnm, m, l) AM_CONDITIONAL(USE_WAVPACK, true)
 AG_GST_CHECK_FEATURE(WAVPACK, [wavpack plug-in], wavpack, [
-  PKG_CHECK_MODULES(WAVPACK, wavpack >= 4.40.0, HAVE_WAVPACK=yes, [
-    PKG_CHECK_MODULES(WAVPACK, wavpack >= 4.20, [
-      HAVE_WAVPACK=yes
-      AC_DEFINE(WAVPACK_OLD_API, 1, [old wavpack API])
-    ],[
-      HAVE_WAVPACK=no
-    ])
-  ])
-  AC_SUBST(WAVPACK_CFLAGS)
-  AC_SUBST(WAVPACK_LIBS)
+  AG_GST_PKG_CHECK_MODULES(WAVPACK, wavpack >= 4.60.0)
 ])
 
 dnl *** qtdemux & matroska prefer to have zlib ***
@@ -940,7 +871,6 @@ AM_CONDITIONAL(USE_VPX, false)
 AM_CONDITIONAL(USE_WAVEFORM, false)
 AM_CONDITIONAL(USE_WAVPACK, false)
 AM_CONDITIONAL(USE_X, false)
-AM_CONDITIONAL(USE_XSHM, false)
 AM_CONDITIONAL(USE_ZLIB, false)
 
 fi dnl of EXT plugins

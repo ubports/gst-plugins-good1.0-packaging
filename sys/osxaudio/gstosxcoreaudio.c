@@ -23,7 +23,6 @@
 
 #include "gstosxcoreaudio.h"
 #include "gstosxcoreaudiocommon.h"
-#include "gstosxaudiosrc.h"
 
 GST_DEBUG_CATEGORY_STATIC (osx_audio_debug);
 #define GST_CAT_DEFAULT osx_audio_debug
@@ -80,36 +79,7 @@ gst_core_audio_close (GstCoreAudio * core_audio)
 gboolean
 gst_core_audio_open (GstCoreAudio * core_audio)
 {
-
-  if (!gst_core_audio_open_impl (core_audio))
-    return FALSE;
-
-  if (core_audio->is_src) {
-    AudioStreamBasicDescription asbd_in;
-    UInt32 propertySize;
-    OSStatus status;
-
-    GstOsxAudioSrc *src =
-        GST_OSX_AUDIO_SRC (GST_OBJECT_PARENT (core_audio->osxbuf));
-
-    propertySize = sizeof (asbd_in);
-    status = AudioUnitGetProperty (core_audio->audiounit,
-        kAudioUnitProperty_StreamFormat,
-        kAudioUnitScope_Input, 1, &asbd_in, &propertySize);
-
-    if (status) {
-      AudioComponentInstanceDispose (core_audio->audiounit);
-      core_audio->audiounit = NULL;
-      GST_WARNING_OBJECT (core_audio,
-          "Unable to obtain device properties: %" GST_FOURCC_FORMAT,
-          GST_FOURCC_ARGS (status));
-      return FALSE;
-    } else {
-      src->deviceChannels = asbd_in.mChannelsPerFrame;
-    }
-  }
-
-  return TRUE;
+  return gst_core_audio_open_impl (core_audio);
 }
 
 gboolean
@@ -156,25 +126,25 @@ gst_core_audio_initialize (GstCoreAudio * core_audio,
 
   if (core_audio->is_src) {
     /* create AudioBufferList needed for recording */
+    core_audio->recBufferSize = frame_size * format.mBytesPerFrame;
     core_audio->recBufferList =
-        buffer_list_alloc (format.mChannelsPerFrame,
-        frame_size * format.mBytesPerFrame);
+        buffer_list_alloc (format.mChannelsPerFrame, core_audio->recBufferSize,
+        /* Currently always TRUE (i.e. interleaved) */
+        !(format.mFormatFlags & kAudioFormatFlagIsNonInterleaved));
   }
 
   /* Initialize the AudioUnit */
   status = AudioUnitInitialize (core_audio->audiounit);
   if (status) {
-    GST_ERROR_OBJECT (core_audio, "Failed to initialise AudioUnit: %"
-        GST_FOURCC_FORMAT, GST_FOURCC_ARGS (status));
+    GST_ERROR_OBJECT (core_audio, "Failed to initialise AudioUnit: %d",
+        (int) status);
     goto error;
   }
   return TRUE;
 
 error:
-  if (core_audio->is_src && core_audio->recBufferList) {
-    buffer_list_free (core_audio->recBufferList);
-    core_audio->recBufferList = NULL;
-  }
+  buffer_list_free (core_audio->recBufferList);
+  core_audio->recBufferList = NULL;
   return FALSE;
 }
 
@@ -183,10 +153,8 @@ gst_core_audio_unitialize (GstCoreAudio * core_audio)
 {
   AudioUnitUninitialize (core_audio->audiounit);
 
-  if (core_audio->recBufferList) {
-    buffer_list_free (core_audio->recBufferList);
-    core_audio->recBufferList = NULL;
-  }
+  buffer_list_free (core_audio->recBufferList);
+  core_audio->recBufferList = NULL;
 }
 
 void
@@ -197,15 +165,9 @@ gst_core_audio_set_volume (GstCoreAudio * core_audio, gfloat volume)
 }
 
 gboolean
-gst_core_audio_select_device (AudioDeviceID * device_id)
+gst_core_audio_select_device (GstCoreAudio * core_audio)
 {
-  return gst_core_audio_select_device_impl (device_id);
-}
-
-gboolean
-gst_core_audio_select_source_device (AudioDeviceID * device_id)
-{
-  return gst_core_audio_select_source_device_impl (device_id);
+  return gst_core_audio_select_device_impl (core_audio);
 }
 
 void
@@ -219,4 +181,148 @@ gboolean
 gst_core_audio_audio_device_is_spdif_avail (AudioDeviceID device_id)
 {
   return gst_core_audio_audio_device_is_spdif_avail_impl (device_id);
+}
+
+gboolean
+gst_core_audio_parse_channel_layout (AudioChannelLayout * layout,
+    gint channels, guint64 * channel_mask, GstAudioChannelPosition * pos)
+{
+  gint i;
+  gboolean ret = TRUE;
+
+  g_return_val_if_fail (channels <= GST_OSX_AUDIO_MAX_CHANNEL, FALSE);
+
+  switch (channels) {
+    case 0:
+      pos[0] = GST_AUDIO_CHANNEL_POSITION_NONE;
+      break;
+    case 1:
+      pos[0] = GST_AUDIO_CHANNEL_POSITION_MONO;
+      break;
+    case 2:
+      pos[0] = GST_AUDIO_CHANNEL_POSITION_FRONT_LEFT;
+      pos[1] = GST_AUDIO_CHANNEL_POSITION_FRONT_RIGHT;
+      *channel_mask |= GST_AUDIO_CHANNEL_POSITION_MASK (FRONT_LEFT);
+      *channel_mask |= GST_AUDIO_CHANNEL_POSITION_MASK (FRONT_RIGHT);
+      break;
+    default:
+      for (i = 0; i < channels; i++) {
+        switch (layout->mChannelDescriptions[i].mChannelLabel) {
+          case kAudioChannelLabel_Left:
+            pos[i] = GST_AUDIO_CHANNEL_POSITION_FRONT_LEFT;
+            break;
+          case kAudioChannelLabel_Right:
+            pos[i] = GST_AUDIO_CHANNEL_POSITION_FRONT_RIGHT;
+            break;
+          case kAudioChannelLabel_Center:
+            pos[i] = GST_AUDIO_CHANNEL_POSITION_FRONT_CENTER;
+            break;
+          case kAudioChannelLabel_LFEScreen:
+            pos[i] = GST_AUDIO_CHANNEL_POSITION_LFE1;
+            break;
+          case kAudioChannelLabel_LeftSurround:
+            pos[i] = GST_AUDIO_CHANNEL_POSITION_REAR_LEFT;
+            break;
+          case kAudioChannelLabel_RightSurround:
+            pos[i] = GST_AUDIO_CHANNEL_POSITION_REAR_RIGHT;
+            break;
+          case kAudioChannelLabel_RearSurroundLeft:
+            pos[i] = GST_AUDIO_CHANNEL_POSITION_SIDE_LEFT;
+            break;
+          case kAudioChannelLabel_RearSurroundRight:
+            pos[i] = GST_AUDIO_CHANNEL_POSITION_SIDE_RIGHT;
+            break;
+          case kAudioChannelLabel_CenterSurround:
+            pos[i] = GST_AUDIO_CHANNEL_POSITION_REAR_CENTER;
+            break;
+          default:
+            GST_WARNING ("unrecognized channel: %d",
+                (int) layout->mChannelDescriptions[i].mChannelLabel);
+            *channel_mask = 0;
+            ret = FALSE;
+            break;
+        }
+      }
+  }
+
+  return ret;
+}
+
+GstCaps *
+gst_core_audio_asbd_to_caps (AudioStreamBasicDescription * asbd,
+    AudioChannelLayout * layout)
+{
+  GstAudioInfo info;
+  GstAudioFormat format = GST_AUDIO_FORMAT_UNKNOWN;
+  GstAudioChannelPosition pos[64] = { GST_AUDIO_CHANNEL_POSITION_INVALID, };
+  gint rate, channels, bps, endianness;
+  guint64 channel_mask;
+  gboolean sign, interleaved;
+
+  if (asbd->mFormatID != kAudioFormatLinearPCM) {
+    GST_WARNING ("Only linear PCM is supported");
+    goto error;
+  }
+
+  if (!(asbd->mFormatFlags & kAudioFormatFlagIsPacked)) {
+    GST_WARNING ("Only packed formats supported");
+    goto error;
+  }
+
+  if (asbd->mFormatFlags & kLinearPCMFormatFlagsSampleFractionMask) {
+    GST_WARNING ("Fixed point audio is unsupported");
+    goto error;
+  }
+
+  rate = asbd->mSampleRate;
+  if (rate == kAudioStreamAnyRate)
+    rate = GST_AUDIO_DEF_RATE;
+
+  channels = asbd->mChannelsPerFrame;
+  if (channels == 0) {
+    /* The documentation says this should not happen! */
+    channels = 1;
+  }
+
+  bps = asbd->mBitsPerChannel;
+  endianness = asbd->mFormatFlags & kAudioFormatFlagIsBigEndian ?
+      G_BIG_ENDIAN : G_LITTLE_ENDIAN;
+  sign = asbd->mFormatID & kAudioFormatFlagIsSignedInteger ? TRUE : FALSE;
+  interleaved = asbd->mFormatFlags & kAudioFormatFlagIsNonInterleaved ?
+      TRUE : FALSE;
+
+  if (asbd->mFormatFlags & kAudioFormatFlagIsFloat) {
+    if (bps == 32) {
+      if (endianness == G_LITTLE_ENDIAN)
+        format = GST_AUDIO_FORMAT_F32LE;
+      else
+        format = GST_AUDIO_FORMAT_F32BE;
+
+    } else if (bps == 64) {
+      if (endianness == G_LITTLE_ENDIAN)
+        format = GST_AUDIO_FORMAT_F64LE;
+      else
+        format = GST_AUDIO_FORMAT_F64BE;
+    }
+  } else {
+    format = gst_audio_format_build_integer (sign, endianness, bps, bps);
+  }
+
+  if (format == GST_AUDIO_FORMAT_UNKNOWN) {
+    GST_WARNING ("Unsupported sample format");
+    goto error;
+  }
+
+  if (!gst_core_audio_parse_channel_layout (layout, channels, &channel_mask,
+          pos)) {
+    GST_WARNING ("Failed to parse channel layout");
+    goto error;
+  }
+
+  gst_audio_info_set_format (&info, format, rate, channels, pos);
+
+  return gst_audio_info_to_caps (&info);
+
+error:
+  return NULL;
 }

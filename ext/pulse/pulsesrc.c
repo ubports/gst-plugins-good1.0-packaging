@@ -60,6 +60,9 @@ GST_DEBUG_CATEGORY_EXTERN (pulse_debug);
 #define DEFAULT_MUTE            FALSE
 #define MAX_VOLUME              10.0
 
+/* See the pulsesink code for notes on how we interact with the PA mainloop
+ * thread. */
+
 enum
 {
   PROP_0,
@@ -1240,7 +1243,7 @@ gst_pulsesrc_create_stream (GstPulseSrc * pulsesrc, GstCaps ** caps,
   const pa_channel_map *m;
   GstStructure *s;
   gboolean need_channel_layout = FALSE;
-  GstAudioRingBufferSpec new_spec, *spec;
+  GstAudioRingBufferSpec new_spec, *spec = NULL;
   const gchar *name;
   int i;
 

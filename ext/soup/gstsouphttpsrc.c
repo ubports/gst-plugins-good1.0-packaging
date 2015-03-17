@@ -718,7 +718,7 @@ static void
 gst_soup_http_src_cancel_message (GstSoupHTTPSrc * src)
 {
   if (src->msg != NULL) {
-    GST_DEBUG_OBJECT (src, "Cancelling message");
+    GST_INFO_OBJECT (src, "Cancelling message");
     src->session_io_status = GST_SOUP_HTTP_SRC_SESSION_IO_STATUS_CANCELLED;
     soup_session_cancel_message (src->session, src->msg, SOUP_STATUS_CANCELLED);
   }
@@ -1034,6 +1034,7 @@ gst_soup_http_src_got_headers_cb (SoupMessage * msg, GstSoupHTTPSrc * src)
   GHashTable *params = NULL;
   GstEvent *http_headers_event;
   GstStructure *http_headers, *headers;
+  const gchar *accept_ranges;
 
   GST_INFO_OBJECT (src, "got headers");
 
@@ -1096,6 +1097,16 @@ gst_soup_http_src_got_headers_cb (SoupMessage * msg, GstSoupHTTPSrc * src)
       gst_element_post_message (GST_ELEMENT (src),
           gst_message_new_duration_changed (GST_OBJECT (src)));
     }
+  }
+
+  /* If the server reports Accept-Ranges: none we don't have to try
+   * doing range requests at all
+   */
+  if ((accept_ranges =
+          soup_message_headers_get_one (msg->response_headers,
+              "Accept-Ranges"))) {
+    if (g_ascii_strcasecmp (accept_ranges, "none") == 0)
+      src->seekable = FALSE;
   }
 
   /* Icecast stuff */
@@ -1203,7 +1214,8 @@ gst_soup_http_src_got_headers_cb (SoupMessage * msg, GstSoupHTTPSrc * src)
     src->seekable = FALSE;
     GST_ELEMENT_ERROR (src, RESOURCE, SEEK,
         (_("Server does not support seeking.")),
-        ("Server does not accept Range HTTP header, URL: %s", src->location));
+        ("Server does not accept Range HTTP header, URL: %s, Redirect to: %s",
+            src->location, GST_STR_NULL (src->redirection_uri)));
     src->ret = GST_FLOW_ERROR;
   }
 
@@ -1253,7 +1265,7 @@ gst_soup_http_src_finished_cb (SoupMessage * msg, GstSoupHTTPSrc * src)
     GST_DEBUG_OBJECT (src, "finished, but not for current message");
     return;
   }
-  GST_DEBUG_OBJECT (src, "finished");
+  GST_INFO_OBJECT (src, "finished, io status: %d", src->session_io_status);
   src->ret = GST_FLOW_EOS;
   if (src->session_io_status == GST_SOUP_HTTP_SRC_SESSION_IO_STATUS_CANCELLED) {
     /* gst_soup_http_src_cancel_message() triggered this; probably a seek
@@ -1441,7 +1453,7 @@ gst_soup_http_src_response_cb (SoupSession * session, SoupMessage * msg,
     /* Ignore redirections. */
     return;
   }
-  GST_DEBUG_OBJECT (src, "got response %d: %s", msg->status_code,
+  GST_INFO_OBJECT (src, "got response %d: %s", msg->status_code,
       msg->reason_phrase);
   if (src->session_io_status == GST_SOUP_HTTP_SRC_SESSION_IO_STATUS_RUNNING &&
       src->read_position > 0 && (src->have_size
@@ -1461,8 +1473,8 @@ gst_soup_http_src_response_cb (SoupSession * session, SoupMessage * msg,
 
 #define SOUP_HTTP_SRC_ERROR(src,soup_msg,cat,code,error_message)     \
   GST_ELEMENT_ERROR ((src), cat, code, ("%s", error_message),        \
-      ("%s (%d), URL: %s", (soup_msg)->reason_phrase,                \
-          (soup_msg)->status_code, (src)->location));
+      ("%s (%d), URL: %s, Redirect to: %s", (soup_msg)->reason_phrase,                \
+          (soup_msg)->status_code, (src)->location, GST_STR_NULL ((src)->redirection_uri)));
 
 static void
 gst_soup_http_src_parse_status (SoupMessage * msg, GstSoupHTTPSrc * src)
@@ -1533,21 +1545,23 @@ gst_soup_http_src_parse_status (SoupMessage * msg, GstSoupHTTPSrc * src)
     if (msg->status_code == SOUP_STATUS_NOT_FOUND) {
       GST_ELEMENT_ERROR (src, RESOURCE, NOT_FOUND,
           ("%s", msg->reason_phrase),
-          ("%s (%d), URL: %s", msg->reason_phrase, msg->status_code,
-              src->location));
-    } else if (msg->status_code == SOUP_STATUS_UNAUTHORIZED ||
-        msg->status_code == SOUP_STATUS_PAYMENT_REQUIRED ||
-        msg->status_code == SOUP_STATUS_FORBIDDEN ||
-        msg->status_code == SOUP_STATUS_PROXY_AUTHENTICATION_REQUIRED) {
-      GST_ELEMENT_ERROR (src, RESOURCE, NOT_AUTHORIZED,
-          ("%s", msg->reason_phrase),
-          ("%s (%d), URL: %s", msg->reason_phrase, msg->status_code,
-              src->location));
+          ("%s (%d), URL: %s, Redirect to: %s", msg->reason_phrase,
+              msg->status_code, src->location,
+              GST_STR_NULL (src->redirection_uri)));
+    } else if (msg->status_code == SOUP_STATUS_UNAUTHORIZED
+        || msg->status_code == SOUP_STATUS_PAYMENT_REQUIRED
+        || msg->status_code == SOUP_STATUS_FORBIDDEN
+        || msg->status_code == SOUP_STATUS_PROXY_AUTHENTICATION_REQUIRED) {
+      GST_ELEMENT_ERROR (src, RESOURCE, NOT_AUTHORIZED, ("%s",
+              msg->reason_phrase), ("%s (%d), URL: %s, Redirect to: %s",
+              msg->reason_phrase, msg->status_code, src->location,
+              GST_STR_NULL (src->redirection_uri)));
     } else {
       GST_ELEMENT_ERROR (src, RESOURCE, OPEN_READ,
           ("%s", msg->reason_phrase),
-          ("%s (%d), URL: %s", msg->reason_phrase, msg->status_code,
-              src->location));
+          ("%s (%d), URL: %s, Redirect to: %s", msg->reason_phrase,
+              msg->status_code, src->location,
+              GST_STR_NULL (src->redirection_uri)));
     }
     src->ret = GST_FLOW_ERROR;
   }
@@ -1635,12 +1649,12 @@ gst_soup_http_src_do_request (GstSoupHTTPSrc * src, const gchar * method,
   src->outbuf = outbuf;
   do {
     if (src->interrupted) {
-      GST_DEBUG_OBJECT (src, "interrupted");
+      GST_INFO_OBJECT (src, "interrupted");
       src->ret = GST_FLOW_FLUSHING;
       break;
     }
     if (src->retry) {
-      GST_DEBUG_OBJECT (src, "Reconnecting");
+      GST_INFO_OBJECT (src, "Reconnecting");
       if (!gst_soup_http_src_build_message (src, method)) {
         return GST_FLOW_ERROR;
       }
@@ -1654,7 +1668,7 @@ gst_soup_http_src_do_request (GstSoupHTTPSrc * src, const gchar * method,
 
     switch (src->session_io_status) {
       case GST_SOUP_HTTP_SRC_SESSION_IO_STATUS_IDLE:
-        GST_DEBUG_OBJECT (src, "Queueing connection request");
+        GST_INFO_OBJECT (src, "Queueing connection request");
         gst_soup_http_src_queue_message (src);
         break;
       case GST_SOUP_HTTP_SRC_SESSION_IO_STATUS_QUEUED:
@@ -1694,6 +1708,18 @@ gst_soup_http_src_do_request (GstSoupHTTPSrc * src, const gchar * method,
   if (src->ret == GST_FLOW_CUSTOM_ERROR)
     src->ret = GST_FLOW_EOS;
   g_cond_signal (&src->request_finished_cond);
+
+  /* basesrc assumes that we don't return a buffer if
+   * something else than OK is returned. It will just
+   * leak any buffer we might accidentially provide
+   * here.
+   *
+   * This can potentially happen during flushing.
+   */
+  if (src->ret != GST_FLOW_OK && outbuf && *outbuf) {
+    gst_buffer_unref (*outbuf);
+    *outbuf = NULL;
+  }
 
   return src->ret;
 }

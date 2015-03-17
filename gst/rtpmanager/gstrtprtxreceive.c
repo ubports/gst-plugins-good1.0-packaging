@@ -427,12 +427,14 @@ _gst_rtp_buffer_new_from_rtx (GstRTPBuffer * rtp, guint32 ssrc1,
   guint payload_len = 0;
 
   /* copy fixed header */
-  mem = gst_memory_copy (rtp->map[0].memory, 0, rtp->size[0]);
+  mem = gst_memory_copy (rtp->map[0].memory,
+      (guint8 *) rtp->data[0] - rtp->map[0].data, rtp->size[0]);
   gst_buffer_append_memory (new_buffer, mem);
 
   /* copy extension if any */
   if (rtp->size[1]) {
-    mem = gst_memory_copy (rtp->map[1].memory, 0, rtp->size[1]);
+    mem = gst_memory_copy (rtp->map[1].memory,
+        (guint8 *) rtp->data[1] - rtp->map[1].data, rtp->size[1]);
     gst_buffer_append_memory (new_buffer, mem);
   }
 
@@ -489,7 +491,7 @@ gst_rtp_rtx_receive_chain (GstPad * pad, GstObject * parent, GstBuffer * buffer)
   guint16 orign_seqnum = 0;
   guint8 payload_type = 0;
   guint8 origin_payload_type = 0;
-  gboolean is_rtx = FALSE;
+  gboolean is_rtx;
   gboolean drop = FALSE;
 
   /* map current rtp packet to parse its header */

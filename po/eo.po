@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 0.10.28.2\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2014-06-22 17:33+0200\n"
+"POT-Creation-Date: 2015-03-17 09:11+0100\n"
 "PO-Revision-Date: 2011-06-04 21:48+0100\n"
 "Last-Translator: Kristjan SCHMIDT <kristjan.schmidt@googlemail.com>\n"
 "Language-Team: Esperanto <translation-team-eo@lists.sourceforge.net>\n"
@@ -214,10 +214,6 @@ msgid "The driver of device '%s' does not support any known IO method."
 msgstr ""
 
 #, c-format
-msgid "Device '%s' does not support video capture"
-msgstr ""
-
-#, c-format
 msgid "Device '%s' is busy"
 msgstr ""
 
@@ -288,6 +284,9 @@ msgstr ""
 msgid "Failed to allocated required memory."
 msgstr ""
 
+msgid "Failed to allocate required memory."
+msgstr ""
+
 #, c-format
 msgid "Converter on device %s has no supported input format"
 msgstr ""
@@ -302,9 +301,6 @@ msgstr ""
 
 #, c-format
 msgid "Encoder on device %s has no supported output format"
-msgstr ""
-
-msgid "Failed to allocate required memory."
 msgstr ""
 
 msgid "Failed to start decoding thread."

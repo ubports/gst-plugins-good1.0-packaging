@@ -198,7 +198,7 @@ check_matroska =
 endif
 
 if USE_PLUGIN_MULTIFILE
-check_multifile = elements/multifile
+check_multifile = elements/multifile elements/splitmux
 else
 check_multifile =
 endif
@@ -270,6 +270,12 @@ check_udp = \
         elements/udpsrc
 else
 check_udp =
+endif
+
+if USE_PLUGIN_VIDEOBOX
+check_videobox = elements/videobox
+else
+check_videobox =
 endif
 
 if USE_PLUGIN_VIDEOCROP
@@ -368,6 +374,7 @@ check_PROGRAMS = \
 	$(check_sunaudio) \
 	$(check_taglib) \
 	$(check_udp) \
+	$(check_videobox) \
 	$(check_videocrop) \
 	$(check_videofilter) \
 	$(check_videomixer) \
@@ -492,6 +499,10 @@ elements_jpegenc_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_BASE_CFLAGS) $(AM_CFL
 elements_jpegenc_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstapp-$(GST_API_VERSION) $(GST_BASE_LIBS) $(LDADD)
 
 elements_matroskamux_LDADD = $(GST_BASE_LIBS) $(LDADD) $(LIBM)
+
+elements_mulawdec_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_CFLAGS) $(AM_CFLAGS)
+
+elements_mulawenc_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_CFLAGS) $(AM_CFLAGS)
 
 elements_multifile_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_CFLAGS) $(AM_CFLAGS)
 elements_multifile_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstvideo-$(GST_API_VERSION) $(GST_LIBS) $(LDADD) $(LIBM)

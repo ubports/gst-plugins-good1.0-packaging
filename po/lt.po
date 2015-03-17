@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 0.10.23.2\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2014-06-22 17:33+0200\n"
+"POT-Creation-Date: 2015-03-17 09:11+0100\n"
 "PO-Revision-Date: 2010-07-16 19:34+0300\n"
 "Last-Translator: Žygimantas Beručka <uid0@akl.lt>\n"
 "Language-Team: Lithuanian <komp_lt@konferencijos.lt>\n"
@@ -228,10 +228,6 @@ msgid "The driver of device '%s' does not support any known IO method."
 msgstr "Įrenginio „%s“ tvarkyklė nepalaiko jokių žinomų įrašymo būdų."
 
 #, fuzzy, c-format
-msgid "Device '%s' does not support video capture"
-msgstr "Įrenginys „%s“ nėra išvesties įrenginys."
-
-#, fuzzy, c-format
 msgid "Device '%s' is busy"
 msgstr "Įrenginys „%s“ nėra išvesties įrenginys."
 
@@ -306,6 +302,9 @@ msgstr "Nepavyko gauti įrenginio „%s“ signalo stiprumo."
 msgid "Failed to allocated required memory."
 msgstr ""
 
+msgid "Failed to allocate required memory."
+msgstr ""
+
 #, fuzzy, c-format
 msgid "Converter on device %s has no supported input format"
 msgstr "Įrenginio „%s“ tvarkyklė nepalaiko jokių žinomų įrašymo būdų."
@@ -321,9 +320,6 @@ msgstr "Vaizdo įvesties įrenginys nepriėmė naujų kadrų dažnio nustatymų.
 #, fuzzy, c-format
 msgid "Encoder on device %s has no supported output format"
 msgstr "Vaizdo įvesties įrenginys nepriėmė naujų kadrų dažnio nustatymų."
-
-msgid "Failed to allocate required memory."
-msgstr ""
 
 #, fuzzy
 msgid "Failed to start decoding thread."
@@ -430,6 +426,10 @@ msgstr "Galimybės keisti skiriamąją gebą operacijos vykdymo metu dar nėra."
 
 msgid "Cannot operate without a clock"
 msgstr "Negali veikti be laikrodžio"
+
+#, fuzzy
+#~ msgid "Device '%s' does not support video capture"
+#~ msgstr "Įrenginys „%s“ nėra išvesties įrenginys."
 
 #~ msgid "Got unexpected frame size of %u instead of %u."
 #~ msgstr "Gautas netikėtas kadro dydis %u vietoje %u."

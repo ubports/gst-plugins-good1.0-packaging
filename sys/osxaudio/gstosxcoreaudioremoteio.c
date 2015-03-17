@@ -70,8 +70,7 @@ gst_core_audio_get_samples_and_latency_impl (GstCoreAudio * core_audio,
       latency, &size);
 
   if (status) {
-    GST_WARNING_OBJECT (core_audio, "Failed to get latency: %"
-        GST_FOURCC_FORMAT, GST_FOURCC_ARGS (status));
+    GST_WARNING_OBJECT (core_audio, "Failed to get latency: %d", (int) status);
     *samples = 0;
     return FALSE;
   }
@@ -101,21 +100,16 @@ gst_core_audio_initialize_impl (GstCoreAudio * core_audio,
 }
 
 AudioChannelLayout *
-gst_core_audio_audio_device_get_channel_layout (AudioDeviceID device_id)
+gst_core_audio_audio_device_get_channel_layout (AudioDeviceID device_id,
+    gboolean output)
 {
   return NULL;
 }
 
 static gboolean
-gst_core_audio_select_device_impl (AudioDeviceID * device_id)
+gst_core_audio_select_device_impl (GstCoreAudio * core_audio)
 {
   /* No device selection in iOS */
-  return TRUE;
-}
-
-static gboolean
-gst_core_audio_select_source_device_impl (AudioDeviceID * device_id)
-{
   return TRUE;
 }
 

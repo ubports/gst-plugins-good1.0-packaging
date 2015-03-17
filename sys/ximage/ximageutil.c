@@ -175,18 +175,17 @@ ximageutil_xcontext_get (GstElement * parent, const gchar * display_name)
     return NULL;
   }
   xcontext->screen = DefaultScreenOfDisplay (xcontext->disp);
-  xcontext->screen_num = DefaultScreen (xcontext->disp);
-  xcontext->visual = DefaultVisual (xcontext->disp, xcontext->screen_num);
-  xcontext->root = DefaultRootWindow (xcontext->disp);
-  xcontext->white = XWhitePixel (xcontext->disp, xcontext->screen_num);
-  xcontext->black = XBlackPixel (xcontext->disp, xcontext->screen_num);
+  xcontext->visual = DefaultVisualOfScreen (xcontext->screen);
+  xcontext->root = RootWindowOfScreen (xcontext->screen);
+  xcontext->white = WhitePixelOfScreen (xcontext->screen);
+  xcontext->black = BlackPixelOfScreen (xcontext->screen);
   xcontext->depth = DefaultDepthOfScreen (xcontext->screen);
 
-  xcontext->width = DisplayWidth (xcontext->disp, xcontext->screen_num);
-  xcontext->height = DisplayHeight (xcontext->disp, xcontext->screen_num);
+  xcontext->width = WidthOfScreen (xcontext->screen);
+  xcontext->height = HeightOfScreen (xcontext->screen);
 
-  xcontext->widthmm = DisplayWidthMM (xcontext->disp, xcontext->screen_num);
-  xcontext->heightmm = DisplayHeightMM (xcontext->disp, xcontext->screen_num);
+  xcontext->widthmm = WidthMMOfScreen (xcontext->screen);
+  xcontext->heightmm = HeightMMOfScreen (xcontext->screen);
 
   xcontext->caps = NULL;
 
@@ -314,13 +313,12 @@ ximageutil_calculate_pixel_aspect_ratio (GstXContext * xcontext)
   GST_DEBUG ("set xcontext PAR to %d/%d\n", xcontext->par_n, xcontext->par_d);
 }
 
-static void
+static gboolean
 gst_ximagesrc_buffer_dispose (GstBuffer * ximage)
 {
   GstElement *parent;
   GstMetaXImage *meta;
-
-  g_return_if_fail (ximage != NULL);
+  gboolean ret = TRUE;
 
   meta = GST_META_XIMAGE_GET (ximage);
 
@@ -331,10 +329,10 @@ gst_ximagesrc_buffer_dispose (GstBuffer * ximage)
   }
 
   if (meta->return_func)
-    meta->return_func (parent, ximage);
+    ret = meta->return_func (parent, ximage);
 
 beach:
-  return;
+  return ret;
 }
 
 void

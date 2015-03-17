@@ -80,7 +80,7 @@
  * sink_\%u pad that matches the sessionid in the signal and it should have 1 or
  * more src_\%u pads. For each src_%\u pad, a session will be made (if needed)
  * and the pad will be linked to the session send_rtp_sink pad. Each session will
- * then expose its source pad ad send_rtp_src_\%u on #GstRtpBin.
+ * then expose its source pad as send_rtp_src_\%u on #GstRtpBin.
  * An AUX receiver has 1 src_\%u pad that much match the sessionid in the signal
  * and 1 or more sink_\%u pads. A session will be made for each sink_\%u pad
  * when the corresponding recv_rtp_sink_\%u pad is requested on #GstRtpBin.
@@ -2119,9 +2119,17 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
           "Send event downstream when a stream is synchronized to the sender",
           DEFAULT_DO_SYNC_EVENT, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
+  /**
+   * GstRtpBin:do-retransmission:
+   *
+   * Enables RTP retransmission on all streams. To control retransmission on
+   * a per-SSRC basis, connect to the #GstRtpBin::new-jitterbuffer signal and
+   * set the #GstRtpJitterBuffer::do-retransmission property on the
+   * #GstRtpJitterBuffer object instead.
+   */
   g_object_class_install_property (gobject_class, PROP_DO_RETRANSMISSION,
       g_param_spec_boolean ("do-retransmission", "Do retransmission",
-          "Send an event downstream to request packet retransmission",
+          "Enable retransmission on all streams",
           DEFAULT_DO_RETRANSMISSION,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
@@ -2813,8 +2821,10 @@ caps_changed (GstPad * pad, GParamSpec * pspec, GstRtpBinSession * session)
   s = gst_caps_get_structure (caps, 0);
 
   /* get payload, finish when it's not there */
-  if (!gst_structure_get_int (s, "payload", &payload))
+  if (!gst_structure_get_int (s, "payload", &payload)) {
+    gst_caps_unref (caps);
     return;
+  }
 
   GST_RTP_SESSION_LOCK (session);
   GST_DEBUG_OBJECT (bin, "insert caps for payload %d", payload);
@@ -3661,16 +3671,16 @@ create_rtcp (GstRtpBin * rtpbin, GstPadTemplate * templ, const gchar * name)
     GstPadLinkReturn ret;
 
     GST_DEBUG_OBJECT (rtpbin, "linking RTCP encoder");
-    ename = g_strdup_printf ("rtcp_sink_%d", sessid);
-    encsink = gst_element_get_static_pad (encoder, ename);
-    g_free (ename);
+
     ename = g_strdup_printf ("rtcp_src_%d", sessid);
     encsrc = gst_element_get_static_pad (encoder, ename);
     g_free (ename);
-
     if (encsrc == NULL)
       goto enc_src_failed;
 
+    ename = g_strdup_printf ("rtcp_sink_%d", sessid);
+    encsink = gst_element_get_static_pad (encoder, ename);
+    g_free (ename);
     if (encsink == NULL)
       goto enc_sink_failed;
 

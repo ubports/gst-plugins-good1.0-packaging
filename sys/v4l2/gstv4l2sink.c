@@ -116,6 +116,8 @@ static GstCaps *gst_v4l2sink_get_caps (GstBaseSink * bsink, GstCaps * filter);
 static gboolean gst_v4l2sink_set_caps (GstBaseSink * bsink, GstCaps * caps);
 static GstFlowReturn gst_v4l2sink_show_frame (GstVideoSink * bsink,
     GstBuffer * buf);
+static gboolean gst_v4l2sink_unlock (GstBaseSink * sink);
+static gboolean gst_v4l2sink_unlock_stop (GstBaseSink * sink);
 
 static void
 gst_v4l2sink_class_init (GstV4l2SinkClass * klass)
@@ -185,6 +187,8 @@ gst_v4l2sink_class_init (GstV4l2SinkClass * klass)
   basesink_class->set_caps = GST_DEBUG_FUNCPTR (gst_v4l2sink_set_caps);
   basesink_class->propose_allocation =
       GST_DEBUG_FUNCPTR (gst_v4l2sink_propose_allocation);
+  basesink_class->unlock = GST_DEBUG_FUNCPTR (gst_v4l2sink_unlock);
+  basesink_class->unlock_stop = GST_DEBUG_FUNCPTR (gst_v4l2sink_unlock_stop);
 
   videosink_class->show_frame = GST_DEBUG_FUNCPTR (gst_v4l2sink_show_frame);
 
@@ -314,6 +318,11 @@ gst_v4l2sink_sync_crop_fields (GstV4l2Sink * v4l2sink)
 
     if (v4l2_ioctl (fd, VIDIOC_S_CROP, &crop) < 0) {
       GST_WARNING_OBJECT (v4l2sink, "VIDIOC_S_CROP failed");
+      return;
+    }
+
+    if (v4l2_ioctl (fd, VIDIOC_G_CROP, &crop) < 0) {
+      GST_WARNING_OBJECT (v4l2sink, "VIDIOC_G_CROP failed");
       return;
     }
 
@@ -486,7 +495,7 @@ gst_v4l2sink_set_caps (GstBaseSink * bsink, GstCaps * caps)
 
   LOG_CAPS (v4l2sink, caps);
 
-  if (!GST_V4L2_IS_OPEN (v4l2sink->v4l2object)) {
+  if (!GST_V4L2_IS_OPEN (obj)) {
     GST_DEBUG_OBJECT (v4l2sink, "device is not open");
     return FALSE;
   }
@@ -498,16 +507,16 @@ gst_v4l2sink_set_caps (GstBaseSink * bsink, GstCaps * caps)
   if (!gst_v4l2_object_stop (obj))
     goto stop_failed;
 
-  if (!gst_v4l2_object_set_format (v4l2sink->v4l2object, caps))
+  if (!gst_v4l2_object_set_format (obj, caps))
     goto invalid_format;
 
   gst_v4l2sink_sync_overlay_fields (v4l2sink);
   gst_v4l2sink_sync_crop_fields (v4l2sink);
 
-  GST_INFO_OBJECT (v4l2sink, "outputting buffers via mmap()");
+  GST_INFO_OBJECT (v4l2sink, "outputting buffers via mode %u", obj->mode);
 
-  v4l2sink->video_width = GST_V4L2_WIDTH (v4l2sink->v4l2object);
-  v4l2sink->video_height = GST_V4L2_HEIGHT (v4l2sink->v4l2object);
+  v4l2sink->video_width = GST_V4L2_WIDTH (obj);
+  v4l2sink->video_height = GST_V4L2_HEIGHT (obj);
 
   /* TODO: videosink width/height should be scaled according to
    * pixel-aspect-ratio
@@ -554,6 +563,7 @@ gst_v4l2sink_propose_allocation (GstBaseSink * bsink, GstQuery * query)
       max = min;
 
     gst_query_set_nth_allocation_pool (query, 0, pool, size, min, max);
+    gst_object_unref (pool);
   }
 
   return TRUE;
@@ -606,4 +616,18 @@ activate_failed:
         ("Buffer pool activation failed"));
     return GST_FLOW_ERROR;
   }
+}
+
+static gboolean
+gst_v4l2sink_unlock (GstBaseSink * sink)
+{
+  GstV4l2Sink *v4l2sink = GST_V4L2SINK (sink);
+  return gst_v4l2_object_unlock (v4l2sink->v4l2object);
+}
+
+static gboolean
+gst_v4l2sink_unlock_stop (GstBaseSink * sink)
+{
+  GstV4l2Sink *v4l2sink = GST_V4L2SINK (sink);
+  return gst_v4l2_object_unlock_stop (v4l2sink->v4l2object);
 }

@@ -14,9 +14,9 @@ GObject
           GstAudioClock
       GstControlBinding
       GstControlSource
-      GstDeviceMonitor
-        GstPulseDeviceMonitor
-        GstV4l2DeviceMonitor
+      GstDeviceProvider
+        GstPulseDeviceProvider
+        GstV4l2DeviceProvider
       GstElement
         Gst3GPPMux
         GstALawDec
@@ -152,6 +152,8 @@ GObject
           GstRTSPSrc
           GstRgVolume
           GstRtpBin
+          GstSplitMuxSink
+          GstSplitMuxSrc
         GstCutter
         GstDVDec
         GstDVDemux
@@ -287,17 +289,17 @@ GObject
           GstPngEnc
           GstVP8Enc
           GstVP9Enc
+          GstY4mEncode
         GstVideoMixer2
         GstWavEnc
         GstWavParse
-        GstY4mEncode
       GstPad
         GstInterleavePad
         GstVideoMixer2Pad
       GstPadTemplate
       GstPlugin
       GstPluginFeature
-        GstDeviceMonitorFactory
+        GstDeviceProviderFactory
         GstElementFactory
         GstTypeFindFactory
       GstRegistry

@@ -15,6 +15,7 @@
 @SET_MAKE@
 
 
+
 VPATH = @srcdir@
 am__is_gnu_make = test -n '$(MAKEFILE_LIST)' && test -n '$(MAKELEVEL)'
 am__make_running_with_option = \
@@ -80,6 +81,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
+noinst_PROGRAMS = test-splitmux-part-reader$(EXEEXT)
 subdir = gst/multifile
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/depcomp $(noinst_HEADERS)
@@ -104,7 +106,6 @@ am__aclocal_m4_deps = $(top_srcdir)/common/m4/as-ac-expand.m4 \
 	$(top_srcdir)/common/m4/gst-platform.m4 \
 	$(top_srcdir)/common/m4/gst-plugin-docs.m4 \
 	$(top_srcdir)/common/m4/gst-plugindir.m4 \
-	$(top_srcdir)/common/m4/gst-x11.m4 \
 	$(top_srcdir)/common/m4/gst.m4 \
 	$(top_srcdir)/common/m4/gtk-doc.m4 \
 	$(top_srcdir)/common/m4/orc.m4 $(top_srcdir)/common/m4/pkg.m4 \
@@ -161,6 +162,10 @@ am_libgstmultifile_la_OBJECTS =  \
 	libgstmultifile_la-gstmultifilesrc.lo \
 	libgstmultifile_la-gstmultifile.lo \
 	libgstmultifile_la-gstsplitfilesrc.lo \
+	libgstmultifile_la-gstsplitmuxsink.lo \
+	libgstmultifile_la-gstsplitmuxpartreader.lo \
+	libgstmultifile_la-gstsplitmuxsrc.lo \
+	libgstmultifile_la-gstsplitutils.lo \
 	libgstmultifile_la-patternspec.lo
 libgstmultifile_la_OBJECTS = $(am_libgstmultifile_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -171,6 +176,22 @@ libgstmultifile_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(libgstmultifile_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link \
 	$(CCLD) $(libgstmultifile_la_CFLAGS) $(CFLAGS) \
 	$(libgstmultifile_la_LDFLAGS) $(LDFLAGS) -o $@
+PROGRAMS = $(noinst_PROGRAMS)
+am_test_splitmux_part_reader_OBJECTS =  \
+	test_splitmux_part_reader-test-splitmuxpartreader.$(OBJEXT) \
+	test_splitmux_part_reader-gstsplitmuxpartreader.$(OBJEXT) \
+	test_splitmux_part_reader-gstsplitmuxsrc.$(OBJEXT) \
+	test_splitmux_part_reader-gstsplitutils.$(OBJEXT) \
+	test_splitmux_part_reader-patternspec.$(OBJEXT)
+test_splitmux_part_reader_OBJECTS =  \
+	$(am_test_splitmux_part_reader_OBJECTS)
+test_splitmux_part_reader_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+test_splitmux_part_reader_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+	$(test_splitmux_part_reader_CFLAGS) $(CFLAGS) \
+	$(test_splitmux_part_reader_LDFLAGS) $(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -205,8 +226,10 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(libgstmultifile_la_SOURCES)
-DIST_SOURCES = $(libgstmultifile_la_SOURCES)
+SOURCES = $(libgstmultifile_la_SOURCES) \
+	$(test_splitmux_part_reader_SOURCES)
+DIST_SOURCES = $(libgstmultifile_la_SOURCES) \
+	$(test_splitmux_part_reader_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -364,9 +387,6 @@ HAVE_AVC1394 = @HAVE_AVC1394@
 HAVE_CXX = @HAVE_CXX@
 HAVE_DIRECTSOUND = @HAVE_DIRECTSOUND@
 HAVE_ROM1394 = @HAVE_ROM1394@
-HAVE_SPEEX = @HAVE_SPEEX@
-HAVE_X = @HAVE_X@
-HAVE_XSHM = @HAVE_XSHM@
 HAVE_ZLIB = @HAVE_ZLIB@
 HTML_DIR = @HTML_DIR@
 INSTALL = @INSTALL@
@@ -484,17 +504,17 @@ WAVPACK_CFLAGS = @WAVPACK_CFLAGS@
 WAVPACK_LIBS = @WAVPACK_LIBS@
 XDAMAGE_CFLAGS = @XDAMAGE_CFLAGS@
 XDAMAGE_LIBS = @XDAMAGE_LIBS@
+XEXT_CFLAGS = @XEXT_CFLAGS@
+XEXT_LIBS = @XEXT_LIBS@
 XFIXES_CFLAGS = @XFIXES_CFLAGS@
 XFIXES_LIBS = @XFIXES_LIBS@
 XGETTEXT = @XGETTEXT@
 XGETTEXT_015 = @XGETTEXT_015@
 XGETTEXT_EXTRA_OPTIONS = @XGETTEXT_EXTRA_OPTIONS@
-XMKMF = @XMKMF@
+XSHM_CFLAGS = @XSHM_CFLAGS@
 XSHM_LIBS = @XSHM_LIBS@
 X_CFLAGS = @X_CFLAGS@
-X_EXTRA_LIBS = @X_EXTRA_LIBS@
 X_LIBS = @X_LIBS@
-X_PRE_LIBS = @X_PRE_LIBS@
 ZLIB_LIBS = @ZLIB_LIBS@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
@@ -565,13 +585,29 @@ libgstmultifile_la_SOURCES = \
 	gstmultifilesrc.c    \
 	gstmultifile.c       \
 	gstsplitfilesrc.c    \
+	gstsplitmuxsink.c    \
+	gstsplitmuxpartreader.c \
+	gstsplitmuxsrc.c \
+	gstsplitutils.c    \
 	patternspec.c
 
 libgstmultifile_la_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_BASE_CFLAGS) $(GST_CFLAGS) $(GIO_CFLAGS)
 libgstmultifile_la_LIBADD = $(GST_PLUGINS_BASE_LIBS) -lgstvideo-@GST_API_VERSION@ $(GST_BASE_LIBS) $(GST_LIBS) $(GIO_LIBS)
 libgstmultifile_la_LDFLAGS = $(GST_PLUGIN_LDFLAGS)
 libgstmultifile_la_LIBTOOLFLAGS = $(GST_PLUGIN_LIBTOOLFLAGS)
-noinst_HEADERS = gstmultifilesrc.h gstmultifilesink.h gstsplitfilesrc.h patternspec.h
+noinst_HEADERS = gstmultifilesrc.h gstmultifilesink.h gstsplitfilesrc.h gstsplitmuxsink.h \
+	gstsplitmuxsrc.h gstsplitmuxpartreader.h gstsplitutils.h patternspec.h
+
+test_splitmux_part_reader_SOURCES = \
+	test-splitmuxpartreader.c \
+	gstsplitmuxpartreader.c \
+	gstsplitmuxsrc.c \
+	gstsplitutils.c \
+	patternspec.c
+
+test_splitmux_part_reader_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_BASE_CFLAGS) $(GST_CFLAGS) $(GIO_CFLAGS)
+test_splitmux_part_reader_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstvideo-@GST_API_VERSION@ $(GST_BASE_LIBS) $(GST_LIBS) $(GIO_LIBS)
+test_splitmux_part_reader_LDFLAGS = $(GST_PLUGIN_LDFLAGS)
 all: all-am
 
 .SUFFIXES:
@@ -645,6 +681,19 @@ clean-pluginLTLIBRARIES:
 libgstmultifile.la: $(libgstmultifile_la_OBJECTS) $(libgstmultifile_la_DEPENDENCIES) $(EXTRA_libgstmultifile_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(libgstmultifile_la_LINK) -rpath $(plugindir) $(libgstmultifile_la_OBJECTS) $(libgstmultifile_la_LIBADD) $(LIBS)
 
+clean-noinstPROGRAMS:
+	@list='$(noinst_PROGRAMS)'; test -n "$$list" || exit 0; \
+	echo " rm -f" $$list; \
+	rm -f $$list || exit $$?; \
+	test -n "$(EXEEXT)" || exit 0; \
+	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
+	echo " rm -f" $$list; \
+	rm -f $$list
+
+test-splitmux-part-reader$(EXEEXT): $(test_splitmux_part_reader_OBJECTS) $(test_splitmux_part_reader_DEPENDENCIES) $(EXTRA_test_splitmux_part_reader_DEPENDENCIES) 
+	@rm -f test-splitmux-part-reader$(EXEEXT)
+	$(AM_V_CCLD)$(test_splitmux_part_reader_LINK) $(test_splitmux_part_reader_OBJECTS) $(test_splitmux_part_reader_LDADD) $(LIBS)
+
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 
@@ -655,7 +704,16 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstmultifile_la-gstmultifilesink.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstmultifile_la-gstmultifilesrc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstmultifile_la-gstsplitfilesrc.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstmultifile_la-gstsplitmuxpartreader.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstmultifile_la-gstsplitmuxsink.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstmultifile_la-gstsplitmuxsrc.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstmultifile_la-gstsplitutils.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstmultifile_la-patternspec.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_splitmux_part_reader-gstsplitmuxpartreader.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_splitmux_part_reader-gstsplitmuxsrc.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_splitmux_part_reader-gstsplitutils.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_splitmux_part_reader-patternspec.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_splitmux_part_reader-test-splitmuxpartreader.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -709,12 +767,110 @@ libgstmultifile_la-gstsplitfilesrc.lo: gstsplitfilesrc.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstmultifile_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -c -o libgstmultifile_la-gstsplitfilesrc.lo `test -f 'gstsplitfilesrc.c' || echo '$(srcdir)/'`gstsplitfilesrc.c
 
+libgstmultifile_la-gstsplitmuxsink.lo: gstsplitmuxsink.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstmultifile_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -MT libgstmultifile_la-gstsplitmuxsink.lo -MD -MP -MF $(DEPDIR)/libgstmultifile_la-gstsplitmuxsink.Tpo -c -o libgstmultifile_la-gstsplitmuxsink.lo `test -f 'gstsplitmuxsink.c' || echo '$(srcdir)/'`gstsplitmuxsink.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstmultifile_la-gstsplitmuxsink.Tpo $(DEPDIR)/libgstmultifile_la-gstsplitmuxsink.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstsplitmuxsink.c' object='libgstmultifile_la-gstsplitmuxsink.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstmultifile_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -c -o libgstmultifile_la-gstsplitmuxsink.lo `test -f 'gstsplitmuxsink.c' || echo '$(srcdir)/'`gstsplitmuxsink.c
+
+libgstmultifile_la-gstsplitmuxpartreader.lo: gstsplitmuxpartreader.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstmultifile_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -MT libgstmultifile_la-gstsplitmuxpartreader.lo -MD -MP -MF $(DEPDIR)/libgstmultifile_la-gstsplitmuxpartreader.Tpo -c -o libgstmultifile_la-gstsplitmuxpartreader.lo `test -f 'gstsplitmuxpartreader.c' || echo '$(srcdir)/'`gstsplitmuxpartreader.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstmultifile_la-gstsplitmuxpartreader.Tpo $(DEPDIR)/libgstmultifile_la-gstsplitmuxpartreader.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstsplitmuxpartreader.c' object='libgstmultifile_la-gstsplitmuxpartreader.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstmultifile_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -c -o libgstmultifile_la-gstsplitmuxpartreader.lo `test -f 'gstsplitmuxpartreader.c' || echo '$(srcdir)/'`gstsplitmuxpartreader.c
+
+libgstmultifile_la-gstsplitmuxsrc.lo: gstsplitmuxsrc.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstmultifile_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -MT libgstmultifile_la-gstsplitmuxsrc.lo -MD -MP -MF $(DEPDIR)/libgstmultifile_la-gstsplitmuxsrc.Tpo -c -o libgstmultifile_la-gstsplitmuxsrc.lo `test -f 'gstsplitmuxsrc.c' || echo '$(srcdir)/'`gstsplitmuxsrc.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstmultifile_la-gstsplitmuxsrc.Tpo $(DEPDIR)/libgstmultifile_la-gstsplitmuxsrc.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstsplitmuxsrc.c' object='libgstmultifile_la-gstsplitmuxsrc.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstmultifile_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -c -o libgstmultifile_la-gstsplitmuxsrc.lo `test -f 'gstsplitmuxsrc.c' || echo '$(srcdir)/'`gstsplitmuxsrc.c
+
+libgstmultifile_la-gstsplitutils.lo: gstsplitutils.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstmultifile_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -MT libgstmultifile_la-gstsplitutils.lo -MD -MP -MF $(DEPDIR)/libgstmultifile_la-gstsplitutils.Tpo -c -o libgstmultifile_la-gstsplitutils.lo `test -f 'gstsplitutils.c' || echo '$(srcdir)/'`gstsplitutils.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstmultifile_la-gstsplitutils.Tpo $(DEPDIR)/libgstmultifile_la-gstsplitutils.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstsplitutils.c' object='libgstmultifile_la-gstsplitutils.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstmultifile_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -c -o libgstmultifile_la-gstsplitutils.lo `test -f 'gstsplitutils.c' || echo '$(srcdir)/'`gstsplitutils.c
+
 libgstmultifile_la-patternspec.lo: patternspec.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstmultifile_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -MT libgstmultifile_la-patternspec.lo -MD -MP -MF $(DEPDIR)/libgstmultifile_la-patternspec.Tpo -c -o libgstmultifile_la-patternspec.lo `test -f 'patternspec.c' || echo '$(srcdir)/'`patternspec.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstmultifile_la-patternspec.Tpo $(DEPDIR)/libgstmultifile_la-patternspec.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='patternspec.c' object='libgstmultifile_la-patternspec.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstmultifile_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstmultifile_la_CFLAGS) $(CFLAGS) -c -o libgstmultifile_la-patternspec.lo `test -f 'patternspec.c' || echo '$(srcdir)/'`patternspec.c
+
+test_splitmux_part_reader-test-splitmuxpartreader.o: test-splitmuxpartreader.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(test_splitmux_part_reader_CFLAGS) $(CFLAGS) -MT test_splitmux_part_reader-test-splitmuxpartreader.o -MD -MP -MF $(DEPDIR)/test_splitmux_part_reader-test-splitmuxpartreader.Tpo -c -o test_splitmux_part_reader-test-splitmuxpartreader.o `test -f 'test-splitmuxpartreader.c' || echo '$(srcdir)/'`test-splitmuxpartreader.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/test_splitmux_part_reader-test-splitmuxpartreader.Tpo $(DEPDIR)/test_splitmux_part_reader-test-splitmuxpartreader.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='test-splitmuxpartreader.c' object='test_splitmux_part_reader-test-splitmuxpartreader.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(test_splitmux_part_reader_CFLAGS) $(CFLAGS) -c -o test_splitmux_part_reader-test-splitmuxpartreader.o `test -f 'test-splitmuxpartreader.c' || echo '$(srcdir)/'`test-splitmuxpartreader.c
+
+test_splitmux_part_reader-test-splitmuxpartreader.obj: test-splitmuxpartreader.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(test_splitmux_part_reader_CFLAGS) $(CFLAGS) -MT test_splitmux_part_reader-test-splitmuxpartreader.obj -MD -MP -MF $(DEPDIR)/test_splitmux_part_reader-test-splitmuxpartreader.Tpo -c -o test_splitmux_part_reader-test-splitmuxpartreader.obj `if test -f 'test-splitmuxpartreader.c'; then $(CYGPATH_W) 'test-splitmuxpartreader.c'; else $(CYGPATH_W) '$(srcdir)/test-splitmuxpartreader.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/test_splitmux_part_reader-test-splitmuxpartreader.Tpo $(DEPDIR)/test_splitmux_part_reader-test-splitmuxpartreader.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='test-splitmuxpartreader.c' object='test_splitmux_part_reader-test-splitmuxpartreader.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(test_splitmux_part_reader_CFLAGS) $(CFLAGS) -c -o test_splitmux_part_reader-test-splitmuxpartreader.obj `if test -f 'test-splitmuxpartreader.c'; then $(CYGPATH_W) 'test-splitmuxpartreader.c'; else $(CYGPATH_W) '$(srcdir)/test-splitmuxpartreader.c'; fi`
+
+test_splitmux_part_reader-gstsplitmuxpartreader.o: gstsplitmuxpartreader.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(test_splitmux_part_reader_CFLAGS) $(CFLAGS) -MT test_splitmux_part_reader-gstsplitmuxpartreader.o -MD -MP -MF $(DEPDIR)/test_splitmux_part_reader-gstsplitmuxpartreader.Tpo -c -o test_splitmux_part_reader-gstsplitmuxpartreader.o `test -f 'gstsplitmuxpartreader.c' || echo '$(srcdir)/'`gstsplitmuxpartreader.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/test_splitmux_part_reader-gstsplitmuxpartreader.Tpo $(DEPDIR)/test_splitmux_part_reader-gstsplitmuxpartreader.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstsplitmuxpartreader.c' object='test_splitmux_part_reader-gstsplitmuxpartreader.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(test_splitmux_part_reader_CFLAGS) $(CFLAGS) -c -o test_splitmux_part_reader-gstsplitmuxpartreader.o `test -f 'gstsplitmuxpartreader.c' || echo '$(srcdir)/'`gstsplitmuxpartreader.c
+
+test_splitmux_part_reader-gstsplitmuxpartreader.obj: gstsplitmuxpartreader.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(test_splitmux_part_reader_CFLAGS) $(CFLAGS) -MT test_splitmux_part_reader-gstsplitmuxpartreader.obj -MD -MP -MF $(DEPDIR)/test_splitmux_part_reader-gstsplitmuxpartreader.Tpo -c -o test_splitmux_part_reader-gstsplitmuxpartreader.obj `if test -f 'gstsplitmuxpartreader.c'; then $(CYGPATH_W) 'gstsplitmuxpartreader.c'; else $(CYGPATH_W) '$(srcdir)/gstsplitmuxpartreader.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/test_splitmux_part_reader-gstsplitmuxpartreader.Tpo $(DEPDIR)/test_splitmux_part_reader-gstsplitmuxpartreader.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstsplitmuxpartreader.c' object='test_splitmux_part_reader-gstsplitmuxpartreader.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(test_splitmux_part_reader_CFLAGS) $(CFLAGS) -c -o test_splitmux_part_reader-gstsplitmuxpartreader.obj `if test -f 'gstsplitmuxpartreader.c'; then $(CYGPATH_W) 'gstsplitmuxpartreader.c'; else $(CYGPATH_W) '$(srcdir)/gstsplitmuxpartreader.c'; fi`
+
+test_splitmux_part_reader-gstsplitmuxsrc.o: gstsplitmuxsrc.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(test_splitmux_part_reader_CFLAGS) $(CFLAGS) -MT test_splitmux_part_reader-gstsplitmuxsrc.o -MD -MP -MF $(DEPDIR)/test_splitmux_part_reader-gstsplitmuxsrc.Tpo -c -o test_splitmux_part_reader-gstsplitmuxsrc.o `test -f 'gstsplitmuxsrc.c' || echo '$(srcdir)/'`gstsplitmuxsrc.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/test_splitmux_part_reader-gstsplitmuxsrc.Tpo $(DEPDIR)/test_splitmux_part_reader-gstsplitmuxsrc.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstsplitmuxsrc.c' object='test_splitmux_part_reader-gstsplitmuxsrc.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(test_splitmux_part_reader_CFLAGS) $(CFLAGS) -c -o test_splitmux_part_reader-gstsplitmuxsrc.o `test -f 'gstsplitmuxsrc.c' || echo '$(srcdir)/'`gstsplitmuxsrc.c
+
+test_splitmux_part_reader-gstsplitmuxsrc.obj: gstsplitmuxsrc.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(test_splitmux_part_reader_CFLAGS) $(CFLAGS) -MT test_splitmux_part_reader-gstsplitmuxsrc.obj -MD -MP -MF $(DEPDIR)/test_splitmux_part_reader-gstsplitmuxsrc.Tpo -c -o test_splitmux_part_reader-gstsplitmuxsrc.obj `if test -f 'gstsplitmuxsrc.c'; then $(CYGPATH_W) 'gstsplitmuxsrc.c'; else $(CYGPATH_W) '$(srcdir)/gstsplitmuxsrc.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/test_splitmux_part_reader-gstsplitmuxsrc.Tpo $(DEPDIR)/test_splitmux_part_reader-gstsplitmuxsrc.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstsplitmuxsrc.c' object='test_splitmux_part_reader-gstsplitmuxsrc.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(test_splitmux_part_reader_CFLAGS) $(CFLAGS) -c -o test_splitmux_part_reader-gstsplitmuxsrc.obj `if test -f 'gstsplitmuxsrc.c'; then $(CYGPATH_W) 'gstsplitmuxsrc.c'; else $(CYGPATH_W) '$(srcdir)/gstsplitmuxsrc.c'; fi`
+
+test_splitmux_part_reader-gstsplitutils.o: gstsplitutils.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(test_splitmux_part_reader_CFLAGS) $(CFLAGS) -MT test_splitmux_part_reader-gstsplitutils.o -MD -MP -MF $(DEPDIR)/test_splitmux_part_reader-gstsplitutils.Tpo -c -o test_splitmux_part_reader-gstsplitutils.o `test -f 'gstsplitutils.c' || echo '$(srcdir)/'`gstsplitutils.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/test_splitmux_part_reader-gstsplitutils.Tpo $(DEPDIR)/test_splitmux_part_reader-gstsplitutils.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstsplitutils.c' object='test_splitmux_part_reader-gstsplitutils.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(test_splitmux_part_reader_CFLAGS) $(CFLAGS) -c -o test_splitmux_part_reader-gstsplitutils.o `test -f 'gstsplitutils.c' || echo '$(srcdir)/'`gstsplitutils.c
+
+test_splitmux_part_reader-gstsplitutils.obj: gstsplitutils.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(test_splitmux_part_reader_CFLAGS) $(CFLAGS) -MT test_splitmux_part_reader-gstsplitutils.obj -MD -MP -MF $(DEPDIR)/test_splitmux_part_reader-gstsplitutils.Tpo -c -o test_splitmux_part_reader-gstsplitutils.obj `if test -f 'gstsplitutils.c'; then $(CYGPATH_W) 'gstsplitutils.c'; else $(CYGPATH_W) '$(srcdir)/gstsplitutils.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/test_splitmux_part_reader-gstsplitutils.Tpo $(DEPDIR)/test_splitmux_part_reader-gstsplitutils.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstsplitutils.c' object='test_splitmux_part_reader-gstsplitutils.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(test_splitmux_part_reader_CFLAGS) $(CFLAGS) -c -o test_splitmux_part_reader-gstsplitutils.obj `if test -f 'gstsplitutils.c'; then $(CYGPATH_W) 'gstsplitutils.c'; else $(CYGPATH_W) '$(srcdir)/gstsplitutils.c'; fi`
+
+test_splitmux_part_reader-patternspec.o: patternspec.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(test_splitmux_part_reader_CFLAGS) $(CFLAGS) -MT test_splitmux_part_reader-patternspec.o -MD -MP -MF $(DEPDIR)/test_splitmux_part_reader-patternspec.Tpo -c -o test_splitmux_part_reader-patternspec.o `test -f 'patternspec.c' || echo '$(srcdir)/'`patternspec.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/test_splitmux_part_reader-patternspec.Tpo $(DEPDIR)/test_splitmux_part_reader-patternspec.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='patternspec.c' object='test_splitmux_part_reader-patternspec.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(test_splitmux_part_reader_CFLAGS) $(CFLAGS) -c -o test_splitmux_part_reader-patternspec.o `test -f 'patternspec.c' || echo '$(srcdir)/'`patternspec.c
+
+test_splitmux_part_reader-patternspec.obj: patternspec.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(test_splitmux_part_reader_CFLAGS) $(CFLAGS) -MT test_splitmux_part_reader-patternspec.obj -MD -MP -MF $(DEPDIR)/test_splitmux_part_reader-patternspec.Tpo -c -o test_splitmux_part_reader-patternspec.obj `if test -f 'patternspec.c'; then $(CYGPATH_W) 'patternspec.c'; else $(CYGPATH_W) '$(srcdir)/patternspec.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/test_splitmux_part_reader-patternspec.Tpo $(DEPDIR)/test_splitmux_part_reader-patternspec.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='patternspec.c' object='test_splitmux_part_reader-patternspec.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(test_splitmux_part_reader_CFLAGS) $(CFLAGS) -c -o test_splitmux_part_reader-patternspec.obj `if test -f 'patternspec.c'; then $(CYGPATH_W) 'patternspec.c'; else $(CYGPATH_W) '$(srcdir)/patternspec.c'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -806,7 +962,7 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(LTLIBRARIES) $(HEADERS)
+all-am: Makefile $(LTLIBRARIES) $(PROGRAMS) $(HEADERS)
 installdirs:
 	for dir in "$(DESTDIR)$(plugindir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
@@ -843,8 +999,8 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-generic clean-libtool clean-pluginLTLIBRARIES \
-	mostlyclean-am
+clean-am: clean-generic clean-libtool clean-noinstPROGRAMS \
+	clean-pluginLTLIBRARIES mostlyclean-am
 
 distclean: distclean-am
 	-rm -rf ./$(DEPDIR)
@@ -915,19 +1071,19 @@ uninstall-am: uninstall-pluginLTLIBRARIES
 .MAKE: install-am install-strip
 
 .PHONY: CTAGS GTAGS TAGS all all-am check check-am clean clean-generic \
-	clean-libtool clean-pluginLTLIBRARIES cscopelist-am ctags \
-	ctags-am distclean distclean-compile distclean-generic \
-	distclean-libtool distclean-tags distdir dvi dvi-am html \
-	html-am info info-am install install-am install-data \
-	install-data-am install-dvi install-dvi-am install-exec \
-	install-exec-am install-html install-html-am install-info \
-	install-info-am install-man install-pdf install-pdf-am \
-	install-pluginLTLIBRARIES install-ps install-ps-am \
-	install-strip installcheck installcheck-am installdirs \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
-	pdf pdf-am ps ps-am tags tags-am uninstall uninstall-am \
-	uninstall-pluginLTLIBRARIES
+	clean-libtool clean-noinstPROGRAMS clean-pluginLTLIBRARIES \
+	cscopelist-am ctags ctags-am distclean distclean-compile \
+	distclean-generic distclean-libtool distclean-tags distdir dvi \
+	dvi-am html html-am info info-am install install-am \
+	install-data install-data-am install-dvi install-dvi-am \
+	install-exec install-exec-am install-html install-html-am \
+	install-info install-info-am install-man install-pdf \
+	install-pdf-am install-pluginLTLIBRARIES install-ps \
+	install-ps-am install-strip installcheck installcheck-am \
+	installdirs maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-compile mostlyclean-generic \
+	mostlyclean-libtool pdf pdf-am ps ps-am tags tags-am uninstall \
+	uninstall-am uninstall-pluginLTLIBRARIES
 
 
 Android.mk: Makefile.am $(BUILT_SOURCES)
