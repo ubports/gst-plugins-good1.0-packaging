@@ -375,13 +375,10 @@ gst_matroska_index_seek_find (GstMatroskaIndex * i1, GstClockTime * time,
 GstMatroskaIndex *
 gst_matroska_read_common_do_index_seek (GstMatroskaReadCommon * common,
     GstMatroskaTrackContext * track, gint64 seek_pos, GArray ** _index,
-    gint * _entry_index, gboolean next)
+    gint * _entry_index, GstSearchMode snap_dir)
 {
   GstMatroskaIndex *entry = NULL;
   GArray *index;
-
-  if (!common->index || !common->index->len)
-    return NULL;
 
   /* find entry just before or at the requested position */
   if (track && track->index_table)
@@ -389,16 +386,21 @@ gst_matroska_read_common_do_index_seek (GstMatroskaReadCommon * common,
   else
     index = common->index;
 
+  if (!index || !index->len)
+    return NULL;
+
   entry =
       gst_util_array_binary_search (index->data, index->len,
       sizeof (GstMatroskaIndex),
-      (GCompareDataFunc) gst_matroska_index_seek_find,
-      next ? GST_SEARCH_MODE_AFTER : GST_SEARCH_MODE_BEFORE, &seek_pos, NULL);
+      (GCompareDataFunc) gst_matroska_index_seek_find, snap_dir, &seek_pos,
+      NULL);
 
   if (entry == NULL) {
-    if (next) {
-      return NULL;
+    if (snap_dir == GST_SEARCH_MODE_AFTER) {
+      /* Can only happen with a reverse seek past the end */
+      entry = &g_array_index (index, GstMatroskaIndex, index->len - 1);
     } else {
+      /* Can only happen with a forward seek before the start */
       entry = &g_array_index (index, GstMatroskaIndex, 0);
     }
   }
@@ -445,25 +447,10 @@ gst_matroska_read_common_found_global_tag (GstMatroskaReadCommon * common,
     GstElement * el, GstTagList * taglist)
 {
   if (common->global_tags) {
-    /* nothing sent yet, add to cache */
     gst_tag_list_insert (common->global_tags, taglist, GST_TAG_MERGE_APPEND);
     gst_tag_list_unref (taglist);
   } else {
-    GstEvent *tag_event = gst_event_new_tag (taglist);
-    gint i;
-
-    /* hm, already sent, no need to cache and wait anymore */
-    GST_DEBUG_OBJECT (common->sinkpad,
-        "Sending late global tags %" GST_PTR_FORMAT, taglist);
-
-    for (i = 0; i < common->src->len; i++) {
-      GstMatroskaTrackContext *stream;
-
-      stream = g_ptr_array_index (common->src, i);
-      gst_pad_push_event (stream->pad, gst_event_ref (tag_event));
-    }
-
-    gst_event_unref (tag_event);
+    common->global_tags = taglist;
   }
 }
 
@@ -1503,10 +1490,8 @@ gst_matroska_read_common_parse_index_pointentry (GstMatroskaReadCommon *
         /* position in the file + track to which it belongs */
       case GST_MATROSKA_ID_CUETRACKPOSITIONS:
       {
-        if ((ret =
-                gst_matroska_read_common_parse_index_cuetrack (common, ebml,
-                    &nentries)) != GST_FLOW_OK)
-          break;
+        ret = gst_matroska_read_common_parse_index_cuetrack (common, ebml,
+            &nentries);
         break;
       }
 
@@ -2402,6 +2387,9 @@ gst_matroska_read_common_parse_metadata_id_tag (GstMatroskaReadCommon * common,
         GstMatroskaTrackContext *stream = g_ptr_array_index (common->src, j);
 
         if (stream->uid == tgt) {
+          if (stream->pending_tags == NULL)
+            stream->pending_tags = gst_tag_list_new_empty ();
+
           gst_tag_list_insert (stream->pending_tags, taglist,
               GST_TAG_MERGE_REPLACE);
           found = TRUE;

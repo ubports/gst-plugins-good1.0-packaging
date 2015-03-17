@@ -215,6 +215,7 @@ gst_gdk_pixbuf_dec_init (GstGdkPixbufDec * filter)
 
   filter->last_timestamp = GST_CLOCK_TIME_NONE;
   filter->pixbuf_loader = NULL;
+  filter->packetized = FALSE;
 }
 
 static gboolean
@@ -245,6 +246,8 @@ gst_gdk_pixbuf_dec_setup_pool (GstGdkPixbufDec * filter, GstVideoInfo * info)
     size = info->size;
     min = max = 0;
   }
+
+  gst_query_unref (query);
 
   if (pool == NULL) {
     /* we did not get a pool, make one ourselves then */
@@ -410,9 +413,10 @@ gst_gdk_pixbuf_dec_sink_event (GstPad * pad, GstObject * parent,
         /* as long as we don't have flow returns for event functions we need
          * to post an error here, or the application might never know that
          * things failed */
-        if (res != GST_FLOW_OK && res != GST_FLOW_FLUSHING) {
-          GST_ELEMENT_ERROR (pixbuf, STREAM, FAILED, (NULL),
-              ("Flow: %s", gst_flow_get_name (res)));
+        if (res != GST_FLOW_OK && res != GST_FLOW_FLUSHING
+            && res != GST_FLOW_EOS && res != GST_FLOW_NOT_LINKED) {
+          GST_ELEMENT_ERROR (pixbuf, STREAM, FAILED, (NULL), ("Flow: %s",
+                  gst_flow_get_name (res)));
           forward = FALSE;
           ret = FALSE;
         }
@@ -424,12 +428,20 @@ gst_gdk_pixbuf_dec_sink_event (GstPad * pad, GstObject * parent,
       pixbuf->pending_events = NULL;
       /* Fall through */
     case GST_EVENT_SEGMENT:
+    {
+      const GstSegment *segment;
+      gst_event_parse_segment (event, &segment);
+      if (segment->format == GST_FORMAT_BYTES)
+        pixbuf->packetized = FALSE;
+      else
+        pixbuf->packetized = TRUE;
       if (pixbuf->pixbuf_loader != NULL) {
         gdk_pixbuf_loader_close (pixbuf->pixbuf_loader, NULL);
         g_object_unref (G_OBJECT (pixbuf->pixbuf_loader));
         pixbuf->pixbuf_loader = NULL;
       }
       break;
+    }
     default:
       break;
   }
@@ -479,9 +491,7 @@ gst_gdk_pixbuf_dec_chain (GstPad * pad, GstObject * parent, GstBuffer * buf)
           &error))
     goto error;
 
-  /* packetised mode? *//* FIXME: shouln't this be fps_d != 0, since 0/1
-   * might be packetised mode but variable framerate */
-  if (filter->in_fps_n != 0) {
+  if (filter->packetized == TRUE) {
     gdk_pixbuf_loader_close (filter->pixbuf_loader, NULL);
     ret = gst_gdk_pixbuf_dec_flush (filter);
     g_object_unref (filter->pixbuf_loader);

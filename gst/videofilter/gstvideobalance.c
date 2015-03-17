@@ -67,24 +67,25 @@ enum
   PROP_SATURATION
 };
 
+#define PROCESSING_CAPS \
+  "{ AYUV, ARGB, BGRA, ABGR, RGBA, Y444, xRGB, RGBx, " \
+  "xBGR, BGRx, RGB, BGR, Y42B, YUY2, UYVY, YVYU, " \
+  "I420, YV12, IYUV, Y41B, NV12, NV21 }"
+
 static GstStaticPadTemplate gst_video_balance_src_template =
-GST_STATIC_PAD_TEMPLATE ("src",
+    GST_STATIC_PAD_TEMPLATE ("src",
     GST_PAD_SRC,
     GST_PAD_ALWAYS,
-    GST_STATIC_CAPS (GST_VIDEO_CAPS_MAKE ("{ AYUV, "
-            "ARGB, BGRA, ABGR, RGBA, Y444, xRGB, RGBx, "
-            "xBGR, BGRx, RGB, BGR, Y42B, YUY2, UYVY, YVYU, "
-            "I420, YV12, IYUV, Y41B, NV12, NV21 }"))
+    GST_STATIC_CAPS (GST_VIDEO_CAPS_MAKE (PROCESSING_CAPS) ";"
+        "video/x-raw(ANY)")
     );
 
 static GstStaticPadTemplate gst_video_balance_sink_template =
-GST_STATIC_PAD_TEMPLATE ("sink",
+    GST_STATIC_PAD_TEMPLATE ("sink",
     GST_PAD_SINK,
     GST_PAD_ALWAYS,
-    GST_STATIC_CAPS (GST_VIDEO_CAPS_MAKE ("{ AYUV, "
-            "ARGB, BGRA, ABGR, RGBA, Y444, xRGB, RGBx, "
-            "xBGR, BGRx, RGB, BGR, Y42B, YUY2, UYVY, YVYU, "
-            "I420, YV12, IYUV, Y41B, NV12, NV21 }"))
+    GST_STATIC_CAPS (GST_VIDEO_CAPS_MAKE (PROCESSING_CAPS) ";"
+        "video/x-raw(ANY)")
     );
 
 static void gst_video_balance_colorbalance_init (GstColorBalanceInterface *
@@ -453,7 +454,8 @@ gst_video_balance_set_info (GstVideoFilter * vfilter, GstCaps * incaps,
       videobalance->process = gst_video_balance_packed_rgb;
       break;
     default:
-      goto unknown_format;
+      if (!gst_video_balance_is_passthrough (videobalance))
+        goto unknown_format;
       break;
   }
 
@@ -482,6 +484,36 @@ gst_video_balance_before_transform (GstBaseTransform * base, GstBuffer * buf)
 
   if (GST_CLOCK_TIME_IS_VALID (stream_time))
     gst_object_sync_values (GST_OBJECT (balance), stream_time);
+}
+
+static GstCaps *
+gst_video_balance_transform_caps (GstBaseTransform * trans,
+    GstPadDirection direction, GstCaps * caps, GstCaps * filter)
+{
+  GstVideoBalance *balance = GST_VIDEO_BALANCE (trans);
+  GstCaps *ret;
+
+  if (!gst_video_balance_is_passthrough (balance)) {
+    static GstStaticCaps raw_caps =
+        GST_STATIC_CAPS (GST_VIDEO_CAPS_MAKE (PROCESSING_CAPS));
+
+    caps = gst_caps_intersect (caps, gst_static_caps_get (&raw_caps));
+
+    if (filter) {
+      ret = gst_caps_intersect_full (filter, caps, GST_CAPS_INTERSECT_FIRST);
+      gst_caps_unref (caps);
+    } else {
+      ret = caps;
+    }
+  } else {
+    if (filter) {
+      ret = gst_caps_intersect_full (filter, caps, GST_CAPS_INTERSECT_FIRST);
+    } else {
+      ret = gst_caps_ref (caps);
+    }
+  }
+
+  return ret;
 }
 
 static GstFlowReturn
@@ -574,6 +606,8 @@ gst_video_balance_class_init (GstVideoBalanceClass * klass)
   trans_class->before_transform =
       GST_DEBUG_FUNCPTR (gst_video_balance_before_transform);
   trans_class->transform_ip_on_passthrough = FALSE;
+  trans_class->transform_caps =
+      GST_DEBUG_FUNCPTR (gst_video_balance_transform_caps);
 
   vfilter_class->set_info = GST_DEBUG_FUNCPTR (gst_video_balance_set_info);
   vfilter_class->transform_frame_ip =

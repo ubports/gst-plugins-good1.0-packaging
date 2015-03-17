@@ -370,6 +370,7 @@ static gboolean gst_vp8_enc_stop (GstVideoEncoder * encoder);
 static gboolean gst_vp8_enc_set_format (GstVideoEncoder *
     video_encoder, GstVideoCodecState * state);
 static GstFlowReturn gst_vp8_enc_finish (GstVideoEncoder * video_encoder);
+static gboolean gst_vp8_enc_flush (GstVideoEncoder * video_encoder);
 static GstFlowReturn gst_vp8_enc_drain (GstVideoEncoder * video_encoder);
 static GstFlowReturn gst_vp8_enc_handle_frame (GstVideoEncoder *
     video_encoder, GstVideoCodecFrame * frame);
@@ -429,6 +430,7 @@ gst_vp8_enc_class_init (GstVP8EncClass * klass)
   video_encoder_class->stop = gst_vp8_enc_stop;
   video_encoder_class->handle_frame = gst_vp8_enc_handle_frame;
   video_encoder_class->set_format = gst_vp8_enc_set_format;
+  video_encoder_class->flush = gst_vp8_enc_flush;
   video_encoder_class->finish = gst_vp8_enc_finish;
   video_encoder_class->pre_push = gst_vp8_enc_pre_push;
   video_encoder_class->sink_event = gst_vp8_enc_sink_event;
@@ -805,7 +807,6 @@ gst_vp8_enc_finalize (GObject * object)
   g_mutex_clear (&gst_vp8_enc->encoder_lock);
 
   G_OBJECT_CLASS (parent_class)->finalize (object);
-
 }
 
 static void
@@ -1416,15 +1417,9 @@ gst_vp8_enc_start (GstVideoEncoder * video_encoder)
   return TRUE;
 }
 
-static gboolean
-gst_vp8_enc_stop (GstVideoEncoder * video_encoder)
+static void
+gst_vp8_enc_destroy_encoder (GstVP8Enc * encoder)
 {
-  GstVP8Enc *encoder;
-
-  GST_DEBUG_OBJECT (video_encoder, "stop");
-
-  encoder = GST_VP8_ENC (video_encoder);
-
   g_mutex_lock (&encoder->encoder_lock);
   if (encoder->inited) {
     vpx_codec_destroy (&encoder->encoder);
@@ -1442,6 +1437,18 @@ gst_vp8_enc_stop (GstVideoEncoder * video_encoder)
     encoder->cfg.rc_twopass_stats_in.sz = 0;
   }
   g_mutex_unlock (&encoder->encoder_lock);
+}
+
+static gboolean
+gst_vp8_enc_stop (GstVideoEncoder * video_encoder)
+{
+  GstVP8Enc *encoder;
+
+  GST_DEBUG_OBJECT (video_encoder, "stop");
+
+  encoder = GST_VP8_ENC (video_encoder);
+
+  gst_vp8_enc_destroy_encoder (encoder);
 
   gst_tag_setter_reset_tags (GST_TAG_SETTER (encoder));
 
@@ -1500,6 +1507,7 @@ gst_vp8_enc_set_format (GstVideoEncoder * video_encoder,
   GstVideoInfo *info = &state->info;
   GstVideoCodecState *output_state;
   gchar *profile_str;
+  GstClockTime latency;
 
   encoder = GST_VP8_ENC (video_encoder);
   GST_DEBUG_OBJECT (video_encoder, "set_format");
@@ -1681,13 +1689,16 @@ gst_vp8_enc_set_format (GstVideoEncoder * video_encoder,
   }
 
   if (GST_VIDEO_INFO_FPS_D (info) == 0 || GST_VIDEO_INFO_FPS_N (info) == 0) {
-    gst_video_encoder_set_latency (video_encoder, 0, GST_CLOCK_TIME_NONE);
+    /* FIXME: Assume 25fps for unknown framerates. Better than reporting
+     * that we introduce no latency while we actually do
+     */
+    latency = gst_util_uint64_scale (encoder->cfg.g_lag_in_frames,
+        1 * GST_SECOND, 25);
   } else {
-    gst_video_encoder_set_latency (video_encoder, 0,
-        gst_util_uint64_scale (encoder->cfg.g_lag_in_frames,
-            GST_VIDEO_INFO_FPS_D (info) * GST_SECOND,
-            GST_VIDEO_INFO_FPS_N (info)));
+    latency = gst_util_uint64_scale (encoder->cfg.g_lag_in_frames,
+        GST_VIDEO_INFO_FPS_D (info) * GST_SECOND, GST_VIDEO_INFO_FPS_N (info));
   }
+  gst_video_encoder_set_latency (video_encoder, latency, latency);
   encoder->inited = TRUE;
 
   /* Store input state */
@@ -1873,15 +1884,19 @@ gst_vp8_enc_drain (GstVideoEncoder * video_encoder)
   int flags = 0;
   vpx_codec_err_t status;
   gint64 deadline;
+  vpx_codec_pts_t pts;
 
   encoder = GST_VP8_ENC (video_encoder);
 
   g_mutex_lock (&encoder->encoder_lock);
   deadline = encoder->deadline;
 
-  status =
-      vpx_codec_encode (&encoder->encoder, NULL, encoder->n_frames, 1, flags,
-      deadline);
+  pts =
+      gst_util_uint64_scale (encoder->last_pts,
+      encoder->cfg.g_timebase.num * (GstClockTime) GST_SECOND,
+      encoder->cfg.g_timebase.den);
+
+  status = vpx_codec_encode (&encoder->encoder, NULL, pts, 0, flags, deadline);
   g_mutex_unlock (&encoder->encoder_lock);
 
   if (status != 0) {
@@ -1910,14 +1925,40 @@ gst_vp8_enc_drain (GstVideoEncoder * video_encoder)
   return GST_FLOW_OK;
 }
 
+static gboolean
+gst_vp8_enc_flush (GstVideoEncoder * video_encoder)
+{
+  GstVP8Enc *encoder;
+
+  GST_DEBUG_OBJECT (video_encoder, "flush");
+
+  encoder = GST_VP8_ENC (video_encoder);
+
+  gst_vp8_enc_destroy_encoder (encoder);
+  if (encoder->input_state) {
+    gst_video_codec_state_ref (encoder->input_state);
+    gst_vp8_enc_set_format (video_encoder, encoder->input_state);
+    gst_video_codec_state_unref (encoder->input_state);
+  }
+
+  return TRUE;
+}
+
 static GstFlowReturn
 gst_vp8_enc_finish (GstVideoEncoder * video_encoder)
 {
+  GstVP8Enc *encoder;
   GstFlowReturn ret;
 
   GST_DEBUG_OBJECT (video_encoder, "finish");
 
-  ret = gst_vp8_enc_drain (video_encoder);
+  encoder = GST_VP8_ENC (video_encoder);
+
+  if (encoder->inited) {
+    ret = gst_vp8_enc_drain (video_encoder);
+  } else {
+    ret = GST_FLOW_OK;
+  }
 
   return ret;
 }
@@ -1950,12 +1991,12 @@ gst_vp8_enc_handle_frame (GstVideoEncoder * video_encoder,
   vpx_image_t *image;
   GstVP8EncUserData *user_data;
   GstVideoFrame vframe;
+  vpx_codec_pts_t pts;
+  unsigned long duration;
 
   GST_DEBUG_OBJECT (video_encoder, "handle_frame");
 
   encoder = GST_VP8_ENC (video_encoder);
-
-  encoder->n_frames++;
 
   GST_DEBUG_OBJECT (video_encoder, "size %d %d",
       GST_VIDEO_INFO_WIDTH (&encoder->input_state->info),
@@ -1975,8 +2016,25 @@ gst_vp8_enc_handle_frame (GstVideoEncoder * video_encoder,
   }
 
   g_mutex_lock (&encoder->encoder_lock);
+  pts =
+      gst_util_uint64_scale (frame->pts,
+      encoder->cfg.g_timebase.num * (GstClockTime) GST_SECOND,
+      encoder->cfg.g_timebase.den);
+  encoder->last_pts = frame->pts;
+
+  if (frame->duration != GST_CLOCK_TIME_NONE) {
+    duration =
+        gst_util_uint64_scale (frame->duration,
+        encoder->cfg.g_timebase.num * (GstClockTime) GST_SECOND,
+        encoder->cfg.g_timebase.den);
+    encoder->last_pts += frame->duration;
+  } else {
+    duration = 1;
+  }
+
   status = vpx_codec_encode (&encoder->encoder, image,
-      encoder->n_frames, 1, flags, encoder->deadline);
+      pts, duration, flags, encoder->deadline);
+
   g_mutex_unlock (&encoder->encoder_lock);
   gst_video_frame_unmap (&vframe);
 

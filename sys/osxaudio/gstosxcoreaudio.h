@@ -27,6 +27,7 @@
 #endif
 
 #include <gst/gst.h>
+#include <gst/audio/audio-channels.h>
 #ifdef HAVE_IOS
   #include <CoreAudio/CoreAudioTypes.h>
   #define AudioDeviceID gint
@@ -62,6 +63,8 @@ G_BEGIN_DECLS
 #define GST_IS_CORE_AUDIO_CLASS(klass) \
   (G_TYPE_CHECK_CLASS_TYPE((klass),GST_TYPE_CORE_AUDIO))
 
+#define GST_OSX_AUDIO_MAX_CHANNEL (9)
+
 #define CORE_AUDIO_FORMAT_IS_SPDIF(f) ((f).mFormat.mFormatID == 'IAC3' || (f).mFormat.mFormatID == 'iac3' || (f).mFormat.mFormatID == kAudioFormat60958AC3 || (f).mFormat.mFormatID == kAudioFormatAC3)
 
 #define CORE_AUDIO_FORMAT "FormatID: %" GST_FOURCC_FORMAT " rate: %f flags: 0x%x BytesPerPacket: %u FramesPerPacket: %u BytesPerFrame: %u ChannelsPerFrame: %u BitsPerChannel: %u"
@@ -80,13 +83,13 @@ struct _GstCoreAudio
   gboolean is_src;
   gboolean is_passthrough;
   AudioDeviceID device_id;
-  AudioStreamBasicDescription stream_format;
   gint stream_idx;
   gboolean io_proc_active;
   gboolean io_proc_needs_deactivation;
 
   /* For LPCM in/out */
   AudioUnit audiounit;
+  UInt32 recBufferSize; /* AudioUnitRender clobbers mDataByteSize */
   AudioBufferList *recBufferList;
 
 #ifndef HAVE_IOS
@@ -95,7 +98,7 @@ struct _GstCoreAudio
   gboolean disabled_mixing;
   AudioStreamID stream_id;
   gboolean revert_format;
-  AudioStreamBasicDescription original_format;
+  AudioStreamBasicDescription original_format, stream_format;
   AudioDeviceIOProcID procID;
 #endif
 };
@@ -139,12 +142,14 @@ void  gst_core_audio_set_volume                              (GstCoreAudio *core
 gboolean gst_core_audio_audio_device_is_spdif_avail          (AudioDeviceID device_id);
 
 
-gboolean gst_core_audio_select_device                        (AudioDeviceID *device_id);
+gboolean gst_core_audio_select_device                        (GstCoreAudio * core_audio);
 
-gboolean gst_core_audio_select_source_device                        (AudioDeviceID *device_id);
+AudioChannelLayout * gst_core_audio_audio_device_get_channel_layout (AudioDeviceID device_id, gboolean output);
 
-AudioChannelLayout * gst_core_audio_audio_device_get_channel_layout (AudioDeviceID device_id);
-
+gboolean gst_core_audio_parse_channel_layout (AudioChannelLayout * layout,
+    gint channels, guint64 * channel_mask, GstAudioChannelPosition * pos);
+GstCaps * gst_core_audio_asbd_to_caps (AudioStreamBasicDescription * asbd,
+    AudioChannelLayout * layout);
 
 G_END_DECLS
 

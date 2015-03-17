@@ -120,6 +120,8 @@ static void gst_multiudpsink_finalize (GObject * object);
 
 static GstFlowReturn gst_multiudpsink_render (GstBaseSink * sink,
     GstBuffer * buffer);
+static GstFlowReturn gst_multiudpsink_render_list (GstBaseSink * bsink,
+    GstBufferList * buffer_list);
 
 static gboolean gst_multiudpsink_start (GstBaseSink * bsink);
 static gboolean gst_multiudpsink_stop (GstBaseSink * bsink);
@@ -311,11 +313,13 @@ gst_multiudpsink_class_init (GstMultiUDPSinkClass * klass)
    *
    * Since: 1.0.2
    */
+#ifndef GST_REMOVE_DEPRECATED
   g_object_class_install_property (gobject_class, PROP_FORCE_IPV4,
       g_param_spec_boolean ("force-ipv4", "Force IPv4",
           "Forcing the use of an IPv4 socket (DEPRECATED, has no effect anymore)",
-          DEFAULT_FORCE_IPV4, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
-
+          DEFAULT_FORCE_IPV4,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_DEPRECATED));
+#endif
   g_object_class_install_property (G_OBJECT_CLASS (klass), PROP_QOS_DSCP,
       g_param_spec_int ("qos-dscp", "QoS diff srv code point",
           "Quality of Service, differentiated services code point (-1 default)",
@@ -357,6 +361,7 @@ gst_multiudpsink_class_init (GstMultiUDPSinkClass * klass)
       "Wim Taymans <wim.taymans@gmail.com>");
 
   gstbasesink_class->render = gst_multiudpsink_render;
+  gstbasesink_class->render_list = gst_multiudpsink_render_list;
   gstbasesink_class->start = gst_multiudpsink_start;
   gstbasesink_class->stop = gst_multiudpsink_stop;
   gstbasesink_class->unlock = gst_multiudpsink_unlock;
@@ -369,13 +374,18 @@ gst_multiudpsink_class_init (GstMultiUDPSinkClass * klass)
   GST_DEBUG_CATEGORY_INIT (multiudpsink_debug, "multiudpsink", 0, "UDP sink");
 }
 
-
 static void
 gst_multiudpsink_init (GstMultiUDPSink * sink)
 {
   guint max_mem;
 
   g_mutex_init (&sink->client_lock);
+  sink->clients = NULL;
+  sink->num_v4_unique = 0;
+  sink->num_v4_all = 0;
+  sink->num_v6_unique = 0;
+  sink->num_v6_all = 0;
+
   sink->socket = DEFAULT_SOCKET;
   sink->socket_v6 = DEFAULT_SOCKET;
   sink->used_socket = DEFAULT_USED_SOCKET;
@@ -393,17 +403,25 @@ gst_multiudpsink_init (GstMultiUDPSink * sink)
 
   sink->cancellable = g_cancellable_new ();
 
-  /* allocate OutputVector and MapInfo for use in the render function, buffers can
-   * hold up to a maximum amount of memory so we can create a maximally sized
-   * array for them.  */
+  /* pre-allocate OutputVector, MapInfo and OutputMessage arrays
+   * for use in the render and render_list functions */
   max_mem = gst_buffer_get_max_memory ();
 
-  sink->vec = g_new (GOutputVector, max_mem);
-  sink->map = g_new (GstMapInfo, max_mem);
+  sink->n_vecs = max_mem;
+  sink->vecs = g_new (GOutputVector, sink->n_vecs);
+
+  sink->n_maps = max_mem;
+  sink->maps = g_new (GstMapInfo, sink->n_maps);
+
+  sink->n_messages = 1;
+  sink->messages = g_new (GstOutputMessage, sink->n_messages);
+
+  /* we assume that the number of memories per buffer can fit into a guint8 */
+  g_warn_if_fail (max_mem <= G_MAXUINT8);
 }
 
 static GstUDPClient *
-create_client (GstMultiUDPSink * sink, const gchar * host, gint port)
+gst_udp_client_new (GstMultiUDPSink * sink, const gchar * host, gint port)
 {
   GstUDPClient *client;
   GInetAddress *addr;
@@ -434,7 +452,8 @@ create_client (GstMultiUDPSink * sink, const gchar * host, gint port)
 #endif
 
   client = g_slice_new0 (GstUDPClient);
-  client->refcount = 1;
+  client->ref_count = 1;
+  client->add_count = 0;
   client->host = g_strdup (host);
   client->port = port;
   client->addr = g_inet_socket_address_new (addr, port);
@@ -450,12 +469,23 @@ name_resolve:
   }
 }
 
+/* call with client lock held */
 static void
-free_client (GstUDPClient * client)
+gst_udp_client_unref (GstUDPClient * client)
 {
-  g_object_unref (client->addr);
-  g_free (client->host);
-  g_slice_free (GstUDPClient, client);
+  if (--client->ref_count == 0) {
+    g_object_unref (client->addr);
+    g_free (client->host);
+    g_slice_free (GstUDPClient, client);
+  }
+}
+
+/* call with client lock held */
+static inline GstUDPClient *
+gst_udp_client_ref (GstUDPClient * client)
+{
+  ++client->ref_count;
+  return client;
 }
 
 static gint
@@ -474,7 +504,7 @@ gst_multiudpsink_finalize (GObject * object)
 
   sink = GST_MULTIUDPSINK (object);
 
-  g_list_foreach (sink->clients, (GFunc) free_client, NULL);
+  g_list_foreach (sink->clients, (GFunc) gst_udp_client_unref, NULL);
   g_list_free (sink->clients);
 
   if (sink->socket)
@@ -500,10 +530,12 @@ gst_multiudpsink_finalize (GObject * object)
   g_free (sink->multi_iface);
   sink->multi_iface = NULL;
 
-  g_free (sink->vec);
-  sink->vec = NULL;
-  g_free (sink->map);
-  sink->map = NULL;
+  g_free (sink->vecs);
+  sink->vecs = NULL;
+  g_free (sink->maps);
+  sink->maps = NULL;
+  g_free (sink->messages);
+  sink->messages = NULL;
 
   g_free (sink->bind_address);
   sink->bind_address = NULL;
@@ -513,130 +545,408 @@ gst_multiudpsink_finalize (GObject * object)
   G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 
+/* replacement until we can depend unconditionally on the real one in GLib */
+#ifndef HAVE_G_SOCKET_SEND_MESSAGES
+#define g_socket_send_messages gst_socket_send_messages
+
+static gint
+gst_socket_send_messages (GSocket * socket, GstOutputMessage * messages,
+    guint num_messages, gint flags, GCancellable * cancellable, GError ** error)
+{
+  gssize result;
+  gint i;
+
+  for (i = 0; i < num_messages; ++i) {
+    GstOutputMessage *msg = &messages[i];
+    GError *msg_error = NULL;
+
+    result = g_socket_send_message (socket, msg->address,
+        msg->vectors, msg->num_vectors,
+        msg->control_messages, msg->num_control_messages,
+        flags, cancellable, &msg_error);
+
+    if (result < 0) {
+      /* if we couldn't send all messages, just return how many we did
+       * manage to send, provided we managed to send at least one */
+      if (msg_error->code == G_IO_ERROR_WOULD_BLOCK && i > 0) {
+        g_error_free (msg_error);
+        return i;
+      } else {
+        g_propagate_error (error, msg_error);
+        return -1;
+      }
+    }
+
+    msg->bytes_sent = result;
+  }
+
+  return i;
+}
+#endif /* HAVE_G_SOCKET_SEND_MESSAGES */
+
+static gsize
+fill_vectors (GOutputVector * vecs, GstMapInfo * maps, guint n, GstBuffer * buf)
+{
+  GstMemory *mem;
+  gsize size = 0;
+  guint i;
+
+  g_assert (gst_buffer_n_memory (buf) == n);
+
+  for (i = 0; i < n; ++i) {
+    mem = gst_buffer_peek_memory (buf, i);
+    if (gst_memory_map (mem, &maps[i], GST_MAP_READ)) {
+      vecs[i].buffer = maps[i].data;
+      vecs[i].size = maps[i].size;
+    } else {
+      GST_WARNING ("Failed to map memory %p for reading", mem);
+      vecs[i].buffer = "";
+      vecs[i].size = 0;
+    }
+    size += vecs[i].size;
+  }
+
+  return size;
+}
+
+static gsize
+gst_udp_calc_message_size (GstOutputMessage * msg)
+{
+  gsize size = 0;
+  guint i;
+
+  for (i = 0; i < msg->num_vectors; ++i)
+    size += msg->vectors[i].size;
+
+  return size;
+}
+
+static gint
+gst_udp_messsages_find_first_not_sent (GstOutputMessage * messages,
+    guint num_messages)
+{
+  guint i;
+
+  for (i = 0; i < num_messages; ++i) {
+    GstOutputMessage *msg = &messages[i];
+
+    if (msg->bytes_sent == 0 && gst_udp_calc_message_size (msg) > 0)
+      return i;
+  }
+
+  return -1;
+}
+
+static inline gchar *
+gst_udp_address_get_string (GSocketAddress * addr, gchar * s, gsize size)
+{
+  GInetSocketAddress *isa = G_INET_SOCKET_ADDRESS (addr);
+  GInetAddress *ia;
+  gchar *addr_str;
+
+  ia = g_inet_socket_address_get_address (isa);
+  addr_str = g_inet_address_to_string (ia);
+  g_snprintf (s, size, "%s:%u", addr_str, g_inet_socket_address_get_port (isa));
+  g_free (addr_str);
+
+  return s;
+}
+
+/* Wrapper around g_socket_send_messages() plus error handling (ignoring).
+ * Returns FALSE if we got cancelled, otherwise TRUE. */
+static gboolean
+gst_multiudpsink_send_messages (GstMultiUDPSink * sink, GSocket * socket,
+    GstOutputMessage * messages, guint num_messages)
+{
+  gboolean sent_max_size_warning = FALSE;
+
+  while (num_messages > 0) {
+    gchar astr[64] G_GNUC_UNUSED;
+    GError *err = NULL;
+    guint msg_size, skip, i;
+    gint ret, err_idx;
+
+    ret = g_socket_send_messages (socket, messages, num_messages, 0,
+        sink->cancellable, &err);
+
+    if (G_UNLIKELY (ret < 0)) {
+      GstOutputMessage *msg;
+
+      if (g_error_matches (err, G_IO_ERROR, G_IO_ERROR_CANCELLED)) {
+        g_clear_error (&err);
+        return FALSE;
+      }
+
+      err_idx = gst_udp_messsages_find_first_not_sent (messages, num_messages);
+      if (err_idx < 0)
+        break;
+
+      msg = &messages[err_idx];
+      msg_size = gst_udp_calc_message_size (msg);
+
+      GST_LOG_OBJECT (sink, "error sending %u bytes to client %s: %s", msg_size,
+          gst_udp_address_get_string (msg->address, astr, sizeof (astr)),
+          err->message);
+
+      skip = 1;
+      if (msg_size > UDP_MAX_SIZE) {
+        if (!sent_max_size_warning) {
+          GST_ELEMENT_WARNING (sink, RESOURCE, WRITE,
+              ("Attempting to send a UDP packets larger than maximum size "
+                  "(%u > %d)", msg_size, UDP_MAX_SIZE),
+              ("Reason: %s", err ? err->message : "unknown reason"));
+          sent_max_size_warning = FALSE;
+        }
+      } else {
+        GST_ELEMENT_WARNING (sink, RESOURCE, WRITE,
+            ("Error sending UDP packets"), ("client %s, reason: %s",
+                gst_udp_address_get_string (msg->address, astr, sizeof (astr)),
+                (err != NULL) ? err->message : "unknown reason"));
+
+        for (i = err_idx + 1; i < num_messages; ++i, ++skip) {
+          if (messages[i].address != msg->address)
+            break;
+        }
+        GST_DEBUG_OBJECT (sink, "skipping %d message(s) to same client", skip);
+      }
+
+      /* ignore any errors and try sending the rest */
+      g_clear_error (&err);
+      ret = skip;
+    }
+
+    g_assert (ret <= num_messages);
+
+    messages += ret;
+    num_messages -= ret;
+  }
+
+  return TRUE;
+}
+
+static GstFlowReturn
+gst_multiudpsink_render_buffers (GstMultiUDPSink * sink, GstBuffer ** buffers,
+    guint num_buffers, guint8 * mem_nums, guint total_mem_num)
+{
+  GstOutputMessage *msgs;
+  gboolean send_duplicates;
+  GstUDPClient **clients;
+  GOutputVector *vecs;
+  GstMapInfo *map_infos;
+  GstFlowReturn flow_ret;
+  guint num_addr_v4, num_addr_v6;
+  guint num_addr, num_msgs;
+  GError *err = NULL;
+  guint i, j, mem;
+  gsize size = 0;
+  GList *l;
+
+  send_duplicates = sink->send_duplicates;
+
+  g_mutex_lock (&sink->client_lock);
+
+  if (send_duplicates) {
+    num_addr_v4 = sink->num_v4_all;
+    num_addr_v6 = sink->num_v6_all;
+  } else {
+    num_addr_v4 = sink->num_v4_unique;
+    num_addr_v6 = sink->num_v6_unique;
+  }
+  num_addr = num_addr_v4 + num_addr_v6;
+
+  if (num_addr == 0)
+    goto no_clients;
+
+  clients = g_newa (GstUDPClient *, num_addr);
+  for (l = sink->clients, i = 0; l != NULL; l = l->next) {
+    GstUDPClient *client = l->data;
+
+    clients[i++] = gst_udp_client_ref (client);
+    for (j = 1; send_duplicates && j < client->add_count; ++j)
+      clients[i++] = gst_udp_client_ref (client);
+  }
+  g_assert_cmpuint (i, ==, num_addr);
+
+  g_mutex_unlock (&sink->client_lock);
+
+  GST_LOG_OBJECT (sink, "%u buffers, %u memories -> to be sent to %u clients",
+      num_buffers, total_mem_num, num_addr);
+
+  /* ensure our pre-allocated scratch space arrays are large enough */
+  if (sink->n_vecs < total_mem_num) {
+    sink->n_vecs = GST_ROUND_UP_16 (total_mem_num);
+    g_free (sink->vecs);
+    sink->vecs = g_new (GOutputVector, sink->n_vecs);
+  }
+  vecs = sink->vecs;
+
+  if (sink->n_maps < total_mem_num) {
+    sink->n_maps = GST_ROUND_UP_16 (total_mem_num);
+    g_free (sink->maps);
+    sink->maps = g_new (GstMapInfo, sink->n_maps);
+  }
+  map_infos = sink->maps;
+
+  num_msgs = num_addr * num_buffers;
+  if (sink->n_messages < num_msgs) {
+    sink->n_messages = GST_ROUND_UP_16 (num_msgs);
+    g_free (sink->messages);
+    sink->messages = g_new (GstOutputMessage, sink->n_messages);
+  }
+  msgs = sink->messages;
+
+  /* populate first num_buffers messages with output vectors for the buffers */
+  for (i = 0, mem = 0; i < num_buffers; ++i) {
+    size += fill_vectors (&vecs[mem], &map_infos[mem], mem_nums[i], buffers[i]);
+    msgs[i].vectors = &vecs[mem];
+    msgs[i].num_vectors = mem_nums[i];
+    msgs[i].num_control_messages = 0;
+    msgs[i].control_messages = NULL;
+    msgs[i].address = clients[0]->addr;
+    mem += mem_nums[i];
+  }
+
+  /* FIXME: how about some locking? (there wasn't any before either, but..) */
+  sink->bytes_to_serve += size;
+
+  /* now copy the pre-filled num_buffer messages over to the next num_buffer
+   * messages for the next client, where we also change the target adddress */
+  for (i = 1; i < num_addr; ++i) {
+    for (j = 0; j < num_buffers; ++j) {
+      msgs[i * num_buffers + j] = msgs[j];
+      msgs[i * num_buffers + j].address = clients[i]->addr;
+    }
+  }
+
+  /* now send it! */
+  {
+    gboolean ret;
+
+    /* no IPv4 socket? Send it all from the IPv6 socket then.. */
+    if (sink->used_socket == NULL) {
+      ret = gst_multiudpsink_send_messages (sink, sink->used_socket_v6,
+          msgs, num_msgs);
+    } else {
+      guint num_msgs_v4 = num_buffers * num_addr_v4;
+      guint num_msgs_v6 = num_buffers * num_addr_v6;
+
+      /* our client list is sorted with IPv4 clients first and IPv6 ones last */
+      ret = gst_multiudpsink_send_messages (sink, sink->used_socket,
+          msgs, num_msgs_v4);
+
+      if (!ret)
+        goto cancelled;
+
+      ret = gst_multiudpsink_send_messages (sink, sink->used_socket_v6,
+          msgs + num_msgs_v4, num_msgs_v6);
+    }
+
+    if (!ret)
+      goto cancelled;
+  }
+
+  flow_ret = GST_FLOW_OK;
+
+  /* now update stats */
+  g_mutex_lock (&sink->client_lock);
+
+  for (i = 0; i < num_addr; ++i) {
+    GstUDPClient *client = clients[i];
+
+    for (j = 0; j < num_buffers; ++j) {
+      gsize bytes_sent;
+
+      bytes_sent = msgs[i * num_buffers + j].bytes_sent;
+
+      client->bytes_sent += bytes_sent;
+      client->packets_sent++;
+      sink->bytes_served += bytes_sent;
+    }
+    gst_udp_client_unref (client);
+  }
+
+  g_mutex_unlock (&sink->client_lock);
+
+out:
+
+  for (i = 0; i < mem; ++i)
+    gst_memory_unmap (map_infos[i].memory, &map_infos[i]);
+
+  return flow_ret;
+
+no_clients:
+  {
+    g_mutex_unlock (&sink->client_lock);
+    GST_LOG_OBJECT (sink, "no clients");
+    return GST_FLOW_OK;
+  }
+cancelled:
+  {
+    GST_INFO_OBJECT (sink, "cancelled");
+    g_clear_error (&err);
+    flow_ret = GST_FLOW_FLUSHING;
+
+    g_mutex_lock (&sink->client_lock);
+    for (i = 0; i < num_addr; ++i)
+      gst_udp_client_unref (clients[i]);
+    g_mutex_unlock (&sink->client_lock);
+    goto out;
+  }
+}
+
+static GstFlowReturn
+gst_multiudpsink_render_list (GstBaseSink * bsink, GstBufferList * buffer_list)
+{
+  GstMultiUDPSink *sink;
+  GstBuffer **buffers;
+  GstFlowReturn flow;
+  guint8 *mem_nums;
+  guint total_mems;
+  guint i, num_buffers;
+
+  sink = GST_MULTIUDPSINK_CAST (bsink);
+
+  num_buffers = gst_buffer_list_length (buffer_list);
+  if (num_buffers == 0)
+    goto no_data;
+
+  buffers = g_newa (GstBuffer *, num_buffers);
+  mem_nums = g_newa (guint8, num_buffers);
+  for (i = 0, total_mems = 0; i < num_buffers; ++i) {
+    buffers[i] = gst_buffer_list_get (buffer_list, i);
+    mem_nums[i] = gst_buffer_n_memory (buffers[i]);
+    total_mems += mem_nums[i];
+  }
+
+  flow = gst_multiudpsink_render_buffers (sink, buffers, num_buffers,
+      mem_nums, total_mems);
+
+  return flow;
+
+no_data:
+  {
+    GST_LOG_OBJECT (sink, "empty buffer");
+    return GST_FLOW_OK;
+  }
+}
+
 static GstFlowReturn
 gst_multiudpsink_render (GstBaseSink * bsink, GstBuffer * buffer)
 {
   GstMultiUDPSink *sink;
-  GList *clients;
-  GOutputVector *vec;
-  GstMapInfo *map;
-  guint n_mem, i;
-  gsize size;
-  GstMemory *mem;
-  gint num, no_clients;
-  GError *err = NULL;
+  GstFlowReturn flow;
+  guint8 n_mem;
 
   sink = GST_MULTIUDPSINK_CAST (bsink);
 
   n_mem = gst_buffer_n_memory (buffer);
-  if (n_mem == 0)
-    goto no_data;
 
-  /* pre-allocated, the max number of memory blocks is limited so this
-   * should not cause overflows */
-  vec = sink->vec;
-  map = sink->map;
+  if (n_mem > 0)
+    flow = gst_multiudpsink_render_buffers (sink, &buffer, 1, &n_mem, n_mem);
+  else
+    flow = GST_FLOW_OK;
 
-  size = 0;
-  for (i = 0; i < n_mem; i++) {
-    mem = gst_buffer_peek_memory (buffer, i);
-    gst_memory_map (mem, &map[i], GST_MAP_READ);
-
-    vec[i].buffer = map[i].data;
-    vec[i].size = map[i].size;
-
-    size += map[i].size;
-  }
-
-  sink->bytes_to_serve += size;
-
-  /* grab lock while iterating and sending to clients, this should be
-   * fast as UDP never blocks */
-  g_mutex_lock (&sink->client_lock);
-  GST_LOG_OBJECT (bsink, "about to send %" G_GSIZE_FORMAT " bytes in %u blocks",
-      size, n_mem);
-
-  no_clients = 0;
-  num = 0;
-  for (clients = sink->clients; clients; clients = g_list_next (clients)) {
-    GstUDPClient *client;
-    GSocket *socket;
-    GSocketFamily family;
-    gint count;
-
-    client = (GstUDPClient *) clients->data;
-    no_clients++;
-    GST_LOG_OBJECT (sink, "sending %" G_GSIZE_FORMAT " bytes to client %p",
-        size, client);
-
-    family = g_socket_address_get_family (G_SOCKET_ADDRESS (client->addr));
-    /* Select socket to send from for this address */
-    if (family == G_SOCKET_FAMILY_IPV6 || !sink->used_socket)
-      socket = sink->used_socket_v6;
-    else
-      socket = sink->used_socket;
-
-    count = sink->send_duplicates ? client->refcount : 1;
-
-    while (count--) {
-      gssize ret;
-
-      ret =
-          g_socket_send_message (socket, client->addr, vec, n_mem,
-          NULL, 0, 0, sink->cancellable, &err);
-
-      if (G_UNLIKELY (ret < 0)) {
-        if (g_error_matches (err, G_IO_ERROR, G_IO_ERROR_CANCELLED))
-          goto flushing;
-
-        /* we continue after posting a warning, next packets might be ok
-         * again */
-        if (size > UDP_MAX_SIZE) {
-          GST_ELEMENT_WARNING (sink, RESOURCE, WRITE,
-              ("Attempting to send a UDP packet larger than maximum size "
-                  "(%" G_GSIZE_FORMAT " > %d)", size, UDP_MAX_SIZE),
-              ("Reason: %s", err ? err->message : "unknown reason"));
-        } else {
-          GST_ELEMENT_WARNING (sink, RESOURCE, WRITE,
-              ("Error sending UDP packet"), ("Reason: %s",
-                  err ? err->message : "unknown reason"));
-        }
-        g_clear_error (&err);
-      } else {
-        num++;
-        client->bytes_sent += ret;
-        client->packets_sent++;
-        sink->bytes_served += ret;
-      }
-    }
-  }
-  g_mutex_unlock (&sink->client_lock);
-
-  /* unmap all memory again */
-  for (i = 0; i < n_mem; i++)
-    gst_memory_unmap (map[i].memory, &map[i]);
-
-  GST_LOG_OBJECT (sink, "sent %" G_GSIZE_FORMAT " bytes to %d (of %d) clients",
-      size, num, no_clients);
-
-  return GST_FLOW_OK;
-
-no_data:
-  {
-    return GST_FLOW_OK;
-  }
-flushing:
-  {
-    GST_DEBUG ("we are flushing");
-    g_mutex_unlock (&sink->client_lock);
-    g_clear_error (&err);
-
-    /* unmap all memory */
-    for (i = 0; i < n_mem; i++)
-      gst_memory_unmap (map[i].memory, &map[i]);
-
-    return GST_FLOW_FLUSHING;
-  }
+  return flow;
 }
 
 static void
@@ -687,7 +997,7 @@ gst_multiudpsink_get_clients_string (GstMultiUDPSink * sink)
 
     clients = g_list_next (clients);
 
-    count = client->refcount;
+    count = client->add_count;
     while (count--) {
       g_string_append_printf (str, "%s:%d%s", client->host, client->port,
           (clients || count > 1 ? "," : ""));
@@ -1232,10 +1542,28 @@ gst_multiudpsink_stop (GstBaseSink * bsink)
   return TRUE;
 }
 
+static gint
+gst_udp_client_compare_socket_family (GstUDPClient * a, GstUDPClient * b)
+{
+  GSocketFamily fa = g_socket_address_get_family (a->addr);
+  GSocketFamily fb = g_socket_address_get_family (b->addr);
+
+  if (fa == fb)
+    return 0;
+
+  /* a should go before b */
+  if (fa == G_SOCKET_FAMILY_IPV4 && fb == G_SOCKET_FAMILY_IPV6)
+    return -1;
+
+  /* b should go before a */
+  return 1;
+}
+
 static void
 gst_multiudpsink_add_internal (GstMultiUDPSink * sink, const gchar * host,
     gint port, gboolean lock)
 {
+  GSocketFamily family;
   GstUDPClient *client;
   GstUDPClient udpclient;
   GTimeVal now;
@@ -1251,16 +1579,27 @@ gst_multiudpsink_add_internal (GstMultiUDPSink * sink, const gchar * host,
 
   find = g_list_find_custom (sink->clients, &udpclient,
       (GCompareFunc) client_compare);
+
+  if (!find) {
+    find = g_list_find_custom (sink->clients_to_be_removed, &udpclient,
+        (GCompareFunc) client_compare);
+    if (find)
+      gst_udp_client_ref (find->data);
+  }
+
   if (find) {
     client = (GstUDPClient *) find->data;
 
+    family = g_socket_address_get_family (client->addr);
+
     GST_DEBUG_OBJECT (sink, "found %d existing clients with host %s, port %d",
-        client->refcount, host, port);
-    client->refcount++;
+        client->add_count, host, port);
   } else {
-    client = create_client (sink, host, port);
+    client = gst_udp_client_new (sink, host, port);
     if (!client)
       goto error;
+
+    family = g_socket_address_get_family (client->addr);
 
     g_get_current_time (&now);
     client->connect_time = GST_TIMEVAL_TO_TIME (now);
@@ -1269,8 +1608,24 @@ gst_multiudpsink_add_internal (GstMultiUDPSink * sink, const gchar * host,
       gst_multiudpsink_configure_client (sink, client);
 
     GST_DEBUG_OBJECT (sink, "add client with host %s, port %d", host, port);
-    sink->clients = g_list_prepend (sink->clients, client);
+
+    /* keep IPv4 clients at the beginning, and IPv6 at the end, we can make
+     * use of this in gst_multiudpsink_render_buffers() */
+    sink->clients = g_list_insert_sorted (sink->clients, client,
+        (GCompareFunc) gst_udp_client_compare_socket_family);
+
+    if (family == G_SOCKET_FAMILY_IPV4)
+      ++sink->num_v4_unique;
+    else
+      ++sink->num_v6_unique;
   }
+
+  ++client->add_count;
+
+  if (family == G_SOCKET_FAMILY_IPV4)
+    ++sink->num_v4_all;
+  else
+    ++sink->num_v6_all;
 
   if (lock)
     g_mutex_unlock (&sink->client_lock);
@@ -1301,6 +1656,7 @@ gst_multiudpsink_add (GstMultiUDPSink * sink, const gchar * host, gint port)
 void
 gst_multiudpsink_remove (GstMultiUDPSink * sink, const gchar * host, gint port)
 {
+  GSocketFamily family;
   GList *find;
   GstUDPClient udpclient;
   GstUDPClient *client;
@@ -1318,12 +1674,18 @@ gst_multiudpsink_remove (GstMultiUDPSink * sink, const gchar * host, gint port)
   client = (GstUDPClient *) find->data;
 
   GST_DEBUG_OBJECT (sink, "found %d clients with host %s, port %d",
-      client->refcount, host, port);
+      client->add_count, host, port);
 
-  client->refcount--;
-  if (client->refcount == 0) {
+  --client->add_count;
+
+  family = g_socket_address_get_family (client->addr);
+  if (family == G_SOCKET_FAMILY_IPV4)
+    --sink->num_v4_all;
+  else
+    --sink->num_v6_all;
+
+  if (client->add_count == 0) {
     GInetSocketAddress *saddr = G_INET_SOCKET_ADDRESS (client->addr);
-    GSocketFamily family = g_socket_address_get_family (client->addr);
     GInetAddress *addr = g_inet_socket_address_get_address (saddr);
     GSocket *socket;
 
@@ -1350,15 +1712,29 @@ gst_multiudpsink_remove (GstMultiUDPSink * sink, const gchar * host, gint port)
       }
     }
 
+    if (family == G_SOCKET_FAMILY_IPV4)
+      --sink->num_v4_unique;
+    else
+      --sink->num_v6_unique;
+
+    /* Keep state consistent for streaming thread, so remove from client list,
+     * but keep it around until after the signal has been emitted, in case a
+     * callback wants to get stats for that client or so */
+    sink->clients = g_list_delete_link (sink->clients, find);
+
+    sink->clients_to_be_removed =
+        g_list_prepend (sink->clients_to_be_removed, client);
+
     /* Unlock to emit signal before we delete the actual client */
     g_mutex_unlock (&sink->client_lock);
     g_signal_emit (G_OBJECT (sink),
         gst_multiudpsink_signals[SIGNAL_CLIENT_REMOVED], 0, host, port);
     g_mutex_lock (&sink->client_lock);
 
-    sink->clients = g_list_delete_link (sink->clients, find);
+    sink->clients_to_be_removed =
+        g_list_remove (sink->clients_to_be_removed, client);
 
-    free_client (client);
+    gst_udp_client_unref (client);
   }
   g_mutex_unlock (&sink->client_lock);
 
@@ -1382,9 +1758,13 @@ gst_multiudpsink_clear_internal (GstMultiUDPSink * sink, gboolean lock)
    * socket or anything to free for UDP */
   if (lock)
     g_mutex_lock (&sink->client_lock);
-  g_list_foreach (sink->clients, (GFunc) free_client, sink);
+  g_list_foreach (sink->clients, (GFunc) gst_udp_client_unref, sink);
   g_list_free (sink->clients);
   sink->clients = NULL;
+  sink->num_v4_unique = 0;
+  sink->num_v4_all = 0;
+  sink->num_v6_unique = 0;
+  sink->num_v6_all = 0;
   if (lock)
     g_mutex_unlock (&sink->client_lock);
 }
@@ -1411,6 +1791,11 @@ gst_multiudpsink_get_stats (GstMultiUDPSink * sink, const gchar * host,
 
   find = g_list_find_custom (sink->clients, &udpclient,
       (GCompareFunc) client_compare);
+
+  if (!find)
+    find = g_list_find_custom (sink->clients_to_be_removed, &udpclient,
+        (GCompareFunc) client_compare);
+
   if (!find)
     goto not_found;
 

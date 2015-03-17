@@ -378,12 +378,14 @@ gst_vp8_dec_image_to_buffer (GstVP8Dec * dec, const vpx_image_t * img,
 
   if (!gst_video_frame_map (&frame, info, buffer, GST_MAP_WRITE)) {
     GST_ERROR_OBJECT (dec, "Could not map video buffer");
+    return;
   }
 
   for (comp = 0; comp < 3; comp++) {
     dest = GST_VIDEO_FRAME_COMP_DATA (&frame, comp);
     src = img->planes[comp];
-    width = GST_VIDEO_FRAME_COMP_WIDTH (&frame, comp);
+    width = GST_VIDEO_FRAME_COMP_WIDTH (&frame, comp)
+        * GST_VIDEO_FRAME_COMP_PSTRIDE (&frame, comp);
     height = GST_VIDEO_FRAME_COMP_HEIGHT (&frame, comp);
     deststride = GST_VIDEO_FRAME_COMP_STRIDE (&frame, comp);
     srcstride = img->stride[comp];
@@ -428,12 +430,12 @@ open_codec (GstVP8Dec * dec, GstVideoCodecFrame * frame)
   if (status != VPX_CODEC_OK) {
     GST_WARNING_OBJECT (dec, "VPX preprocessing error: %s",
         gst_vpx_error_name (status));
-    gst_video_decoder_finish_frame (GST_VIDEO_DECODER (dec), frame);
+    gst_video_decoder_drop_frame (GST_VIDEO_DECODER (dec), frame);
     return GST_FLOW_CUSTOM_SUCCESS_1;
   }
   if (!stream_info.is_kf) {
     GST_WARNING_OBJECT (dec, "No keyframe, skipping");
-    gst_video_decoder_finish_frame (GST_VIDEO_DECODER (dec), frame);
+    gst_video_decoder_drop_frame (GST_VIDEO_DECODER (dec), frame);
     return GST_FLOW_CUSTOM_SUCCESS_1;
   }
 
@@ -577,7 +579,7 @@ gst_vp8_dec_handle_frame (GstVideoDecoder * decoder, GstVideoCodecFrame * frame)
         gst_vp8_dec_image_to_buffer (dec, img, frame->output_buffer);
         ret = gst_video_decoder_finish_frame (decoder, frame);
       } else {
-        gst_video_decoder_finish_frame (decoder, frame);
+        gst_video_decoder_drop_frame (decoder, frame);
       }
     }
 

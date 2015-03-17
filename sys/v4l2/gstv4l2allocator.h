@@ -141,7 +141,7 @@ gboolean             gst_v4l2_allocator_import_dmabuf  (GstV4l2Allocator * alloc
 gboolean             gst_v4l2_allocator_import_userptr (GstV4l2Allocator * allocator,
                                                         GstV4l2MemoryGroup *group,
                                                         gsize img_size, int n_planes,
-                                                        gpointer * data, gsize * offset);
+                                                        gpointer * data, gsize * size);
 
 void                 gst_v4l2_allocator_flush          (GstV4l2Allocator * allocator);
 
@@ -152,8 +152,6 @@ GstV4l2MemoryGroup*  gst_v4l2_allocator_dqbuf          (GstV4l2Allocator * alloc
 
 void                 gst_v4l2_allocator_reset_group    (GstV4l2Allocator * allocator,
                                                         GstV4l2MemoryGroup * group);
-
-gsize                gst_v4l2_allocator_num_allocated  (GstV4l2Allocator * allocator);
 
 G_END_DECLS
 

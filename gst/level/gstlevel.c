@@ -200,10 +200,13 @@ gst_level_class_init (GstLevelClass * klass)
    *
    * Deprecated: use the #GstLevel:post-messages property
    */
+#ifndef GST_REMOVE_DEPRECATED
   g_object_class_install_property (gobject_class, PROP_MESSAGE,
       g_param_spec_boolean ("message", "message",
-          "Post a 'level' message for each passed interval (deprecated)",
-          TRUE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+          "Post a 'level' message for each passed interval "
+          "(deprecated, use the post-messages property instead)", TRUE,
+          G_PARAM_READWRITE | G_PARAM_DEPRECATED | G_PARAM_STATIC_STRINGS));
+#endif
   g_object_class_install_property (gobject_class, PROP_INTERVAL,
       g_param_spec_uint64 ("interval", "Interval",
           "Interval of time between message posts (in nanoseconds)",
@@ -621,7 +624,7 @@ gst_level_transform_ip (GstBaseTransform * trans, GstBuffer * in)
 
     for (i = 0; i < channels; ++i) {
       if (!GST_BUFFER_FLAG_IS_SET (in, GST_BUFFER_FLAG_GAP)) {
-        filter->process (in_data, block_int_size, channels, &CS,
+        filter->process (in_data + (bps * i), block_int_size, channels, &CS,
             &filter->peak[i]);
         GST_LOG_OBJECT (filter,
             "[%d]: cumulative squares %lf, over %d samples/%d channels",
@@ -630,7 +633,6 @@ gst_level_transform_ip (GstBaseTransform * trans, GstBuffer * in)
       } else {
         filter->peak[i] = 0.0;
       }
-      in_data += bps;
 
       filter->decay_peak_age[i] += GST_FRAMES_TO_CLOCK_TIME (num_frames, rate);
       GST_LOG_OBJECT (filter,

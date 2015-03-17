@@ -84,7 +84,6 @@
 
 #include "videomixer2.h"
 #include "videomixer2pad.h"
-#include "videoconvert.h"
 
 #ifdef DISABLE_ORC
 #define orc_memset memset
@@ -435,7 +434,7 @@ gst_videomixer2_update_converters (GstVideoMixer2 * mix)
       continue;
 
     if (pad->convert)
-      videomixer_videoconvert_convert_free (pad->convert);
+      gst_video_converter_free (pad->convert);
 
     pad->convert = NULL;
 
@@ -445,11 +444,15 @@ gst_videomixer2_update_converters (GstVideoMixer2 * mix)
     if (best_format != GST_VIDEO_INFO_FORMAT (&pad->info) ||
         g_strcmp0 (colorimetry, best_colorimetry) ||
         g_strcmp0 (chroma, best_chroma)) {
+      GstVideoInfo tmp_info = pad->info;
+      tmp_info.finfo = best_info.finfo;
+      tmp_info.chroma_site = best_info.chroma_site;
+      tmp_info.colorimetry = best_info.colorimetry;
+
       GST_DEBUG_OBJECT (pad, "This pad will be converted from %d to %d",
           GST_VIDEO_INFO_FORMAT (&pad->info),
           GST_VIDEO_INFO_FORMAT (&best_info));
-      pad->convert =
-          videomixer_videoconvert_convert_new (&pad->info, &best_info);
+      pad->convert = gst_video_converter_new (&pad->info, &tmp_info, NULL);
       pad->need_conversion_update = TRUE;
       if (!pad->convert) {
         g_free (colorimetry);
@@ -1140,8 +1143,7 @@ gst_videomixer2_blend_buffers (GstVideoMixer2 * mix,
 
         gst_video_frame_map (&converted_frame, &(pad->conversion_info),
             converted_buf, GST_MAP_READWRITE);
-        videomixer_videoconvert_convert_convert (pad->convert, &converted_frame,
-            &frame);
+        gst_video_converter_frame (pad->convert, &frame, &converted_frame);
         gst_video_frame_unmap (&frame);
       } else {
         converted_frame = frame;
@@ -1432,89 +1434,6 @@ gst_videomixer2_query_duration (GstVideoMixer2 * mix, GstQuery * query)
 }
 
 static gboolean
-gst_videomixer2_query_latency (GstVideoMixer2 * mix, GstQuery * query)
-{
-  GstClockTime min, max;
-  gboolean live;
-  gboolean res;
-  GstIterator *it;
-  gboolean done;
-  GValue item = { 0 };
-
-  res = TRUE;
-  done = FALSE;
-  live = FALSE;
-  min = 0;
-  max = GST_CLOCK_TIME_NONE;
-
-  /* Take maximum of all latency values */
-  it = gst_element_iterate_sink_pads (GST_ELEMENT_CAST (mix));
-  while (!done) {
-    switch (gst_iterator_next (it, &item)) {
-      case GST_ITERATOR_DONE:
-        done = TRUE;
-        break;
-      case GST_ITERATOR_OK:
-      {
-        GstPad *pad = g_value_get_object (&item);
-        GstQuery *peerquery;
-        GstClockTime min_cur, max_cur;
-        gboolean live_cur;
-
-        peerquery = gst_query_new_latency ();
-
-        /* Ask peer for latency */
-        res &= gst_pad_peer_query (pad, peerquery);
-
-        /* take max from all valid return values */
-        if (res) {
-          gst_query_parse_latency (peerquery, &live_cur, &min_cur, &max_cur);
-
-          if (min_cur > min)
-            min = min_cur;
-
-          if (max_cur != GST_CLOCK_TIME_NONE &&
-              ((max != GST_CLOCK_TIME_NONE && max_cur > max) ||
-                  (max == GST_CLOCK_TIME_NONE)))
-            max = max_cur;
-
-          live = live || live_cur;
-        }
-
-        gst_query_unref (peerquery);
-        g_value_reset (&item);
-        break;
-      }
-      case GST_ITERATOR_RESYNC:
-        live = FALSE;
-        min = 0;
-        max = GST_CLOCK_TIME_NONE;
-        res = TRUE;
-        gst_iterator_resync (it);
-        break;
-      default:
-        res = FALSE;
-        done = TRUE;
-        break;
-    }
-  }
-  g_value_unset (&item);
-  gst_iterator_free (it);
-
-  mix->live = live;
-
-  if (res) {
-    /* store the results */
-    GST_DEBUG_OBJECT (mix, "Calculated total latency: live %s, min %"
-        GST_TIME_FORMAT ", max %" GST_TIME_FORMAT,
-        (live ? "yes" : "no"), GST_TIME_ARGS (min), GST_TIME_ARGS (max));
-    gst_query_set_latency (query, live, min, max);
-  }
-
-  return res;
-}
-
-static gboolean
 gst_videomixer2_src_query (GstPad * pad, GstObject * parent, GstQuery * query)
 {
   GstVideoMixer2 *mix = GST_VIDEO_MIXER2 (parent);
@@ -1541,9 +1460,6 @@ gst_videomixer2_src_query (GstPad * pad, GstObject * parent, GstQuery * query)
     }
     case GST_QUERY_DURATION:
       res = gst_videomixer2_query_duration (mix, query);
-      break;
-    case GST_QUERY_LATENCY:
-      res = gst_videomixer2_query_latency (mix, query);
       break;
     case GST_QUERY_CAPS:
       res = gst_pad_query_default (pad, parent, query);
@@ -2134,7 +2050,7 @@ gst_videomixer2_release_pad (GstElement * element, GstPad * pad)
   mixpad = GST_VIDEO_MIXER2_PAD (pad);
 
   if (mixpad->convert)
-    videomixer_videoconvert_convert_free (mixpad->convert);
+    gst_video_converter_free (mixpad->convert);
   mixpad->convert = NULL;
 
   mix->sinkpads = g_slist_remove (mix->sinkpads, pad);
@@ -2183,7 +2099,7 @@ gst_videomixer2_dispose (GObject * o)
     GstVideoMixer2Pad *mixpad = tmp->data;
 
     if (mixpad->convert)
-      videomixer_videoconvert_convert_free (mixpad->convert);
+      gst_video_converter_free (mixpad->convert);
     mixpad->convert = NULL;
   }
 

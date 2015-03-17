@@ -307,7 +307,7 @@ Records a video stream captured from a v4l2 device and muxes it into a qt file.
 </tr>
 <tr>
 <td><p><span class="term">details</span></p></td>
-<td>video/x-raw, format=(string){ RGB, UYVY }, width=(int)[ 16, 2147483647 ], height=(int)[ 16, 2147483647 ]</td>
+<td>video/x-raw, format=(string){ RGB, UYVY, v210 }, width=(int)[ 16, 2147483647 ], height=(int)[ 16, 2147483647 ]</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
@@ -401,7 +401,7 @@ Records a video stream captured from a v4l2 device and muxes it into a qt file.
 <div class="refsect2">
 <a name="GstQTMux--dts-method"></a><h3>The <code class="literal">“dts-method”</code> property</h3>
 <pre class="programlisting">  “dts-method”               <span class="type">GstQTMuxDtsMethods</span></pre>
-<p>(DEPRECATED) Method to determine DTS time.</p>
+<p>Method to determine DTS time (DEPRECATED).</p>
 <p>Flags: Read / Write / Construct</p>
 <p>Default value: reorder</p>
 </div>
@@ -444,7 +444,7 @@ Records a video stream captured from a v4l2 device and muxes it into a qt file.
 <p>Timescale to use in the movie (units per second).</p>
 <p>Flags: Read / Write / Construct</p>
 <p>Allowed values: &gt;= 1</p>
-<p>Default value: 1000</p>
+<p>Default value: 1800</p>
 </div>
 <hr>
 <div class="refsect2">

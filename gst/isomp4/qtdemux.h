@@ -24,6 +24,7 @@
 #include <gst/gst.h>
 #include <gst/base/gstadapter.h>
 #include <gst/base/gstflowcombiner.h>
+#include "gstisoff.h"
 
 G_BEGIN_DECLS
 
@@ -76,11 +77,10 @@ struct _GstQTDemux {
   GNode *moov_node_compressed;
 
   guint32 timescale;
-  guint64 duration;
+  GstClockTime duration;
 
   gboolean fragmented;
-  /* offset of the mfra atom */
-  guint64 mfra_offset;
+  gboolean fragmented_seek_pending;
   guint64 moof_offset;
 
   gint state;
@@ -124,9 +124,6 @@ struct _GstQTDemux {
   gint64 seek_offset;
   gint64 push_seek_start;
   gint64 push_seek_stop;
-  guint64 segment_base; /* The offset from which playback was started, needs to
-                         * be subtracted from GstSegment.base to get a correct
-                         * running time whenever a new QtSegment is activated */
 
 #if 0
   /* gst index support */

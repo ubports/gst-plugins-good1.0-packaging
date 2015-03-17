@@ -198,7 +198,7 @@ check_matroska =
 endif
 
 if USE_PLUGIN_MULTIFILE
-check_multifile = elements/multifile
+check_multifile = elements/multifile elements/splitmux
 else
 check_multifile =
 endif
@@ -499,6 +499,10 @@ elements_jpegenc_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_BASE_CFLAGS) $(AM_CFL
 elements_jpegenc_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstapp-$(GST_API_VERSION) $(GST_BASE_LIBS) $(LDADD)
 
 elements_matroskamux_LDADD = $(GST_BASE_LIBS) $(LDADD) $(LIBM)
+
+elements_mulawdec_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_CFLAGS) $(AM_CFLAGS)
+
+elements_mulawenc_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_CFLAGS) $(AM_CFLAGS)
 
 elements_multifile_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_CFLAGS) $(AM_CFLAGS)
 elements_multifile_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstvideo-$(GST_API_VERSION) $(GST_LIBS) $(LDADD) $(LIBM)

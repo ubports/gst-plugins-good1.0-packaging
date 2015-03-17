@@ -3,6 +3,8 @@
  * Copyright (C) <2005> Nokia Corporation <kai.vehmanen@nokia.com>
  * Copyright (C) <2012> Collabora Ltd.
  *   Author: Sebastian Dröge <sebastian.droege@collabora.co.uk>
+ * Copyright (C) 2014 Tim-Philipp Müller <tim@centricular.com>
+ * Copyright (C) 2014 Centricular Ltd
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -34,7 +36,7 @@
  * udpsrc can read from multicast groups by setting the #GstUDPSrc:multicast-group
  * property to the IP address of the multicast group.
  *
- * Alternatively one can provide a custom socket to udpsrc with the #GstUDPSrc:sockfd
+ * Alternatively one can provide a custom socket to udpsrc with the #GstUDPSrc:socket
  * property, udpsrc will then not allocate a socket itself but use the provided
  * one.
  *
@@ -80,10 +82,10 @@
  * because it is blocked by a firewall.
  *
  * A custom file descriptor can be configured with the
- * #GstUDPSrc:sockfd property. The socket will be closed when setting the
- * element to READY by default. This behaviour can be
- * overriden with the #GstUDPSrc:closefd property, in which case the application
- * is responsible for closing the file descriptor.
+ * #GstUDPSrc:socket property. The socket will be closed when setting
+ * the element to READY by default. This behaviour can be overriden
+ * with the #GstUDPSrc:close-socket property, in which case the
+ * application is responsible for closing the file descriptor.
  *
  * <refsect2>
  * <title>Examples</title>
@@ -105,6 +107,7 @@
 #include "config.h"
 #endif
 
+#include <string.h>
 #include "gstudpsrc.h"
 
 #include <gst/net/gstnetaddressmeta.h>
@@ -182,6 +185,7 @@ static GstFlowReturn gst_udpsrc_create (GstPushSrc * psrc, GstBuffer ** buf);
 static gboolean gst_udpsrc_close (GstUDPSrc * src);
 static gboolean gst_udpsrc_unlock (GstBaseSrc * bsrc);
 static gboolean gst_udpsrc_unlock_stop (GstBaseSrc * bsrc);
+static gboolean gst_udpsrc_negotiate (GstBaseSrc * basesrc);
 
 static void gst_udpsrc_finalize (GObject * object);
 
@@ -221,11 +225,13 @@ gst_udpsrc_class_init (GstUDPSrcClass * klass)
           "The port to receive the packets from, 0=allocate", 0, G_MAXUINT16,
           UDP_DEFAULT_PORT, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
   /* FIXME 2.0: Remove multicast-group property */
+#ifndef GST_REMOVE_DEPRECATED
   g_object_class_install_property (gobject_class, PROP_MULTICAST_GROUP,
       g_param_spec_string ("multicast-group", "Multicast Group",
-          "The Address of multicast group to join. DEPRECATED: "
-          "Use address property instead", UDP_DEFAULT_MULTICAST_GROUP,
-          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+          "The Address of multicast group to join. (DEPRECATED: "
+          "Use address property instead)", UDP_DEFAULT_MULTICAST_GROUP,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_DEPRECATED));
+#endif
   g_object_class_install_property (gobject_class, PROP_MULTICAST_IFACE,
       g_param_spec_string ("multicast-iface", "Multicast Interface",
           "The network interface on which to join the multicast group",
@@ -294,6 +300,7 @@ gst_udpsrc_class_init (GstUDPSrcClass * klass)
   gstbasesrc_class->unlock = gst_udpsrc_unlock;
   gstbasesrc_class->unlock_stop = gst_udpsrc_unlock_stop;
   gstbasesrc_class->get_caps = gst_udpsrc_getcaps;
+  gstbasesrc_class->negotiate = gst_udpsrc_negotiate;
 
   gstpushsrc_class->create = gst_udpsrc_create;
 }
@@ -390,27 +397,130 @@ gst_udpsrc_getcaps (GstBaseSrc * src, GstCaps * filter)
   return result;
 }
 
+static void
+gst_udpsrc_reset_memory_allocator (GstUDPSrc * src)
+{
+  if (src->mem != NULL) {
+    gst_memory_unmap (src->mem, &src->map);
+    gst_memory_unref (src->mem);
+    src->mem = NULL;
+  }
+  if (src->mem_max != NULL) {
+    gst_memory_unmap (src->mem_max, &src->map_max);
+    gst_memory_unref (src->mem_max);
+    src->mem_max = NULL;
+  }
+
+  src->vec[0].buffer = NULL;
+  src->vec[0].size = 0;
+  src->vec[1].buffer = NULL;
+  src->vec[1].size = 0;
+
+  if (src->allocator != NULL) {
+    gst_object_unref (src->allocator);
+    src->allocator = NULL;
+  }
+}
+
+static gboolean
+gst_udpsrc_negotiate (GstBaseSrc * basesrc)
+{
+  GstUDPSrc *src = GST_UDPSRC_CAST (basesrc);
+  gboolean ret;
+
+  /* just chain up to the default implementation, we just want to
+   * retrieve the allocator at the end of it (if there is one) */
+  ret = GST_BASE_SRC_CLASS (parent_class)->negotiate (basesrc);
+
+  if (ret) {
+    GstAllocationParams new_params;
+    GstAllocator *new_allocator = NULL;
+
+    /* retrieve new allocator */
+    gst_base_src_get_allocator (basesrc, &new_allocator, &new_params);
+
+    if (src->allocator != new_allocator ||
+        memcmp (&src->params, &new_params, sizeof (GstAllocationParams)) != 0) {
+      /* drop old allocator and throw away any memory allocated with it */
+      gst_udpsrc_reset_memory_allocator (src);
+
+      /* and save the new allocator and/or new allocation parameters */
+      src->allocator = new_allocator;
+      src->params = new_params;
+
+      GST_INFO_OBJECT (src, "new allocator: %" GST_PTR_FORMAT, new_allocator);
+    }
+  }
+
+  return ret;
+}
+
+static gboolean
+gst_udpsrc_alloc_mem (GstUDPSrc * src, GstMemory ** p_mem, GstMapInfo * map,
+    gsize size)
+{
+  GstMemory *mem;
+
+  mem = gst_allocator_alloc (src->allocator, size, &src->params);
+
+  if (!gst_memory_map (mem, map, GST_MAP_WRITE)) {
+    gst_memory_unref (mem);
+    memset (map, 0, sizeof (GstMapInfo));
+    return FALSE;
+  }
+  *p_mem = mem;
+  return TRUE;
+}
+
+static gboolean
+gst_udpsrc_ensure_mem (GstUDPSrc * src)
+{
+  if (src->mem == NULL) {
+    gsize mem_size = 1500;      /* typical max. MTU */
+
+    /* if packets are likely to be smaller, just use that size, otherwise
+     * default to assuming incoming packets are around MTU size */
+    if (src->max_size > 0 && src->max_size < mem_size)
+      mem_size = src->max_size;
+
+    if (!gst_udpsrc_alloc_mem (src, &src->mem, &src->map, mem_size))
+      return FALSE;
+
+    src->vec[0].buffer = src->map.data;
+    src->vec[0].size = src->map.size;
+  }
+
+  if (src->mem_max == NULL) {
+    gsize max_size = MAX_IPV4_UDP_PACKET_SIZE;
+
+    if (!gst_udpsrc_alloc_mem (src, &src->mem_max, &src->map_max, max_size))
+      return FALSE;
+
+    src->vec[1].buffer = src->map_max.data;
+    src->vec[1].size = src->map_max.size;
+  }
+
+  return TRUE;
+}
+
 static GstFlowReturn
 gst_udpsrc_create (GstPushSrc * psrc, GstBuffer ** buf)
 {
-  GstFlowReturn ret;
   GstUDPSrc *udpsrc;
   GstBuffer *outbuf = NULL;
-  GstMapInfo info;
   GSocketAddress *saddr = NULL;
-  gsize offset;
-  gssize readsize;
-  gssize res;
+  gint flags = G_SOCKET_MSG_NONE;
   gboolean try_again;
   GError *err = NULL;
+  gssize res;
+  gsize offset;
 
   udpsrc = GST_UDPSRC_CAST (psrc);
 
+  if (!gst_udpsrc_ensure_mem (udpsrc))
+    goto memory_alloc_error;
+
 retry:
-  /* quick check, avoid going in select when we already have data */
-  readsize = g_socket_get_available_bytes (udpsrc->used_socket);
-  if (readsize > 0)
-    goto no_select;
 
   do {
     gint64 timeout;
@@ -444,95 +554,78 @@ retry:
     }
   } while (G_UNLIKELY (try_again));
 
-  /* ask how much is available for reading on the socket, this should be exactly
-   * one UDP packet. We will check the return value, though, because in some
-   * case it can return 0 and we don't want a 0 sized buffer. */
-  readsize = g_socket_get_available_bytes (udpsrc->used_socket);
-  if (G_UNLIKELY (readsize < 0))
-    goto get_available_error;
-
-  /* If we get here and the readsize is zero, then either select was woken up
-   * by activity that is not a read, or a poll error occurred, or a UDP packet
-   * was received that has no data. Since we cannot identify which case it is,
-   * we handle all of them. This could possibly lead to a UDP packet getting
-   * lost, but since UDP is not reliable, we can accept this. */
-  if (G_UNLIKELY (!readsize)) {
-    /* try to read a packet (and it will be ignored),
-     * in case a packet with no data arrived */
-    res =
-        g_socket_receive_from (udpsrc->used_socket, NULL, NULL,
-        0, udpsrc->cancellable, &err);
-    if (G_UNLIKELY (res < 0))
-      goto receive_error;
-
-    /* poll again */
-    goto retry;
+  if (saddr != NULL) {
+    g_object_unref (saddr);
+    saddr = NULL;
   }
 
-no_select:
-  GST_LOG_OBJECT (udpsrc, "ioctl says %d bytes available", (int) readsize);
-
-  /* sanity check value from _get_available_bytes(), which might be as
-   * large as the kernel-side buffer on some operating systems */
-  if (g_socket_get_family (udpsrc->used_socket) == G_SOCKET_FAMILY_IPV4)
-    readsize = MIN (MAX_IPV4_UDP_PACKET_SIZE, readsize);
-
-  ret = GST_BASE_SRC_CLASS (parent_class)->alloc (GST_BASE_SRC_CAST (udpsrc),
-      -1, readsize, &outbuf);
-  if (ret != GST_FLOW_OK)
-    goto alloc_failed;
-
-  gst_buffer_map (outbuf, &info, GST_MAP_WRITE);
-  offset = 0;
-
-  if (saddr)
-    g_object_unref (saddr);
-  saddr = NULL;
-
   res =
-      g_socket_receive_from (udpsrc->used_socket, &saddr, (gchar *) info.data,
-      info.size, udpsrc->cancellable, &err);
+      g_socket_receive_message (udpsrc->used_socket, &saddr, udpsrc->vec, 2,
+      NULL, NULL, &flags, udpsrc->cancellable, &err);
 
   if (G_UNLIKELY (res < 0)) {
     /* EHOSTUNREACH for a UDP socket means that a packet sent with udpsink
      * generated a "port unreachable" ICMP response. We ignore that and try
      * again. */
     if (g_error_matches (err, G_IO_ERROR, G_IO_ERROR_HOST_UNREACHABLE)) {
-      gst_buffer_unmap (outbuf, &info);
-      gst_buffer_unref (outbuf);
-      outbuf = NULL;
       g_clear_error (&err);
       goto retry;
     }
     goto receive_error;
   }
 
-  /* patch offset and size when stripping off the headers */
-  if (G_UNLIKELY (udpsrc->skip_first_bytes != 0)) {
-    if (G_UNLIKELY (readsize < udpsrc->skip_first_bytes))
-      goto skip_error;
+  /* remember maximum packet size */
+  if (res > udpsrc->max_size)
+    udpsrc->max_size = res;
 
-    offset += udpsrc->skip_first_bytes;
-    res -= udpsrc->skip_first_bytes;
+  outbuf = gst_buffer_new ();
+
+  /* append first memory chunk to buffer */
+  gst_buffer_append_memory (outbuf, udpsrc->mem);
+
+  /* if the packet didn't fit into the first chunk, add second one as well */
+  if (res > udpsrc->map.size) {
+    gst_buffer_append_memory (outbuf, udpsrc->mem_max);
+    gst_memory_unmap (udpsrc->mem_max, &udpsrc->map_max);
+    udpsrc->vec[1].buffer = NULL;
+    udpsrc->vec[1].size = 0;
+    udpsrc->mem_max = NULL;
   }
 
-  gst_buffer_unmap (outbuf, &info);
-  gst_buffer_resize (outbuf, offset, res);
+  /* make sure we allocate a new chunk next time (we do this only here because
+   * we look at map.size to see if the second memory chunk is needed above) */
+  gst_memory_unmap (udpsrc->mem, &udpsrc->map);
+  udpsrc->vec[0].buffer = NULL;
+  udpsrc->vec[0].size = 0;
+  udpsrc->mem = NULL;
+
+  offset = udpsrc->skip_first_bytes;
+
+  if (G_UNLIKELY (offset > 0 && res < offset))
+    goto skip_error;
+
+  gst_buffer_resize (outbuf, offset, res - offset);
 
   /* use buffer metadata so receivers can also track the address */
   if (saddr) {
     gst_buffer_add_net_address_meta (outbuf, saddr);
     g_object_unref (saddr);
+    saddr = NULL;
   }
-  saddr = NULL;
 
-  GST_LOG_OBJECT (udpsrc, "read %d bytes", (int) readsize);
+  GST_LOG_OBJECT (udpsrc, "read packet of %d bytes", (int) res);
 
   *buf = GST_BUFFER_CAST (outbuf);
 
-  return ret;
+  return GST_FLOW_OK;
 
   /* ERRORS */
+memory_alloc_error:
+  {
+    GST_ELEMENT_ERROR (udpsrc, RESOURCE, READ, (NULL),
+        ("Failed to allocate or map memory"));
+    return GST_FLOW_ERROR;
+  }
 select_error:
   {
     GST_ELEMENT_ERROR (udpsrc, RESOURCE, READ, (NULL),
@@ -546,24 +639,8 @@ stopped:
     g_clear_error (&err);
     return GST_FLOW_FLUSHING;
   }
-get_available_error:
-  {
-    GST_ELEMENT_ERROR (udpsrc, RESOURCE, READ, (NULL),
-        ("get available bytes failed"));
-    return GST_FLOW_ERROR;
-  }
-alloc_failed:
-  {
-    GST_DEBUG ("Allocation failed");
-    return ret;
-  }
 receive_error:
   {
-    if (outbuf != NULL) {
-      gst_buffer_unmap (outbuf, &info);
-      gst_buffer_unref (outbuf);
-    }
-
     if (g_error_matches (err, G_IO_ERROR, G_IO_ERROR_BUSY) ||
         g_error_matches (err, G_IO_ERROR, G_IO_ERROR_CANCELLED)) {
       g_clear_error (&err);
@@ -577,7 +654,6 @@ receive_error:
   }
 skip_error:
   {
-    gst_buffer_unmap (outbuf, &info);
     gst_buffer_unref (outbuf);
 
     GST_ELEMENT_ERROR (udpsrc, STREAM, DECODE, (NULL),
@@ -997,6 +1073,11 @@ gst_udpsrc_open (GstUDPSrc * src)
     g_object_unref (addr);
   }
 
+  src->allocator = NULL;
+  gst_allocation_params_init (&src->params);
+
+  src->max_size = 0;
+
   return TRUE;
 
   /* ERRORS */
@@ -1101,6 +1182,8 @@ gst_udpsrc_close (GstUDPSrc * src)
     g_object_unref (src->addr);
     src->addr = NULL;
   }
+
+  gst_udpsrc_reset_memory_allocator (src);
 
   return TRUE;
 }

@@ -118,8 +118,11 @@ struct _GstV4l2Object {
   gboolean prefered_non_contiguous;
 
   /* This will be set if supported in decide_allocation. It can be used to
-   * calculate the minimum latency of a m2m decoder. */
-  guint32 min_buffers_for_capture;
+   * calculate the minimum latency. */
+  guint32 min_buffers;
+
+  /* This will be set if supported in propose allocation. */
+  guint32 min_buffers_for_output;
 
   /* wanted mode */
   GstV4l2IOMode req_mode;
@@ -244,7 +247,11 @@ GstCaps*      gst_v4l2_object_get_raw_caps (void);
 
 GstCaps*      gst_v4l2_object_get_codec_caps (void);
 
+gint          gst_v4l2_object_extrapolate_stride (const GstVideoFormatInfo * finfo,
+                                                  gint plane, gint stride);
+
 gboolean      gst_v4l2_object_set_format  (GstV4l2Object * v4l2object, GstCaps * caps);
+gboolean      gst_v4l2_object_try_format  (GstV4l2Object * v4l2object, GstCaps * caps);
 
 gboolean      gst_v4l2_object_caps_equal  (GstV4l2Object * v4l2object, GstCaps * caps);
 

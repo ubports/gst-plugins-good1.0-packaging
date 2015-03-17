@@ -324,7 +324,7 @@ implement FEC or retransmission (such as RFC 4588). An AUX sender must have one
 sink_%u pad that matches the sessionid in the signal and it should have 1 or
 more src_%u pads. For each src_%\u pad, a session will be made (if needed)
 and the pad will be linked to the session send_rtp_sink pad. Each session will
-then expose its source pad ad send_rtp_src_%u on <a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin"><span class="type">GstRtpBin</span></a>.
+then expose its source pad as send_rtp_src_%u on <a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin"><span class="type">GstRtpBin</span></a>.
 An AUX receiver has 1 src_%u pad that much match the sessionid in the signal
 and 1 or more sink_%u pads. A session will be made for each sink_%u pad
 when the corresponding recv_rtp_sink_%u pad is requested on <a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin"><span class="type">GstRtpBin</span></a>.</p>
@@ -730,7 +730,10 @@ the various streams.</p>
 <div class="refsect2">
 <a name="GstRtpBin--do-retransmission"></a><h3>The <code class="literal">“do-retransmission”</code> property</h3>
 <pre class="programlisting">  “do-retransmission”        <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
-<p>Send an event downstream to request packet retransmission.</p>
+<p>Enables RTP retransmission on all streams. To control retransmission on
+a per-SSRC basis, connect to the <a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin-new-jitterbuffer" title="The “new-jitterbuffer” signal"><span class="type">“new-jitterbuffer”</span></a> signal and
+set the <span class="type">“do-retransmission”</span> property on the
+<a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer"><span class="type">GstRtpJitterBuffer</span></a> object instead.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: FALSE</p>
 </div>

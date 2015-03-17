@@ -255,9 +255,24 @@ gst_interleave_finalize (GObject * object)
   G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 
+static gint
+compare_positions (gconstpointer a, gconstpointer b, gpointer user_data)
+{
+  const gint i = *(const gint *) a;
+  const gint j = *(const gint *) b;
+  const gint *pos = (const gint *) user_data;
+
+  if (pos[i] < pos[j])
+    return -1;
+  else if (pos[i] > pos[j])
+    return 1;
+  else
+    return 0;
+}
+
 static gboolean
 gst_interleave_channel_positions_to_mask (GValueArray * positions,
-    guint64 * mask)
+    gint default_ordering_map[64], guint64 * mask)
 {
   gint i;
   guint channels;
@@ -274,6 +289,13 @@ gst_interleave_channel_positions_to_mask (GValueArray * positions,
     pos[i] = g_value_get_enum (val);
   }
 
+  /* sort the default ordering map according to the position order */
+  for (i = 0; i < channels; i++) {
+    default_ordering_map[i] = i;
+  }
+  g_qsort_with_data (default_ordering_map, channels,
+      sizeof (*default_ordering_map), compare_positions, pos);
+
   ret = gst_audio_channel_positions_to_mask (pos, channels, FALSE, mask);
   g_free (pos);
 
@@ -288,7 +310,7 @@ gst_interleave_set_channel_positions (GstInterleave * self, GstStructure * s)
   if (self->channel_positions != NULL &&
       self->channels == self->channel_positions->n_values) {
     if (!gst_interleave_channel_positions_to_mask (self->channel_positions,
-            &channel_mask)) {
+            self->default_channels_ordering_map, &channel_mask)) {
       GST_WARNING_OBJECT (self, "Invalid channel positions, using NONE");
       channel_mask = 0;
     }
@@ -1015,91 +1037,6 @@ gst_interleave_src_query_duration (GstInterleave * self, GstQuery * query)
 }
 
 static gboolean
-gst_interleave_src_query_latency (GstInterleave * self, GstQuery * query)
-{
-  GstClockTime min, max;
-  gboolean live;
-  gboolean res;
-  GstIterator *it;
-  gboolean done;
-
-  res = TRUE;
-  done = FALSE;
-
-  live = FALSE;
-  min = 0;
-  max = GST_CLOCK_TIME_NONE;
-
-  /* Take maximum of all latency values */
-  it = gst_element_iterate_sink_pads (GST_ELEMENT_CAST (self));
-  while (!done) {
-    GstIteratorResult ires;
-    GValue item = { 0, };
-
-    ires = gst_iterator_next (it, &item);
-    switch (ires) {
-      case GST_ITERATOR_DONE:
-        done = TRUE;
-        break;
-      case GST_ITERATOR_OK:
-      {
-        GstPad *pad = GST_PAD_CAST (g_value_dup_object (&item));
-        GstQuery *peerquery;
-        GstClockTime min_cur, max_cur;
-        gboolean live_cur;
-
-        peerquery = gst_query_new_latency ();
-
-        /* Ask peer for latency */
-        res &= gst_pad_peer_query (pad, peerquery);
-
-        /* take max from all valid return values */
-        if (res) {
-          gst_query_parse_latency (peerquery, &live_cur, &min_cur, &max_cur);
-
-          if (min_cur > min)
-            min = min_cur;
-
-          if (max_cur != GST_CLOCK_TIME_NONE &&
-              ((max != GST_CLOCK_TIME_NONE && max_cur > max) ||
-                  (max == GST_CLOCK_TIME_NONE)))
-            max = max_cur;
-
-          live = live || live_cur;
-        }
-
-        gst_query_unref (peerquery);
-        gst_object_unref (pad);
-        g_value_unset (&item);
-        break;
-      }
-      case GST_ITERATOR_RESYNC:
-        live = FALSE;
-        min = 0;
-        max = GST_CLOCK_TIME_NONE;
-        res = TRUE;
-        gst_iterator_resync (it);
-        break;
-      default:
-        res = FALSE;
-        done = TRUE;
-        break;
-    }
-  }
-  gst_iterator_free (it);
-
-  if (res) {
-    /* store the results */
-    GST_DEBUG_OBJECT (self, "Calculated total latency: live %s, min %"
-        GST_TIME_FORMAT ", max %" GST_TIME_FORMAT,
-        (live ? "yes" : "no"), GST_TIME_ARGS (min), GST_TIME_ARGS (max));
-    gst_query_set_latency (query, live, min, max);
-  }
-
-  return res;
-}
-
-static gboolean
 gst_interleave_src_query (GstPad * pad, GstObject * parent, GstQuery * query)
 {
   GstInterleave *self = GST_INTERLEAVE (parent);
@@ -1134,9 +1071,6 @@ gst_interleave_src_query (GstPad * pad, GstObject * parent, GstQuery * query)
     }
     case GST_QUERY_DURATION:
       res = gst_interleave_src_query_duration (self, query);
-      break;
-    case GST_QUERY_LATENCY:
-      res = gst_interleave_src_query_latency (self, query);
       break;
     default:
       /* FIXME, needs a custom query handler because we have multiple
@@ -1274,6 +1208,7 @@ gst_interleave_collected (GstCollectPads * pads, GstInterleave * self)
     GstBuffer *inbuf;
     guint8 *outdata;
     GstMapInfo input_info;
+    gint channel;
 
     cdata = (GstCollectData *) collected->data;
 
@@ -1292,8 +1227,9 @@ gst_interleave_collected (GstCollectPads * pads, GstInterleave * self)
       goto next;
 
     empty = FALSE;
+    channel = GST_INTERLEAVE_PAD_CAST (cdata->pad)->channel;
     outdata =
-        write_info.data + width * GST_INTERLEAVE_PAD_CAST (cdata->pad)->channel;
+        write_info.data + width * self->default_channels_ordering_map[channel];
 
     self->func (outdata, input_info.data, self->channels, nsamples);
     gst_buffer_unmap (inbuf, &input_info);

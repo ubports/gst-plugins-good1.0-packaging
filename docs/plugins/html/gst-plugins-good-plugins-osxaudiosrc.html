@@ -109,8 +109,7 @@
 
   AudioDeviceID device_id;
 
-  /* actual number of channels reported by input device */
-  int deviceChannels;
+  GstCaps *cached_caps;
 };
 </pre>
 <p>

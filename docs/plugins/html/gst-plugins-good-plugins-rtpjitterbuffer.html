@@ -104,6 +104,16 @@
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer--stats" title="The “stats” property">stats</a></td>
 <td class="property_flags">Read</td>
 </tr>
+<tr>
+<td class="property_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer--rtx-min-delay" title="The “rtx-min-delay” property">rtx-min-delay</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
+<tr>
+<td class="property_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer--rtx-min-retry-timeout" title="The “rtx-min-retry-timeout” property">rtx-min-retry-timeout</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
 </tbody>
 </table></div>
 </div>
@@ -283,7 +293,7 @@ out-of-order RTP packets.
 </tr>
 <tr>
 <td><p><span class="term">details</span></p></td>
-<td>application/x-rtp, clock-rate=(int)[ 1, 2147483647 ]</td>
+<td>application/x-rtp</td>
 </tr>
 </tbody>
 </table></div>
@@ -472,6 +482,25 @@ with name application/x-rtp-jitterbuffer-stats with the following fields:</p>
  "rtx-rtt"           G_TYPE_UINT64 Average round trip time per RTX</p>
 <p>Flags: Read</p>
 <p class="since">Since 1.4</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRtpJitterBuffer--rtx-min-delay"></a><h3>The <code class="literal">“rtx-min-delay”</code> property</h3>
+<pre class="programlisting">  “rtx-min-delay”            <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a></pre>
+<p>When a packet did not arrive at the expected time, wait at least this extra amount
+of time before sending a retransmission event.</p>
+<p>Flags: Read / Write</p>
+<p>Default value: 0</p>
+<p class="since">Since 1.6</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRtpJitterBuffer--rtx-min-retry-timeout"></a><h3>The <code class="literal">“rtx-min-retry-timeout”</code> property</h3>
+<pre class="programlisting">  “rtx-min-retry-timeout”    <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a></pre>
+<p>Minimum timeout between sending a transmission event in ms (-1 automatic).</p>
+<p>Flags: Read / Write</p>
+<p>Allowed values: &gt;= G_MAXULONG</p>
+<p>Default value: -1</p>
 </div>
 </div>
 <div class="refsect1">

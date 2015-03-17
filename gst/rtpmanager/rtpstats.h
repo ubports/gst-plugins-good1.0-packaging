@@ -135,6 +135,11 @@ typedef struct {
   guint64      packets_sent;
   guint64      octets_sent;
 
+  guint        sent_pli_count;
+  guint        recv_pli_count;
+  guint        sent_fir_count;
+  guint        recv_fir_count;
+
   /* when we received stuff */
   GstClockTime prev_rtptime;
   GstClockTime prev_rtcptime;
@@ -177,12 +182,12 @@ typedef struct {
 #define RTP_STATS_BYE_TIMEOUT           (2 * GST_SECOND)
 
 /*
- * The maximum number of missing packets we tollerate. These are packets with a
+ * The maximum number of missing packets we tolerate. These are packets with a
  * sequence number bigger than the last seen packet.
  */
 #define RTP_MAX_DROPOUT      3000
 /*
- * The maximum number of misordered packets we tollerate. These are packets with
+ * The maximum number of misordered packets we tolerate. These are packets with
  * a sequence number smaller than the last seen packet.
  */
 #define RTP_MAX_MISORDER     100

@@ -43,6 +43,7 @@
 #include <gst/pbutils/descriptions.h>
 #include <gst/pbutils/pbutils.h>
 #include <gst/audio/audio.h>
+#include <gst/video/video.h>
 
 /* FIXME: don't rely on own GstIndex */
 #include "gstindex.c"
@@ -93,8 +94,11 @@ G_DEFINE_TYPE (GstFlvDemux, gst_flv_demux, GST_TYPE_ELEMENT);
 /* 1 byte of tag type + 3 bytes of tag data size */
 #define FLV_TAG_TYPE_SIZE 4
 
-/* two seconds - consider pts are resynced to another base if this different */
+/* two seconds - consider dts are resynced to another base if this different */
 #define RESYNC_THRESHOLD 2000
+
+/* how much stream time to wait for audio tags to appear after we have video, or vice versa */
+#define NO_MORE_PADS_THRESHOLD (6 * GST_SECOND)
 
 static gboolean flv_demux_handle_seek_push (GstFlvDemux * demux,
     GstEvent * event);
@@ -889,23 +893,23 @@ gst_flv_demux_push_tags (GstFlvDemux * demux)
 }
 
 static gboolean
-gst_flv_demux_update_resync (GstFlvDemux * demux, guint32 pts, gboolean discont,
+gst_flv_demux_update_resync (GstFlvDemux * demux, guint32 dts, gboolean discont,
     guint32 * last, GstClockTime * offset)
 {
   gboolean ret = FALSE;
-  gint32 dpts = pts - *last;
-  if (!discont && dpts <= -RESYNC_THRESHOLD) {
+  gint32 ddts = dts - *last;
+  if (!discont && ddts <= -RESYNC_THRESHOLD) {
     /* Theoretically, we should use substract the duration of the last buffer,
        but this demuxer sends no durations on buffers, not sure if it cannot
        know, or just does not care to calculate. */
-    *offset -= dpts * GST_MSECOND;
+    *offset -= ddts * GST_MSECOND;
     GST_WARNING_OBJECT (demux,
-        "Large pts gap (%" G_GINT32_FORMAT " ms), assuming resync, offset now %"
-        GST_TIME_FORMAT "", dpts, GST_TIME_ARGS (*offset));
+        "Large dts gap (%" G_GINT32_FORMAT " ms), assuming resync, offset now %"
+        GST_TIME_FORMAT "", ddts, GST_TIME_ARGS (*offset));
 
     ret = TRUE;
   }
-  *last = pts;
+  *last = dts;
 
   return ret;
 }
@@ -923,9 +927,14 @@ gst_flv_demux_parse_tag_audio (GstFlvDemux * demux, GstBuffer * buffer)
 
   GST_LOG_OBJECT (demux, "parsing an audio tag");
 
-  if (demux->no_more_pads && !demux->audio_pad) {
-    GST_WARNING_OBJECT (demux,
-        "Signaled no-more-pads already but had no audio pad -- ignoring");
+  if G_UNLIKELY (!demux->audio_pad && demux->no_more_pads) {
+#ifndef GST_DISABLE_DEBUG
+    if G_UNLIKELY (!demux->no_audio_warned) {
+      GST_WARNING_OBJECT (demux,
+          "Signaled no-more-pads already but had no audio pad -- ignoring");
+      demux->no_audio_warned = TRUE;
+    }
+#endif
     return GST_FLOW_OK;
   }
 
@@ -1094,7 +1103,6 @@ gst_flv_demux_parse_tag_audio (GstFlvDemux * demux, GstBuffer * buffer)
         /* Use that buffer data in the caps */
         gst_flv_demux_audio_negotiate (demux, codec_tag, rate, channels, width);
         goto beach;
-        break;
       }
       case 1:
         /* AAC raw packet */
@@ -1108,12 +1116,13 @@ gst_flv_demux_parse_tag_audio (GstFlvDemux * demux, GstBuffer * buffer)
 
   /* detect (and deem to be resyncs)  large pts gaps */
   if (gst_flv_demux_update_resync (demux, pts, demux->audio_need_discont,
-      &demux->last_audio_pts, &demux->audio_time_offset)) {
+          &demux->last_audio_pts, &demux->audio_time_offset)) {
     GST_BUFFER_FLAG_SET (outbuf, GST_BUFFER_FLAG_RESYNC);
   }
 
   /* Fill buffer with data */
-  GST_BUFFER_TIMESTAMP (outbuf) = pts * GST_MSECOND + demux->audio_time_offset;
+  GST_BUFFER_PTS (outbuf) = pts * GST_MSECOND + demux->audio_time_offset;
+  GST_BUFFER_DTS (outbuf) = GST_BUFFER_PTS (outbuf);
   GST_BUFFER_DURATION (outbuf) = GST_CLOCK_TIME_NONE;
   GST_BUFFER_OFFSET (outbuf) = demux->audio_offset++;
   GST_BUFFER_OFFSET_END (outbuf) = demux->audio_offset;
@@ -1170,7 +1179,7 @@ gst_flv_demux_parse_tag_audio (GstFlvDemux * demux, GstBuffer * buffer)
 
   if (G_UNLIKELY (!demux->no_more_pads
           && (GST_CLOCK_DIFF (demux->audio_start,
-                  GST_BUFFER_TIMESTAMP (outbuf)) > 6 * GST_SECOND))) {
+                  GST_BUFFER_TIMESTAMP (outbuf)) > NO_MORE_PADS_THRESHOLD))) {
     GST_DEBUG_OBJECT (demux,
         "Signalling no-more-pads because no video stream was found"
         " after 6 seconds of audio");
@@ -1255,7 +1264,7 @@ gst_flv_demux_video_negotiate (GstFlvDemux * demux, guint32 codec_tag)
   if (G_LIKELY (demux->framerate)) {
     gint num = 0, den = 0;
 
-    gst_util_double_to_fraction (demux->framerate, &num, &den);
+    gst_video_guess_framerate (GST_SECOND / demux->framerate, &num, &den);
     GST_DEBUG_OBJECT (demux->video_pad,
         "fps to be used on caps %f (as a fraction = %d/%d)", demux->framerate,
         num, den);
@@ -1310,7 +1319,8 @@ static GstFlowReturn
 gst_flv_demux_parse_tag_video (GstFlvDemux * demux, GstBuffer * buffer)
 {
   GstFlowReturn ret = GST_FLOW_OK;
-  guint32 pts = 0, codec_data = 1, pts_ext = 0;
+  guint32 dts = 0, codec_data = 1, dts_ext = 0;
+  gint32 cts = 0;
   gboolean keyframe = FALSE;
   guint8 flags = 0, codec_tag = 0;
   GstBuffer *outbuf;
@@ -1322,9 +1332,14 @@ gst_flv_demux_parse_tag_video (GstFlvDemux * demux, GstBuffer * buffer)
 
   GST_LOG_OBJECT (demux, "parsing a video tag");
 
-  if (demux->no_more_pads && !demux->video_pad) {
-    GST_WARNING_OBJECT (demux,
-        "Signaled no-more-pads already but had no audio pad -- ignoring");
+  if G_UNLIKELY (!demux->video_pad && demux->no_more_pads) {
+#ifndef GST_DISABLE_DEBUG
+    if G_UNLIKELY (!demux->no_video_warned) {
+      GST_WARNING_OBJECT (demux,
+          "Signaled no-more-pads already but had no video pad -- ignoring");
+      demux->no_video_warned = TRUE;
+    }
+#endif
     return GST_FLOW_OK;
   }
 
@@ -1337,14 +1352,14 @@ gst_flv_demux_parse_tag_video (GstFlvDemux * demux, GstBuffer * buffer)
   data = map.data;
 
   /* Grab information about video tag */
-  pts = GST_READ_UINT24_BE (data);
-  /* read the pts extension to 32 bits integer */
-  pts_ext = GST_READ_UINT8 (data + 3);
+  dts = GST_READ_UINT24_BE (data);
+  /* read the dts extension to 32 bits integer */
+  dts_ext = GST_READ_UINT8 (data + 3);
   /* Combine them */
-  pts |= pts_ext << 24;
+  dts |= dts_ext << 24;
 
-  GST_LOG_OBJECT (demux, "pts bytes %02X %02X %02X %02X (%d)", data[0], data[1],
-      data[2], data[3], pts);
+  GST_LOG_OBJECT (demux, "dts bytes %02X %02X %02X %02X (%d)", data[0], data[1],
+      data[2], data[3], dts);
 
   /* Skip the stream id and go directly to the flags */
   flags = GST_READ_UINT8 (data + 7);
@@ -1358,18 +1373,12 @@ gst_flv_demux_parse_tag_video (GstFlvDemux * demux, GstBuffer * buffer)
   if (codec_tag == 4 || codec_tag == 5) {
     codec_data = 2;
   } else if (codec_tag == 7) {
-    gint32 cts;
-
     codec_data = 5;
 
     cts = GST_READ_UINT24_BE (data + 9);
     cts = (cts + 0xff800000) ^ 0xff800000;
 
     GST_LOG_OBJECT (demux, "got cts %d", cts);
-
-    /* avoid negative overflow */
-    if (cts >= 0 || pts >= -cts)
-      pts += cts;
   }
 
   GST_LOG_OBJECT (demux, "video tag with codec tag %u, keyframe (%d) "
@@ -1481,7 +1490,6 @@ gst_flv_demux_parse_tag_video (GstFlvDemux * demux, GstBuffer * buffer)
         /* Use that buffer data in the caps */
         gst_flv_demux_video_negotiate (demux, codec_tag);
         goto beach;
-        break;
       }
       case 1:
         /* H.264 NALU packet */
@@ -1493,14 +1501,18 @@ gst_flv_demux_parse_tag_video (GstFlvDemux * demux, GstBuffer * buffer)
     }
   }
 
-  /* detect (and deem to be resyncs)  large pts gaps */
-  if (gst_flv_demux_update_resync (demux, pts, demux->video_need_discont,
-      &demux->last_video_pts, &demux->video_time_offset)) {
+  /* detect (and deem to be resyncs)  large dts gaps */
+  if (gst_flv_demux_update_resync (demux, dts, demux->video_need_discont,
+          &demux->last_video_dts, &demux->video_time_offset)) {
     GST_BUFFER_FLAG_SET (outbuf, GST_BUFFER_FLAG_RESYNC);
   }
 
   /* Fill buffer with data */
-  GST_BUFFER_TIMESTAMP (outbuf) = pts * GST_MSECOND + demux->video_time_offset;
+  GST_LOG_OBJECT (demux, "dts %u pts %u cts %d", dts, dts + cts, cts);
+
+  GST_BUFFER_PTS (outbuf) =
+      (dts + cts) * GST_MSECOND + demux->video_time_offset;
+  GST_BUFFER_DTS (outbuf) = dts * GST_MSECOND + demux->video_time_offset;
   GST_BUFFER_DURATION (outbuf) = GST_CLOCK_TIME_NONE;
   GST_BUFFER_OFFSET (outbuf) = demux->video_offset++;
   GST_BUFFER_OFFSET_END (outbuf) = demux->video_offset;
@@ -1543,10 +1555,10 @@ gst_flv_demux_parse_tag_video (GstFlvDemux * demux, GstBuffer * buffer)
   }
 
   GST_LOG_OBJECT (demux,
-      "pushing %" G_GSIZE_FORMAT " bytes buffer at pts %" GST_TIME_FORMAT
+      "pushing %" G_GSIZE_FORMAT " bytes buffer at dts %" GST_TIME_FORMAT
       " with duration %" GST_TIME_FORMAT ", offset %" G_GUINT64_FORMAT
       ", keyframe (%d)", gst_buffer_get_size (outbuf),
-      GST_TIME_ARGS (GST_BUFFER_TIMESTAMP (outbuf)),
+      GST_TIME_ARGS (GST_BUFFER_DTS (outbuf)),
       GST_TIME_ARGS (GST_BUFFER_DURATION (outbuf)), GST_BUFFER_OFFSET (outbuf),
       keyframe);
 
@@ -1559,7 +1571,7 @@ gst_flv_demux_parse_tag_video (GstFlvDemux * demux, GstBuffer * buffer)
 
   if (G_UNLIKELY (!demux->no_more_pads
           && (GST_CLOCK_DIFF (demux->video_start,
-                  GST_BUFFER_TIMESTAMP (outbuf)) > 6 * GST_SECOND))) {
+                  GST_BUFFER_TIMESTAMP (outbuf)) > NO_MORE_PADS_THRESHOLD))) {
     GST_DEBUG_OBJECT (demux,
         "Signalling no-more-pads because no audio stream was found"
         " after 6 seconds of video");
@@ -1594,7 +1606,7 @@ static GstClockTime
 gst_flv_demux_parse_tag_timestamp (GstFlvDemux * demux, gboolean index,
     GstBuffer * buffer, size_t * tag_size)
 {
-  guint32 pts = 0, pts_ext = 0;
+  guint32 dts = 0, dts_ext = 0;
   guint32 tag_data_size;
   guint8 type;
   gboolean keyframe = TRUE;
@@ -1636,15 +1648,15 @@ gst_flv_demux_parse_tag_timestamp (GstFlvDemux * demux, gboolean index,
 
   data += 4;
 
-  GST_LOG_OBJECT (demux, "pts bytes %02X %02X %02X %02X", data[0], data[1],
+  GST_LOG_OBJECT (demux, "dts bytes %02X %02X %02X %02X", data[0], data[1],
       data[2], data[3]);
 
   /* Grab timestamp of tag tag */
-  pts = GST_READ_UINT24_BE (data);
-  /* read the pts extension to 32 bits integer */
-  pts_ext = GST_READ_UINT8 (data + 3);
+  dts = GST_READ_UINT24_BE (data);
+  /* read the dts extension to 32 bits integer */
+  dts_ext = GST_READ_UINT8 (data + 3);
   /* Combine them */
-  pts |= pts_ext << 24;
+  dts |= dts_ext << 24;
 
   if (type == 9) {
     data += 7;
@@ -1652,8 +1664,8 @@ gst_flv_demux_parse_tag_timestamp (GstFlvDemux * demux, gboolean index,
     keyframe = ((data[0] >> 4) == 1);
   }
 
-  ret = pts * GST_MSECOND;
-  GST_LOG_OBJECT (demux, "pts: %" GST_TIME_FORMAT, GST_TIME_ARGS (ret));
+  ret = dts * GST_MSECOND;
+  GST_LOG_OBJECT (demux, "dts: %" GST_TIME_FORMAT, GST_TIME_ARGS (ret));
 
   if (index && !demux->indexed && (type == 9 || (type == 8
               && !demux->has_video))) {
@@ -1823,10 +1835,15 @@ gst_flv_demux_cleanup (GstFlvDemux * demux)
   demux->index_max_time = 0;
 
   demux->audio_start = demux->video_start = GST_CLOCK_TIME_NONE;
-  demux->last_audio_pts = demux->last_video_pts = 0;
+  demux->last_audio_pts = demux->last_video_dts = 0;
   demux->audio_time_offset = demux->video_time_offset = 0;
 
   demux->no_more_pads = FALSE;
+
+#ifndef GST_DISABLE_DEBUG
+  demux->no_audio_warned = FALSE;
+  demux->no_video_warned = FALSE;
+#endif
 
   gst_segment_init (&demux->segment, GST_FORMAT_TIME);
 
