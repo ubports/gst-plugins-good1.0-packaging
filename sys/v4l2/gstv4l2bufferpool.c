@@ -69,7 +69,7 @@ static void gst_v4l2_buffer_pool_release_buffer (GstBufferPool * bpool,
     GstBuffer * buffer);
 
 static gboolean
-gst_v4l2_is_buffer_valid (GstBuffer * buffer, GstV4l2MemoryGroup ** group)
+gst_v4l2_is_buffer_valid (GstBuffer * buffer, GstV4l2MemoryGroup ** out_group)
 {
   GstMemory *mem = gst_buffer_peek_memory (buffer, 0);
   gboolean valid = FALSE;
@@ -83,9 +83,23 @@ gst_v4l2_is_buffer_valid (GstBuffer * buffer, GstV4l2MemoryGroup ** group)
 
   if (mem && gst_is_v4l2_memory (mem)) {
     GstV4l2Memory *vmem = (GstV4l2Memory *) mem;
+    GstV4l2MemoryGroup *group = vmem->group;
+    gint i;
+
+    if (group->n_mem != gst_buffer_n_memory (buffer))
+      goto done;
+
+    for (i = 0; i < group->n_mem; i++) {
+      if (group->mem[i] != gst_buffer_peek_memory (buffer, i))
+        goto done;
+
+      if (!gst_memory_is_writable (group->mem[i]))
+        goto done;
+    }
+
     valid = TRUE;
-    if (group)
-      *group = vmem->group;
+    if (out_group)
+      *out_group = group;
   }
 
 done:
@@ -458,7 +472,8 @@ gst_v4l2_buffer_pool_set_config (GstBufferPool * bpool, GstStructure * config)
       can_allocate = GST_V4L2_ALLOCATOR_CAN_ALLOCATE (pool->vallocator, DMABUF);
       break;
     case GST_V4L2_IO_RW:
-      pool->allocator = g_object_ref (allocator);
+      if (allocator)
+        pool->allocator = g_object_ref (allocator);
       pool->params = params;
       /* No need to change the configuration */
       goto done;
@@ -629,6 +644,15 @@ gst_v4l2_buffer_pool_start (GstBufferPool * bpool)
   switch (obj->mode) {
     case GST_V4L2_IO_RW:
       can_allocate = TRUE;
+#ifdef HAVE_LIBV4L2
+      /* This workaround a unfixable bug in libv4l2 when RW is emulated on top
+       * of MMAP. In this case, the first read initialize the queues, but the
+       * poll before that will always fail. Doing an empty read, forces the
+       * queue to be initialized now. We only do this if we have a streaming
+       * driver. */
+      if (obj->vcap.capabilities & V4L2_CAP_STREAMING)
+        v4l2_read (obj->video_fd, NULL, 0);
+#endif
       break;
     case GST_V4L2_IO_DMABUF:
     case GST_V4L2_IO_MMAP:
@@ -731,7 +755,7 @@ gst_v4l2_buffer_pool_start (GstBufferPool * bpool)
   pool->min_latency = min_latency;
   pool->num_queued = 0;
 
-  if (max_buffers < min_buffers)
+  if (max_buffers != 0 && max_buffers < min_buffers)
     max_buffers = min_buffers;
 
   gst_buffer_pool_config_set_params (config, caps, size, min_buffers,
@@ -947,10 +971,14 @@ gst_v4l2_buffer_pool_poll (GstV4l2BufferPool * pool)
 {
   gint ret;
 
-  GST_OBJECT_LOCK (pool);
-  while (pool->empty)
-    g_cond_wait (&pool->empty_cond, GST_OBJECT_GET_LOCK (pool));
-  GST_OBJECT_UNLOCK (pool);
+  /* In RW mode there is no queue, hence no need to wait while the queue is
+   * empty */
+  if (pool->obj->mode != GST_V4L2_IO_RW) {
+    GST_OBJECT_LOCK (pool);
+    while (pool->empty)
+      g_cond_wait (&pool->empty_cond, GST_OBJECT_GET_LOCK (pool));
+    GST_OBJECT_UNLOCK (pool);
+  }
 
   if (!pool->can_poll_device)
     goto done;
@@ -1093,15 +1121,35 @@ gst_v4l2_buffer_pool_dqbuf (GstV4l2BufferPool * pool, GstBuffer ** buffer)
 #endif
 
   /* set top/bottom field first if v4l2_buffer has the information */
-  if (group->buffer.field == V4L2_FIELD_INTERLACED_TB) {
-    GST_BUFFER_FLAG_SET (outbuf, GST_VIDEO_BUFFER_FLAG_INTERLACED);
-    GST_BUFFER_FLAG_SET (outbuf, GST_VIDEO_BUFFER_FLAG_TFF);
-  } else if (group->buffer.field == V4L2_FIELD_INTERLACED_BT) {
-    GST_BUFFER_FLAG_SET (outbuf, GST_VIDEO_BUFFER_FLAG_INTERLACED);
-    GST_BUFFER_FLAG_UNSET (outbuf, GST_VIDEO_BUFFER_FLAG_TFF);
-  } else {
-    GST_BUFFER_FLAG_UNSET (outbuf, GST_VIDEO_BUFFER_FLAG_INTERLACED);
-    GST_BUFFER_FLAG_UNSET (outbuf, GST_VIDEO_BUFFER_FLAG_TFF);
+  switch (group->buffer.field) {
+    case V4L2_FIELD_NONE:
+      GST_BUFFER_FLAG_UNSET (outbuf, GST_VIDEO_BUFFER_FLAG_INTERLACED);
+      GST_BUFFER_FLAG_UNSET (outbuf, GST_VIDEO_BUFFER_FLAG_TFF);
+      break;
+    case V4L2_FIELD_INTERLACED_TB:
+      GST_BUFFER_FLAG_SET (outbuf, GST_VIDEO_BUFFER_FLAG_INTERLACED);
+      GST_BUFFER_FLAG_SET (outbuf, GST_VIDEO_BUFFER_FLAG_TFF);
+      break;
+    case V4L2_FIELD_INTERLACED_BT:
+      GST_BUFFER_FLAG_SET (outbuf, GST_VIDEO_BUFFER_FLAG_INTERLACED);
+      GST_BUFFER_FLAG_UNSET (outbuf, GST_VIDEO_BUFFER_FLAG_TFF);
+      break;
+    case V4L2_FIELD_INTERLACED:
+      GST_BUFFER_FLAG_SET (outbuf, GST_VIDEO_BUFFER_FLAG_INTERLACED);
+      if (obj->tv_norm == V4L2_STD_NTSC_M ||
+          obj->tv_norm == V4L2_STD_NTSC_M_JP ||
+          obj->tv_norm == V4L2_STD_NTSC_M_KR) {
+        GST_BUFFER_FLAG_UNSET (outbuf, GST_VIDEO_BUFFER_FLAG_TFF);
+      } else {
+        GST_BUFFER_FLAG_SET (outbuf, GST_VIDEO_BUFFER_FLAG_TFF);
+      }
+      break;
+    default:
+      GST_BUFFER_FLAG_UNSET (outbuf, GST_VIDEO_BUFFER_FLAG_INTERLACED);
+      GST_BUFFER_FLAG_UNSET (outbuf, GST_VIDEO_BUFFER_FLAG_TFF);
+      GST_FIXME_OBJECT (pool,
+          "Unhandled enum v4l2_field %d - treating as progressive",
+          group->buffer.field);
   }
 
   if (GST_VIDEO_INFO_FORMAT (&obj->info) == GST_VIDEO_FORMAT_ENCODED) {
@@ -1110,6 +1158,9 @@ gst_v4l2_buffer_pool_dqbuf (GstV4l2BufferPool * pool, GstBuffer ** buffer)
     else
       GST_BUFFER_FLAG_SET (outbuf, GST_BUFFER_FLAG_DELTA_UNIT);
   }
+
+  if (group->buffer.flags & V4L2_BUF_FLAG_ERROR)
+    GST_BUFFER_FLAG_SET (outbuf, GST_BUFFER_FLAG_CORRUPTED);
 
   GST_BUFFER_TIMESTAMP (outbuf) = timestamp;
 
@@ -1466,6 +1517,7 @@ dup_failed:
 allocator_failed:
   {
     GST_ERROR_OBJECT (pool, "Failed to create V4L2 allocator");
+    gst_object_unref (pool);
     return NULL;
   }
 }
@@ -1573,8 +1625,12 @@ gst_v4l2_buffer_pool_process (GstV4l2BufferPool * pool, GstBuffer ** buf)
           GstBuffer *tmp;
 
           if ((*buf)->pool == bpool) {
-            if (gst_buffer_get_size (*buf) == 0)
-              goto eos;
+            if (gst_buffer_get_size (*buf) == 0) {
+              if (GST_BUFFER_FLAG_IS_SET (*buf, GST_BUFFER_FLAG_CORRUPTED))
+                goto buffer_corrupted;
+              else
+                goto eos;
+            }
 
             /* start copying buffers when we are running low on buffers */
             if (g_atomic_int_get (&pool->num_queued) < pool->copy_threshold) {
@@ -1610,7 +1666,11 @@ gst_v4l2_buffer_pool_process (GstV4l2BufferPool * pool, GstBuffer ** buf)
           /* An empty buffer on capture indicates the end of stream */
           if (gst_buffer_get_size (tmp) == 0) {
             gst_v4l2_buffer_pool_release_buffer (bpool, tmp);
-            goto eos;
+
+            if (GST_BUFFER_FLAG_IS_SET (*buf, GST_BUFFER_FLAG_CORRUPTED))
+              goto buffer_corrupted;
+            else
+              goto eos;
           }
 
           ret = gst_v4l2_buffer_pool_copy_buffer (pool, *buf, tmp);
@@ -1765,10 +1825,19 @@ copy_failed:
     GST_ERROR_OBJECT (pool, "failed to copy buffer");
     return ret;
   }
+buffer_corrupted:
+  {
+    GST_WARNING_OBJECT (pool, "Dropping corrupted buffer without payload");
+    gst_buffer_unref (*buf);
+    *buf = NULL;
+    return GST_V4L2_FLOW_CORRUPTED_BUFFER;
+  }
 eos:
   {
     GST_DEBUG_OBJECT (pool, "end of stream reached");
-    return GST_FLOW_EOS;
+    gst_buffer_unref (*buf);
+    *buf = NULL;
+    return GST_V4L2_FLOW_LAST_BUFFER;
   }
 acquire_failed:
   {
