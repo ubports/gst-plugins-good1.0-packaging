@@ -946,20 +946,6 @@ uninstall-am: uninstall-pluginLTLIBRARIES uninstall-presetDATA
 	uninstall-am uninstall-pluginLTLIBRARIES uninstall-presetDATA
 
 
-Android.mk: Makefile.am $(BUILT_SOURCES)
-	androgenizer \
-	-:PROJECT libgstequalizer -:SHARED libgstequalizer \
-	 -:TAGS eng debug \
-         -:REL_TOP $(top_srcdir) -:ABS_TOP $(abs_top_srcdir) \
-	 -:SOURCES $(libgstequalizer_la_SOURCES) \
-	 -:CFLAGS $(DEFS) $(DEFAULT_INCLUDES) $(libgstequalizer_la_CFLAGS) \
-	 -:LDFLAGS $(libgstequalizer_la_LDFLAGS) \
-	           $(libgstequalizer_la_LIBADD) \
-	           -ldl \
-	 -:PASSTHROUGH LOCAL_ARM_MODE:=arm \
-		       LOCAL_MODULE_PATH:='$$(TARGET_OUT)/lib/gstreamer-0.10' \
-	> $@
-
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

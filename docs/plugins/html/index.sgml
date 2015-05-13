@@ -1626,6 +1626,8 @@
 <ANCHOR id="gst-plugins-good-plugins-rtpbin.functions_details" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbin.html#gst-plugins-good-plugins-rtpbin.functions_details">
 <ANCHOR id="gst-plugins-good-plugins-rtpbin.other_details" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbin.html#gst-plugins-good-plugins-rtpbin.other_details">
 <ANCHOR id="GstRtpBin-struct" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbin.html#GstRtpBin-struct">
+<ANCHOR id="RTPJitterBufferMode" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbin.html#RTPJitterBufferMode">
+<ANCHOR id="GstRTCPSync" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbin.html#GstRTCPSync">
 <ANCHOR id="gst-plugins-good-plugins-rtpbin.property-details" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbin.html#gst-plugins-good-plugins-rtpbin.property-details">
 <ANCHOR id="GstRtpBin--do-lost" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbin.html#GstRtpBin--do-lost">
 <ANCHOR id="GstRtpBin--latency" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbin.html#GstRtpBin--latency">

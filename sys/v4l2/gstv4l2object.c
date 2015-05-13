@@ -721,6 +721,28 @@ gst_v4l2_object_get_property_helper (GstV4l2Object * v4l2object,
 }
 
 static void
+gst_v4l2_get_driver_min_buffers (GstV4l2Object * v4l2object)
+{
+  int min;
+  gboolean ret = FALSE;
+
+  /* Certain driver may expose a minimum number of buffers through controls. */
+  /* If the ioctl is not supported by the driver, min_buffers remains zero.  */
+  ret = gst_v4l2_get_attribute (v4l2object,
+      V4L2_TYPE_IS_OUTPUT (v4l2object->type)
+      ? V4L2_CID_MIN_BUFFERS_FOR_OUTPUT : V4L2_CID_MIN_BUFFERS_FOR_CAPTURE,
+      &min);
+
+  if (ret) {
+    GST_DEBUG_OBJECT (v4l2object->element,
+        "driver requires a minimum of %d buffers", min);
+    v4l2object->min_buffers = min;
+  } else {
+    v4l2object->min_buffers = 0;
+  }
+}
+
+static void
 gst_v4l2_set_defaults (GstV4l2Object * v4l2object)
 {
   GstTunerNorm *norm = NULL;
@@ -1731,7 +1753,7 @@ gst_v4l2_object_add_interlace_mode (GstV4l2Object * v4l2object,
 {
   struct v4l2_format fmt;
   GValue interlace_formats = { 0, };
-  GstVideoInterlaceMode interlace_mode;
+  GstVideoInterlaceMode interlace_mode, prev = -1;
 
   const gchar *mode_strings[] = { "progressive",
     "interleaved",
@@ -1762,6 +1784,7 @@ gst_v4l2_object_add_interlace_mode (GstV4l2Object * v4l2object,
     g_value_init (&interlace_enum, G_TYPE_STRING);
     g_value_set_string (&interlace_enum, mode_strings[interlace_mode]);
     gst_value_list_append_and_take_value (&interlace_formats, &interlace_enum);
+    prev = interlace_mode;
   }
 
   memset (&fmt, 0, sizeof (fmt));
@@ -1772,7 +1795,8 @@ gst_v4l2_object_add_interlace_mode (GstV4l2Object * v4l2object,
   fmt.fmt.pix.field = V4L2_FIELD_INTERLACED;
 
   if (gst_v4l2_object_try_fmt (v4l2object, &fmt) == 0 &&
-      gst_v4l2_object_get_interlace_mode (fmt.fmt.pix.field, &interlace_mode)) {
+      gst_v4l2_object_get_interlace_mode (fmt.fmt.pix.field, &interlace_mode) &&
+      prev != interlace_mode) {
     GValue interlace_enum = { 0, };
     g_value_init (&interlace_enum, G_TYPE_STRING);
     g_value_set_string (&interlace_enum, mode_strings[interlace_mode]);
@@ -2406,6 +2430,11 @@ gst_v4l2_object_setup_pool (GstV4l2Object * v4l2object, GstCaps * caps)
 
   GST_INFO_OBJECT (v4l2object->element, "accessing buffers via mode %d", mode);
   v4l2object->mode = mode;
+
+  /* If min_buffers is not set, the driver either does not support the control or
+     it has not been asked yet via propose_allocation/decide_allocation. */
+  if (!v4l2object->min_buffers)
+    gst_v4l2_get_driver_min_buffers (v4l2object);
 
   /* Map the buffers */
   GST_LOG_OBJECT (v4l2object->element, "initiating buffer pool");
@@ -3315,7 +3344,6 @@ gst_v4l2_object_decide_allocation (GstV4l2Object * obj, GstQuery * query)
   gboolean update;
   gboolean has_video_meta;
   gboolean can_share_own_pool, pushing_from_our_pool = FALSE;
-  struct v4l2_control ctl = { 0, };
   GstAllocator *allocator = NULL;
   GstAllocationParams params = { 0 };
 
@@ -3352,16 +3380,7 @@ gst_v4l2_object_decide_allocation (GstV4l2Object * obj, GstQuery * query)
 
   can_share_own_pool = (has_video_meta || !obj->need_video_meta);
 
-  /* Certain driver may expose a minimum through controls */
-  ctl.id = V4L2_CID_MIN_BUFFERS_FOR_CAPTURE;
-  if (v4l2_ioctl (obj->video_fd, VIDIOC_G_CTRL, &ctl) >= 0) {
-    GST_DEBUG_OBJECT (obj->element, "driver require a minimum of %d buffers",
-        ctl.value);
-    obj->min_buffers = ctl.value;
-  } else {
-    obj->min_buffers = 0;
-  }
-
+  gst_v4l2_get_driver_min_buffers (obj);
   /* We can't share our own pool, if it exceed V4L2 capacity */
   if (min + obj->min_buffers + 1 > VIDEO_MAX_FRAME)
     can_share_own_pool = FALSE;
@@ -3597,7 +3616,6 @@ gst_v4l2_object_propose_allocation (GstV4l2Object * obj, GstQuery * query)
   guint size, min, max;
   GstCaps *caps;
   gboolean need_pool;
-  struct v4l2_control ctl = { 0, };
 
   /* Set defaults allocation parameters */
   size = obj->info.size;
@@ -3629,16 +3647,7 @@ gst_v4l2_object_propose_allocation (GstV4l2Object * obj, GstQuery * query)
     }
     gst_structure_free (config);
   }
-
-  /* Some devices may expose a minimum */
-  ctl.id = V4L2_CID_MIN_BUFFERS_FOR_OUTPUT;
-  if (v4l2_ioctl (obj->video_fd, VIDIOC_G_CTRL, &ctl) >= 0) {
-    GST_DEBUG_OBJECT (obj->element, "driver require a miminum of %d buffers",
-        ctl.value);
-    obj->min_buffers = ctl.value;
-  } else {
-    obj->min_buffers = 0;
-  }
+  gst_v4l2_get_driver_min_buffers (obj);
 
   min = MAX (obj->min_buffers, GST_V4L2_MIN_BUFFERS);
 

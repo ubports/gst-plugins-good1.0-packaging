@@ -64,7 +64,7 @@
 <td class="property_flags">Read / Write</td>
 </tr>
 <tr>
-<td class="property_type"><span class="type">RTPJitterBufferMode</span></td>
+<td class="property_type"><a class="link" href="gst-plugins-good-plugins-rtpbin.html#RTPJitterBufferMode" title="enum RTPJitterBufferMode"><span class="type">RTPJitterBufferMode</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer--mode" title="The “mode” property">mode</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
@@ -400,7 +400,7 @@ This is mainly used to ensure interstream synchronisation.</p>
 <hr>
 <div class="refsect2">
 <a name="GstRtpJitterBuffer--mode"></a><h3>The <code class="literal">“mode”</code> property</h3>
-<pre class="programlisting">  “mode”                     <span class="type">RTPJitterBufferMode</span></pre>
+<pre class="programlisting">  “mode”                     <a class="link" href="gst-plugins-good-plugins-rtpbin.html#RTPJitterBufferMode" title="enum RTPJitterBufferMode"><span class="type">RTPJitterBufferMode</span></a></pre>
 <p>Control the buffering and timestamping mode used by the jitterbuffer.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: Slave receiver to sender clock</p>
@@ -476,10 +476,28 @@ latency and the observed round trip time.</p>
 <pre class="programlisting">  “stats”                    <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstStructure.html"><span class="type">GstStructure</span></a> *</pre>
 <p>Various jitterbuffer statistics. This property returns a GstStructure
 with name application/x-rtp-jitterbuffer-stats with the following fields:</p>
-<p> "rtx-count"         G_TYPE_UINT64 The number of retransmissions requested
- "rtx-success-count" G_TYPE_UINT64 The number of successful retransmissions
- "rtx-per-packet"    G_TYPE_DOUBLE Average number of RTX per packet
- "rtx-rtt"           G_TYPE_UINT64 Average round trip time per RTX</p>
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem"><p>
+  <span class="type">guint64</span>
+  <code class="classname">"rtx-count"</code>:
+  the number of retransmissions requested.
+  </p></li>
+<li class="listitem"><p>
+  <span class="type">guint64</span>
+  <code class="classname">"rtx-success-count"</code>:
+  the number of successful retransmissions.
+  </p></li>
+<li class="listitem"><p>
+  <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gdouble"><span class="type">gdouble</span></a>
+  <code class="classname">"rtx-per-packet"</code>:
+  average number of RTX per packet.
+  </p></li>
+<li class="listitem"><p>
+  <span class="type">guint64</span>
+  <code class="classname">"rtx-rtt"</code>:
+  average round trip time per RTX.
+  </p></li>
+</ul></div>
 <p>Flags: Read</p>
 <p class="since">Since 1.4</p>
 </div>

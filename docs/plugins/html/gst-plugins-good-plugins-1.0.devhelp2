@@ -775,9 +775,9 @@
     <keyword type="" name="Element Information" link="gst-plugins-good-plugins-mulawenc.html#id-1.2.82.7.2.1.1"/>
     <keyword type="" name="Element Pads" link="gst-plugins-good-plugins-mulawenc.html#id-1.2.82.7.2.1.2"/>
     <keyword type="struct" name="struct GstMuLawEnc" link="gst-plugins-good-plugins-mulawenc.html#GstMuLawEnc-struct"/>
-    <keyword type="" name="Example launch line" link="gst-plugins-good-plugins-multifilesink.html#id-1.2.83.7.9"/>
-    <keyword type="" name="Element Information" link="gst-plugins-good-plugins-multifilesink.html#id-1.2.83.7.10.1"/>
-    <keyword type="" name="Element Pads" link="gst-plugins-good-plugins-multifilesink.html#id-1.2.83.7.10.2"/>
+    <keyword type="" name="Example launch line" link="gst-plugins-good-plugins-multifilesink.html#id-1.2.83.7.11"/>
+    <keyword type="" name="Element Information" link="gst-plugins-good-plugins-multifilesink.html#id-1.2.83.7.12.1"/>
+    <keyword type="" name="Element Pads" link="gst-plugins-good-plugins-multifilesink.html#id-1.2.83.7.12.2"/>
     <keyword type="struct" name="struct GstMultiFileSink" link="gst-plugins-good-plugins-multifilesink.html#GstMultiFileSink-struct"/>
     <keyword type="enum" name="enum GstMultiFileSinkNext" link="gst-plugins-good-plugins-multifilesink.html#GstMultiFileSinkNext"/>
     <keyword type="property" name="The “location” property" link="gst-plugins-good-plugins-multifilesink.html#GstMultiFileSink--location"/>
@@ -1099,6 +1099,8 @@
     <keyword type="" name="Element Information" link="gst-plugins-good-plugins-rtpbin.html#id-1.2.124.9.13.1"/>
     <keyword type="" name="Element Pads" link="gst-plugins-good-plugins-rtpbin.html#id-1.2.124.9.13.2"/>
     <keyword type="struct" name="struct GstRtpBin" link="gst-plugins-good-plugins-rtpbin.html#GstRtpBin-struct"/>
+    <keyword type="enum" name="enum RTPJitterBufferMode" link="gst-plugins-good-plugins-rtpbin.html#RTPJitterBufferMode"/>
+    <keyword type="enum" name="enum GstRTCPSync" link="gst-plugins-good-plugins-rtpbin.html#GstRTCPSync"/>
     <keyword type="property" name="The “do-lost” property" link="gst-plugins-good-plugins-rtpbin.html#GstRtpBin--do-lost"/>
     <keyword type="property" name="The “latency” property" link="gst-plugins-good-plugins-rtpbin.html#GstRtpBin--latency"/>
     <keyword type="property" name="The “sdes” property" link="gst-plugins-good-plugins-rtpbin.html#GstRtpBin--sdes"/>

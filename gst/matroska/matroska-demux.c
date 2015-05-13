@@ -80,10 +80,10 @@ GST_DEBUG_CATEGORY_STATIC (matroskademux_debug);
 
 enum
 {
-  ARG_0,
-  ARG_METADATA,
-  ARG_STREAMINFO,
-  ARG_MAX_GAP_TIME
+  PROP_0,
+  PROP_METADATA,
+  PROP_STREAMINFO,
+  PROP_MAX_GAP_TIME
 };
 
 #define  DEFAULT_MAX_GAP_TIME      (2 * GST_SECOND)
@@ -208,7 +208,7 @@ gst_matroska_demux_class_init (GstMatroskaDemuxClass * klass)
   gobject_class->get_property = gst_matroska_demux_get_property;
   gobject_class->set_property = gst_matroska_demux_set_property;
 
-  g_object_class_install_property (gobject_class, ARG_MAX_GAP_TIME,
+  g_object_class_install_property (gobject_class, PROP_MAX_GAP_TIME,
       g_param_spec_uint64 ("max-gap-time", "Maximum gap time",
           "The demuxer sends out segment events for skipping "
           "gaps longer than this (0 = disabled).", 0, G_MAXUINT64,
@@ -401,7 +401,6 @@ gst_matroska_demux_add_stream (GstMatroskaDemux * demux, GstEbmlRead * ebml)
   GstFlowReturn ret;
   guint32 id, riff_fourcc = 0;
   guint16 riff_audio_fmt = 0;
-  GstTagList *list = NULL;
   GstEvent *stream_start;
   gchar *codec = NULL;
   gchar *stream_id;
@@ -434,6 +433,7 @@ gst_matroska_demux_add_stream (GstMatroskaDemux * demux, GstEbmlRead * ebml)
   context->alignment = 1;
   context->dts_only = FALSE;
   context->intra_only = FALSE;
+  context->tags = gst_tag_list_new_empty ();
   demux->common.num_streams++;
   g_assert (demux->common.src->len == demux->common.num_streams);
 
@@ -1094,7 +1094,9 @@ gst_matroska_demux_add_stream (GstMatroskaDemux * demux, GstEbmlRead * ebml)
           context->codec_priv_size, &codec, &riff_fourcc);
 
       if (codec) {
-        list = gst_tag_list_new (GST_TAG_VIDEO_CODEC, codec, NULL);
+        gst_tag_list_add (context->tags, GST_TAG_MERGE_REPLACE,
+            GST_TAG_VIDEO_CODEC, codec, NULL);
+        context->tags_changed = TRUE;
         g_free (codec);
       }
       break;
@@ -1111,7 +1113,9 @@ gst_matroska_demux_add_stream (GstMatroskaDemux * demux, GstEbmlRead * ebml)
           &codec, &riff_audio_fmt);
 
       if (codec) {
-        list = gst_tag_list_new (GST_TAG_AUDIO_CODEC, codec, NULL);
+        gst_tag_list_add (context->tags, GST_TAG_MERGE_REPLACE,
+            GST_TAG_AUDIO_CODEC, codec, NULL);
+        context->tags_changed = TRUE;
         g_free (codec);
       }
       break;
@@ -1147,13 +1151,11 @@ gst_matroska_demux_add_stream (GstMatroskaDemux * demux, GstEbmlRead * ebml)
   if (context->language) {
     const gchar *lang;
 
-    if (!list)
-      list = gst_tag_list_new_empty ();
-
     /* Matroska contains ISO 639-2B codes, we want ISO 639-1 */
     lang = gst_tag_get_language_code (context->language);
-    gst_tag_list_add (list, GST_TAG_MERGE_REPLACE,
+    gst_tag_list_add (context->tags, GST_TAG_MERGE_REPLACE,
         GST_TAG_LANGUAGE_CODE, (lang) ? lang : context->language, NULL);
+    context->tags_changed = TRUE;
   }
 
   if (caps == NULL) {
@@ -1203,8 +1205,6 @@ gst_matroska_demux_add_stream (GstMatroskaDemux * demux, GstEbmlRead * ebml)
   GST_INFO_OBJECT (demux, "Adding pad '%s' with caps %" GST_PTR_FORMAT,
       padname, caps);
 
-  context->pending_tags = list;
-
   gst_pad_set_element_private (context->pad, context);
 
   gst_pad_use_fixed_caps (context->pad);
@@ -1239,6 +1239,29 @@ gst_matroska_demux_add_stream (GstMatroskaDemux * demux, GstEbmlRead * ebml)
   gst_event_set_stream_flags (stream_start, stream_flags);
   gst_pad_push_event (context->pad, stream_start);
   gst_pad_set_caps (context->pad, context->caps);
+
+
+  if (demux->common.global_tags) {
+    GstEvent *tag_event;
+
+    gst_tag_list_add (demux->common.global_tags, GST_TAG_MERGE_REPLACE,
+        GST_TAG_CONTAINER_FORMAT, "Matroska", NULL);
+    GST_DEBUG_OBJECT (context->pad, "Sending global_tags %p: %" GST_PTR_FORMAT,
+        demux->common.global_tags, demux->common.global_tags);
+
+    tag_event =
+        gst_event_new_tag (gst_tag_list_copy (demux->common.global_tags));
+
+    gst_pad_push_event (context->pad, tag_event);
+  }
+
+  if (G_UNLIKELY (context->tags_changed)) {
+    GST_DEBUG_OBJECT (context->pad, "Sending tags %p: %"
+        GST_PTR_FORMAT, context->tags, context->tags);
+    gst_pad_push_event (context->pad,
+        gst_event_new_tag (gst_tag_list_copy (context->tags)));
+    context->tags_changed = FALSE;
+  }
 
   gst_element_add_pad (GST_ELEMENT (demux), context->pad);
   gst_flow_combiner_add_pad (demux->flowcombiner, context->pad);
@@ -1424,14 +1447,15 @@ gst_matroska_demux_send_tags (GstMatroskaDemux * demux)
 {
   gint i;
 
-  if (G_UNLIKELY (demux->common.global_tags != NULL)) {
+  if (G_UNLIKELY (demux->common.global_tags_changed)) {
     GstEvent *tag_event;
     gst_tag_list_add (demux->common.global_tags, GST_TAG_MERGE_REPLACE,
         GST_TAG_CONTAINER_FORMAT, "Matroska", NULL);
     GST_DEBUG_OBJECT (demux, "Sending global_tags %p : %" GST_PTR_FORMAT,
         demux->common.global_tags, demux->common.global_tags);
 
-    tag_event = gst_event_new_tag (demux->common.global_tags);
+    tag_event =
+        gst_event_new_tag (gst_tag_list_copy (demux->common.global_tags));
 
     for (i = 0; i < demux->common.src->len; i++) {
       GstMatroskaTrackContext *stream;
@@ -1441,7 +1465,7 @@ gst_matroska_demux_send_tags (GstMatroskaDemux * demux)
     }
 
     gst_event_unref (tag_event);
-    demux->common.global_tags = NULL;
+    demux->common.global_tags_changed = FALSE;
   }
 
   g_assert (demux->common.src->len == demux->common.num_streams);
@@ -1450,13 +1474,13 @@ gst_matroska_demux_send_tags (GstMatroskaDemux * demux)
 
     stream = g_ptr_array_index (demux->common.src, i);
 
-    if (G_UNLIKELY (stream->pending_tags != NULL)) {
-      GST_DEBUG_OBJECT (demux, "Sending pending_tags %p for pad %s:%s : %"
-          GST_PTR_FORMAT, stream->pending_tags,
-          GST_DEBUG_PAD_NAME (stream->pad), stream->pending_tags);
+    if (G_UNLIKELY (stream->tags_changed)) {
+      GST_DEBUG_OBJECT (demux, "Sending tags %p for pad %s:%s : %"
+          GST_PTR_FORMAT, stream->tags,
+          GST_DEBUG_PAD_NAME (stream->pad), stream->tags);
       gst_pad_push_event (stream->pad,
-          gst_event_new_tag (stream->pending_tags));
-      stream->pending_tags = NULL;
+          gst_event_new_tag (gst_tag_list_copy (stream->tags)));
+      stream->tags_changed = FALSE;
     }
   }
 }
@@ -1501,6 +1525,7 @@ gst_matroska_demux_move_to_entry (GstMatroskaDemux * demux,
 
     /* update the time */
     gst_matroska_read_common_reset_streams (&demux->common, entry->time, TRUE);
+    gst_flow_combiner_reset (demux->flowcombiner);
     demux->common.segment.position = entry->time;
     demux->seek_block = entry->block;
     demux->seek_first = TRUE;
@@ -3654,7 +3679,8 @@ gst_matroska_demux_parse_blockgroup_or_simpleblock (GstMatroskaDemux * demux,
         }
       }
       /* combine flows */
-      ret = gst_flow_combiner_update_flow (demux->flowcombiner, ret);
+      ret = gst_flow_combiner_update_pad_flow (demux->flowcombiner,
+          stream->pad, ret);
 
     next_lace:
       size -= lace_size[n];
@@ -3680,7 +3706,8 @@ eos:
     stream->eos = TRUE;
     ret = GST_FLOW_OK;
     /* combine flows */
-    ret = gst_flow_combiner_update_flow (demux->flowcombiner, ret);
+    ret = gst_flow_combiner_update_pad_flow (demux->flowcombiner, stream->pad,
+        ret);
     goto done;
   }
 invalid_lacing:
@@ -4350,8 +4377,11 @@ gst_matroska_demux_parse_id (GstMatroskaDemux * demux, guint32 id,
 
             g_assert (event);
             /* unlikely to fail, since we managed to seek to this point */
-            if (!gst_matroska_demux_handle_seek_event (demux, NULL, event))
+            if (!gst_matroska_demux_handle_seek_event (demux, NULL, event)) {
+              gst_event_unref (event);
               goto seek_failed;
+            }
+            gst_event_unref (event);
             /* resume data handling, main thread clear to seek again */
             GST_OBJECT_LOCK (demux);
             demux->common.state = GST_MATROSKA_READ_STATE_DATA;
@@ -4743,6 +4773,7 @@ gst_matroska_demux_handle_sink_event (GstPad * pad, GstObject * parent,
       GST_OBJECT_LOCK (demux);
       gst_matroska_read_common_reset_streams (&demux->common,
           GST_CLOCK_TIME_NONE, TRUE);
+      gst_flow_combiner_reset (demux->flowcombiner);
       dur = demux->common.segment.duration;
       gst_segment_init (&demux->common.segment, GST_FORMAT_TIME);
       demux->common.segment.duration = dur;
@@ -5714,7 +5745,7 @@ gst_matroska_demux_set_property (GObject * object,
   demux = GST_MATROSKA_DEMUX (object);
 
   switch (prop_id) {
-    case ARG_MAX_GAP_TIME:
+    case PROP_MAX_GAP_TIME:
       GST_OBJECT_LOCK (demux);
       demux->max_gap_time = g_value_get_uint64 (value);
       GST_OBJECT_UNLOCK (demux);
@@ -5735,7 +5766,7 @@ gst_matroska_demux_get_property (GObject * object,
   demux = GST_MATROSKA_DEMUX (object);
 
   switch (prop_id) {
-    case ARG_MAX_GAP_TIME:
+    case PROP_MAX_GAP_TIME:
       GST_OBJECT_LOCK (demux);
       g_value_set_uint64 (value, demux->max_gap_time);
       GST_OBJECT_UNLOCK (demux);
