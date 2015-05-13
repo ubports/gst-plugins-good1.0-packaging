@@ -1,3 +1,9 @@
+gst-plugins-good1.0 (1.5.0.1+git20150513-1) experimental; urgency=medium
+
+  * New upstream GIT snapshot.
+
+ -- Sebastian Dröge <slomo@debian.org>  Wed, 13 May 2015 13:24:34 +0300
+
 gst-plugins-good1.0 (1.5.0.1+git20150316-1) experimental; urgency=medium
 
   * New upstream GIT snapshot.
