@@ -191,8 +191,8 @@ enum
   LAST_SIGNAL
 };
 
-#define DEFAULT_BANDWIDTH            RTP_STATS_BANDWIDTH
-#define DEFAULT_RTCP_FRACTION        (RTP_STATS_BANDWIDTH * RTP_STATS_RTCP_FRACTION)
+#define DEFAULT_BANDWIDTH            0
+#define DEFAULT_RTCP_FRACTION        RTP_STATS_RTCP_FRACTION
 #define DEFAULT_RTCP_RR_BANDWIDTH    -1
 #define DEFAULT_RTCP_RS_BANDWIDTH    -1
 #define DEFAULT_SDES                 NULL
@@ -216,8 +216,7 @@ enum
   PROP_USE_PIPELINE_CLOCK,
   PROP_RTCP_MIN_INTERVAL,
   PROP_PROBATION,
-  PROP_STATS,
-  PROP_LAST
+  PROP_STATS
 };
 
 #define GST_RTP_SESSION_GET_PRIVATE(obj)  \
@@ -911,7 +910,7 @@ rtcp_thread (GstRtpSession * rtpsession)
   GST_RTP_SESSION_LOCK (rtpsession);
 
   while (rtpsession->priv->wait_send) {
-    GST_LOG_OBJECT (rtpsession, "waiting for RTP thread");
+    GST_LOG_OBJECT (rtpsession, "waiting for getting started");
     GST_RTP_SESSION_WAIT (rtpsession);
     GST_LOG_OBJECT (rtpsession, "signaled...");
   }
@@ -1721,6 +1720,14 @@ gst_rtp_session_chain_recv_rtp (GstPad * pad, GstObject * parent,
 
   GST_LOG_OBJECT (rtpsession, "received RTP packet");
 
+  GST_RTP_SESSION_LOCK (rtpsession);
+  if (rtpsession->priv->wait_send) {
+    GST_LOG_OBJECT (rtpsession, "signal RTCP thread");
+    rtpsession->priv->wait_send = FALSE;
+    GST_RTP_SESSION_SIGNAL (rtpsession);
+  }
+  GST_RTP_SESSION_UNLOCK (rtpsession);
+
   /* get NTP time when this packet was captured, this depends on the timestamp. */
   timestamp = GST_BUFFER_TIMESTAMP (buffer);
   if (GST_CLOCK_TIME_IS_VALID (timestamp)) {
@@ -1765,6 +1772,18 @@ gst_rtp_session_event_recv_rtcp_sink (GstPad * pad, GstObject * parent,
       GST_EVENT_TYPE_NAME (event));
 
   switch (GST_EVENT_TYPE (event)) {
+    case GST_EVENT_SEGMENT:
+      /* Make sure that the sync_src pad has caps before the segment event.
+       * Otherwise we might get a segment event before caps from the receive
+       * RTCP pad, and then later when receiving RTCP packets will set caps.
+       * This will results in a sticky event misordering warning
+       */
+      if (!gst_pad_has_current_caps (rtpsession->sync_src)) {
+        GstCaps *caps = gst_caps_new_empty_simple ("application/x-rtcp");
+        gst_pad_set_caps (rtpsession->sync_src, caps);
+        gst_caps_unref (caps);
+      }
+      /* fall through */
     default:
       ret = gst_pad_push_event (rtpsession->sync_src, event);
       break;
@@ -1789,6 +1808,14 @@ gst_rtp_session_chain_recv_rtcp (GstPad * pad, GstObject * parent,
   priv = rtpsession->priv;
 
   GST_LOG_OBJECT (rtpsession, "received RTCP packet");
+
+  GST_RTP_SESSION_LOCK (rtpsession);
+  if (rtpsession->priv->wait_send) {
+    GST_LOG_OBJECT (rtpsession, "signal RTCP thread");
+    rtpsession->priv->wait_send = FALSE;
+    GST_RTP_SESSION_SIGNAL (rtpsession);
+  }
+  GST_RTP_SESSION_UNLOCK (rtpsession);
 
   current_time = gst_clock_get_time (priv->sysclock);
   get_current_times (rtpsession, NULL, &ntpnstime);

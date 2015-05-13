@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 1.5.0.1\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2015-03-17 09:11+0100\n"
+"POT-Creation-Date: 2015-05-13 13:04+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -20,10 +20,10 @@ msgstr ""
 msgid "Jack server not found"
 msgstr ""
 
-#: ext/jpeg/gstjpegdec.c:921 ext/jpeg/gstjpegdec.c:1169
-#: ext/jpeg/gstjpegdec.c:1181 ext/jpeg/gstjpegdec.c:1209
-#: ext/jpeg/gstjpegdec.c:1218 ext/jpeg/gstjpegdec.c:1227
-#: ext/jpeg/gstjpegdec.c:1235
+#: ext/jpeg/gstjpegdec.c:921 ext/jpeg/gstjpegdec.c:1174
+#: ext/jpeg/gstjpegdec.c:1186 ext/jpeg/gstjpegdec.c:1215
+#: ext/jpeg/gstjpegdec.c:1224 ext/jpeg/gstjpegdec.c:1233
+#: ext/jpeg/gstjpegdec.c:1241
 msgid "Failed to decode JPEG image"
 msgstr ""
 
@@ -78,54 +78,54 @@ msgstr ""
 msgid "This file contains no playable streams."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:649 gst/isomp4/qtdemux.c:5039
-#: gst/isomp4/qtdemux.c:5106 gst/isomp4/qtdemux.c:5345
+#: gst/isomp4/qtdemux.c:649 gst/isomp4/qtdemux.c:5060
+#: gst/isomp4/qtdemux.c:5127 gst/isomp4/qtdemux.c:5365
 msgid "This file is invalid and cannot be played."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:2324
+#: gst/isomp4/qtdemux.c:2329
 msgid "Cannot play stream because it is encrypted with PlayReady DRM."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:3028 gst/isomp4/qtdemux.c:6044
-#: gst/isomp4/qtdemux.c:6051 gst/isomp4/qtdemux.c:6705
-#: gst/isomp4/qtdemux.c:7132 gst/isomp4/qtdemux.c:7139
-#: gst/isomp4/qtdemux.c:9256
+#: gst/isomp4/qtdemux.c:3033 gst/isomp4/qtdemux.c:6072
+#: gst/isomp4/qtdemux.c:6079 gst/isomp4/qtdemux.c:6736
+#: gst/isomp4/qtdemux.c:7163 gst/isomp4/qtdemux.c:7170
+#: gst/isomp4/qtdemux.c:9287
 msgid "This file is corrupt and cannot be played."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:3261
+#: gst/isomp4/qtdemux.c:3275
 msgid "Invalid atom size."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:3337
+#: gst/isomp4/qtdemux.c:3351
 msgid "This file is incomplete and cannot be played."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:7908
+#: gst/isomp4/qtdemux.c:7939
 msgid "The video in this file might not play correctly."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:9297
+#: gst/isomp4/qtdemux.c:9328
 #, c-format
 msgid "This file contains too many streams. Only playing first %d"
 msgstr ""
 
-#: gst/rtsp/gstrtspsrc.c:6665
+#: gst/multifile/gstsplitmuxsrc.c:548 gst/wavparse/gstwavparse.c:2248
+msgid "Internal data flow error."
+msgstr ""
+
+#: gst/rtsp/gstrtspsrc.c:6699
 msgid ""
 "No supported stream was found. You might need to install a GStreamer RTSP "
 "extension plugin for Real media streams."
 msgstr ""
 
-#: gst/rtsp/gstrtspsrc.c:6670
+#: gst/rtsp/gstrtspsrc.c:6704
 msgid ""
 "No supported stream was found. You might need to allow more transport "
 "protocols or may otherwise be missing the right GStreamer RTSP extension "
 "plugin."
-msgstr ""
-
-#: gst/wavparse/gstwavparse.c:2232
-msgid "Internal data flow error."
 msgstr ""
 
 #: sys/oss4/oss4-sink.c:493 sys/oss4/oss4-source.c:358
@@ -251,85 +251,85 @@ msgstr ""
 msgid "AUX 2 Out"
 msgstr ""
 
-#: sys/v4l2/gstv4l2bufferpool.c:1648
+#: sys/v4l2/gstv4l2bufferpool.c:1657
 #, c-format
 msgid "Error reading %d bytes from device '%s'."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:1064
+#: sys/v4l2/gstv4l2object.c:1086
 #, c-format
 msgid "Failed to enumerate possible video formats device '%s' can work with"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2424
+#: sys/v4l2/gstv4l2object.c:2453
 #, c-format
 msgid "Could not map buffers from device '%s'"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2432
+#: sys/v4l2/gstv4l2object.c:2461
 #, c-format
 msgid "The driver of device '%s' does not support the IO method %d"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2439
+#: sys/v4l2/gstv4l2object.c:2468
 #, c-format
 msgid "The driver of device '%s' does not support any known IO method."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2945 sys/v4l2/gstv4l2object.c:2956
+#: sys/v4l2/gstv4l2object.c:2974 sys/v4l2/gstv4l2object.c:2985
 #, c-format
 msgid "Device '%s' is busy"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2962 sys/v4l2/gstv4l2object.c:2974
+#: sys/v4l2/gstv4l2object.c:2991 sys/v4l2/gstv4l2object.c:3003
 #, c-format
 msgid "Device '%s' cannot capture at %dx%d"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2985
+#: sys/v4l2/gstv4l2object.c:3014
 #, c-format
 msgid "Device '%s' cannot capture in the specified format"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2998
+#: sys/v4l2/gstv4l2object.c:3027
 #, c-format
 msgid "Device '%s' does support non-contiguous planes"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3009
+#: sys/v4l2/gstv4l2object.c:3038
 #, c-format
 msgid "Could not get parameters on device '%s'"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3017
+#: sys/v4l2/gstv4l2object.c:3046
 msgid "Video device did not accept new frame rate setting."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3122
+#: sys/v4l2/gstv4l2object.c:3151
 msgid "Video device did not provide output format."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3128
+#: sys/v4l2/gstv4l2object.c:3157
 msgid "Video device returned invalid dimensions."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3136
+#: sys/v4l2/gstv4l2object.c:3165
 msgid "Video devices uses an unsupported interlacing method."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3143
+#: sys/v4l2/gstv4l2object.c:3172
 msgid "Video devices uses an unsupported pixel format."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3565
+#: sys/v4l2/gstv4l2object.c:3584
 msgid "Failed to configure internal buffer pool."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3571
+#: sys/v4l2/gstv4l2object.c:3590
 msgid "Video device did not suggest any buffer size."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3586
+#: sys/v4l2/gstv4l2object.c:3605
 msgid "No downstream pool to import from."
 msgstr ""
 
@@ -367,7 +367,7 @@ msgstr ""
 msgid "Failed to allocated required memory."
 msgstr ""
 
-#: sys/v4l2/gstv4l2src.c:509 sys/v4l2/gstv4l2videodec.c:581
+#: sys/v4l2/gstv4l2src.c:510 sys/v4l2/gstv4l2videodec.c:581
 msgid "Failed to allocate required memory."
 msgstr ""
 

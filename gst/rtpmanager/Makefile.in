@@ -1042,21 +1042,6 @@ uninstall-am: uninstall-pluginLTLIBRARIES
 	uninstall-pluginLTLIBRARIES
 
 
-Android.mk: Makefile.am
-	androgenizer \
-	-:PROJECT libgstrtpmanager -:SHARED libgstrtpmanager \
-	 -:TAGS eng debug \
-         -:REL_TOP $(top_srcdir) -:ABS_TOP $(abs_top_srcdir) \
-	 -:SOURCES $(libgstrtpmanager_la_SOURCES) \
-	 	   $(nodist_libgstrtpmanager_la_SOURCES) \
-	 -:CFLAGS $(DEFS) $(DEFAULT_INCLUDES) $(libgstrtpmanager_la_CFLAGS) \
-	 -:LDFLAGS $(libgstrtpmanager_la_LDFLAGS) \
-	           $(libgstrtpmanager_la_LIBADD) \
-	           -ldl \
-	 -:PASSTHROUGH LOCAL_ARM_MODE:=arm \
-		       LOCAL_MODULE_PATH:='$$(TARGET_OUT)/lib/gstreamer-0.10' \
-	> $@
-
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

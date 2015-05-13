@@ -232,8 +232,7 @@ enum
   PROP_SDES,
   PROP_TLS_VALIDATION_FLAGS,
   PROP_TLS_DATABASE,
-  PROP_DO_RETRANSMISSION,
-  PROP_LAST
+  PROP_DO_RETRANSMISSION
 };
 
 #define GST_TYPE_RTSP_NAT_METHOD (gst_rtsp_nat_method_get_type())
@@ -337,6 +336,31 @@ static guint gst_rtspsrc_signals[LAST_SIGNAL] = { 0 };
 #define gst_rtspsrc_parent_class parent_class
 G_DEFINE_TYPE_WITH_CODE (GstRTSPSrc, gst_rtspsrc, GST_TYPE_BIN,
     G_IMPLEMENT_INTERFACE (GST_TYPE_URI_HANDLER, gst_rtspsrc_uri_handler_init));
+
+#ifndef GST_DISABLE_GST_DEBUG
+static inline const char *
+cmd_to_string (guint cmd)
+{
+  switch (cmd) {
+    case CMD_OPEN:
+      return "OPEN";
+    case CMD_PLAY:
+      return "PLAY";
+    case CMD_PAUSE:
+      return "PAUSE";
+    case CMD_CLOSE:
+      return "CLOSE";
+    case CMD_WAIT:
+      return "WAIT";
+    case CMD_RECONNECT:
+      return "RECONNECT";
+    case CMD_LOOP:
+      return "LOOP";
+  }
+
+  return "unknown";
+}
+#endif
 
 static gboolean
 default_select_stream (GstRTSPSrc * src, guint id, GstCaps * caps)
@@ -1636,10 +1660,9 @@ gst_rtspsrc_cleanup (GstRTSPSrc * src)
     gst_sdp_message_free (src->sdp);
     src->sdp = NULL;
   }
-  if (src->start_segment) {
-    gst_event_unref (src->start_segment);
-    src->start_segment = NULL;
-  }
+
+  src->need_segment = FALSE;
+
   if (src->provided_clock) {
     gst_object_unref (src->provided_clock);
     src->provided_clock = NULL;
@@ -2385,16 +2408,6 @@ out:
 }
 
 static gboolean
-gst_rtspsrc_do_seek (GstRTSPSrc * src, GstSegment * segment)
-{
-  src->state = GST_RTSP_STATE_SEEKING;
-  /* PLAY will add the range header now. */
-  src->need_range = TRUE;
-
-  return TRUE;
-}
-
-static gboolean
 gst_rtspsrc_perform_seek (GstRTSPSrc * src, GstEvent * event)
 {
   gdouble rate;
@@ -2483,7 +2496,10 @@ gst_rtspsrc_perform_seek (GstRTSPSrc * src, GstEvent * event)
   }
   src->skip = skip;
 
-  gst_rtspsrc_do_seek (src, &seeksegment);
+  src->state = GST_RTSP_STATE_SEEKING;
+
+  /* PLAY will add the range header now. */
+  src->need_range = TRUE;
 
   /* and continue playing */
   if (playing)
@@ -2691,9 +2707,8 @@ gst_rtspsrc_handle_src_query (GstPad * pad, GstObject * parent,
         seekable = seekable && src->seekable && src->segment.duration &&
             GST_CLOCK_TIME_IS_VALID (src->segment.duration);
 
-        /* FIXME ?? should we have 0 and segment.duration here; see demuxers */
-        gst_query_set_seeking (query, GST_FORMAT_TIME, seekable,
-            src->segment.start, src->segment.stop);
+        gst_query_set_seeking (query, GST_FORMAT_TIME, seekable, 0,
+            src->segment.duration);
         res = TRUE;
       }
       break;
@@ -3185,8 +3200,12 @@ add_retransmission (GstRTSPSrc * src, GstRTSPTransport * transport)
 {
   GList *walk;
   guint signal_id;
+  gboolean do_retransmission = FALSE;
 
   if (transport->trans != GST_RTSP_TRANS_RTP)
+    return;
+  if (transport->profile != GST_RTSP_PROFILE_AVPF &&
+      transport->profile != GST_RTSP_PROFILE_SAVPF)
     return;
 
   signal_id = g_signal_lookup ("request-aux-receiver",
@@ -3203,6 +3222,7 @@ add_retransmission (GstRTSPSrc * src, GstRTSPTransport * transport)
   /* build the retransmission payload type map */
   for (walk = src->streams; walk; walk = g_list_next (walk)) {
     GstRTSPStream *stream = (GstRTSPStream *) walk->data;
+    gboolean do_retransmission_stream = FALSE;
     int i;
 
     if (stream->rtx_pt_map)
@@ -3226,21 +3246,37 @@ add_retransmission (GstRTSPSrc * src, GstRTSPTransport * transport)
           if (rtx_pt != 0) {
             gst_structure_set (stream->rtx_pt_map, stream_pt_s, G_TYPE_UINT,
                 rtx_pt, NULL);
+            do_retransmission_stream = TRUE;
           }
         }
       }
     }
 
-    GST_DEBUG_OBJECT (src, "built retransmission payload map for stream "
-        "id %i: %" GST_PTR_FORMAT, stream->id, stream->rtx_pt_map);
+    if (do_retransmission_stream) {
+      GST_DEBUG_OBJECT (src, "built retransmission payload map for stream "
+          "id %i: %" GST_PTR_FORMAT, stream->id, stream->rtx_pt_map);
+      do_retransmission = TRUE;
+    } else {
+      GST_DEBUG_OBJECT (src, "no retransmission payload map for stream "
+          "id %i", stream->id);
+      gst_structure_free (stream->rtx_pt_map);
+      stream->rtx_pt_map = NULL;
+    }
   }
 
-  g_object_set (src->manager, "do-retransmission", TRUE, NULL);
+  if (do_retransmission) {
+    GST_DEBUG_OBJECT (src, "Enabling retransmissions");
 
-  /* enable RFC4588 retransmission handling by setting rtprtxreceive
-   * as the "aux" element of rtpbin */
-  g_signal_connect (src->manager, "request-aux-receiver",
-      (GCallback) request_aux_receiver, src);
+    g_object_set (src->manager, "do-retransmission", TRUE, NULL);
+
+    /* enable RFC4588 retransmission handling by setting rtprtxreceive
+     * as the "aux" element of rtpbin */
+    g_signal_connect (src->manager, "request-aux-receiver",
+        (GCallback) request_aux_receiver, src);
+  } else {
+    GST_DEBUG_OBJECT (src,
+        "Not enabling retransmissions as no stream had a retransmission payload map");
+  }
 }
 
 /* try to get and configure a manager */
@@ -4524,7 +4560,6 @@ gst_rtspsrc_handle_data (GstRTSPSrc * src, GstRTSPMessage * message)
   guint size;
   GstBuffer *buf;
   gboolean is_rtcp;
-  GstEvent *event;
 
   channel = message->type_data.data.channel;
 
@@ -4581,14 +4616,11 @@ gst_rtspsrc_handle_data (GstRTSPSrc * src, GstRTSPMessage * message)
     gchar *uri;
     GList *streams;
     guint group_id = gst_util_group_id_next ();
-    GstSegment segment;
 
     /* generate an SHA256 sum of the URI */
     cs = g_checksum_new (G_CHECKSUM_SHA256);
     uri = src->conninfo.location;
     g_checksum_update (cs, (const guchar *) uri, strlen (uri));
-
-    gst_segment_init (&segment, GST_FORMAT_TIME);
 
     for (streams = src->streams; streams; streams = g_list_next (streams)) {
       GstRTSPStream *ostream = (GstRTSPStream *) streams->data;
@@ -4630,25 +4662,16 @@ gst_rtspsrc_handle_data (GstRTSPSrc * src, GstRTSPMessage * message)
               gst_pad_send_event (ostream->channelpad[1],
                   gst_event_new_caps (caps));
           }
+
+          gst_caps_unref (caps);
         }
       }
-
-      /* Push a SEGMENT event if we don't have one pending, if we have one
-       * pending we will just send that one a few lines below to all pads
-       */
-      if (!src->start_segment)
-        gst_rtspsrc_stream_push_event (src, ostream,
-            gst_event_new_segment (&segment));
     }
     g_checksum_free (cs);
 
     gst_rtspsrc_activate_streams (src);
     src->need_activate = FALSE;
-  }
-
-  if ((event = src->start_segment) != NULL) {
-    src->start_segment = NULL;
-    gst_rtspsrc_push_event (src, event);
+    src->need_segment = TRUE;
   }
 
   if (src->base_time == -1) {
@@ -4673,6 +4696,15 @@ gst_rtspsrc_handle_data (GstRTSPSrc * src, GstRTSPMessage * message)
           GST_TIME_FORMAT, GST_TIME_ARGS (now), GST_TIME_ARGS (base_time));
     }
     GST_OBJECT_UNLOCK (src);
+  }
+
+  /* If needed send a new segment, don't forget we are live and buffer are
+   * timestamped with running time */
+  if (src->need_segment) {
+    GstSegment segment;
+    src->need_segment = FALSE;
+    gst_segment_init (&segment, GST_FORMAT_TIME);
+    gst_rtspsrc_push_event (src, gst_event_new_segment (&segment));
   }
 
   if (stream->discont && !is_rtcp) {
@@ -5173,7 +5205,7 @@ gst_rtspsrc_loop_send_cmd (GstRTSPSrc * src, gint cmd, gint mask)
   /* start new request */
   gst_rtspsrc_loop_start_cmd (src, cmd);
 
-  GST_DEBUG_OBJECT (src, "sending cmd %d", cmd);
+  GST_DEBUG_OBJECT (src, "sending cmd %s", cmd_to_string (cmd));
 
   GST_OBJECT_LOCK (src);
   old = src->pending_cmd;
@@ -5185,18 +5217,20 @@ gst_rtspsrc_loop_send_cmd (GstRTSPSrc * src, gint cmd, gint mask)
     src->pending_cmd = CMD_WAIT;
     GST_OBJECT_UNLOCK (src);
     /* cancel previous request */
-    GST_DEBUG_OBJECT (src, "cancel previous request %d", old);
+    GST_DEBUG_OBJECT (src, "cancel previous request %s", cmd_to_string (old));
     gst_rtspsrc_loop_cancel_cmd (src, old);
     GST_OBJECT_LOCK (src);
   }
   src->pending_cmd = cmd;
   /* interrupt if allowed */
   if (src->busy_cmd & mask) {
-    GST_DEBUG_OBJECT (src, "connection flush busy %d", src->busy_cmd);
+    GST_DEBUG_OBJECT (src, "connection flush busy %s",
+        cmd_to_string (src->busy_cmd));
     gst_rtspsrc_connection_flush (src, TRUE);
     flushed = TRUE;
   } else {
-    GST_DEBUG_OBJECT (src, "not interrupting busy cmd %d", src->busy_cmd);
+    GST_DEBUG_OBJECT (src, "not interrupting busy cmd %s",
+        cmd_to_string (src->busy_cmd));
   }
   if (src->task)
     gst_task_start (src->task);
@@ -7516,9 +7550,7 @@ gst_rtspsrc_play (GstRTSPSrc * src, GstSegment * segment, gboolean async)
       gst_rtsp_message_take_header (&request, GST_RTSP_HDR_RANGE, hval);
 
       /* store the newsegment event so it can be sent from the streaming thread. */
-      if (src->start_segment)
-        gst_event_unref (src->start_segment);
-      src->start_segment = gst_event_new_segment (segment);
+      src->need_segment = TRUE;
     }
 
     if (segment->rate != 1.0) {
@@ -7883,7 +7915,7 @@ gst_rtspsrc_thread (GstRTSPSrc * src)
     src->pending_cmd = CMD_LOOP;
   else
     src->pending_cmd = CMD_WAIT;
-  GST_DEBUG_OBJECT (src, "got command %d", cmd);
+  GST_DEBUG_OBJECT (src, "got command %s", cmd_to_string (cmd));
 
   /* we got the message command, so ensure communication is possible again */
   gst_rtspsrc_connection_flush (src, FALSE);

@@ -5,7 +5,7 @@
 
 Name: 		%{gstreamer}-plugins-good
 Version: 	1.5.0.1
-Release: 	0.20150316.185508.gst
+Release: 	0.20150513.125648.gst
 Summary: 	GStreamer plug-ins with good code and licensing
 
 Group: 		Applications/Multimedia
