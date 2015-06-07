@@ -2,13 +2,13 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>GStreamer Good Plugins 1.0 Plugins Reference Manual: rtpjitterbuffer</title>
+<title>rtpjitterbuffer: GStreamer Good Plugins 1.0 Plugins Reference Manual</title>
 <meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
 <link rel="home" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-rtpdtmfsrc.html" title="rtpdtmfsrc">
 <link rel="next" href="gst-plugins-good-plugins-rtpmux.html" title="rtpmux">
-<meta name="generator" content="GTK-Doc V1.21 (XML mode)">
+<meta name="generator" content="GTK-Doc V1.24 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -112,6 +112,16 @@
 <tr>
 <td class="property_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer--rtx-min-retry-timeout" title="The “rtx-min-retry-timeout” property">rtx-min-retry-timeout</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
+<tr>
+<td class="property_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer--rtx-max-retries" title="The “rtx-max-retries” property">rtx-max-retries</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
+<tr>
+<td class="property_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer--rtx-next-seqnum" title="The “rtx-next-seqnum” property">rtx-next-seqnum</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
 </tbody>
@@ -352,6 +362,7 @@ out-of-order RTP packets.
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-rtpjitterbuffer.functions_details"></a><h2>Functions</h2>
+<p></p>
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-rtpjitterbuffer.other_details"></a><h2>Types and Values</h2>
@@ -422,7 +433,7 @@ This is mainly used to ensure interstream synchronisation.</p>
 late and should be retransmitted.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: FALSE</p>
-<p class="since">Since 1.2</p>
+<p class="since">Since: 1.2</p>
 </div>
 <hr>
 <div class="refsect2">
@@ -434,7 +445,7 @@ of time before sending a retransmission event.</p>
 <p>Flags: Read / Write</p>
 <p>Allowed values: &gt;= G_MAXULONG</p>
 <p>Default value: -1</p>
-<p class="since">Since 1.2</p>
+<p class="since">Since: 1.2</p>
 </div>
 <hr>
 <div class="refsect2">
@@ -447,7 +458,7 @@ reordering.</p>
 <p>Flags: Read / Write</p>
 <p>Allowed values: &gt;= G_MAXULONG</p>
 <p>Default value: 3</p>
-<p class="since">Since 1.2</p>
+<p class="since">Since: 1.2</p>
 </div>
 <hr>
 <div class="refsect2">
@@ -459,7 +470,7 @@ latency and the observed round trip time.</p>
 <p>Flags: Read / Write</p>
 <p>Allowed values: &gt;= G_MAXULONG</p>
 <p>Default value: -1</p>
-<p class="since">Since 1.2</p>
+<p class="since">Since: 1.2</p>
 </div>
 <hr>
 <div class="refsect2">
@@ -499,7 +510,7 @@ with name application/x-rtp-jitterbuffer-stats with the following fields:</p>
   </p></li>
 </ul></div>
 <p>Flags: Read</p>
-<p class="since">Since 1.4</p>
+<p class="since">Since: 1.4</p>
 </div>
 <hr>
 <div class="refsect2">
@@ -509,7 +520,7 @@ with name application/x-rtp-jitterbuffer-stats with the following fields:</p>
 of time before sending a retransmission event.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: 0</p>
-<p class="since">Since 1.6</p>
+<p class="since">Since: 1.6</p>
 </div>
 <hr>
 <div class="refsect2">
@@ -519,6 +530,31 @@ of time before sending a retransmission event.</p>
 <p>Flags: Read / Write</p>
 <p>Allowed values: &gt;= G_MAXULONG</p>
 <p>Default value: -1</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRtpJitterBuffer--rtx-max-retries"></a><h3>The <code class="literal">“rtx-max-retries”</code> property</h3>
+<pre class="programlisting">  “rtx-max-retries”          <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a></pre>
+<p>The maximum number of retries to request a retransmission.</p>
+<p>This implies that as maximum (rtx-max-retries + 1) retransmissions will be requested.
+When -1 is used, the number of retransmission request will not be limited.</p>
+<p>Flags: Read / Write</p>
+<p>Allowed values: &gt;= G_MAXULONG</p>
+<p>Default value: -1</p>
+<p class="since">Since: 1.6</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRtpJitterBuffer--rtx-next-seqnum"></a><h3>The <code class="literal">“rtx-next-seqnum”</code> property</h3>
+<pre class="programlisting">  “rtx-next-seqnum”          <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
+<p>Estimate when the next packet should arrive and schedule a retransmission
+request for it.
+This is, when packet N arrives, a GstRTPRetransmission event is schedule
+for packet N+1. So it will be requested if it does not arrive at the expected time.
+The expected time is calculated using the dts of N and the packet spacing.</p>
+<p>Flags: Read / Write</p>
+<p>Default value: TRUE</p>
+<p class="since">Since: 1.6</p>
 </div>
 </div>
 <div class="refsect1">
@@ -696,14 +732,12 @@ useful in buffering mode.</p>
 <div class="refsect3">
 <a name="id-1.2.127.12.6.6"></a><h4>Returns</h4>
 <p> the time of the last pushed packet.</p>
-<p></p>
 </div>
 <p>Flags: Action</p>
 </div>
 </div>
 </div>
 <div class="footer">
-<hr>
-          Generated by GTK-Doc V1.21</div>
+<hr>Generated by GTK-Doc V1.24</div>
 </body>
 </html>

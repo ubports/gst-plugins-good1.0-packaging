@@ -162,8 +162,8 @@ am__libgstgoom_la_SOURCES_DIST = gstgoom.c gstgoom.h drawmethods.c \
 	motif_goom2.h plugin_info.c goom_plugin_info.h goom_tools.c \
 	config_param.c filters.c goom_core.c graphic.c goom.h \
 	goom_typedefs.h goom_graphic.h goom_config_param.h \
-	goom_filters.h goom_tools.h goom_config.h mmx.c xmmx.c mmx.h \
-	xmmx.h
+	goom_filters.h goom_tools.h goom_config.h gstaudiovisualizer.c \
+	gstaudiovisualizer.h mmx.c xmmx.c mmx.h xmmx.h
 am__objects_1 = libgstgoom_la-mmx.lo libgstgoom_la-xmmx.lo
 @HAVE_CPU_I386_TRUE@am__objects_2 = $(am__objects_1)
 am_libgstgoom_la_OBJECTS = libgstgoom_la-gstgoom.lo \
@@ -175,7 +175,7 @@ am_libgstgoom_la_OBJECTS = libgstgoom_la-gstgoom.lo \
 	libgstgoom_la-plugin_info.lo libgstgoom_la-goom_tools.lo \
 	libgstgoom_la-config_param.lo libgstgoom_la-filters.lo \
 	libgstgoom_la-goom_core.lo libgstgoom_la-graphic.lo \
-	$(am__objects_2)
+	libgstgoom_la-gstaudiovisualizer.lo $(am__objects_2)
 libgstgoom_la_OBJECTS = $(am_libgstgoom_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -597,10 +597,11 @@ libgstgoom_la_SOURCES = \
 	goom.h goom_typedefs.h goom_graphic.h			\
 	goom_config_param.h goom_visual_fx.h goom_filters.h	\
 	goom_tools.h goom_tools.h goom_config.h			\
+	gstaudiovisualizer.c gstaudiovisualizer.h \
 	$(ARCH_FILES)
 
 libgstgoom_la_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_BASE_CFLAGS) $(GST_CFLAGS) $(GOOM_FILTER_CFLAGS) $(ARCH_CFLAGS) $(ORC_CFLAGS)
-libgstgoom_la_LIBADD = $(GST_BASE_LIBS) $(GST_LIBS) $(LIBM) $(ORC_LIBS)
+libgstgoom_la_LIBADD = $(GST_BASE_LIBS) $(GST_LIBS) -lgstvideo-$(GST_API_VERSION) -lgstaudio-$(GST_API_VERSION) $(LIBM) $(ORC_LIBS)
 libgstgoom_la_LDFLAGS = $(GST_PLUGIN_LDFLAGS)
 libgstgoom_la_LIBTOOLFLAGS = $(GST_PLUGIN_LIBTOOLFLAGS)
 EXTRA_DIST = $(PPC_FILES) $(MMX_FILES)
@@ -691,6 +692,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstgoom_la-goom_core.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstgoom_la-goom_tools.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstgoom_la-graphic.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstgoom_la-gstaudiovisualizer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstgoom_la-gstgoom.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstgoom_la-ifs.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstgoom_la-lines.Plo@am__quote@
@@ -845,6 +847,13 @@ libgstgoom_la-graphic.lo: graphic.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='graphic.c' object='libgstgoom_la-graphic.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstgoom_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstgoom_la_CFLAGS) $(CFLAGS) -c -o libgstgoom_la-graphic.lo `test -f 'graphic.c' || echo '$(srcdir)/'`graphic.c
+
+libgstgoom_la-gstaudiovisualizer.lo: gstaudiovisualizer.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstgoom_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstgoom_la_CFLAGS) $(CFLAGS) -MT libgstgoom_la-gstaudiovisualizer.lo -MD -MP -MF $(DEPDIR)/libgstgoom_la-gstaudiovisualizer.Tpo -c -o libgstgoom_la-gstaudiovisualizer.lo `test -f 'gstaudiovisualizer.c' || echo '$(srcdir)/'`gstaudiovisualizer.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstgoom_la-gstaudiovisualizer.Tpo $(DEPDIR)/libgstgoom_la-gstaudiovisualizer.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstaudiovisualizer.c' object='libgstgoom_la-gstaudiovisualizer.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstgoom_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstgoom_la_CFLAGS) $(CFLAGS) -c -o libgstgoom_la-gstaudiovisualizer.lo `test -f 'gstaudiovisualizer.c' || echo '$(srcdir)/'`gstaudiovisualizer.c
 
 libgstgoom_la-mmx.lo: mmx.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstgoom_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstgoom_la_CFLAGS) $(CFLAGS) -MT libgstgoom_la-mmx.lo -MD -MP -MF $(DEPDIR)/libgstgoom_la-mmx.Tpo -c -o libgstgoom_la-mmx.lo `test -f 'mmx.c' || echo '$(srcdir)/'`mmx.c
