@@ -1,3 +1,9 @@
+gst-plugins-good1.0 (1.4.5-3) UNRELEASED; urgency=medium
+
+  * debian/watch: Update for current URL scheme
+
+ -- Iain Lane <laney@debian.org>  Mon, 15 Jun 2015 12:59:04 +0100
+
 gst-plugins-good1.0 (1.4.5-2) unstable; urgency=medium
 
   * Upload to unstable.
