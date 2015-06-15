@@ -1,4 +1,4 @@
-gst-plugins-good1.0 (1.5.1-1ubuntu1) UNRELEASED; urgency=medium
+gst-plugins-good1.0 (1.5.1-1ubuntu1) wily; urgency=medium
 
   * Merge with Debian unstable; remaining changes:
     + Import plugins from -bad that are needed for main applications.
@@ -13,8 +13,9 @@ gst-plugins-good1.0 (1.5.1-1ubuntu1) UNRELEASED; urgency=medium
   * Refresh import-camerabin and import-jpegformat with latest changes from
     upstream.
   * debian/watch: Update for current URL scheme
+  * debian/control{,.in}: Update Vcs-* for Ubuntu
 
- -- Iain Lane <iain.lane@canonical.com>  Mon, 15 Jun 2015 10:56:07 +0100
+ -- Iain Lane <iain.lane@canonical.com>  Mon, 15 Jun 2015 12:21:43 +0100
 
 gst-plugins-good1.0 (1.5.1-1) experimental; urgency=medium
 
@@ -33,12 +34,6 @@ gst-plugins-good1.0 (1.5.0.1+git20150316-1) experimental; urgency=medium
   * New upstream GIT snapshot.
 
  -- Sebastian Dröge <slomo@debian.org>  Tue, 17 Mar 2015 09:14:23 +0100
-
-gst-plugins-good1.0 (1.4.5-1ubuntu3) UNRELEASED; urgency=medium
-
-  * debian/control{,.in}: Update Vcs-* for Ubuntu
-
- -- Iain Lane <iain.lane@canonical.com>  Mon, 15 Jun 2015 10:45:43 +0100
 
 gst-plugins-good1.0 (1.4.5-1ubuntu2) vivid; urgency=medium
 
