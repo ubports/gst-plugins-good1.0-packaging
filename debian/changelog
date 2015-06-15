@@ -10,6 +10,8 @@ gst-plugins-good1.0 (1.5.1-1ubuntu1) UNRELEASED; urgency=medium
       which formerly contained files shipped here.
     + Add 'pluginsdir' variable to our added pcfile for compatibility with
       some external software
+  * Refresh import-camerabin and import-jpegformat with latest changes from
+    upstream.
 
  -- Iain Lane <iain.lane@canonical.com>  Mon, 15 Jun 2015 10:56:07 +0100
 
