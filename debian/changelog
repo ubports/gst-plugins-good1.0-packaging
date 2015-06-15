@@ -12,6 +12,7 @@ gst-plugins-good1.0 (1.5.1-1ubuntu1) UNRELEASED; urgency=medium
       some external software
   * Refresh import-camerabin and import-jpegformat with latest changes from
     upstream.
+  * debian/watch: Update for current URL scheme
 
  -- Iain Lane <iain.lane@canonical.com>  Mon, 15 Jun 2015 10:56:07 +0100
 
