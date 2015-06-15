@@ -1,3 +1,9 @@
+gst-plugins-good1.0 (1.4.5-1ubuntu3) UNRELEASED; urgency=medium
+
+  * debian/control{,.in}: Update Vcs-* for Ubuntu
+
+ -- Iain Lane <iain.lane@canonical.com>  Mon, 15 Jun 2015 10:45:43 +0100
+
 gst-plugins-good1.0 (1.4.5-1ubuntu2) vivid; urgency=medium
 
   * debian/patches/qtdemux-Set-maximum-sample-input-size-in-caps.patch:
