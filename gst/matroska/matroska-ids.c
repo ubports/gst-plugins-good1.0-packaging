@@ -221,6 +221,36 @@ gst_matroska_parse_speex_stream_headers (gpointer codec_data,
 }
 
 GstBufferList *
+gst_matroska_parse_opus_stream_headers (gpointer codec_data,
+    gsize codec_data_size)
+{
+  GstBufferList *list = NULL;
+  GstBuffer *hdr;
+  guint8 *pdata = codec_data;
+
+  GST_MEMDUMP ("opus codec data", codec_data, codec_data_size);
+
+  if (codec_data == NULL || codec_data_size < 19) {
+    GST_WARNING ("not enough codec priv data for opus headers");
+    return NULL;
+  }
+
+  if (memcmp (pdata, "OpusHead", 8) != 0) {
+    GST_WARNING ("no OpusHead marker at start of stream headers");
+    return NULL;
+  }
+
+  list = gst_buffer_list_new ();
+
+  hdr =
+      gst_buffer_new_wrapped (g_memdup (pdata, codec_data_size),
+      codec_data_size);
+  gst_buffer_list_add (list, hdr);
+
+  return list;
+}
+
+GstBufferList *
 gst_matroska_parse_flac_stream_headers (gpointer codec_data,
     gsize codec_data_size)
 {
@@ -267,6 +297,17 @@ gst_matroska_parse_flac_stream_headers (gpointer codec_data,
   return list;
 }
 
+GstClockTime
+gst_matroska_track_get_buffer_timestamp (GstMatroskaTrackContext * track,
+    GstBuffer * buf)
+{
+  if (track->dts_only) {
+    return GST_BUFFER_DTS (buf);
+  } else {
+    return GST_BUFFER_PTS (buf);
+  }
+}
+
 void
 gst_matroska_track_free (GstMatroskaTrackContext * track)
 {
@@ -290,8 +331,8 @@ gst_matroska_track_free (GstMatroskaTrackContext * track)
     g_array_free (track->encodings, TRUE);
   }
 
-  if (track->pending_tags)
-    gst_tag_list_unref (track->pending_tags);
+  if (track->tags)
+    gst_tag_list_unref (track->tags);
 
   if (track->index_table)
     g_array_free (track->index_table, TRUE);

@@ -61,7 +61,6 @@ GST_DEBUG_CATEGORY_STATIC (osx_audio_debug);
 #include "gstosxcoreaudio.h"
 
 static void gst_osx_audio_ring_buffer_dispose (GObject * object);
-static void gst_osx_audio_ring_buffer_finalize (GObject * object);
 static gboolean gst_osx_audio_ring_buffer_open_device (GstAudioRingBuffer *
     buf);
 static gboolean gst_osx_audio_ring_buffer_close_device (GstAudioRingBuffer *
@@ -95,7 +94,6 @@ gst_osx_audio_ring_buffer_class_init (GstOsxAudioRingBufferClass * klass)
   ring_parent_class = g_type_class_peek_parent (klass);
 
   gobject_class->dispose = gst_osx_audio_ring_buffer_dispose;
-  gobject_class->finalize = gst_osx_audio_ring_buffer_finalize;
 
   gstringbuffer_class->open_device =
       GST_DEBUG_FUNCPTR (gst_osx_audio_ring_buffer_open_device);
@@ -139,18 +137,13 @@ gst_osx_audio_ring_buffer_dispose (GObject * object)
   G_OBJECT_CLASS (ring_parent_class)->dispose (object);
 }
 
-static void
-gst_osx_audio_ring_buffer_finalize (GObject * object)
-{
-  G_OBJECT_CLASS (ring_parent_class)->finalize (object);
-}
-
 static gboolean
 gst_osx_audio_ring_buffer_open_device (GstAudioRingBuffer * buf)
 {
-  GstOsxAudioRingBuffer *osxbuf;
+  GstOsxAudioRingBuffer *osxbuf = GST_OSX_AUDIO_RING_BUFFER (buf);
 
-  osxbuf = GST_OSX_AUDIO_RING_BUFFER (buf);
+  if (!gst_core_audio_select_device (osxbuf->core_audio))
+    return FALSE;
 
   return gst_core_audio_open (osxbuf->core_audio);
 }
@@ -206,10 +199,12 @@ gst_osx_audio_ring_buffer_acquire (GstAudioRingBuffer * buf,
       } else {
         format.mFormatFlags |= kAudioFormatFlagIsAlignedHigh;
       }
-      if (GST_AUDIO_INFO_IS_BIG_ENDIAN (&spec->info)) {
-        format.mFormatFlags |= kAudioFormatFlagIsBigEndian;
-      }
     }
+
+    if (GST_AUDIO_INFO_IS_BIG_ENDIAN (&spec->info)) {
+      format.mFormatFlags |= kAudioFormatFlagIsBigEndian;
+    }
+
     format.mBytesPerFrame = GST_AUDIO_INFO_BPF (&spec->info);
     format.mBitsPerChannel = depth;
     format.mBytesPerPacket = GST_AUDIO_INFO_BPF (&spec->info);

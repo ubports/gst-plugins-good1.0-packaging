@@ -135,7 +135,7 @@ gst_avi_demux_class_init (GstAviDemuxClass * klass)
   GstElementClass *gstelement_class = GST_ELEMENT_CLASS (klass);
   GObjectClass *gobject_class = (GObjectClass *) klass;
   GstPadTemplate *videosrctempl, *audiosrctempl, *subsrctempl, *subpicsrctempl;
-  GstCaps *audcaps, *vidcaps, *subcaps, *subpiccaps;;
+  GstCaps *audcaps, *vidcaps, *subcaps, *subpiccaps;
 
   GST_DEBUG_CATEGORY_INIT (avidemux_debug, "avidemux",
       0, "Demuxer for AVI streams");
@@ -482,18 +482,11 @@ gst_avi_demux_handle_src_query (GstPad * pad, GstObject * parent,
           guint64 xlen = avi->avih->us_frame *
               avi->avih->tot_frames * GST_USECOND;
 
-          if (stream->is_vbr) {
-            pos = gst_util_uint64_scale (xlen, stream->current_entry,
-                stream->idx_n);
-            GST_DEBUG_OBJECT (avi, "VBR perc convert frame %u, time %"
-                GST_TIME_FORMAT, stream->current_entry, GST_TIME_ARGS (pos));
-          } else {
-            pos = gst_util_uint64_scale (xlen, stream->current_total,
-                stream->total_bytes);
-            GST_DEBUG_OBJECT (avi,
-                "CBR perc convert bytes %u, time %" GST_TIME_FORMAT,
-                stream->current_total, GST_TIME_ARGS (pos));
-          }
+          pos = gst_util_uint64_scale (xlen, stream->current_total,
+              stream->total_bytes);
+          GST_DEBUG_OBJECT (avi,
+              "CBR perc convert bytes %u, time %" GST_TIME_FORMAT,
+              stream->current_total, GST_TIME_ARGS (pos));
         } else {
           /* we don't know */
           res = FALSE;
@@ -3016,7 +3009,7 @@ static GstFlowReturn
 gst_avi_demux_peek_tag (GstAviDemux * avi, guint64 offset, guint32 * tag,
     guint * size)
 {
-  GstFlowReturn res = GST_FLOW_OK;
+  GstFlowReturn res;
   GstBuffer *buf = NULL;
   GstMapInfo map;
 
@@ -4641,6 +4634,8 @@ gst_avi_demux_handle_seek (GstAviDemux * avi, GstPad * pad, GstEvent * event)
     GST_DEBUG_OBJECT (avi, "marking DISCONT");
     avi->stream[i].discont = TRUE;
   }
+  /* likewise for the whole new segment */
+  gst_flow_combiner_reset (avi->flowcombiner);
   GST_PAD_STREAM_UNLOCK (avi->sinkpad);
 
   return TRUE;
@@ -5005,7 +5000,7 @@ gst_avi_demux_combine_flows (GstAviDemux * avi, GstAviStream * stream,
 {
   GST_LOG_OBJECT (avi, "Stream %s:%s flow return: %s",
       GST_DEBUG_PAD_NAME (stream->pad), gst_flow_get_name (ret));
-  ret = gst_flow_combiner_update_flow (avi->flowcombiner, ret);
+  ret = gst_flow_combiner_update_pad_flow (avi->flowcombiner, stream->pad, ret);
   GST_LOG_OBJECT (avi, "combined to return %s", gst_flow_get_name (ret));
 
   return ret;

@@ -507,6 +507,7 @@ struct _GstMatroskaTrackContext {
   gint          index_writer_id;
 
   /* some often-used info */
+  guint64       track_uid;
   gchar        *codec_id, *codec_name, *name, *language;
   gpointer      codec_priv;
   gsize         codec_priv_size;
@@ -539,8 +540,10 @@ struct _GstMatroskaTrackContext {
                                       GstMatroskaTrackContext *context,
 				      GstBuffer **buffer);
 
-  /* Tags to send after newsegment event */
-  GstTagList   *pending_tags;
+  /* List of tags for this stream */
+  GstTagList   *tags;
+  /* Tags changed and should be pushed again */
+  gboolean      tags_changed;
 
   /* A GArray of GstMatroskaTrackEncoding structures which contain the
    * encoding (compression/encryption) settings for this track, if any */
@@ -551,6 +554,12 @@ struct _GstMatroskaTrackContext {
 
   /* any alignment we need our output buffers to have */
   gint          alignment;
+  
+  /* for compatibility with VFW files, where timestamp represents DTS */
+  gboolean      dts_only;
+  
+  /* indicate that the track is raw (jpeg,raw variants) and so pts=dts */
+  gboolean		intra_only;
 };
 
 typedef struct _GstMatroskaTrackVideoContext {
@@ -640,8 +649,12 @@ GstBufferList * gst_matroska_parse_xiph_stream_headers  (gpointer codec_data,
 GstBufferList * gst_matroska_parse_speex_stream_headers (gpointer codec_data,
                                                          gsize codec_data_size);
 
+GstBufferList * gst_matroska_parse_opus_stream_headers  (gpointer codec_data,
+                                                         gsize codec_data_size);
+
 GstBufferList * gst_matroska_parse_flac_stream_headers  (gpointer codec_data,
                                                          gsize codec_data_size);
 void gst_matroska_track_free (GstMatroskaTrackContext * track);
+GstClockTime gst_matroska_track_get_buffer_timestamp (GstMatroskaTrackContext * track, GstBuffer *buf);
 
 #endif /* __GST_MATROSKA_IDS_H__ */

@@ -35,7 +35,7 @@
  * <refsect2>
  * <title>Example pipelines</title>
  * |[
- * gst-launch rtpmux name=mux ! udpsink host=127.0.0.1 port=8888        \
+ * gst-launch-1.0 rtpmux name=mux ! udpsink host=127.0.0.1 port=8888        \
  *              alsasrc ! alawenc ! rtppcmapay !                        \
  *              application/x-rtp, payload=8, rate=8000 ! mux.sink_0    \
  *              audiotestsrc is-live=1 !                                \
@@ -63,7 +63,7 @@ GST_DEBUG_CATEGORY_STATIC (gst_rtp_mux_debug);
 
 enum
 {
-  ARG_0,
+  PROP_0,
   PROP_TIMESTAMP_OFFSET,
   PROP_SEQNUM_OFFSET,
   PROP_SEQNUM,
@@ -191,7 +191,7 @@ gst_rtp_mux_src_event (GstPad * pad, GstObject * parent, GstEvent * event)
 {
   GstRTPMux *rtp_mux = GST_RTP_MUX (parent);
   GstRTPMuxClass *klass;
-  gboolean ret = FALSE;
+  gboolean ret;
 
   klass = GST_RTP_MUX_GET_CLASS (rtp_mux);
 

@@ -121,7 +121,6 @@ am__aclocal_m4_deps = $(top_srcdir)/common/m4/as-ac-expand.m4 \
 	$(top_srcdir)/common/m4/gst-platform.m4 \
 	$(top_srcdir)/common/m4/gst-plugin-docs.m4 \
 	$(top_srcdir)/common/m4/gst-plugindir.m4 \
-	$(top_srcdir)/common/m4/gst-x11.m4 \
 	$(top_srcdir)/common/m4/gst.m4 \
 	$(top_srcdir)/common/m4/gtk-doc.m4 \
 	$(top_srcdir)/common/m4/orc.m4 $(top_srcdir)/common/m4/pkg.m4 \
@@ -152,7 +151,8 @@ am__v_lt_1 =
 libparser_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(libparser_la_CFLAGS) \
 	$(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-@USE_PLUGIN_ALPHA_TRUE@am__EXEEXT_1 = elements/alphacolor$(EXEEXT)
+@USE_PLUGIN_ALPHA_TRUE@am__EXEEXT_1 = elements/alphacolor$(EXEEXT) \
+@USE_PLUGIN_ALPHA_TRUE@	elements/alpha$(EXEEXT)
 @USE_PLUGIN_AUDIOFX_TRUE@am__EXEEXT_2 =  \
 @USE_PLUGIN_AUDIOFX_TRUE@	elements/audioamplify$(EXEEXT) \
 @USE_PLUGIN_AUDIOFX_TRUE@	elements/audiochebband$(EXEEXT) \
@@ -205,7 +205,8 @@ libparser_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 @USE_PLUGIN_MATROSKA_TRUE@	elements/matroskamux$(EXEEXT) \
 @USE_PLUGIN_MATROSKA_TRUE@	elements/matroskaparse$(EXEEXT)
 @USE_PLUGIN_MULTIFILE_TRUE@am__EXEEXT_23 =  \
-@USE_PLUGIN_MULTIFILE_TRUE@	elements/multifile$(EXEEXT)
+@USE_PLUGIN_MULTIFILE_TRUE@	elements/multifile$(EXEEXT) \
+@USE_PLUGIN_MULTIFILE_TRUE@	elements/splitmux$(EXEEXT)
 @USE_PLUGIN_REPLAYGAIN_TRUE@am__EXEEXT_24 =  \
 @USE_PLUGIN_REPLAYGAIN_TRUE@	elements/rganalysis$(EXEEXT) \
 @USE_PLUGIN_REPLAYGAIN_TRUE@	elements/rglimiter$(EXEEXT) \
@@ -254,6 +255,14 @@ elements_aacparse_DEPENDENCIES = libparser.la $(am__DEPENDENCIES_2)
 elements_ac3parse_SOURCES = elements/ac3parse.c
 elements_ac3parse_OBJECTS = elements/ac3parse.$(OBJEXT)
 elements_ac3parse_DEPENDENCIES = libparser.la $(am__DEPENDENCIES_2)
+elements_alpha_SOURCES = elements/alpha.c
+elements_alpha_OBJECTS = elements/elements_alpha-alpha.$(OBJEXT)
+elements_alpha_LDADD = $(LDADD)
+elements_alpha_DEPENDENCIES = $(am__DEPENDENCIES_1)
+elements_alpha_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+	$(elements_alpha_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o \
+	$@
 elements_alphacolor_SOURCES = elements/alphacolor.c
 elements_alphacolor_OBJECTS =  \
 	elements/elements_alphacolor-alphacolor.$(OBJEXT)
@@ -514,13 +523,23 @@ elements_mpegaudioparse_OBJECTS = elements/mpegaudioparse.$(OBJEXT)
 elements_mpegaudioparse_DEPENDENCIES = libparser.la \
 	$(am__DEPENDENCIES_2)
 elements_mulawdec_SOURCES = elements/mulawdec.c
-elements_mulawdec_OBJECTS = elements/mulawdec.$(OBJEXT)
+elements_mulawdec_OBJECTS =  \
+	elements/elements_mulawdec-mulawdec.$(OBJEXT)
 elements_mulawdec_LDADD = $(LDADD)
 elements_mulawdec_DEPENDENCIES = $(am__DEPENDENCIES_1)
+elements_mulawdec_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+	$(elements_mulawdec_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
+	-o $@
 elements_mulawenc_SOURCES = elements/mulawenc.c
-elements_mulawenc_OBJECTS = elements/mulawenc.$(OBJEXT)
+elements_mulawenc_OBJECTS =  \
+	elements/elements_mulawenc-mulawenc.$(OBJEXT)
 elements_mulawenc_LDADD = $(LDADD)
 elements_mulawenc_DEPENDENCIES = $(am__DEPENDENCIES_1)
+elements_mulawenc_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+	$(elements_mulawenc_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
+	-o $@
 elements_multifile_SOURCES = elements/multifile.c
 elements_multifile_OBJECTS =  \
 	elements/elements_multifile-multifile.$(OBJEXT)
@@ -658,6 +677,10 @@ elements_spectrum_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(elements_spectrum_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
 	-o $@
+elements_splitmux_SOURCES = elements/splitmux.c
+elements_splitmux_OBJECTS = elements/splitmux.$(OBJEXT)
+elements_splitmux_LDADD = $(LDADD)
+elements_splitmux_DEPENDENCIES = $(am__DEPENDENCIES_1)
 elements_sunaudio_SOURCES = elements/sunaudio.c
 elements_sunaudio_OBJECTS =  \
 	elements/elements_sunaudio-sunaudio.$(OBJEXT)
@@ -840,18 +863,19 @@ am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
 SOURCES = $(libparser_la_SOURCES) elements/aacparse.c \
-	elements/ac3parse.c elements/alphacolor.c elements/amrparse.c \
-	elements/apev2mux.c elements/aspectratiocrop.c \
-	elements/audioamplify.c elements/audiochebband.c \
-	elements/audiocheblimit.c elements/audiodynamic.c \
-	elements/audioecho.c elements/audiofirfilter.c \
-	elements/audioiirfilter.c elements/audioinvert.c \
-	elements/audiopanorama.c elements/audiowsincband.c \
-	elements/audiowsinclimit.c elements/autodetect.c \
-	elements/avimux.c elements/avisubtitle.c elements/capssetter.c \
-	elements/deinterlace.c elements/deinterleave.c elements/dtmf.c \
-	elements/equalizer.c elements/flacparse.c elements/flvdemux.c \
-	elements/flvmux.c elements/gdkpixbufsink.c elements/icydemux.c \
+	elements/ac3parse.c elements/alpha.c elements/alphacolor.c \
+	elements/amrparse.c elements/apev2mux.c \
+	elements/aspectratiocrop.c elements/audioamplify.c \
+	elements/audiochebband.c elements/audiocheblimit.c \
+	elements/audiodynamic.c elements/audioecho.c \
+	elements/audiofirfilter.c elements/audioiirfilter.c \
+	elements/audioinvert.c elements/audiopanorama.c \
+	elements/audiowsincband.c elements/audiowsinclimit.c \
+	elements/autodetect.c elements/avimux.c elements/avisubtitle.c \
+	elements/capssetter.c elements/deinterlace.c \
+	elements/deinterleave.c elements/dtmf.c elements/equalizer.c \
+	elements/flacparse.c elements/flvdemux.c elements/flvmux.c \
+	elements/gdkpixbufsink.c elements/icydemux.c \
 	elements/id3demux.c elements/id3v2mux.c elements/imagefreeze.c \
 	elements/interleave.c elements/jpegdec.c elements/jpegenc.c \
 	elements/level.c elements/matroskamux.c \
@@ -863,11 +887,11 @@ SOURCES = $(libparser_la_SOURCES) elements/aacparse.c \
 	$(elements_rtpbin_buffer_list_SOURCES) elements/rtpcollision.c \
 	elements/rtpjitterbuffer.c elements/rtpmux.c elements/rtprtx.c \
 	elements/rtpsession.c elements/shapewipe.c \
-	elements/souphttpsrc.c elements/spectrum.c elements/sunaudio.c \
-	elements/udpsink.c elements/udpsrc.c elements/videobox.c \
-	elements/videocrop.c elements/videofilter.c \
-	elements/videomixer.c elements/vp8dec.c elements/vp8enc.c \
-	elements/wavpackdec.c elements/wavpackenc.c \
+	elements/souphttpsrc.c elements/spectrum.c elements/splitmux.c \
+	elements/sunaudio.c elements/udpsink.c elements/udpsrc.c \
+	elements/videobox.c elements/videocrop.c \
+	elements/videofilter.c elements/videomixer.c elements/vp8dec.c \
+	elements/vp8enc.c elements/wavpackdec.c elements/wavpackenc.c \
 	elements/wavpackparse.c elements/wavparse.c elements/y4menc.c \
 	generic/states.c $(nodist_orc_deinterlace_SOURCES) \
 	$(nodist_orc_videobox_SOURCES) \
@@ -876,18 +900,19 @@ SOURCES = $(libparser_la_SOURCES) elements/aacparse.c \
 	pipelines/tagschecking.c pipelines/wavenc.c \
 	pipelines/wavpack.c
 DIST_SOURCES = $(libparser_la_SOURCES) elements/aacparse.c \
-	elements/ac3parse.c elements/alphacolor.c elements/amrparse.c \
-	elements/apev2mux.c elements/aspectratiocrop.c \
-	elements/audioamplify.c elements/audiochebband.c \
-	elements/audiocheblimit.c elements/audiodynamic.c \
-	elements/audioecho.c elements/audiofirfilter.c \
-	elements/audioiirfilter.c elements/audioinvert.c \
-	elements/audiopanorama.c elements/audiowsincband.c \
-	elements/audiowsinclimit.c elements/autodetect.c \
-	elements/avimux.c elements/avisubtitle.c elements/capssetter.c \
-	elements/deinterlace.c elements/deinterleave.c elements/dtmf.c \
-	elements/equalizer.c elements/flacparse.c elements/flvdemux.c \
-	elements/flvmux.c elements/gdkpixbufsink.c elements/icydemux.c \
+	elements/ac3parse.c elements/alpha.c elements/alphacolor.c \
+	elements/amrparse.c elements/apev2mux.c \
+	elements/aspectratiocrop.c elements/audioamplify.c \
+	elements/audiochebband.c elements/audiocheblimit.c \
+	elements/audiodynamic.c elements/audioecho.c \
+	elements/audiofirfilter.c elements/audioiirfilter.c \
+	elements/audioinvert.c elements/audiopanorama.c \
+	elements/audiowsincband.c elements/audiowsinclimit.c \
+	elements/autodetect.c elements/avimux.c elements/avisubtitle.c \
+	elements/capssetter.c elements/deinterlace.c \
+	elements/deinterleave.c elements/dtmf.c elements/equalizer.c \
+	elements/flacparse.c elements/flvdemux.c elements/flvmux.c \
+	elements/gdkpixbufsink.c elements/icydemux.c \
 	elements/id3demux.c elements/id3v2mux.c elements/imagefreeze.c \
 	elements/interleave.c elements/jpegdec.c elements/jpegenc.c \
 	elements/level.c elements/matroskamux.c \
@@ -899,11 +924,11 @@ DIST_SOURCES = $(libparser_la_SOURCES) elements/aacparse.c \
 	$(elements_rtpbin_buffer_list_SOURCES) elements/rtpcollision.c \
 	elements/rtpjitterbuffer.c elements/rtpmux.c elements/rtprtx.c \
 	elements/rtpsession.c elements/shapewipe.c \
-	elements/souphttpsrc.c elements/spectrum.c elements/sunaudio.c \
-	elements/udpsink.c elements/udpsrc.c elements/videobox.c \
-	elements/videocrop.c elements/videofilter.c \
-	elements/videomixer.c elements/vp8dec.c elements/vp8enc.c \
-	elements/wavpackdec.c elements/wavpackenc.c \
+	elements/souphttpsrc.c elements/spectrum.c elements/splitmux.c \
+	elements/sunaudio.c elements/udpsink.c elements/udpsrc.c \
+	elements/videobox.c elements/videocrop.c \
+	elements/videofilter.c elements/videomixer.c elements/vp8dec.c \
+	elements/vp8enc.c elements/wavpackdec.c elements/wavpackenc.c \
 	elements/wavpackparse.c elements/wavparse.c elements/y4menc.c \
 	generic/states.c pipelines/effectv.c pipelines/flacdec.c \
 	pipelines/simple-launch-lines.c pipelines/tagschecking.c \
@@ -1268,9 +1293,6 @@ HAVE_AVC1394 = @HAVE_AVC1394@
 HAVE_CXX = @HAVE_CXX@
 HAVE_DIRECTSOUND = @HAVE_DIRECTSOUND@
 HAVE_ROM1394 = @HAVE_ROM1394@
-HAVE_SPEEX = @HAVE_SPEEX@
-HAVE_X = @HAVE_X@
-HAVE_XSHM = @HAVE_XSHM@
 HAVE_ZLIB = @HAVE_ZLIB@
 HTML_DIR = @HTML_DIR@
 INSTALL = @INSTALL@
@@ -1388,17 +1410,17 @@ WAVPACK_CFLAGS = @WAVPACK_CFLAGS@
 WAVPACK_LIBS = @WAVPACK_LIBS@
 XDAMAGE_CFLAGS = @XDAMAGE_CFLAGS@
 XDAMAGE_LIBS = @XDAMAGE_LIBS@
+XEXT_CFLAGS = @XEXT_CFLAGS@
+XEXT_LIBS = @XEXT_LIBS@
 XFIXES_CFLAGS = @XFIXES_CFLAGS@
 XFIXES_LIBS = @XFIXES_LIBS@
 XGETTEXT = @XGETTEXT@
 XGETTEXT_015 = @XGETTEXT_015@
 XGETTEXT_EXTRA_OPTIONS = @XGETTEXT_EXTRA_OPTIONS@
-XMKMF = @XMKMF@
+XSHM_CFLAGS = @XSHM_CFLAGS@
 XSHM_LIBS = @XSHM_LIBS@
 X_CFLAGS = @X_CFLAGS@
-X_EXTRA_LIBS = @X_EXTRA_LIBS@
 X_LIBS = @X_LIBS@
-X_PRE_LIBS = @X_PRE_LIBS@
 ZLIB_LIBS = @ZLIB_LIBS@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
@@ -1471,7 +1493,7 @@ TEST_FILES_DIRECTORY = $(top_srcdir)/tests/files
 REGISTRY_ENVIRONMENT = \
 	GST_REGISTRY_1_0=$(CHECK_REGISTRY)
 
-TESTS_ENVIRONMENT = \
+AM_TESTS_ENVIRONMENT = \
 	$(REGISTRY_ENVIRONMENT)					\
 	GST_PLUGIN_SYSTEM_PATH_1_0=				\
 	GST_PLUGIN_PATH_1_0=$(top_builddir)/gst:$(top_builddir)/ext:$(top_builddir)/sys:$(GSTPB_PLUGINS_DIR):$(GST_PLUGINS_DIR)			\
@@ -1499,7 +1521,10 @@ TESTS_ENVIRONMENT = \
 # the core dumps of some machines have PIDs appended
 CLEANFILES = core.* test-registry.*
 @USE_PLUGIN_ALPHA_FALSE@check_alpha = 
-@USE_PLUGIN_ALPHA_TRUE@check_alpha = elements/alphacolor
+@USE_PLUGIN_ALPHA_TRUE@check_alpha = \
+@USE_PLUGIN_ALPHA_TRUE@	elements/alphacolor \
+@USE_PLUGIN_ALPHA_TRUE@	elements/alpha
+
 @USE_PLUGIN_AUDIOFX_FALSE@check_audiofx = 
 @USE_PLUGIN_AUDIOFX_TRUE@check_audiofx = \
 @USE_PLUGIN_AUDIOFX_TRUE@	elements/audioamplify \
@@ -1580,7 +1605,7 @@ CLEANFILES = core.* test-registry.*
 @USE_PLUGIN_MATROSKA_TRUE@	elements/matroskaparse
 
 @USE_PLUGIN_MULTIFILE_FALSE@check_multifile = 
-@USE_PLUGIN_MULTIFILE_TRUE@check_multifile = elements/multifile
+@USE_PLUGIN_MULTIFILE_TRUE@check_multifile = elements/multifile elements/splitmux
 @USE_PLUGIN_REPLAYGAIN_FALSE@check_replaygain = 
 @USE_PLUGIN_REPLAYGAIN_TRUE@check_replaygain = \
 @USE_PLUGIN_REPLAYGAIN_TRUE@	elements/rganalysis \
@@ -1651,6 +1676,7 @@ VALGRIND_TO_FIX = \
 TESTS = $(check_PROGRAMS)
 AM_CFLAGS = $(GST_OBJ_CFLAGS) $(GST_CHECK_CFLAGS) $(CHECK_CFLAGS) \
 	$(GST_OPTION_CFLAGS) $(GST_CFLAGS) -DGST_TEST_FILES_PATH="\"$(TEST_FILES_DIRECTORY)\"" \
+	-DGST_CHECK_TEST_ENVIRONMENT_BEACON="\"GST_PLUGIN_LOADING_WHITELIST\"" \
 	-UG_DISABLE_ASSERT -UG_DISABLE_CAST_CHECKS
 
 LDADD = $(GST_OBJ_LIBS) $(GST_CHECK_LIBS) $(CHECK_LIBS)
@@ -1714,6 +1740,7 @@ elements_rgvolume_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstaudio-$(GST_API_VERSION)
 elements_spectrum_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
 elements_spectrum_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstaudio-$(GST_API_VERSION) $(LDADD)
 elements_alphacolor_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
+elements_alpha_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
 elements_deinterlace_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
 elements_deinterlace_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstvideo-$(GST_API_VERSION) $(LDADD)
 elements_dtmf_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) \
@@ -1735,6 +1762,8 @@ elements_jpegdec_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstapp-$(GST_API_VERSION) -l
 elements_jpegenc_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_BASE_CFLAGS) $(AM_CFLAGS)
 elements_jpegenc_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstapp-$(GST_API_VERSION) $(GST_BASE_LIBS) $(LDADD)
 elements_matroskamux_LDADD = $(GST_BASE_LIBS) $(LDADD) $(LIBM)
+elements_mulawdec_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_CFLAGS) $(AM_CFLAGS)
+elements_mulawenc_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_CFLAGS) $(AM_CFLAGS)
 elements_multifile_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_CFLAGS) $(AM_CFLAGS)
 elements_multifile_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgstvideo-$(GST_API_VERSION) $(GST_LIBS) $(LDADD) $(LIBM)
 elements_qtmux_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_CFLAGS) $(AM_CFLAGS)
@@ -1882,6 +1911,12 @@ elements/ac3parse.$(OBJEXT): elements/$(am__dirstamp) \
 elements/ac3parse$(EXEEXT): $(elements_ac3parse_OBJECTS) $(elements_ac3parse_DEPENDENCIES) $(EXTRA_elements_ac3parse_DEPENDENCIES) elements/$(am__dirstamp)
 	@rm -f elements/ac3parse$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(elements_ac3parse_OBJECTS) $(elements_ac3parse_LDADD) $(LIBS)
+elements/elements_alpha-alpha.$(OBJEXT): elements/$(am__dirstamp) \
+	elements/$(DEPDIR)/$(am__dirstamp)
+
+elements/alpha$(EXEEXT): $(elements_alpha_OBJECTS) $(elements_alpha_DEPENDENCIES) $(EXTRA_elements_alpha_DEPENDENCIES) elements/$(am__dirstamp)
+	@rm -f elements/alpha$(EXEEXT)
+	$(AM_V_CCLD)$(elements_alpha_LINK) $(elements_alpha_OBJECTS) $(elements_alpha_LDADD) $(LIBS)
 elements/elements_alphacolor-alphacolor.$(OBJEXT):  \
 	elements/$(am__dirstamp) elements/$(DEPDIR)/$(am__dirstamp)
 
@@ -2110,18 +2145,18 @@ elements/mpegaudioparse.$(OBJEXT): elements/$(am__dirstamp) \
 elements/mpegaudioparse$(EXEEXT): $(elements_mpegaudioparse_OBJECTS) $(elements_mpegaudioparse_DEPENDENCIES) $(EXTRA_elements_mpegaudioparse_DEPENDENCIES) elements/$(am__dirstamp)
 	@rm -f elements/mpegaudioparse$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(elements_mpegaudioparse_OBJECTS) $(elements_mpegaudioparse_LDADD) $(LIBS)
-elements/mulawdec.$(OBJEXT): elements/$(am__dirstamp) \
-	elements/$(DEPDIR)/$(am__dirstamp)
+elements/elements_mulawdec-mulawdec.$(OBJEXT):  \
+	elements/$(am__dirstamp) elements/$(DEPDIR)/$(am__dirstamp)
 
 elements/mulawdec$(EXEEXT): $(elements_mulawdec_OBJECTS) $(elements_mulawdec_DEPENDENCIES) $(EXTRA_elements_mulawdec_DEPENDENCIES) elements/$(am__dirstamp)
 	@rm -f elements/mulawdec$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(elements_mulawdec_OBJECTS) $(elements_mulawdec_LDADD) $(LIBS)
-elements/mulawenc.$(OBJEXT): elements/$(am__dirstamp) \
-	elements/$(DEPDIR)/$(am__dirstamp)
+	$(AM_V_CCLD)$(elements_mulawdec_LINK) $(elements_mulawdec_OBJECTS) $(elements_mulawdec_LDADD) $(LIBS)
+elements/elements_mulawenc-mulawenc.$(OBJEXT):  \
+	elements/$(am__dirstamp) elements/$(DEPDIR)/$(am__dirstamp)
 
 elements/mulawenc$(EXEEXT): $(elements_mulawenc_OBJECTS) $(elements_mulawenc_DEPENDENCIES) $(EXTRA_elements_mulawenc_DEPENDENCIES) elements/$(am__dirstamp)
 	@rm -f elements/mulawenc$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(elements_mulawenc_OBJECTS) $(elements_mulawenc_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(elements_mulawenc_LINK) $(elements_mulawenc_OBJECTS) $(elements_mulawenc_LDADD) $(LIBS)
 elements/elements_multifile-multifile.$(OBJEXT):  \
 	elements/$(am__dirstamp) elements/$(DEPDIR)/$(am__dirstamp)
 
@@ -2224,6 +2259,12 @@ elements/elements_spectrum-spectrum.$(OBJEXT):  \
 elements/spectrum$(EXEEXT): $(elements_spectrum_OBJECTS) $(elements_spectrum_DEPENDENCIES) $(EXTRA_elements_spectrum_DEPENDENCIES) elements/$(am__dirstamp)
 	@rm -f elements/spectrum$(EXEEXT)
 	$(AM_V_CCLD)$(elements_spectrum_LINK) $(elements_spectrum_OBJECTS) $(elements_spectrum_LDADD) $(LIBS)
+elements/splitmux.$(OBJEXT): elements/$(am__dirstamp) \
+	elements/$(DEPDIR)/$(am__dirstamp)
+
+elements/splitmux$(EXEEXT): $(elements_splitmux_OBJECTS) $(elements_splitmux_DEPENDENCIES) $(EXTRA_elements_splitmux_DEPENDENCIES) elements/$(am__dirstamp)
+	@rm -f elements/splitmux$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(elements_splitmux_OBJECTS) $(elements_splitmux_LDADD) $(LIBS)
 elements/elements_sunaudio-sunaudio.$(OBJEXT):  \
 	elements/$(am__dirstamp) elements/$(DEPDIR)/$(am__dirstamp)
 
@@ -2407,6 +2448,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/avimux.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/avisubtitle.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/capssetter.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_alpha-alpha.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_alphacolor-alphacolor.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_aspectratiocrop-aspectratiocrop.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_audioamplify-audioamplify.Po@am__quote@
@@ -2429,6 +2471,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_jpegdec-jpegdec.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_jpegenc-jpegenc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_level-level.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_mulawdec-mulawdec.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_mulawenc-mulawenc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_multifile-multifile.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_qtmux-qtmux.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_rganalysis-rganalysis.Po@am__quote@
@@ -2458,11 +2502,10 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/matroskamux.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/matroskaparse.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/mpegaudioparse.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/mulawdec.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/mulawenc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/rtp-payloading.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/rtpbin.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/shapewipe.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/splitmux.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/udpsink.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/videobox.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/vp8dec.Po@am__quote@
@@ -2513,6 +2556,20 @@ elements/libparser_la-parser.lo: elements/parser.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/parser.c' object='elements/libparser_la-parser.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libparser_la_CFLAGS) $(CFLAGS) -c -o elements/libparser_la-parser.lo `test -f 'elements/parser.c' || echo '$(srcdir)/'`elements/parser.c
+
+elements/elements_alpha-alpha.o: elements/alpha.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_alpha_CFLAGS) $(CFLAGS) -MT elements/elements_alpha-alpha.o -MD -MP -MF elements/$(DEPDIR)/elements_alpha-alpha.Tpo -c -o elements/elements_alpha-alpha.o `test -f 'elements/alpha.c' || echo '$(srcdir)/'`elements/alpha.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) elements/$(DEPDIR)/elements_alpha-alpha.Tpo elements/$(DEPDIR)/elements_alpha-alpha.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/alpha.c' object='elements/elements_alpha-alpha.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_alpha_CFLAGS) $(CFLAGS) -c -o elements/elements_alpha-alpha.o `test -f 'elements/alpha.c' || echo '$(srcdir)/'`elements/alpha.c
+
+elements/elements_alpha-alpha.obj: elements/alpha.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_alpha_CFLAGS) $(CFLAGS) -MT elements/elements_alpha-alpha.obj -MD -MP -MF elements/$(DEPDIR)/elements_alpha-alpha.Tpo -c -o elements/elements_alpha-alpha.obj `if test -f 'elements/alpha.c'; then $(CYGPATH_W) 'elements/alpha.c'; else $(CYGPATH_W) '$(srcdir)/elements/alpha.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) elements/$(DEPDIR)/elements_alpha-alpha.Tpo elements/$(DEPDIR)/elements_alpha-alpha.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/alpha.c' object='elements/elements_alpha-alpha.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_alpha_CFLAGS) $(CFLAGS) -c -o elements/elements_alpha-alpha.obj `if test -f 'elements/alpha.c'; then $(CYGPATH_W) 'elements/alpha.c'; else $(CYGPATH_W) '$(srcdir)/elements/alpha.c'; fi`
 
 elements/elements_alphacolor-alphacolor.o: elements/alphacolor.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_alphacolor_CFLAGS) $(CFLAGS) -MT elements/elements_alphacolor-alphacolor.o -MD -MP -MF elements/$(DEPDIR)/elements_alphacolor-alphacolor.Tpo -c -o elements/elements_alphacolor-alphacolor.o `test -f 'elements/alphacolor.c' || echo '$(srcdir)/'`elements/alphacolor.c
@@ -2821,6 +2878,34 @@ elements/elements_level-level.obj: elements/level.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/level.c' object='elements/elements_level-level.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_level_CFLAGS) $(CFLAGS) -c -o elements/elements_level-level.obj `if test -f 'elements/level.c'; then $(CYGPATH_W) 'elements/level.c'; else $(CYGPATH_W) '$(srcdir)/elements/level.c'; fi`
+
+elements/elements_mulawdec-mulawdec.o: elements/mulawdec.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_mulawdec_CFLAGS) $(CFLAGS) -MT elements/elements_mulawdec-mulawdec.o -MD -MP -MF elements/$(DEPDIR)/elements_mulawdec-mulawdec.Tpo -c -o elements/elements_mulawdec-mulawdec.o `test -f 'elements/mulawdec.c' || echo '$(srcdir)/'`elements/mulawdec.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) elements/$(DEPDIR)/elements_mulawdec-mulawdec.Tpo elements/$(DEPDIR)/elements_mulawdec-mulawdec.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/mulawdec.c' object='elements/elements_mulawdec-mulawdec.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_mulawdec_CFLAGS) $(CFLAGS) -c -o elements/elements_mulawdec-mulawdec.o `test -f 'elements/mulawdec.c' || echo '$(srcdir)/'`elements/mulawdec.c
+
+elements/elements_mulawdec-mulawdec.obj: elements/mulawdec.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_mulawdec_CFLAGS) $(CFLAGS) -MT elements/elements_mulawdec-mulawdec.obj -MD -MP -MF elements/$(DEPDIR)/elements_mulawdec-mulawdec.Tpo -c -o elements/elements_mulawdec-mulawdec.obj `if test -f 'elements/mulawdec.c'; then $(CYGPATH_W) 'elements/mulawdec.c'; else $(CYGPATH_W) '$(srcdir)/elements/mulawdec.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) elements/$(DEPDIR)/elements_mulawdec-mulawdec.Tpo elements/$(DEPDIR)/elements_mulawdec-mulawdec.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/mulawdec.c' object='elements/elements_mulawdec-mulawdec.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_mulawdec_CFLAGS) $(CFLAGS) -c -o elements/elements_mulawdec-mulawdec.obj `if test -f 'elements/mulawdec.c'; then $(CYGPATH_W) 'elements/mulawdec.c'; else $(CYGPATH_W) '$(srcdir)/elements/mulawdec.c'; fi`
+
+elements/elements_mulawenc-mulawenc.o: elements/mulawenc.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_mulawenc_CFLAGS) $(CFLAGS) -MT elements/elements_mulawenc-mulawenc.o -MD -MP -MF elements/$(DEPDIR)/elements_mulawenc-mulawenc.Tpo -c -o elements/elements_mulawenc-mulawenc.o `test -f 'elements/mulawenc.c' || echo '$(srcdir)/'`elements/mulawenc.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) elements/$(DEPDIR)/elements_mulawenc-mulawenc.Tpo elements/$(DEPDIR)/elements_mulawenc-mulawenc.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/mulawenc.c' object='elements/elements_mulawenc-mulawenc.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_mulawenc_CFLAGS) $(CFLAGS) -c -o elements/elements_mulawenc-mulawenc.o `test -f 'elements/mulawenc.c' || echo '$(srcdir)/'`elements/mulawenc.c
+
+elements/elements_mulawenc-mulawenc.obj: elements/mulawenc.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_mulawenc_CFLAGS) $(CFLAGS) -MT elements/elements_mulawenc-mulawenc.obj -MD -MP -MF elements/$(DEPDIR)/elements_mulawenc-mulawenc.Tpo -c -o elements/elements_mulawenc-mulawenc.obj `if test -f 'elements/mulawenc.c'; then $(CYGPATH_W) 'elements/mulawenc.c'; else $(CYGPATH_W) '$(srcdir)/elements/mulawenc.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) elements/$(DEPDIR)/elements_mulawenc-mulawenc.Tpo elements/$(DEPDIR)/elements_mulawenc-mulawenc.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/mulawenc.c' object='elements/elements_mulawenc-mulawenc.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_mulawenc_CFLAGS) $(CFLAGS) -c -o elements/elements_mulawenc-mulawenc.obj `if test -f 'elements/mulawenc.c'; then $(CYGPATH_W) 'elements/mulawenc.c'; else $(CYGPATH_W) '$(srcdir)/elements/mulawenc.c'; fi`
 
 elements/elements_multifile-multifile.o: elements/multifile.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_multifile_CFLAGS) $(CFLAGS) -MT elements/elements_multifile-multifile.o -MD -MP -MF elements/$(DEPDIR)/elements_multifile-multifile.Tpo -c -o elements/elements_multifile-multifile.o `test -f 'elements/multifile.c' || echo '$(srcdir)/'`elements/multifile.c
@@ -3403,6 +3488,13 @@ elements/alphacolor.log: elements/alphacolor$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+elements/alpha.log: elements/alpha$(EXEEXT)
+	@p='elements/alpha$(EXEEXT)'; \
+	b='elements/alpha'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 elements/audioamplify.log: elements/audioamplify$(EXEEXT)
 	@p='elements/audioamplify$(EXEEXT)'; \
 	b='elements/audioamplify'; \
@@ -3700,6 +3792,13 @@ elements/matroskaparse.log: elements/matroskaparse$(EXEEXT)
 elements/multifile.log: elements/multifile$(EXEEXT)
 	@p='elements/multifile$(EXEEXT)'; \
 	b='elements/multifile'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+elements/splitmux.log: elements/splitmux$(EXEEXT)
+	@p='elements/splitmux$(EXEEXT)'; \
+	b='elements/splitmux'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
@@ -4153,37 +4252,38 @@ LOOPS ?= 10
 # run any given test by running make test.check
 # if the test fails, run it again at at least debug level 2
 %.check: %
-	@$(TESTS_ENVIRONMENT)					\
+	@$(AM_TESTS_ENVIRONMENT)					\
 	CK_DEFAULT_TIMEOUT=20					\
 	$* ||							\
-	$(TESTS_ENVIRONMENT)					\
+	$(AM_TESTS_ENVIRONMENT)					\
 	GST_DEBUG=$$GST_DEBUG,*:2				\
 	CK_DEFAULT_TIMEOUT=20					\
 	$*
 
 # just like 'check', but don't run it again if it fails (useful for debugging)
 %.check-norepeat: %
-	@$(TESTS_ENVIRONMENT)					\
+	@$(AM_TESTS_ENVIRONMENT)					\
 	CK_DEFAULT_TIMEOUT=20					\
 	$*
 
 # run any given test in a loop
 %.torture: %
 	@for i in `seq 1 $(LOOPS)`; do				\
-	$(TESTS_ENVIRONMENT)					\
+	$(AM_TESTS_ENVIRONMENT)					\
 	CK_DEFAULT_TIMEOUT=20					\
 	$*; done
 
 # run any given test in an infinite loop
 %.forever: %
 	@while true; do						\
-	$(TESTS_ENVIRONMENT)					\
+	$(AM_TESTS_ENVIRONMENT)					\
 	CK_DEFAULT_TIMEOUT=20					\
 	$* || break; done
 
 # valgrind any given test by running make test.valgrind
 %.valgrind: %
-	@$(TESTS_ENVIRONMENT)					\
+	@valgrind_log=$(subst /,-,$*-valgrind.log);		\
+	$(AM_TESTS_ENVIRONMENT)					\
 	CK_DEFAULT_TIMEOUT=360					\
 	G_SLICE=always-malloc					\
 	$(LIBTOOL) --mode=execute				\
@@ -4192,16 +4292,16 @@ LOOPS ?= 10
 	--tool=memcheck --leak-check=full --trace-children=yes	\
 	--show-possibly-lost=no                                 \
 	--leak-resolution=high --num-callers=20			\
-	./$* 2>&1 | tee valgrind.log
-	@if grep "==" valgrind.log > /dev/null 2>&1; then	\
-	    rm valgrind.log;					\
+	./$* 2>&1 | tee $$valgrind_log ;			\
+	if grep "==" $$valgrind_log > /dev/null 2>&1; then	\
+	    rm $$valgrind_log;					\
 	    exit 1;						\
-	fi
-	@rm valgrind.log
+	fi ;							\
+	rm $$valgrind_log
 
 # valgrind any given test and generate suppressions for it
 %.valgrind.gen-suppressions: %
-	@$(TESTS_ENVIRONMENT)					\
+	@$(AM_TESTS_ENVIRONMENT)					\
 	CK_DEFAULT_TIMEOUT=360					\
 	G_SLICE=always-malloc					\
 	$(LIBTOOL) --mode=execute				\
@@ -4231,7 +4331,7 @@ LOOPS ?= 10
 
 # gdb any given test by running make test.gdb
 %.gdb: %
-	@$(TESTS_ENVIRONMENT)					\
+	@$(AM_TESTS_ENVIRONMENT)					\
 	CK_FORK=no						\
 	$(LIBTOOL) --mode=execute				\
 	gdb $*
@@ -4284,19 +4384,13 @@ forever: $(TESTS)
 # valgrind all tests
 valgrind: $(TESTS)
 	@echo "Valgrinding tests ..."
-	@failed=0;							\
+	@failed=0; valgrind_targets="";					\
 	for t in $(filter-out $(VALGRIND_TESTS_DISABLE),$(TESTS)); do	\
-		$(MAKE) $$t.valgrind;					\
-		if test "$$?" -ne 0; then                               \
-			echo "Valgrind error for test $$t";		\
-			failed=`expr $$failed + 1`;			\
-			whicht="$$whicht $$t";				\
-		fi;							\
+	  valgrind_targets="$$valgrind_targets $$t.valgrind";		\
 	done;								\
-	if test "$$failed" -ne 0; then					\
-		echo "$$failed tests had leaks or errors under valgrind:";	\
-		echo "$$whicht";					\
-		false;							\
+	if ! $(MAKE) $$valgrind_targets ; then				\
+	  echo "Some tests had leaks or errors under valgrind";		\
+	  false;							\
 	fi
 
 # valgrind all tests until failure
@@ -4341,10 +4435,13 @@ valgrind.gen-suppressions: $(TESTS)
 	fi
 inspect:
 	@echo "Inspecting features ..."
-	@for e in `$(TESTS_ENVIRONMENT) $(GST_INSPECT) | head -n -2 	\
+	@for e in `$(AM_TESTS_ENVIRONMENT) $(GST_INSPECT) | head -n -2 	\
 	  | cut -d: -f2`;						\
 	  do echo Inspecting $$e;					\
 	     $(GST_INSPECT) $$e > /dev/null 2>&1; done
+
+# build all tests
+build-checks: $(TESTS)
 
 help:
 	@echo
@@ -4368,6 +4465,7 @@ help:
 	@echo "make (dir)/(test).valgrind.gen-suppressions -- generate suppressions"
 	@echo "                                               and save to suppressions.log"
 	@echo "make inspect                       -- inspect all plugin features"
+	@echo "make build-checks                  -- build all checks (but don't run them)"
 	@echo
 	@echo
 	@echo "Additionally, you can use the GST_CHECKS environment variable to"

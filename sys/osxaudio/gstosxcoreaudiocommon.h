@@ -40,14 +40,14 @@ gboolean gst_core_audio_io_proc_start                     (GstCoreAudio * core_a
 
 gboolean gst_core_audio_io_proc_stop                      (GstCoreAudio * core_audio);
 
-AudioBufferList * buffer_list_alloc                       (int channels, int size);
+AudioBufferList * buffer_list_alloc                       (UInt32 channels, UInt32 size, gboolean interleaved);
 
 void buffer_list_free                                     (AudioBufferList * list);
 
 gboolean gst_core_audio_set_format                        (GstCoreAudio * core_audio,
                                                            AudioStreamBasicDescription format);
 
-gboolean gst_core_audio_set_channels_layout               (GstCoreAudio * core_audio,
+gboolean gst_core_audio_set_channel_layout                (GstCoreAudio * core_audio,
                                                            gint channels, GstCaps * caps);
 
 gboolean gst_core_audio_open_device                       (GstCoreAudio *core_audio,

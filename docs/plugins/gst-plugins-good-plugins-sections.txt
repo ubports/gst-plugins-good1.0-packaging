@@ -904,6 +904,8 @@ GST_IS_GOOM_CLASS
 <FILE>element-rtpbin</FILE>
 <TITLE>rtpbin</TITLE>
 GstRtpBin
+RTPJitterBufferMode
+GstRTCPSync
 <SUBSECTION Standard>
 GstRtpBinPrivate
 GstRtpBinClass
@@ -2011,6 +2013,34 @@ GST_IS_SPLIT_FILE_SRC
 GST_IS_SPLIT_FILE_SRC_CLASS
 GST_TYPE_SPLIT_FILE_SRC
 gst_split_file_src_get_type
+</SECTION>
+
+<SECTION>
+<FILE>element-splitmuxsrc</FILE>
+<TITLE>splitmuxsrc</TITLE>
+GstSplitMuxSrc
+<SUBSECTION Standard>
+GstSplitMuxSrcClass
+GST_SPLITMUX_SRC
+GST_SPLITMUX_SRC_CLASS
+GST_IS_SPLITMUX_SRC
+GST_IS_SPLITMUX_SRC_CLASS
+GST_TYPE_SPLITMUX_SRC
+gst_split_mux_src_get_type
+</SECTION>
+
+<SECTION>
+<FILE>element-splitmuxsink</FILE>
+<TITLE>splitmuxsink</TITLE>
+GstSplitMuxSink
+<SUBSECTION Standard>
+GstSplitMuxSinkClass
+GST_SPLITMUX_SINK
+GST_SPLITMUX_SINK_CLASS
+GST_IS_SPLITMUX_SINK
+GST_IS_SPLITMUX_SINK_CLASS
+GST_TYPE_SPLITMUX_SINK
+gst_split_mux_sink_get_type
 </SECTION>
 
 <SECTION>

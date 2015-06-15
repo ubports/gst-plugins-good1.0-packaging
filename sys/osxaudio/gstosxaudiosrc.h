@@ -57,6 +57,8 @@ G_BEGIN_DECLS
   (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_OSX_AUDIO_SRC,GstOsxAudioSrc))
 #define GST_OSX_AUDIO_SRC_CLASS(klass) \
   (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_OSX_AUDIO_SRC,GstOsxAudioSrcClass))
+#define GST_IS_OSX_AUDIO_SRC(obj) \
+  (G_TYPE_CHECK_INSTANCE_TYPE((obj),GST_TYPE_OSX_AUDIO_SRC))
 
 typedef struct _GstOsxAudioSrc GstOsxAudioSrc;
 typedef struct _GstOsxAudioSrcClass GstOsxAudioSrcClass;
@@ -67,11 +69,10 @@ struct _GstOsxAudioSrc
 
   AudioDeviceID device_id;
 
-  /* actual number of channels reported by input device */
-  int deviceChannels;
+  GstCaps *cached_caps;
 };
 
-struct _GstOsxAudioSrcClass 
+struct _GstOsxAudioSrcClass
 {
   GstAudioBaseSrcClass parent_class;
 };

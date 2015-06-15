@@ -955,19 +955,21 @@ gst_rtp_h264_depay_process (GstRTPBaseDepayload * depayload, GstBuffer * buf)
         }
 
         outsize = gst_adapter_available (rtph264depay->adapter);
-        outbuf = gst_adapter_take_buffer (rtph264depay->adapter, outsize);
-
-        outbuf = gst_rtp_h264_depay_handle_nal (rtph264depay, outbuf, timestamp,
-            marker);
+        if (outsize > 0) {
+          outbuf = gst_adapter_take_buffer (rtph264depay->adapter, outsize);
+          outbuf =
+              gst_rtp_h264_depay_handle_nal (rtph264depay, outbuf, timestamp,
+              marker);
+        }
         break;
       }
       case 26:
         /* MTAP16    Multi-time aggregation packet      5.7.2 */
-        header_len = 5;
+        // header_len = 5;
         /* fallthrough, not implemented */
       case 27:
         /* MTAP24    Multi-time aggregation packet      5.7.2 */
-        header_len = 6;
+        // header_len = 6;
         goto not_implemented;
         break;
       case 28:

@@ -72,8 +72,7 @@ enum
 {
   PROP_0,
   PROP_SPROP_PARAMETER_SETS,
-  PROP_CONFIG_INTERVAL,
-  PROP_LAST
+  PROP_CONFIG_INTERVAL
 };
 
 #define IS_ACCESS_UNIT(x) (((x) > 0x00) && ((x) < 0x06))
@@ -390,12 +389,21 @@ gst_rtp_h264_pay_set_sps_pps (GstRTPBasePayload * basepayload)
   }
 
   if (G_LIKELY (count)) {
-    /* profile is 24 bit. Force it to respect the limit */
-    profile = g_strdup_printf ("%06x", payloader->profile & 0xffffff);
-    /* combine into output caps */
-    res = gst_rtp_base_payload_set_outcaps (basepayload,
-        "sprop-parameter-sets", G_TYPE_STRING, sprops->str, NULL);
-    g_free (profile);
+    if (payloader->profile != 0) {
+      /* profile is 24 bit. Force it to respect the limit */
+      profile = g_strdup_printf ("%06x", payloader->profile & 0xffffff);
+      /* combine into output caps */
+      res = gst_rtp_base_payload_set_outcaps (basepayload,
+          "packetization-mode", G_TYPE_STRING, "1",
+          "profile-level-id", G_TYPE_STRING, profile,
+          "sprop-parameter-sets", G_TYPE_STRING, sprops->str, NULL);
+      g_free (profile);
+    } else {
+      res = gst_rtp_base_payload_set_outcaps (basepayload,
+          "packetization-mode", G_TYPE_STRING, "1",
+          "sprop-parameter-sets", G_TYPE_STRING, sprops->str, NULL);
+    }
+
   } else {
     res = gst_rtp_base_payload_set_outcaps (basepayload, NULL);
   }

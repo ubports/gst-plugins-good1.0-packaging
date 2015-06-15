@@ -48,10 +48,7 @@
 
 G_BEGIN_DECLS
 
-#include <gst/rtsp/gstrtspconnection.h>
-#include <gst/rtsp/gstrtspmessage.h>
-#include <gst/rtsp/gstrtspurl.h>
-#include <gst/rtsp/gstrtsprange.h>
+#include <gst/rtsp/rtsp.h>
 #include <gio/gio.h>
 
 #include "gstrtspext.h"
@@ -157,6 +154,7 @@ struct _GstRTSPStream {
   gboolean      is_multicast;
   guint         ttl;
 
+  GstStructure     *rtx_pt_map;
 };
 
 /**
@@ -184,7 +182,7 @@ struct _GstRTSPSrc {
   gboolean         need_range;
   gboolean         skip;
   gint             free_channel;
-  GstEvent        *start_segment;
+  gboolean         need_segment;
   GstClockTime     base_time;
 
   /* UDP mode loop */
@@ -236,6 +234,7 @@ struct _GstRTSPSrc {
   GstStructure     *sdes;
   GTlsCertificateFlags tls_validation_flags;
   GTlsDatabase     *tls_database;
+  gboolean          do_retransmission;
 
   /* state */
   GstRTSPState       state;

@@ -33,6 +33,10 @@ GObject
           GstMuLawEnc
           GstSpeexEnc
           GstWavpackEnc
+        GstAudioVisualizer-ExtGom
+          GstGoom
+        GstAudioVisualizer-ExtGoom2k1
+          GstGoom2k1
         GstAviDemux
         GstAviMux
         GstAviSubtitle
@@ -152,6 +156,8 @@ GObject
           GstRTSPSrc
           GstRgVolume
           GstRtpBin
+          GstSplitMuxSink
+          GstSplitMuxSrc
         GstCutter
         GstDVDec
         GstDVDemux
@@ -162,8 +168,6 @@ GObject
         GstFlvMux
         GstFlxDec
         GstGdkPixbufDec
-        GstGoom
-        GstGoom2k1
         GstICYDemux
         GstISMLMux
         GstImageFreeze
@@ -287,10 +291,10 @@ GObject
           GstPngEnc
           GstVP8Enc
           GstVP9Enc
+          GstY4mEncode
         GstVideoMixer2
         GstWavEnc
         GstWavParse
-        GstY4mEncode
       GstPad
         GstInterleavePad
         GstVideoMixer2Pad

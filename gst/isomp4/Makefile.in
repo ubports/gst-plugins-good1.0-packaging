@@ -104,7 +104,6 @@ am__aclocal_m4_deps = $(top_srcdir)/common/m4/as-ac-expand.m4 \
 	$(top_srcdir)/common/m4/gst-platform.m4 \
 	$(top_srcdir)/common/m4/gst-plugin-docs.m4 \
 	$(top_srcdir)/common/m4/gst-plugindir.m4 \
-	$(top_srcdir)/common/m4/gst-x11.m4 \
 	$(top_srcdir)/common/m4/gst.m4 \
 	$(top_srcdir)/common/m4/gtk-doc.m4 \
 	$(top_srcdir)/common/m4/orc.m4 $(top_srcdir)/common/m4/pkg.m4 \
@@ -155,7 +154,7 @@ LTLIBRARIES = $(plugin_LTLIBRARIES)
 am__DEPENDENCIES_1 =
 libgstisomp4_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1)
 am_libgstisomp4_la_OBJECTS = libgstisomp4_la-isomp4-plugin.lo \
 	libgstisomp4_la-gstrtpxqtdepay.lo libgstisomp4_la-qtdemux.lo \
 	libgstisomp4_la-qtdemux_types.lo \
@@ -164,7 +163,7 @@ am_libgstisomp4_la_OBJECTS = libgstisomp4_la-isomp4-plugin.lo \
 	libgstisomp4_la-gstqtmoovrecover.lo libgstisomp4_la-atoms.lo \
 	libgstisomp4_la-atomsrecovery.lo \
 	libgstisomp4_la-descriptors.lo libgstisomp4_la-properties.lo \
-	libgstisomp4_la-gstqtmuxmap.lo
+	libgstisomp4_la-gstqtmuxmap.lo libgstisomp4_la-gstisoff.lo
 libgstisomp4_la_OBJECTS = $(am_libgstisomp4_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -367,9 +366,6 @@ HAVE_AVC1394 = @HAVE_AVC1394@
 HAVE_CXX = @HAVE_CXX@
 HAVE_DIRECTSOUND = @HAVE_DIRECTSOUND@
 HAVE_ROM1394 = @HAVE_ROM1394@
-HAVE_SPEEX = @HAVE_SPEEX@
-HAVE_X = @HAVE_X@
-HAVE_XSHM = @HAVE_XSHM@
 HAVE_ZLIB = @HAVE_ZLIB@
 HTML_DIR = @HTML_DIR@
 INSTALL = @INSTALL@
@@ -487,17 +483,17 @@ WAVPACK_CFLAGS = @WAVPACK_CFLAGS@
 WAVPACK_LIBS = @WAVPACK_LIBS@
 XDAMAGE_CFLAGS = @XDAMAGE_CFLAGS@
 XDAMAGE_LIBS = @XDAMAGE_LIBS@
+XEXT_CFLAGS = @XEXT_CFLAGS@
+XEXT_LIBS = @XEXT_LIBS@
 XFIXES_CFLAGS = @XFIXES_CFLAGS@
 XFIXES_LIBS = @XFIXES_LIBS@
 XGETTEXT = @XGETTEXT@
 XGETTEXT_015 = @XGETTEXT_015@
 XGETTEXT_EXTRA_OPTIONS = @XGETTEXT_EXTRA_OPTIONS@
-XMKMF = @XMKMF@
+XSHM_CFLAGS = @XSHM_CFLAGS@
 XSHM_LIBS = @XSHM_LIBS@
 X_CFLAGS = @X_CFLAGS@
-X_EXTRA_LIBS = @X_EXTRA_LIBS@
 X_LIBS = @X_LIBS@
-X_PRE_LIBS = @X_PRE_LIBS@
 ZLIB_LIBS = @ZLIB_LIBS@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
@@ -572,13 +568,13 @@ libgstisomp4_la_LIBADD = \
     -lgstrtp-@GST_API_VERSION@ \
     -lgsttag-@GST_API_VERSION@ \
     -lgstpbutils-@GST_API_VERSION@ \
-    $(GST_BASE_LIBS) $(GST_LIBS) $(ZLIB_LIBS) $(LIBM)
+    $(GST_BASE_LIBS) $(GST_LIBS) $(ZLIB_LIBS)
 
 libgstisomp4_la_LDFLAGS = ${GST_PLUGIN_LDFLAGS}
 libgstisomp4_la_SOURCES = isomp4-plugin.c gstrtpxqtdepay.c \
 	qtdemux.c qtdemux_types.c qtdemux_dump.c qtdemux_lang.c \
 	gstqtmux.c gstqtmoovrecover.c atoms.c atomsrecovery.c descriptors.c \
-	properties.c gstqtmuxmap.c
+	properties.c gstqtmuxmap.c gstisoff.c
 
 libgstisomp4_la_LIBTOOLFLAGS = $(GST_PLUGIN_LIBTOOLFLAGS)
 noinst_HEADERS = \
@@ -596,6 +592,7 @@ noinst_HEADERS = \
 	descriptors.h    \
 	properties.h     \
 	fourcc.h         \
+	gstisoff.h       \
 	gstqtmuxmap.h
 
 EXTRA_DIST = \
@@ -684,6 +681,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstisomp4_la-atoms.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstisomp4_la-atomsrecovery.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstisomp4_la-descriptors.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstisomp4_la-gstisoff.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstisomp4_la-gstqtmoovrecover.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstisomp4_la-gstqtmux.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstisomp4_la-gstqtmuxmap.Plo@am__quote@
@@ -809,6 +807,13 @@ libgstisomp4_la-gstqtmuxmap.lo: gstqtmuxmap.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstqtmuxmap.c' object='libgstisomp4_la-gstqtmuxmap.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstisomp4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -c -o libgstisomp4_la-gstqtmuxmap.lo `test -f 'gstqtmuxmap.c' || echo '$(srcdir)/'`gstqtmuxmap.c
+
+libgstisomp4_la-gstisoff.lo: gstisoff.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstisomp4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -MT libgstisomp4_la-gstisoff.lo -MD -MP -MF $(DEPDIR)/libgstisomp4_la-gstisoff.Tpo -c -o libgstisomp4_la-gstisoff.lo `test -f 'gstisoff.c' || echo '$(srcdir)/'`gstisoff.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstisomp4_la-gstisoff.Tpo $(DEPDIR)/libgstisomp4_la-gstisoff.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstisoff.c' object='libgstisomp4_la-gstisoff.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstisomp4_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) $(CFLAGS) -c -o libgstisomp4_la-gstisoff.lo `test -f 'gstisoff.c' || echo '$(srcdir)/'`gstisoff.c
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -1023,20 +1028,6 @@ uninstall-am: uninstall-pluginLTLIBRARIES
 	pdf pdf-am ps ps-am tags tags-am uninstall uninstall-am \
 	uninstall-pluginLTLIBRARIES
 
-
-Android.mk: Makefile.am $(BUILT_SOURCES)
-	androgenizer \
-	-:PROJECT libgstisomp4 -:SHARED libgstisomp4 \
-	 -:TAGS eng debug \
-         -:REL_TOP $(top_srcdir) -:ABS_TOP $(abs_top_srcdir) \
-	 -:SOURCES $(libgstisomp4_la_SOURCES) \
-	 -:CFLAGS $(DEFS) $(DEFAULT_INCLUDES) $(CPPFLAGS) $(libgstisomp4_la_CFLAGS) \
-	 -:LDFLAGS $(libgstisomp4_la_LDFLAGS) \
-	           $(libgstisomp4_la_LIBADD) \
-	           -ldl \
-	 -:PASSTHROUGH LOCAL_ARM_MODE:=arm \
-		       LOCAL_MODULE_PATH:='$$(TARGET_OUT)/lib/gstreamer-0.10' \
-	> $@
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

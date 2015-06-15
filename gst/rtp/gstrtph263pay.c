@@ -461,13 +461,43 @@ gst_rtp_h263_pay_finalize (GObject * object)
 static gboolean
 gst_rtp_h263_pay_setcaps (GstRTPBasePayload * payload, GstCaps * caps)
 {
+  GstStructure *s = gst_caps_get_structure (caps, 0);
+  gint width, height;
+  gchar *framesize = NULL;
   gboolean res;
+
+  if (gst_structure_has_field (s, "width") &&
+      gst_structure_has_field (s, "height")) {
+    if (!gst_structure_get_int (s, "width", &width) || width <= 0) {
+      goto invalid_dimension;
+    }
+
+    if (!gst_structure_get_int (s, "height", &height) || height <= 0) {
+      goto invalid_dimension;
+    }
+
+    framesize = g_strdup_printf ("%d-%d", width, height);
+  }
 
   payload->pt = GST_RTP_PAYLOAD_H263;
   gst_rtp_base_payload_set_options (payload, "video", TRUE, "H263", 90000);
-  res = gst_rtp_base_payload_set_outcaps (payload, NULL);
+
+  if (framesize != NULL) {
+    res = gst_rtp_base_payload_set_outcaps (payload,
+        "a-framesize", G_TYPE_STRING, framesize, NULL);
+  } else {
+    res = gst_rtp_base_payload_set_outcaps (payload, NULL);
+  }
+  g_free (framesize);
 
   return res;
+
+  /* ERRORS */
+invalid_dimension:
+  {
+    GST_ERROR_OBJECT (payload, "Invalid width/height from caps");
+    return FALSE;
+  }
 }
 
 static void
@@ -1384,12 +1414,11 @@ gst_rtp_h263_pay_mode_B_fragment (GstRtpH263Pay * rtph263pay,
 
 
     /*---------- MODE B MODE FRAGMENTATION ----------*/
-  GstRtpH263PayMB *mac;
+  GstRtpH263PayMB *mac = NULL;
   guint max_payload_size;
   GstRtpH263PayBoundry boundry;
   guint mb;
-  //TODO remove m
-  GstRtpH263PayMB *m;
+  guint8 ebit;
 
   guint first = 0;
   guint payload_len;
@@ -1482,15 +1511,16 @@ gst_rtp_h263_pay_mode_B_fragment (GstRtpH263Pay * rtph263pay,
 
   // We are on MB layer
 
-  m = mac = gst_rtp_h263_pay_mb_new (&boundry, 0);
+  mac = gst_rtp_h263_pay_mb_new (&boundry, 0);
   for (mb = 0; mb < format_props[context->piclayer->ptype_srcformat][1]; mb++) {
 
     GST_DEBUG ("================ START MB %d =================", mb);
 
     //Find next macroblock boundaries
+    ebit = mac->ebit;
     if (!(mac = gst_rtp_h263_pay_B_mbfinder (context, gob, mac, mb))) {
 
-      GST_DEBUG ("Error decoding MB - sbit: %d", 8 - m->ebit);
+      GST_DEBUG ("Error decoding MB - sbit: %d", 8 - ebit);
       GST_ERROR ("Error decoding in GOB");
 
       goto decode_error;
@@ -1513,7 +1543,6 @@ gst_rtp_h263_pay_mode_B_fragment (GstRtpH263Pay * rtph263pay,
       gob->end = mac->end;
       break;
     }
-    m = mac;
     GST_DEBUG ("Found MB: mba: %d start: %p end: %p len: %d sbit: %d ebit: %d",
         mac->mba, mac->start, mac->end, mac->length, mac->sbit, mac->ebit);
     GST_DEBUG ("================ END MB %d =================", mb);
@@ -1538,7 +1567,7 @@ gst_rtp_h263_pay_mode_B_fragment (GstRtpH263Pay * rtph263pay,
       if (gst_rtp_h263_pay_B_fragment_push (rtph263pay, context, gob, first,
               mb - 1, &boundry)) {
         GST_ERROR ("Oooops, there was an error sending");
-        return FALSE;
+        goto decode_error;
       }
 
       payload_len = 0;
@@ -1556,15 +1585,17 @@ gst_rtp_h263_pay_mode_B_fragment (GstRtpH263Pay * rtph263pay,
     if (gst_rtp_h263_pay_B_fragment_push (rtph263pay, context, gob, first,
             mb - 1, &boundry)) {
       GST_ERROR ("Oooops, there was an error sending!");
-      return FALSE;
+      goto decode_error;
     }
   }
 
     /*---------- END OF MODE B FRAGMENTATION ----------*/
 
+  gst_rtp_h263_pay_mb_destroy (mac);
   return TRUE;
 
 decode_error:
+  gst_rtp_h263_pay_mb_destroy (mac);
   return FALSE;
 }
 

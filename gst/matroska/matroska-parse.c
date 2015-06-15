@@ -79,9 +79,7 @@ GST_DEBUG_CATEGORY_STATIC (matroskaparse_debug);
 
 enum
 {
-  ARG_0,
-  ARG_METADATA,
-  ARG_STREAMINFO
+  PROP_0
 };
 
 static GstStaticPadTemplate sink_templ = GST_STATIC_PAD_TEMPLATE ("sink",
@@ -1071,6 +1069,27 @@ gst_matroska_parse_handle_src_query (GstPad * pad, GstObject * parent,
   return ret;
 }
 
+static void
+gst_matroska_parse_send_tags (GstMatroskaParse * parse)
+{
+  if (G_UNLIKELY (parse->common.global_tags_changed)) {
+    GstEvent *tag_event;
+    gst_tag_list_add (parse->common.global_tags, GST_TAG_MERGE_REPLACE,
+        GST_TAG_CONTAINER_FORMAT, "Matroska", NULL);
+    GST_DEBUG_OBJECT (parse, "Sending global_tags %p : %" GST_PTR_FORMAT,
+        parse->common.global_tags, parse->common.global_tags);
+
+    /* Send a copy as we want to keep our local ref writable to add more tags
+     * if any are found */
+    tag_event =
+        gst_event_new_tag (gst_tag_list_copy (parse->common.global_tags));
+
+    gst_pad_push_event (parse->srcpad, tag_event);
+
+    parse->common.global_tags_changed = FALSE;
+  }
+}
+
 /* returns FALSE if there are no pads to deliver event to,
  * otherwise TRUE (whatever the outcome of event sending),
  * takes ownership of the passed event! */
@@ -1221,6 +1240,7 @@ gst_matroska_parse_handle_seek_event (GstMatroskaParse * parse,
   GstMatroskaTrackContext *track = NULL;
   GstSegment seeksegment = { 0, };
   gboolean update;
+  GstSearchMode snap_dir;
 
   if (pad)
     track = gst_pad_get_element_private (pad);
@@ -1248,11 +1268,16 @@ gst_matroska_parse_handle_seek_event (GstMatroskaParse * parse,
 
   GST_DEBUG_OBJECT (parse, "New segment %" GST_SEGMENT_FORMAT, &seeksegment);
 
+  if (seeksegment.rate < 0)
+    snap_dir = GST_SEARCH_MODE_AFTER;
+  else
+    snap_dir = GST_SEARCH_MODE_BEFORE;
+
   /* check sanity before we start flushing and all that */
   GST_OBJECT_LOCK (parse);
   if ((entry = gst_matroska_read_common_do_index_seek (&parse->common, track,
               seeksegment.position, &parse->seek_index, &parse->seek_entry,
-              FALSE)) == NULL) {
+              snap_dir)) == NULL) {
     /* pull mode without index can scan later on */
     GST_DEBUG_OBJECT (parse, "No matching seek entry in index");
     GST_OBJECT_UNLOCK (parse);
@@ -2408,7 +2433,7 @@ static GstFlowReturn
 gst_matroska_parse_output (GstMatroskaParse * parse, GstBuffer * buffer,
     gboolean keyframe)
 {
-  GstFlowReturn ret = GST_FLOW_OK;
+  GstFlowReturn ret;
 
   if (!parse->pushed_headers) {
     GstCaps *caps;
@@ -2452,6 +2477,10 @@ gst_matroska_parse_output (GstMatroskaParse * parse, GstBuffer * buffer,
     GST_BUFFER_FLAG_SET (buf, GST_BUFFER_FLAG_DELTA_UNIT);
 
     ret = gst_pad_push (parse->srcpad, buf);
+    if (ret != GST_FLOW_OK) {
+      GST_WARNING_OBJECT (parse, "Failed to push buffer");
+      return ret;
+    }
 
     parse->pushed_headers = TRUE;
   }
@@ -2466,9 +2495,8 @@ gst_matroska_parse_output (GstMatroskaParse * parse, GstBuffer * buffer,
   } else {
     GST_BUFFER_TIMESTAMP (buffer) = parse->last_timestamp;
   }
-  ret = gst_pad_push (parse->srcpad, gst_buffer_ref (buffer));
 
-  return ret;
+  return gst_pad_push (parse->srcpad, gst_buffer_ref (buffer));
 }
 
 static GstFlowReturn
@@ -2558,6 +2586,8 @@ gst_matroska_parse_parse_id (GstMatroskaParse * parse, guint32 id,
           if (!parse->common.segmentinfo_parsed) {
             ret = gst_matroska_read_common_parse_info (&parse->common,
                 GST_ELEMENT_CAST (parse), &ebml);
+            if (ret == GST_FLOW_OK)
+              gst_matroska_parse_send_tags (parse);
           }
           gst_matroska_parse_accumulate_streamheader (parse, ebml.buf);
           break;
@@ -2651,6 +2681,8 @@ gst_matroska_parse_parse_id (GstMatroskaParse * parse, guint32 id,
           if (!parse->common.attachments_parsed) {
             ret = gst_matroska_read_common_parse_attachments (&parse->common,
                 GST_ELEMENT_CAST (parse), &ebml);
+            if (ret == GST_FLOW_OK)
+              gst_matroska_parse_send_tags (parse);
           }
           gst_matroska_parse_output (parse, ebml.buf, FALSE);
           break;
@@ -2658,6 +2690,8 @@ gst_matroska_parse_parse_id (GstMatroskaParse * parse, guint32 id,
           GST_READ_CHECK (gst_matroska_parse_take (parse, read, &ebml));
           ret = gst_matroska_read_common_parse_metadata (&parse->common,
               GST_ELEMENT_CAST (parse), &ebml);
+          if (ret == GST_FLOW_OK)
+            gst_matroska_parse_send_tags (parse);
           gst_matroska_parse_accumulate_streamheader (parse, ebml.buf);
           break;
         case GST_MATROSKA_ID_CHAPTERS:

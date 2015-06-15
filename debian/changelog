@@ -1,3 +1,21 @@
+gst-plugins-good1.0 (1.5.1-1) experimental; urgency=medium
+
+  * New unstable upstream release.
+
+ -- Sebastian Dröge <slomo@debian.org>  Sun, 07 Jun 2015 10:45:39 +0200
+
+gst-plugins-good1.0 (1.5.0.1+git20150513-1) experimental; urgency=medium
+
+  * New upstream GIT snapshot.
+
+ -- Sebastian Dröge <slomo@debian.org>  Wed, 13 May 2015 13:24:34 +0300
+
+gst-plugins-good1.0 (1.5.0.1+git20150316-1) experimental; urgency=medium
+
+  * New upstream GIT snapshot.
+
+ -- Sebastian Dröge <slomo@debian.org>  Tue, 17 Mar 2015 09:14:23 +0100
+
 gst-plugins-good1.0 (1.4.5-1ubuntu3) UNRELEASED; urgency=medium
 
   * debian/control{,.in}: Update Vcs-* for Ubuntu

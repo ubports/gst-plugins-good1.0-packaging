@@ -110,13 +110,13 @@ process_##channels##_##width (GstAudioFXBaseFIRFilter * self, const g##ctype * s
   gint off; \
   gdouble *buffer = self->buffer; \
   gdouble *kernel = self->kernel; \
-  guint buffer_length = self->buffer_length; \
   \
   if (!buffer) { \
-    self->buffer_length = buffer_length = kernel_length * channels; \
+    self->buffer_length = kernel_length * channels; \
     self->buffer = buffer = g_new0 (gdouble, self->buffer_length); \
   } \
   \
+  input_samples *= channels; \
   /* convolution */ \
   for (i = 0; i < input_samples; i++) { \
     dst[i] = 0.0; \
@@ -156,7 +156,7 @@ process_##channels##_##width (GstAudioFXBaseFIRFilter * self, const g##ctype * s
   if (self->buffer_fill > kernel_length) \
     self->buffer_fill = kernel_length; \
   \
-  return input_samples; \
+  return input_samples / channels; \
 } G_STMT_END
 
 DEFINE_PROCESS_FUNC (32, float);
