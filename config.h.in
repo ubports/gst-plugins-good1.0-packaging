@@ -34,6 +34,9 @@
 /* The GIO modules directory. */
 #undef GIO_MODULE_DIR
 
+/* The GIO install prefix. */
+#undef GIO_PREFIX
+
 /* GStreamer API Version */
 #undef GST_API_VERSION
 

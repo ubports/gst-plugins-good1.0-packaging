@@ -415,13 +415,6 @@ typedef struct _SampleTableEntryMP4A
   GList *extension_atoms;
 } SampleTableEntryMP4A;
 
-typedef struct _SampleTableEntryMP4S
-{
-  SampleTableEntry se;
-
-  AtomESDS es;
-} SampleTableEntryMP4S;
-
 typedef struct _SampleTableEntryTX3G
 {
   SampleTableEntry se;
@@ -478,7 +471,8 @@ typedef struct _AtomSTSC
 typedef struct _AtomSTCO64
 {
   AtomFull header;
-
+  /* Global offset to add to entries when serialising */
+  guint32 chunk_offset;
   ATOM_ARRAY (guint64) entries;
 } AtomSTCO64;
 
@@ -754,6 +748,7 @@ typedef struct _AtomMOOV
   AtomUDTA udta;
 
   gboolean fragmented;
+  guint32 chunks_offset;
 } AtomMOOV;
 
 typedef struct _AtomWAVE
@@ -828,7 +823,7 @@ AtomTRAK*  atom_trak_new               (AtomsContext *context);
 void       atom_trak_add_samples       (AtomTRAK * trak, guint32 nsamples, guint32 delta,
                                         guint32 size, guint64 chunk_offset, gboolean sync,
                                         gint64 pts_offset);
-void       atom_trak_add_elst_entry    (AtomTRAK * trak, guint32 duration,
+void       atom_trak_set_elst_entry    (AtomTRAK * trak, gint index, guint32 duration,
                                         guint32 media_time, guint32 rate);
 guint32    atom_trak_get_timescale     (AtomTRAK *trak);
 guint32    atom_trak_get_id            (AtomTRAK * trak);
@@ -843,12 +838,13 @@ guint64    atom_moov_copy_data         (AtomMOOV *atom, guint8 **buffer, guint64
 void       atom_moov_update_timescale  (AtomMOOV *moov, guint32 timescale);
 void       atom_moov_update_duration   (AtomMOOV *moov);
 void       atom_moov_set_fragmented    (AtomMOOV *moov, gboolean fragmented);
-void       atom_moov_chunks_add_offset (AtomMOOV *moov, guint32 offset);
+void       atom_moov_chunks_set_offset (AtomMOOV *moov, guint32 offset);
 void       atom_moov_add_trak          (AtomMOOV *moov, AtomTRAK *trak);
+guint      atom_moov_get_trak_count    (AtomMOOV *moov);
 
 guint64    atom_mvhd_copy_data         (AtomMVHD * atom, guint8 ** buffer,
                                         guint64 * size, guint64 * offset);
-void       atom_stco64_chunks_add_offset (AtomSTCO64 * stco64, guint32 offset);
+void       atom_stco64_chunks_set_offset (AtomSTCO64 * stco64, guint32 offset);
 guint64    atom_trak_copy_data         (AtomTRAK * atom, guint8 ** buffer,
                                         guint64 * size, guint64 * offset);
 void       atom_stbl_clear             (AtomSTBL * stbl);
@@ -929,15 +925,15 @@ typedef struct
 
 void subtitle_sample_entry_init (SubtitleSampleEntry * entry);
 
-void atom_trak_set_audio_type (AtomTRAK * trak, AtomsContext * context,
+SampleTableEntryMP4A * atom_trak_set_audio_type (AtomTRAK * trak, AtomsContext * context,
                                AudioSampleEntry * entry, guint32 scale,
                                AtomInfo * ext, gint sample_size);
 
-void atom_trak_set_video_type (AtomTRAK * trak, AtomsContext * context,
+SampleTableEntryMP4V * atom_trak_set_video_type (AtomTRAK * trak, AtomsContext * context,
                                VisualSampleEntry * entry, guint32 rate,
                                GList * ext_atoms_list);
 
-void atom_trak_set_subtitle_type (AtomTRAK * trak, AtomsContext * context,
+SampleTableEntryTX3G * atom_trak_set_subtitle_type (AtomTRAK * trak, AtomsContext * context,
                                SubtitleSampleEntry * entry);
 
 void atom_trak_update_bitrates (AtomTRAK * trak, guint32 avg_bitrate,
@@ -945,6 +941,8 @@ void atom_trak_update_bitrates (AtomTRAK * trak, guint32 avg_bitrate,
 
 void atom_trak_tx3g_update_dimension (AtomTRAK * trak, guint32 width,
                                       guint32 height);
+
+void sample_table_entry_add_ext_atom (SampleTableEntry * ste, AtomInfo * ext);
 
 AtomInfo *   build_codec_data_extension  (guint32 fourcc, const GstBuffer * codec_data);
 AtomInfo *   build_mov_aac_extension     (AtomTRAK * trak, const GstBuffer * codec_data,
@@ -962,6 +960,9 @@ AtomInfo *   build_jp2h_extension        (AtomTRAK * trak, gint width, gint heig
 
 AtomInfo *   build_jp2x_extension        (const GstBuffer * prefix);
 AtomInfo *   build_fiel_extension        (gint fields);
+AtomInfo *   build_ac3_extension         (guint8 fscod, guint8 bsid,
+                                          guint8 bsmod, guint8 acmod,
+                                          guint8 lfe_on, guint8 bitrate_code);
 AtomInfo *   build_amr_extension         (void);
 AtomInfo *   build_h263_extension        (void);
 AtomInfo *   build_gama_atom             (gdouble gamma);
@@ -974,6 +975,7 @@ AtomInfo *   build_uuid_xmp_atom         (GstBuffer * xmp);
 /*
  * Meta tags functions
  */
+void atom_udta_clear_tags (AtomUDTA *udta);
 void atom_udta_add_str_tag    (AtomUDTA *udta, guint32 fourcc, const gchar *value);
 void atom_udta_add_uint_tag   (AtomUDTA *udta, guint32 fourcc, guint32 flags,
                                guint32 value);
