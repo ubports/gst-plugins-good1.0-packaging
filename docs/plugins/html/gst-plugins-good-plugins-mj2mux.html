@@ -90,6 +90,26 @@
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-mj2mux.html#GstMJ2Mux--trak-timescale" title="The “trak-timescale” property">trak-timescale</a></td>
 <td class="property_flags">Read / Write / Construct</td>
 </tr>
+<tr>
+<td class="property_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-mj2mux.html#GstMJ2Mux--reserved-bytes-per-sec" title="The “reserved-bytes-per-sec” property">reserved-bytes-per-sec</a></td>
+<td class="property_flags">Read / Write / Construct</td>
+</tr>
+<tr>
+<td class="property_type"><span class="type">guint64</span></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-mj2mux.html#GstMJ2Mux--reserved-duration-remaining" title="The “reserved-duration-remaining” property">reserved-duration-remaining</a></td>
+<td class="property_flags">Read</td>
+</tr>
+<tr>
+<td class="property_type"><span class="type">guint64</span></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-mj2mux.html#GstMJ2Mux--reserved-max-duration" title="The “reserved-max-duration” property">reserved-max-duration</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
+<tr>
+<td class="property_type"><span class="type">guint64</span></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-mj2mux.html#GstMJ2Mux--reserved-moov-update-period" title="The “reserved-moov-update-period” property">reserved-moov-update-period</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
 </tbody>
 </table></div>
 </div>
@@ -170,7 +190,7 @@ and muxes it into an mj2 file.
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.77.8.8.1.1"></a><h3>Element Information</h3>
+<a name="id-1.2.77.8.9.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -196,7 +216,7 @@ and muxes it into an mj2 file.
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.77.8.8.1.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.77.8.9.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -279,8 +299,6 @@ and muxes it into an mj2 file.
 </table></div>
 </div>
 </div>
-<p>
-</p>
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-mj2mux.functions_details"></a><h2>Functions</h2>
@@ -291,8 +309,6 @@ and muxes it into an mj2 file.
 <div class="refsect2">
 <a name="GstMJ2Mux-struct"></a><h3>GstMJ2Mux</h3>
 <pre class="programlisting">typedef struct _GstMJ2Mux GstMJ2Mux;</pre>
-<p>
-</p>
 </div>
 </div>
 <div class="refsect1">
@@ -368,6 +384,39 @@ and muxes it into an mj2 file.
 <p>Timescale to use for the tracks (units per second, 0 is automatic).</p>
 <p>Flags: Read / Write / Construct</p>
 <p>Default value: 0</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstMJ2Mux--reserved-bytes-per-sec"></a><h3>The <code class="literal">“reserved-bytes-per-sec”</code> property</h3>
+<pre class="programlisting">  “reserved-bytes-per-sec”   <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a></pre>
+<p>Multiplier for converting reserved-max-duration into bytes of header to reserve, per second, per track.</p>
+<p>Flags: Read / Write / Construct</p>
+<p>Allowed values: &lt;= 10000</p>
+<p>Default value: 550</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstMJ2Mux--reserved-duration-remaining"></a><h3>The <code class="literal">“reserved-duration-remaining”</code> property</h3>
+<pre class="programlisting">  “reserved-duration-remaining” <span class="type">guint64</span></pre>
+<p>Reports the approximate amount of remaining moov header space reserved using reserved-max-duration.</p>
+<p>Flags: Read</p>
+<p>Default value: 0</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstMJ2Mux--reserved-max-duration"></a><h3>The <code class="literal">“reserved-max-duration”</code> property</h3>
+<pre class="programlisting">  “reserved-max-duration”    <span class="type">guint64</span></pre>
+<p>When set to a value &gt; 0, reserves space for index tables at the beginning of the file.</p>
+<p>Flags: Read / Write</p>
+<p>Default value: 18446744073709551615</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstMJ2Mux--reserved-moov-update-period"></a><h3>The <code class="literal">“reserved-moov-update-period”</code> property</h3>
+<pre class="programlisting">  “reserved-moov-update-period” <span class="type">guint64</span></pre>
+<p>When used with reserved-max-duration, periodically updates the index tables with information muxed so far.</p>
+<p>Flags: Read / Write</p>
+<p>Default value: 18446744073709551615</p>
 </div>
 </div>
 </div>

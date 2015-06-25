@@ -1,3 +1,13 @@
+gst-plugins-good1.0 (1.5.2-1) experimental; urgency=medium
+
+  [ Iain Lane ]
+  * debian/watch: Update for current URL scheme
+
+  [ Sebastian Dröge ]
+  * New unstable upstream release.
+
+ -- Iain Lane <laney@debian.org>  Mon, 15 Jun 2015 10:56:07 +0100
+
 gst-plugins-good1.0 (1.5.1-1ubuntu1) wily; urgency=medium
 
   * Merge with Debian unstable; remaining changes:

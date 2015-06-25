@@ -30,7 +30,7 @@
 <div class="refnamediv"><table width="100%"><tr>
 <td valign="top">
 <h2><span class="refentrytitle"><a name="gst-plugins-good-plugins-souphttpsrc.top_of_page"></a>souphttpsrc</span></h2>
-<p>souphttpsrc — Receive data as a client over the network via HTTP using SOUP</p>
+<p>souphttpsrc</p>
 </td>
 <td class="gallery_image" valign="top" align="right"></td>
 </tr></table></div>
@@ -176,6 +176,12 @@
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-souphttpsrc.html#GstSoupHTTPSrc--ssl-use-system-ca-file" title="The “ssl-use-system-ca-file” property">ssl-use-system-ca-file</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
+<tr>
+<td class="property_type">
+<a href="https://developer.gnome.org/gio/unstable/GTlsDatabase.html"><span class="type">GTlsDatabase</span></a> *</td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-souphttpsrc.html#GstSoupHTTPSrc--tls-database" title="The “tls-database” property">tls-database</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
 </tbody>
 </table></div>
 </div>
@@ -267,8 +273,6 @@ GstSoupHTTPSrc implements
 </table></div>
 </div>
 </div>
-<p>
-</p>
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-souphttpsrc.functions_details"></a><h2>Functions</h2>
@@ -279,8 +283,6 @@ GstSoupHTTPSrc implements
 <div class="refsect2">
 <a name="GstSoupHTTPSrc-struct"></a><h3>struct GstSoupHTTPSrc</h3>
 <pre class="programlisting">struct GstSoupHTTPSrc;</pre>
-<p>
-</p>
 </div>
 </div>
 <div class="refsect1">
@@ -475,6 +477,13 @@ GstSoupHTTPSrc implements
 <p>Use system CA file.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: TRUE</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstSoupHTTPSrc--tls-database"></a><h3>The <code class="literal">“tls-database”</code> property</h3>
+<pre class="programlisting">  “tls-database”             <a href="https://developer.gnome.org/gio/unstable/GTlsDatabase.html"><span class="type">GTlsDatabase</span></a> *</pre>
+<p>TLS database with anchor certificate authorities used to validate the server certificate.</p>
+<p>Flags: Read / Write</p>
 </div>
 </div>
 </div>

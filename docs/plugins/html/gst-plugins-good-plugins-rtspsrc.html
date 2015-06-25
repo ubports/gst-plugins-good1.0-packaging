@@ -31,7 +31,7 @@
 <div class="refnamediv"><table width="100%"><tr>
 <td valign="top">
 <h2><span class="refentrytitle"><a name="gst-plugins-good-plugins-rtspsrc.top_of_page"></a>rtspsrc</span></h2>
-<p>rtspsrc — Receive data over the network via RTSP (RFC 2326)</p>
+<p>rtspsrc</p>
 </td>
 <td class="gallery_image" valign="top" align="right"></td>
 </tr></table></div>
@@ -209,6 +209,12 @@
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--do-retransmission" title="The “do-retransmission” property">do-retransmission</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
+<tr>
+<td class="property_type">
+<a href="https://developer.gnome.org/gio/unstable/GTlsInteraction.html"><span class="type">GTlsInteraction</span></a> *</td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--tls-interaction" title="The “tls-interaction” property">tls-interaction</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
 </tbody>
 </table></div>
 </div>
@@ -234,18 +240,18 @@
 <tr>
 <td class="signal_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gboolean"><span class="returnvalue">gboolean</span></a></td>
 <td class="signal_name"><a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc-select-stream" title="The “select-stream” signal">select-stream</a></td>
-<td class="signal_flags">Run First</td>
+<td class="signal_flags"><a href="https://developer.gnome.org/gobject/unstable/gobject-Signals.html#G-SIGNAL-RUN-FIRST:CAPS">Run First</a></td>
 </tr>
 <tr>
 <td class="signal_type"><span class="returnvalue">void</span></td>
 <td class="signal_name"><a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc-new-manager" title="The “new-manager” signal">new-manager</a></td>
-<td class="signal_flags">Run First</td>
+<td class="signal_flags"><a href="https://developer.gnome.org/gobject/unstable/gobject-Signals.html#G-SIGNAL-RUN-FIRST:CAPS">Run First</a></td>
 </tr>
 <tr>
 <td class="signal_type">
 <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstCaps.html"><span class="returnvalue">GstCaps</span></a>*</td>
 <td class="signal_name"><a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc-request-rtcp-key" title="The “request-rtcp-key” signal">request-rtcp-key</a></td>
-<td class="signal_flags">Run Last</td>
+<td class="signal_flags"><a href="https://developer.gnome.org/gobject/unstable/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></td>
 </tr>
 </tbody>
 </table></div>
@@ -374,8 +380,6 @@ fakesink.
 </table></div>
 </div>
 </div>
-<p>
-</p>
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-rtspsrc.functions_details"></a><h2>Functions</h2>
@@ -386,8 +390,6 @@ fakesink.
 <div class="refsect2">
 <a name="GstRTSPSrc-struct"></a><h3>struct GstRTSPSrc</h3>
 <pre class="programlisting">struct GstRTSPSrc;</pre>
-<p>
-</p>
 </div>
 </div>
 <div class="refsect1">
@@ -649,6 +651,13 @@ keep alive and then this property needs to be set to FALSE.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: TRUE</p>
 </div>
+<hr>
+<div class="refsect2">
+<a name="GstRTSPSrc--tls-interaction"></a><h3>The <code class="literal">“tls-interaction”</code> property</h3>
+<pre class="programlisting">  “tls-interaction”          <a href="https://developer.gnome.org/gio/unstable/GTlsInteraction.html"><span class="type">GTlsInteraction</span></a> *</pre>
+<p>A GTlsInteraction object to promt the user for password or certificate.</p>
+<p>Flags: Read / Write</p>
+</div>
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-rtspsrc.signal-details"></a><h2>Signal Details</h2>
@@ -796,7 +805,7 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRT
 <p> <a href="https://developer.gnome.org/glib/unstable/glib-Standard-Macros.html#TRUE:CAPS"><code class="literal">TRUE</code></a> when the stream should be selected, <a href="https://developer.gnome.org/glib/unstable/glib-Standard-Macros.html#FALSE:CAPS"><code class="literal">FALSE</code></a> when the stream
 is to be ignored.</p>
 </div>
-<p>Flags: Run First</p>
+<p>Flags: <a href="https://developer.gnome.org/gobject/unstable/gobject-Signals.html#G-SIGNAL-RUN-FIRST:CAPS">Run First</a></p>
 <p class="since">Since: 1.2</p>
 </div>
 <hr>
@@ -835,7 +844,7 @@ properties were configured.</p>
 </tbody>
 </table></div>
 </div>
-<p>Flags: Run First</p>
+<p>Flags: <a href="https://developer.gnome.org/gobject/unstable/gobject-Signals.html#G-SIGNAL-RUN-FIRST:CAPS">Run First</a></p>
 <p class="since">Since: 1.4</p>
 </div>
 <hr>
@@ -875,7 +884,7 @@ and authentication, and return them wrapped in a GstCaps.</p>
 </tbody>
 </table></div>
 </div>
-<p>Flags: Run Last</p>
+<p>Flags: <a href="https://developer.gnome.org/gobject/unstable/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></p>
 <p class="since">Since: 1.4</p>
 </div>
 </div>
