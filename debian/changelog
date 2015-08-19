@@ -1,3 +1,9 @@
+gst-plugins-good1.0 (1.5.90-1) experimental; urgency=medium
+
+  * New upstream release candidate.
+
+ -- Sebastian Dröge <slomo@debian.org>  Wed, 19 Aug 2015 13:21:38 +0300
+
 gst-plugins-good1.0 (1.5.2-1) experimental; urgency=medium
 
   [ Iain Lane ]
