@@ -6,7 +6,7 @@
 <meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
 <link rel="home" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
-<link rel="prev" href="gst-plugins-good-plugins-smptealpha.html" title="smptealpha">
+<link rel="prev" href="gst-plugins-good-plugins-smpte.html" title="smpte">
 <link rel="next" href="gst-plugins-good-plugins-spectrum.html" title="spectrum">
 <meta name="generator" content="GTK-Doc V1.24 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
@@ -22,7 +22,7 @@
 </td>
 <td><a accesskey="h" href="index.html"><img src="home.png" width="16" height="16" border="0" alt="Home"></a></td>
 <td><a accesskey="u" href="ch01.html"><img src="up.png" width="16" height="16" border="0" alt="Up"></a></td>
-<td><a accesskey="p" href="gst-plugins-good-plugins-smptealpha.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
+<td><a accesskey="p" href="gst-plugins-good-plugins-smpte.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
 <td><a accesskey="n" href="gst-plugins-good-plugins-spectrum.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
 </tr></table>
 <div class="refentry">
@@ -182,6 +182,12 @@
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-souphttpsrc.html#GstSoupHTTPSrc--tls-database" title="The “tls-database” property">tls-database</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
+<tr>
+<td class="property_type">
+<a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-souphttpsrc.html#GstSoupHTTPSrc--method" title="The “method” property">method</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
 </tbody>
 </table></div>
 </div>
@@ -220,7 +226,7 @@ GstSoupHTTPSrc implements
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.141.8.2.1"></a><h3>Element Information</h3>
+<a name="id-1.2.158.8.2.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -246,7 +252,7 @@ GstSoupHTTPSrc implements
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.141.8.2.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.158.8.2.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -484,6 +490,14 @@ GstSoupHTTPSrc implements
 <pre class="programlisting">  “tls-database”             <a href="https://developer.gnome.org/gio/unstable/GTlsDatabase.html"><span class="type">GTlsDatabase</span></a> *</pre>
 <p>TLS database with anchor certificate authorities used to validate the server certificate.</p>
 <p>Flags: Read / Write</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstSoupHTTPSrc--method"></a><h3>The <code class="literal">“method”</code> property</h3>
+<pre class="programlisting">  “method”                   <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</pre>
+<p>The HTTP method to use (GET, HEAD, OPTIONS, etc).</p>
+<p>Flags: Read / Write</p>
+<p>Default value: NULL</p>
 </div>
 </div>
 </div>

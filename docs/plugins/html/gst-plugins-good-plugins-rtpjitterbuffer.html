@@ -6,8 +6,8 @@
 <meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
 <link rel="home" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
-<link rel="prev" href="gst-plugins-good-plugins-rtpdtmfsrc.html" title="rtpdtmfsrc">
-<link rel="next" href="gst-plugins-good-plugins-rtpmux.html" title="rtpmux">
+<link rel="prev" href="gst-plugins-good-plugins-rtpj2kpay.html" title="rtpj2kpay">
+<link rel="next" href="gst-plugins-good-plugins-rtpjpegpay.html" title="rtpjpegpay">
 <meta name="generator" content="GTK-Doc V1.24 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
@@ -22,8 +22,8 @@
 </td>
 <td><a accesskey="h" href="index.html"><img src="home.png" width="16" height="16" border="0" alt="Home"></a></td>
 <td><a accesskey="u" href="ch01.html"><img src="up.png" width="16" height="16" border="0" alt="Up"></a></td>
-<td><a accesskey="p" href="gst-plugins-good-plugins-rtpdtmfsrc.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
-<td><a accesskey="n" href="gst-plugins-good-plugins-rtpmux.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
+<td><a accesskey="p" href="gst-plugins-good-plugins-rtpj2kpay.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
+<td><a accesskey="n" href="gst-plugins-good-plugins-rtpjpegpay.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
 </tr></table>
 <div class="refentry">
 <a name="gst-plugins-good-plugins-rtpjitterbuffer"></a><div class="titlepage"></div>
@@ -238,7 +238,7 @@ schedule a lost packet as discussed above.</p>
 to the pipeline.</p>
 <p>This element will automatically be used inside rtpbin.</p>
 <div class="refsect2">
-<a name="id-1.2.127.8.11"></a><h3>Example pipelines</h3>
+<a name="id-1.2.135.8.11"></a><h3>Example pipelines</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
@@ -256,7 +256,7 @@ out-of-order RTP packets.
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.127.8.12.1"></a><h3>Element Information</h3>
+<a name="id-1.2.135.8.12.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -282,7 +282,7 @@ out-of-order RTP packets.
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.127.8.12.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.135.8.12.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -565,7 +565,7 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.ht
 <p>Invalidate the clock-rate as obtained with the
 <a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer-request-pt-map" title="The “request-pt-map” signal"><span class="type">“request-pt-map”</span></a> signal.</p>
 <div class="refsect3">
-<a name="id-1.2.127.12.2.5"></a><h4>Parameters</h4>
+<a name="id-1.2.135.12.2.5"></a><h4>Parameters</h4>
 <div class="informaltable"><table width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
@@ -597,7 +597,7 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.ht
                <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>            user_data)</pre>
 <p>Be notified of new sync values.</p>
 <div class="refsect3">
-<a name="id-1.2.127.12.3.5"></a><h4>Parameters</h4>
+<a name="id-1.2.135.12.3.5"></a><h4>Parameters</h4>
 <div class="informaltable"><table width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
@@ -634,7 +634,7 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.ht
 <p>Signal that the jitterbufer has pushed the RTP packet that corresponds to
 the npt-stop position.</p>
 <div class="refsect3">
-<a name="id-1.2.127.12.4.5"></a><h4>Parameters</h4>
+<a name="id-1.2.135.12.4.5"></a><h4>Parameters</h4>
 <div class="informaltable"><table width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
@@ -667,7 +667,7 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.ht
 <p>Request the payload type as <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstCaps.html"><span class="type">GstCaps</span></a> for <em class="parameter"><code>pt</code></em>
 .</p>
 <div class="refsect3">
-<a name="id-1.2.127.12.5.5"></a><h4>Parameters</h4>
+<a name="id-1.2.135.12.5.5"></a><h4>Parameters</h4>
 <div class="informaltable"><table width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
@@ -706,7 +706,7 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.ht
 <p>Start pushing out packets with the given base time. This signal is only
 useful in buffering mode.</p>
 <div class="refsect3">
-<a name="id-1.2.127.12.6.5"></a><h4>Parameters</h4>
+<a name="id-1.2.135.12.6.5"></a><h4>Parameters</h4>
 <div class="informaltable"><table width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
@@ -728,7 +728,7 @@ useful in buffering mode.</p>
 </table></div>
 </div>
 <div class="refsect3">
-<a name="id-1.2.127.12.6.6"></a><h4>Returns</h4>
+<a name="id-1.2.135.12.6.6"></a><h4>Returns</h4>
 <p> the time of the last pushed packet.</p>
 </div>
 <p>Flags: <a href="https://developer.gnome.org/gobject/unstable/gobject-Signals.html#G-SIGNAL-ACTION:CAPS">Action</a></p>

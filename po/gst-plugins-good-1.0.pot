@@ -5,9 +5,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: gst-plugins-good 1.5.2\n"
+"Project-Id-Version: gst-plugins-good 1.5.90\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2015-06-24 22:51+0200\n"
+"POT-Creation-Date: 2015-08-19 12:42+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -20,10 +20,10 @@ msgstr ""
 msgid "Jack server not found"
 msgstr ""
 
-#: ext/jpeg/gstjpegdec.c:921 ext/jpeg/gstjpegdec.c:1174
-#: ext/jpeg/gstjpegdec.c:1186 ext/jpeg/gstjpegdec.c:1215
-#: ext/jpeg/gstjpegdec.c:1224 ext/jpeg/gstjpegdec.c:1233
-#: ext/jpeg/gstjpegdec.c:1241
+#: ext/jpeg/gstjpegdec.c:925 ext/jpeg/gstjpegdec.c:1178
+#: ext/jpeg/gstjpegdec.c:1190 ext/jpeg/gstjpegdec.c:1219
+#: ext/jpeg/gstjpegdec.c:1228 ext/jpeg/gstjpegdec.c:1237
+#: ext/jpeg/gstjpegdec.c:1245
 msgid "Failed to decode JPEG image"
 msgstr ""
 
@@ -37,36 +37,36 @@ msgstr ""
 msgid "Could not connect to server"
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:893
+#: ext/soup/gstsouphttpsrc.c:911
 msgid "No URL set."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1252
+#: ext/soup/gstsouphttpsrc.c:1270
 msgid "Server does not support seeking."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1527
+#: ext/soup/gstsouphttpsrc.c:1545
 msgid "Could not resolve server name."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1533
+#: ext/soup/gstsouphttpsrc.c:1551
 msgid "Could not establish connection to server."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1538
+#: ext/soup/gstsouphttpsrc.c:1556
 msgid "Secure connection setup failed."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1548
+#: ext/soup/gstsouphttpsrc.c:1566
 msgid ""
-"A network error occured, or the server closed the connection unexpectedly."
+"A network error occurred, or the server closed the connection unexpectedly."
 msgstr ""
 
-#: ext/soup/gstsouphttpsrc.c:1555
+#: ext/soup/gstsouphttpsrc.c:1573
 msgid "Server sent bad data."
 msgstr ""
 
-#: gst/avi/gstavidemux.c:5672
+#: gst/avi/gstavidemux.c:5674
 msgid "Internal data stream error."
 msgstr ""
 
@@ -74,76 +74,73 @@ msgstr ""
 msgid "No or invalid input audio, AVI stream will be corrupt."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:607 gst/isomp4/qtdemux.c:611
+#: gst/isomp4/qtdemux.c:635 gst/isomp4/qtdemux.c:639
 msgid "This file contains no playable streams."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:657 gst/isomp4/qtdemux.c:5107
-#: gst/isomp4/qtdemux.c:5174 gst/isomp4/qtdemux.c:5412
+#: gst/isomp4/qtdemux.c:685 gst/isomp4/qtdemux.c:5570 gst/isomp4/qtdemux.c:5637
+#: gst/isomp4/qtdemux.c:5876
 msgid "This file is invalid and cannot be played."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:2355
+#: gst/isomp4/qtdemux.c:2433
 msgid "Cannot play stream because it is encrypted with PlayReady DRM."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:3059 gst/isomp4/qtdemux.c:6119
-#: gst/isomp4/qtdemux.c:6126 gst/isomp4/qtdemux.c:6845
-#: gst/isomp4/qtdemux.c:7272 gst/isomp4/qtdemux.c:7279
-#: gst/isomp4/qtdemux.c:9442
+#: gst/isomp4/qtdemux.c:3498 gst/isomp4/qtdemux.c:6593
+#: gst/isomp4/qtdemux.c:6600 gst/isomp4/qtdemux.c:7374
+#: gst/isomp4/qtdemux.c:7803 gst/isomp4/qtdemux.c:7810
+#: gst/isomp4/qtdemux.c:10089
 msgid "This file is corrupt and cannot be played."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:3301
+#: gst/isomp4/qtdemux.c:3740
 msgid "Invalid atom size."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:3377
+#: gst/isomp4/qtdemux.c:3818
 msgid "This file is incomplete and cannot be played."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:8094
+#: gst/isomp4/qtdemux.c:8733
 msgid "The video in this file might not play correctly."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:9483
+#: gst/isomp4/qtdemux.c:10130
 #, c-format
 msgid "This file contains too many streams. Only playing first %d"
 msgstr ""
 
-#: gst/multifile/gstsplitmuxsrc.c:556 gst/wavparse/gstwavparse.c:2248
+#: gst/multifile/gstsplitmuxsrc.c:532 gst/wavparse/gstwavparse.c:2248
 msgid "Internal data flow error."
 msgstr ""
 
-#: gst/rtsp/gstrtspsrc.c:6750
+#: gst/rtsp/gstrtspsrc.c:6869
 msgid ""
 "No supported stream was found. You might need to install a GStreamer RTSP "
 "extension plugin for Real media streams."
 msgstr ""
 
-#: gst/rtsp/gstrtspsrc.c:6755
+#: gst/rtsp/gstrtspsrc.c:6874
 msgid ""
 "No supported stream was found. You might need to allow more transport "
 "protocols or may otherwise be missing the right GStreamer RTSP extension "
 "plugin."
 msgstr ""
 
-#: sys/oss4/oss4-sink.c:493 sys/oss4/oss4-source.c:358
-#: sys/oss/gstosssink.c:384
+#: sys/oss4/oss4-sink.c:493 sys/oss4/oss4-source.c:358 sys/oss/gstosssink.c:384
 msgid ""
 "Could not open audio device for playback. Device is being used by another "
 "application."
 msgstr ""
 
-#: sys/oss4/oss4-sink.c:503 sys/oss4/oss4-source.c:368
-#: sys/oss/gstosssink.c:391
+#: sys/oss4/oss4-sink.c:503 sys/oss4/oss4-source.c:368 sys/oss/gstosssink.c:391
 msgid ""
 "Could not open audio device for playback. You don't have permission to open "
 "the device."
 msgstr ""
 
-#: sys/oss4/oss4-sink.c:514 sys/oss4/oss4-source.c:379
-#: sys/oss/gstosssink.c:399
+#: sys/oss4/oss4-sink.c:514 sys/oss4/oss4-source.c:379 sys/oss/gstosssink.c:399
 msgid "Could not open audio device for playback."
 msgstr ""
 
@@ -251,7 +248,7 @@ msgstr ""
 msgid "AUX 2 Out"
 msgstr ""
 
-#: sys/v4l2/gstv4l2bufferpool.c:1663
+#: sys/v4l2/gstv4l2bufferpool.c:1672
 #, c-format
 msgid "Error reading %d bytes from device '%s'."
 msgstr ""
@@ -261,75 +258,75 @@ msgstr ""
 msgid "Failed to enumerate possible video formats device '%s' can work with"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2574
+#: sys/v4l2/gstv4l2object.c:2577
 #, c-format
 msgid "Could not map buffers from device '%s'"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2582
+#: sys/v4l2/gstv4l2object.c:2585
 #, c-format
 msgid "The driver of device '%s' does not support the IO method %d"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2589
+#: sys/v4l2/gstv4l2object.c:2592
 #, c-format
 msgid "The driver of device '%s' does not support any known IO method."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3210 sys/v4l2/gstv4l2object.c:3221
+#: sys/v4l2/gstv4l2object.c:3214 sys/v4l2/gstv4l2object.c:3225
 #, c-format
 msgid "Device '%s' is busy"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3227 sys/v4l2/gstv4l2object.c:3239
+#: sys/v4l2/gstv4l2object.c:3231 sys/v4l2/gstv4l2object.c:3243
 #, c-format
 msgid "Device '%s' cannot capture at %dx%d"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3250
+#: sys/v4l2/gstv4l2object.c:3254
 #, c-format
 msgid "Device '%s' cannot capture in the specified format"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3263
+#: sys/v4l2/gstv4l2object.c:3267
 #, c-format
 msgid "Device '%s' does support non-contiguous planes"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3274
+#: sys/v4l2/gstv4l2object.c:3278
 #, c-format
 msgid "Could not get parameters on device '%s'"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3282
+#: sys/v4l2/gstv4l2object.c:3286
 msgid "Video device did not accept new frame rate setting."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3387
+#: sys/v4l2/gstv4l2object.c:3391
 msgid "Video device did not provide output format."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3393
+#: sys/v4l2/gstv4l2object.c:3397
 msgid "Video device returned invalid dimensions."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3401
+#: sys/v4l2/gstv4l2object.c:3405
 msgid "Video devices uses an unsupported interlacing method."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3408
+#: sys/v4l2/gstv4l2object.c:3412
 msgid "Video devices uses an unsupported pixel format."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3820
+#: sys/v4l2/gstv4l2object.c:3824
 msgid "Failed to configure internal buffer pool."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3826
+#: sys/v4l2/gstv4l2object.c:3830
 msgid "Video device did not suggest any buffer size."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3841
+#: sys/v4l2/gstv4l2object.c:3845
 msgid "No downstream pool to import from."
 msgstr ""
 
