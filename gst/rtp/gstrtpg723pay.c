@@ -26,11 +26,10 @@
 #include <string.h>
 #include <gst/rtp/gstrtpbuffer.h>
 #include <gst/base/gstadapter.h>
+#include <gst/audio/audio.h>
 
 #include "gstrtpg723pay.h"
-
-#define GST_RTP_PAYLOAD_G723 4
-#define GST_RTP_PAYLOAD_G723_STRING "4"
+#include "gstrtputils.h"
 
 #define G723_FRAME_DURATION (30 * GST_MSECOND)
 
@@ -107,7 +106,6 @@ gst_rtp_g723_pay_init (GstRTPG723Pay * pay)
   pay->adapter = gst_adapter_new ();
 
   payload->pt = GST_RTP_PAYLOAD_G723;
-  gst_rtp_base_payload_set_options (payload, "audio", FALSE, "G723", 8000);
 }
 
 static void
@@ -128,16 +126,9 @@ static gboolean
 gst_rtp_g723_pay_set_caps (GstRTPBasePayload * payload, GstCaps * caps)
 {
   gboolean res;
-  GstStructure *structure;
-  gint pt;
 
-  structure = gst_caps_get_structure (caps, 0);
-  if (!gst_structure_get_int (structure, "payload", &pt))
-    pt = GST_RTP_PAYLOAD_G723;
-
-  payload->pt = pt;
-  payload->dynamic = pt != GST_RTP_PAYLOAD_G723;
-
+  gst_rtp_base_payload_set_options (payload, "audio",
+      payload->pt != GST_RTP_PAYLOAD_G723, "G723", 8000);
   res = gst_rtp_base_payload_set_outcaps (payload, NULL);
 
   return res;
@@ -146,27 +137,23 @@ gst_rtp_g723_pay_set_caps (GstRTPBasePayload * payload, GstCaps * caps)
 static GstFlowReturn
 gst_rtp_g723_pay_flush (GstRTPG723Pay * pay)
 {
-  GstBuffer *outbuf;
+  GstBuffer *outbuf, *payload_buf;
   GstFlowReturn ret;
-  guint8 *payload;
   guint avail;
   GstRTPBuffer rtp = { NULL };
 
   avail = gst_adapter_available (pay->adapter);
 
-  outbuf = gst_rtp_buffer_new_allocate (avail, 0, 0);
+  outbuf = gst_rtp_buffer_new_allocate (0, 0, 0);
 
   gst_rtp_buffer_map (outbuf, GST_MAP_WRITE, &rtp);
-  payload = gst_rtp_buffer_get_payload (&rtp);
 
   GST_BUFFER_PTS (outbuf) = pay->timestamp;
   GST_BUFFER_DURATION (outbuf) = pay->duration;
 
   /* copy G723 data as payload */
-  gst_adapter_copy (pay->adapter, payload, 0, avail);
+  payload_buf = gst_adapter_take_buffer_fast (pay->adapter, avail);
 
-  /* flush bytes from adapter */
-  gst_adapter_flush (pay->adapter, avail);
   pay->timestamp = GST_CLOCK_TIME_NONE;
   pay->duration = 0;
 
@@ -177,6 +164,10 @@ gst_rtp_g723_pay_flush (GstRTPG723Pay * pay)
     pay->discont = FALSE;
   }
   gst_rtp_buffer_unmap (&rtp);
+  gst_rtp_copy_meta (GST_ELEMENT_CAST (pay), outbuf, payload_buf,
+      g_quark_from_static_string (GST_META_TAG_AUDIO_STR));
+
+  outbuf = gst_buffer_append (outbuf, payload_buf);
 
   ret = gst_rtp_base_payload_push (GST_RTP_BASE_PAYLOAD (pay), outbuf);
 
