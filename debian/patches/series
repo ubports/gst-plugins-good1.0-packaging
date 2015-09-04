@@ -1,5 +1,4 @@
 add-pkgconfig-file
 import-camerabin
 import-jpegformat
-handle_more_rotation_transformation_matrices.patch
 qtdemux-Set-maximum-sample-input-size-in-caps.patch
