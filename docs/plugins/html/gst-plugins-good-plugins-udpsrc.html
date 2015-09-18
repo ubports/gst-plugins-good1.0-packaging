@@ -68,11 +68,6 @@
 </tr>
 <tr>
 <td class="property_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a></td>
-<td class="property_name"><a class="link" href="gst-plugins-good-plugins-udpsrc.html#GstUDPSrc--sockfd" title="The “sockfd” property">sockfd</a></td>
-<td class="property_flags">Read / Write</td>
-</tr>
-<tr>
-<td class="property_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-udpsrc.html#GstUDPSrc--buffer-size" title="The “buffer-size” property">buffer-size</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
@@ -82,19 +77,9 @@
 <td class="property_flags">Read / Write</td>
 </tr>
 <tr>
-<td class="property_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></td>
-<td class="property_name"><a class="link" href="gst-plugins-good-plugins-udpsrc.html#GstUDPSrc--closefd" title="The “closefd” property">closefd</a></td>
-<td class="property_flags">Read / Write</td>
-</tr>
-<tr>
 <td class="property_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-udpsrc.html#GstUDPSrc--skip-first-bytes" title="The “skip-first-bytes” property">skip-first-bytes</a></td>
 <td class="property_flags">Read / Write</td>
-</tr>
-<tr>
-<td class="property_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a></td>
-<td class="property_name"><a class="link" href="gst-plugins-good-plugins-udpsrc.html#GstUDPSrc--sock" title="The “sock” property">sock</a></td>
-<td class="property_flags">Read</td>
 </tr>
 <tr>
 <td class="property_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></td>
@@ -128,12 +113,6 @@
 <a href="https://developer.gnome.org/gio/unstable/GSocket.html"><span class="type">GSocket</span></a> *</td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-udpsrc.html#GstUDPSrc--used-socket" title="The “used-socket” property">used-socket</a></td>
 <td class="property_flags">Read</td>
-</tr>
-<tr>
-<td class="property_type">
-<a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</td>
-<td class="property_name"><a class="link" href="gst-plugins-good-plugins-udpsrc.html#GstUDPSrc--bind-address" title="The “bind-address” property">bind-address</a></td>
-<td class="property_flags">Read / Write</td>
 </tr>
 <tr>
 <td class="property_type">
@@ -363,15 +342,6 @@ above mentioned pipeline should dump data packets to the console.
 </div>
 <hr>
 <div class="refsect2">
-<a name="GstUDPSrc--sockfd"></a><h3>The <code class="literal">“sockfd”</code> property</h3>
-<pre class="programlisting">  “sockfd”                   <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a></pre>
-<p>Socket to use for UDP reception. (-1 == allocate).</p>
-<p>Flags: Read / Write</p>
-<p>Allowed values: &gt;= G_MAXULONG</p>
-<p>Default value: -1</p>
-</div>
-<hr>
-<div class="refsect2">
 <a name="GstUDPSrc--buffer-size"></a><h3>The <code class="literal">“buffer-size”</code> property</h3>
 <pre class="programlisting">  “buffer-size”              <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a></pre>
 <p>Size of the kernel receive buffer in bytes, 0=default.</p>
@@ -389,29 +359,12 @@ above mentioned pipeline should dump data packets to the console.
 </div>
 <hr>
 <div class="refsect2">
-<a name="GstUDPSrc--closefd"></a><h3>The <code class="literal">“closefd”</code> property</h3>
-<pre class="programlisting">  “closefd”                  <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
-<p>Close sockfd if passed as property on state change.</p>
-<p>Flags: Read / Write</p>
-<p>Default value: TRUE</p>
-</div>
-<hr>
-<div class="refsect2">
 <a name="GstUDPSrc--skip-first-bytes"></a><h3>The <code class="literal">“skip-first-bytes”</code> property</h3>
 <pre class="programlisting">  “skip-first-bytes”         <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a></pre>
 <p>number of bytes to skip for each udp packet.</p>
 <p>Flags: Read / Write</p>
 <p>Allowed values: &gt;= 0</p>
 <p>Default value: 0</p>
-</div>
-<hr>
-<div class="refsect2">
-<a name="GstUDPSrc--sock"></a><h3>The <code class="literal">“sock”</code> property</h3>
-<pre class="programlisting">  “sock”                     <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a></pre>
-<p>Socket currently in use for UDP reception. (-1 = no socket).</p>
-<p>Flags: Read</p>
-<p>Allowed values: &gt;= G_MAXULONG</p>
-<p>Default value: -1</p>
 </div>
 <hr>
 <div class="refsect2">
@@ -458,14 +411,6 @@ above mentioned pipeline should dump data packets to the console.
 <pre class="programlisting">  “used-socket”              <a href="https://developer.gnome.org/gio/unstable/GSocket.html"><span class="type">GSocket</span></a> *</pre>
 <p>Socket currently in use for UDP reception. (NULL = no socket).</p>
 <p>Flags: Read</p>
-</div>
-<hr>
-<div class="refsect2">
-<a name="GstUDPSrc--bind-address"></a><h3>The <code class="literal">“bind-address”</code> property</h3>
-<pre class="programlisting">  “bind-address”             <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</pre>
-<p>Address to bind the socket to. This is equivalent to the multicast-group property.</p>
-<p>Flags: Read / Write</p>
-<p>Default value: "0.0.0.0"</p>
 </div>
 <hr>
 <div class="refsect2">
