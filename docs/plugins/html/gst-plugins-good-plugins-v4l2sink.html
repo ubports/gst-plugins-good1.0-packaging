@@ -86,11 +86,6 @@
 <td class="property_flags">Read / Write</td>
 </tr>
 <tr>
-<td class="property_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a></td>
-<td class="property_name"><a class="link" href="gst-plugins-good-plugins-v4l2sink.html#GstV4l2Sink--queue-size" title="The “queue-size” property">queue-size</a></td>
-<td class="property_flags">Read / Write</td>
-</tr>
-<tr>
 <td class="property_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-v4l2sink.html#GstV4l2Sink--brightness" title="The “brightness” property">brightness</a></td>
 <td class="property_flags">Read / Write</td>
@@ -128,11 +123,6 @@
 <tr>
 <td class="property_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-v4l2sink.html#GstV4l2Sink--crop-width" title="The “crop-width” property">crop-width</a></td>
-<td class="property_flags">Read / Write</td>
-</tr>
-<tr>
-<td class="property_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a></td>
-<td class="property_name"><a class="link" href="gst-plugins-good-plugins-v4l2sink.html#GstV4l2Sink--min-queued-bufs" title="The “min-queued-bufs” property">min-queued-bufs</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
 <tr>
@@ -380,15 +370,6 @@ GstV4l2Sink implements
 </div>
 <hr>
 <div class="refsect2">
-<a name="GstV4l2Sink--queue-size"></a><h3>The <code class="literal">“queue-size”</code> property</h3>
-<pre class="programlisting">  “queue-size”               <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a></pre>
-<p>Number of buffers to be enqueud in the driver in streaming mode.</p>
-<p>Flags: Read / Write</p>
-<p>Allowed values: [1,16]</p>
-<p>Default value: 12</p>
-</div>
-<hr>
-<div class="refsect2">
 <a name="GstV4l2Sink--brightness"></a><h3>The <code class="literal">“brightness”</code> property</h3>
 <pre class="programlisting">  “brightness”               <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a></pre>
 <p>Picture brightness, or more precisely, the black level.</p>
@@ -450,15 +431,6 @@ GstV4l2Sink implements
 <p>The width of the video crop; default is equal to negotiated image width.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: 0</p>
-</div>
-<hr>
-<div class="refsect2">
-<a name="GstV4l2Sink--min-queued-bufs"></a><h3>The <code class="literal">“min-queued-bufs”</code> property</h3>
-<pre class="programlisting">  “min-queued-bufs”          <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a></pre>
-<p>Minimum number of queued bufs; v4l2sink won't dqbuf if the driver doesn't have more than this number (which normally you shouldn't change).</p>
-<p>Flags: Read / Write</p>
-<p>Allowed values: &lt;= 16</p>
-<p>Default value: 1</p>
 </div>
 <hr>
 <div class="refsect2">

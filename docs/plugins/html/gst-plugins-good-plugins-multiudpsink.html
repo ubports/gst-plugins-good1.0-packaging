@@ -61,21 +61,6 @@
 </tr>
 <tr>
 <td class="property_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></td>
-<td class="property_name"><a class="link" href="gst-plugins-good-plugins-multiudpsink.html#GstMultiUDPSink--closefd" title="The “closefd” property">closefd</a></td>
-<td class="property_flags">Read / Write</td>
-</tr>
-<tr>
-<td class="property_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a></td>
-<td class="property_name"><a class="link" href="gst-plugins-good-plugins-multiudpsink.html#GstMultiUDPSink--sock" title="The “sock” property">sock</a></td>
-<td class="property_flags">Read</td>
-</tr>
-<tr>
-<td class="property_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a></td>
-<td class="property_name"><a class="link" href="gst-plugins-good-plugins-multiudpsink.html#GstMultiUDPSink--sockfd" title="The “sockfd” property">sockfd</a></td>
-<td class="property_flags">Read / Write</td>
-</tr>
-<tr>
-<td class="property_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-multiudpsink.html#GstMultiUDPSink--auto-multicast" title="The “auto-multicast” property">auto-multicast</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
@@ -327,32 +312,6 @@ It can be combined with rtp payload encoders to implement RTP streaming.</p>
 <p>A comma separated list of host:port pairs with destinations.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: NULL</p>
-</div>
-<hr>
-<div class="refsect2">
-<a name="GstMultiUDPSink--closefd"></a><h3>The <code class="literal">“closefd”</code> property</h3>
-<pre class="programlisting">  “closefd”                  <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
-<p>Close sockfd if passed as property on state change.</p>
-<p>Flags: Read / Write</p>
-<p>Default value: TRUE</p>
-</div>
-<hr>
-<div class="refsect2">
-<a name="GstMultiUDPSink--sock"></a><h3>The <code class="literal">“sock”</code> property</h3>
-<pre class="programlisting">  “sock”                     <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a></pre>
-<p>Socket currently in use for UDP sending. (-1 == no socket).</p>
-<p>Flags: Read</p>
-<p>Allowed values: &gt;= G_MAXULONG</p>
-<p>Default value: -1</p>
-</div>
-<hr>
-<div class="refsect2">
-<a name="GstMultiUDPSink--sockfd"></a><h3>The <code class="literal">“sockfd”</code> property</h3>
-<pre class="programlisting">  “sockfd”                   <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a></pre>
-<p>Socket to use for UDP sending. (-1 == allocate).</p>
-<p>Flags: Read / Write</p>
-<p>Allowed values: &gt;= G_MAXULONG</p>
-<p>Default value: -1</p>
 </div>
 <hr>
 <div class="refsect2">
