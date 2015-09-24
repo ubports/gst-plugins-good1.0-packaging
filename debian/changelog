@@ -1,3 +1,9 @@
+gst-plugins-good1.0 (1.5.91-1) experimental; urgency=medium
+
+  * New upstream release candidate.
+
+ -- Sebastian Dröge <slomo@debian.org>  Fri, 18 Sep 2015 19:28:00 +0200
+
 gst-plugins-good1.0 (1.5.90-1ubuntu1) wily; urgency=medium
 
   * Merge with Debian unstable; remaining changes:

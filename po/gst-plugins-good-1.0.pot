@@ -5,9 +5,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: gst-plugins-good 1.5.90\n"
+"Project-Id-Version: gst-plugins-good 1.5.91\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2015-08-19 12:42+0300\n"
+"POT-Creation-Date: 2015-09-18 19:22+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -66,7 +66,7 @@ msgstr ""
 msgid "Server sent bad data."
 msgstr ""
 
-#: gst/avi/gstavidemux.c:5674
+#: gst/avi/gstavidemux.c:5679
 msgid "Internal data stream error."
 msgstr ""
 
@@ -115,13 +115,13 @@ msgstr ""
 msgid "Internal data flow error."
 msgstr ""
 
-#: gst/rtsp/gstrtspsrc.c:6869
+#: gst/rtsp/gstrtspsrc.c:6894
 msgid ""
 "No supported stream was found. You might need to install a GStreamer RTSP "
 "extension plugin for Real media streams."
 msgstr ""
 
-#: gst/rtsp/gstrtspsrc.c:6874
+#: gst/rtsp/gstrtspsrc.c:6899
 msgid ""
 "No supported stream was found. You might need to allow more transport "
 "protocols or may otherwise be missing the right GStreamer RTSP extension "
