@@ -122,7 +122,9 @@ enum
   PROP_SSL_STRICT,
   PROP_SSL_CA_FILE,
   PROP_SSL_USE_SYSTEM_CA_FILE,
-  PROP_RETRIES
+  PROP_TLS_DATABASE,
+  PROP_RETRIES,
+  PROP_METHOD
 };
 
 #define DEFAULT_USER_AGENT           "GStreamer souphttpsrc "
@@ -133,8 +135,10 @@ enum
 #define DEFAULT_SSL_STRICT           TRUE
 #define DEFAULT_SSL_CA_FILE          NULL
 #define DEFAULT_SSL_USE_SYSTEM_CA_FILE TRUE
+#define DEFAULT_TLS_DATABASE         NULL
 #define DEFAULT_TIMEOUT              15
 #define DEFAULT_RETRIES              3
+#define DEFAULT_SOUP_METHOD          NULL
 
 static void gst_soup_http_src_uri_handler_init (gpointer g_iface,
     gpointer iface_data);
@@ -335,6 +339,10 @@ gst_soup_http_src_class_init (GstSoupHTTPSrcClass * klass)
    * A SSL anchor CA file that should be used for checking certificates
    * instead of the system CA file.
    *
+   * If this property is non-%NULL, #GstSoupHTTPSrc::ssl-use-system-ca-file
+   * value will be ignored.
+   *
+   * Deprecated: Use #GstSoupHTTPSrc::tls-database property instead.
    * Since: 1.4
    */
   g_object_class_install_property (gobject_class, PROP_SSL_CA_FILE,
@@ -346,7 +354,8 @@ gst_soup_http_src_class_init (GstSoupHTTPSrcClass * klass)
    * GstSoupHTTPSrc::ssl-use-system-ca-file:
    *
    * If set to %TRUE, souphttpsrc will use the system's CA file for
-   * checking certificates.
+   * checking certificates, unless #GstSoupHTTPSrc::ssl-ca-file or
+   * #GstSoupHTTPSrc::tls-database are non-%NULL.
    *
    * Since: 1.4
    */
@@ -354,6 +363,22 @@ gst_soup_http_src_class_init (GstSoupHTTPSrcClass * klass)
       g_param_spec_boolean ("ssl-use-system-ca-file", "Use System CA File",
           "Use system CA file", DEFAULT_SSL_USE_SYSTEM_CA_FILE,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+  /**
+   * GstSoupHTTPSrc::tls-database:
+   *
+   * TLS database with anchor certificate authorities used to validate
+   * the server certificate.
+   *
+   * If this property is non-%NULL, #GstSoupHTTPSrc::ssl-use-system-ca-file
+   * and #GstSoupHTTPSrc::ssl-ca-file values will be ignored.
+   *
+   * Since: 1.6
+   */
+  g_object_class_install_property (gobject_class, PROP_TLS_DATABASE,
+      g_param_spec_object ("tls-database", "TLS database",
+          "TLS database with anchor certificate authorities used to validate the server certificate",
+          G_TYPE_TLS_DATABASE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
  /**
    * GstSoupHTTPSrc::retries:
@@ -367,6 +392,18 @@ gst_soup_http_src_class_init (GstSoupHTTPSrcClass * klass)
           "Maximum number of retries until giving up (-1=infinite)", -1,
           G_MAXINT, DEFAULT_RETRIES,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+ /**
+   * GstSoupHTTPSrc::method
+   *
+   * The HTTP method to use when making a request
+   *
+   * Since: 1.6
+   */
+  g_object_class_install_property (gobject_class, PROP_METHOD,
+      g_param_spec_string ("method", "HTTP method",
+          "The HTTP method to use (GET, HEAD, OPTIONS, etc)",
+          DEFAULT_SOUP_METHOD, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   gst_element_class_add_pad_template (gstelement_class,
       gst_static_pad_template_get (&srctemplate));
@@ -446,9 +483,11 @@ gst_soup_http_src_init (GstSoupHTTPSrc * src)
   src->log_level = DEFAULT_SOUP_LOG_LEVEL;
   src->ssl_strict = DEFAULT_SSL_STRICT;
   src->ssl_use_system_ca_file = DEFAULT_SSL_USE_SYSTEM_CA_FILE;
+  src->tls_database = DEFAULT_TLS_DATABASE;
   src->max_retries = DEFAULT_RETRIES;
+  src->method = DEFAULT_SOUP_METHOD;
   proxy = g_getenv ("http_proxy");
-  if (proxy && !gst_soup_http_src_set_proxy (src, proxy)) {
+  if (!gst_soup_http_src_set_proxy (src, proxy)) {
     GST_WARNING_OBJECT (src,
         "The proxy in the http_proxy env var (\"%s\") cannot be parsed.",
         proxy);
@@ -501,6 +540,10 @@ gst_soup_http_src_finalize (GObject * gobject)
 
   g_free (src->ssl_ca_file);
 
+  if (src->tls_database)
+    g_object_unref (src->tls_database);
+  g_free (src->method);
+
   G_OBJECT_CLASS (parent_class)->finalize (gobject);
 }
 
@@ -543,11 +586,6 @@ gst_soup_http_src_set_property (GObject * object, guint prop_id,
       const gchar *proxy;
 
       proxy = g_value_get_string (value);
-
-      if (proxy == NULL) {
-        GST_WARNING ("proxy property cannot be NULL");
-        goto done;
-      }
       if (!gst_soup_http_src_set_proxy (src, proxy)) {
         GST_WARNING ("badly formatted proxy URI");
         goto done;
@@ -613,8 +651,16 @@ gst_soup_http_src_set_property (GObject * object, guint prop_id,
     case PROP_SSL_USE_SYSTEM_CA_FILE:
       src->ssl_use_system_ca_file = g_value_get_boolean (value);
       break;
+    case PROP_TLS_DATABASE:
+      g_clear_object (&src->tls_database);
+      src->tls_database = g_value_dup_object (value);
+      break;
     case PROP_RETRIES:
       src->max_retries = g_value_get_int (value);
+      break;
+    case PROP_METHOD:
+      g_free (src->method);
+      src->method = g_value_dup_string (value);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -693,10 +739,16 @@ gst_soup_http_src_get_property (GObject * object, guint prop_id,
       g_value_set_string (value, src->ssl_ca_file);
       break;
     case PROP_SSL_USE_SYSTEM_CA_FILE:
-      g_value_set_boolean (value, src->ssl_strict);
+      g_value_set_boolean (value, src->ssl_use_system_ca_file);
+      break;
+    case PROP_TLS_DATABASE:
+      g_value_set_object (value, src->tls_database);
       break;
     case PROP_RETRIES:
       g_value_set_int (value, src->max_retries);
+      break;
+    case PROP_METHOD:
+      g_value_set_string (value, src->method);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -718,7 +770,7 @@ static void
 gst_soup_http_src_cancel_message (GstSoupHTTPSrc * src)
 {
   if (src->msg != NULL) {
-    GST_DEBUG_OBJECT (src, "Cancelling message");
+    GST_INFO_OBJECT (src, "Cancelling message");
     src->session_io_status = GST_SOUP_HTTP_SRC_SESSION_IO_STATUS_CANCELLED;
     soup_session_cancel_message (src->session, src->msg, SOUP_STATUS_CANCELLED);
   }
@@ -903,7 +955,9 @@ gst_soup_http_src_session_open (GstSoupHTTPSrc * src)
 
     /* Set up logging */
     gst_soup_util_log_setup (src->session, src->log_level, GST_ELEMENT (src));
-    if (src->ssl_ca_file)
+    if (src->tls_database)
+      g_object_set (src->session, "tls-database", src->tls_database, NULL);
+    else if (src->ssl_ca_file)
       g_object_set (src->session, "ssl-ca-file", src->ssl_ca_file, NULL);
     else
       g_object_set (src->session, "ssl-use-system-ca-file",
@@ -1265,7 +1319,7 @@ gst_soup_http_src_finished_cb (SoupMessage * msg, GstSoupHTTPSrc * src)
     GST_DEBUG_OBJECT (src, "finished, but not for current message");
     return;
   }
-  GST_DEBUG_OBJECT (src, "finished");
+  GST_INFO_OBJECT (src, "finished, io status: %d", src->session_io_status);
   src->ret = GST_FLOW_EOS;
   if (src->session_io_status == GST_SOUP_HTTP_SRC_SESSION_IO_STATUS_CANCELLED) {
     /* gst_soup_http_src_cancel_message() triggered this; probably a seek
@@ -1453,7 +1507,7 @@ gst_soup_http_src_response_cb (SoupSession * session, SoupMessage * msg,
     /* Ignore redirections. */
     return;
   }
-  GST_DEBUG_OBJECT (src, "got response %d: %s", msg->status_code,
+  GST_INFO_OBJECT (src, "got response %d: %s", msg->status_code,
       msg->reason_phrase);
   if (src->session_io_status == GST_SOUP_HTTP_SRC_SESSION_IO_STATUS_RUNNING &&
       src->read_position > 0 && (src->have_size
@@ -1509,7 +1563,7 @@ gst_soup_http_src_parse_status (SoupMessage * msg, GstSoupHTTPSrc * src)
           src->ret = GST_FLOW_CUSTOM_ERROR;
         } else {
           SOUP_HTTP_SRC_ERROR (src, msg, RESOURCE, READ,
-              _("A network error occured, or the server closed the connection "
+              _("A network error occurred, or the server closed the connection "
                   "unexpectedly."));
           src->ret = GST_FLOW_ERROR;
         }
@@ -1649,12 +1703,12 @@ gst_soup_http_src_do_request (GstSoupHTTPSrc * src, const gchar * method,
   src->outbuf = outbuf;
   do {
     if (src->interrupted) {
-      GST_DEBUG_OBJECT (src, "interrupted");
+      GST_INFO_OBJECT (src, "interrupted");
       src->ret = GST_FLOW_FLUSHING;
       break;
     }
     if (src->retry) {
-      GST_DEBUG_OBJECT (src, "Reconnecting");
+      GST_INFO_OBJECT (src, "Reconnecting");
       if (!gst_soup_http_src_build_message (src, method)) {
         return GST_FLOW_ERROR;
       }
@@ -1668,7 +1722,7 @@ gst_soup_http_src_do_request (GstSoupHTTPSrc * src, const gchar * method,
 
     switch (src->session_io_status) {
       case GST_SOUP_HTTP_SRC_SESSION_IO_STATUS_IDLE:
-        GST_DEBUG_OBJECT (src, "Queueing connection request");
+        GST_INFO_OBJECT (src, "Queueing connection request");
         gst_soup_http_src_queue_message (src);
         break;
       case GST_SOUP_HTTP_SRC_SESSION_IO_STATUS_QUEUED:
@@ -1709,6 +1763,18 @@ gst_soup_http_src_do_request (GstSoupHTTPSrc * src, const gchar * method,
     src->ret = GST_FLOW_EOS;
   g_cond_signal (&src->request_finished_cond);
 
+  /* basesrc assumes that we don't return a buffer if
+   * something else than OK is returned. It will just
+   * leak any buffer we might accidentially provide
+   * here.
+   *
+   * This can potentially happen during flushing.
+   */
+  if (src->ret != GST_FLOW_OK && outbuf && *outbuf) {
+    gst_buffer_unref (*outbuf);
+    *outbuf = NULL;
+  }
+
   return src->ret;
 }
 
@@ -1723,7 +1789,9 @@ gst_soup_http_src_create (GstPushSrc * psrc, GstBuffer ** outbuf)
 
   g_mutex_lock (&src->mutex);
   *outbuf = NULL;
-  ret = gst_soup_http_src_do_request (src, SOUP_METHOD_GET, outbuf);
+  ret =
+      gst_soup_http_src_do_request (src,
+      src->method ? src->method : SOUP_METHOD_GET, outbuf);
   http_headers_event = src->http_headers_event;
   src->http_headers_event = NULL;
   g_mutex_unlock (&src->mutex);
@@ -1991,6 +2059,10 @@ gst_soup_http_src_set_proxy (GstSoupHTTPSrc * src, const gchar * uri)
     soup_uri_free (src->proxy);
     src->proxy = NULL;
   }
+
+  if (uri == NULL || *uri == '\0')
+    return TRUE;
+
   if (g_str_has_prefix (uri, "http://")) {
     src->proxy = soup_uri_new (uri);
   } else {
@@ -2000,7 +2072,7 @@ gst_soup_http_src_set_proxy (GstSoupHTTPSrc * src, const gchar * uri)
     g_free (new_uri);
   }
 
-  return TRUE;
+  return (src->proxy != NULL);
 }
 
 static guint

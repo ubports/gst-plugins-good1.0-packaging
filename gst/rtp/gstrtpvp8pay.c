@@ -30,8 +30,10 @@
 #include <gst/base/gstbitreader.h>
 #include <gst/rtp/gstrtppayloads.h>
 #include <gst/rtp/gstrtpbuffer.h>
+#include <gst/video/video.h>
 #include "dboolhuff.h"
 #include "gstrtpvp8pay.h"
+#include "gstrtputils.h"
 
 GST_DEBUG_CATEGORY_STATIC (gst_rtp_vp8_pay_debug);
 #define GST_CAT_DEFAULT gst_rtp_vp8_pay_debug
@@ -82,7 +84,7 @@ GST_STATIC_PAD_TEMPLATE ("src",
     GST_PAD_ALWAYS,
     GST_STATIC_CAPS ("application/x-rtp, "
         "payload = (int) " GST_RTP_PAYLOAD_DYNAMIC_STRING ","
-        "clock-rate = (int) 90000, encoding-name = (string) \"VP8-DRAFT-IETF-01\""));
+        "clock-rate = (int) 90000, encoding-name = (string) { \"VP8\", \"VP8-DRAFT-IETF-01\" }"));
 
 static GstStaticPadTemplate gst_rtp_vp8_pay_sink_template =
 GST_STATIC_PAD_TEMPLATE ("sink",
@@ -350,13 +352,12 @@ gst_rtp_vp8_offset_to_partition (GstRtpVP8Pay * self, guint offset)
 {
   int i;
 
-  for (i = 0; i < self->n_partitions; i++) {
-    if (offset >= self->partition_offset[i] &&
-        offset < self->partition_offset[i + 1])
-      return i;
+  for (i = 1; i < self->n_partitions; i++) {
+    if (offset < self->partition_offset[i])
+      return i - 1;
   }
 
-  return i;
+  return i - 1;
 }
 
 static gsize
@@ -412,7 +413,6 @@ gst_rtp_vp8_create_header_buffer (GstRtpVP8Pay * self, guint8 partid,
   return out;
 }
 
-
 static guint
 gst_rtp_vp8_payload_next (GstRtpVP8Pay * self, GstBufferList * list,
     guint offset, GstBuffer * buffer, gsize buffer_size, gsize max_payload_len)
@@ -439,6 +439,8 @@ gst_rtp_vp8_payload_next (GstRtpVP8Pay * self, GstBufferList * list,
       offset == self->partition_offset[partition], mark, buffer);
   sub = gst_buffer_copy_region (buffer, GST_BUFFER_COPY_ALL, offset, available);
 
+  gst_rtp_copy_meta (GST_ELEMENT_CAST (self), header, buffer,
+      g_quark_from_static_string (GST_META_TAG_VIDEO_STR));
   out = gst_buffer_append (header, sub);
 
   gst_buffer_list_insert (list, -1, out);
@@ -509,8 +511,25 @@ gst_rtp_vp8_pay_sink_event (GstRTPBasePayload * payload, GstEvent * event)
 static gboolean
 gst_rtp_vp8_pay_set_caps (GstRTPBasePayload * payload, GstCaps * caps)
 {
+  GstCaps *src_caps;
+  GstStructure *s;
+  char *encoding_name;
+
+  src_caps = gst_pad_get_allowed_caps (GST_RTP_BASE_PAYLOAD_SRCPAD (payload));
+  if (src_caps) {
+    src_caps = gst_caps_make_writable (src_caps);
+    src_caps = gst_caps_truncate (src_caps);
+    s = gst_caps_get_structure (src_caps, 0);
+    gst_structure_fixate_field_string (s, "encoding-name", "VP8");
+    encoding_name = g_strdup (gst_structure_get_string (s, "encoding-name"));
+    gst_caps_unref (src_caps);
+  } else {
+    encoding_name = g_strdup ("VP8-DRAFT-IETF-01");
+  }
+
   gst_rtp_base_payload_set_options (payload, "video", TRUE,
-      "VP8-DRAFT-IETF-01", 90000);
+      encoding_name, 90000);
+  g_free (encoding_name);
   return gst_rtp_base_payload_set_outcaps (payload, NULL);
 }
 

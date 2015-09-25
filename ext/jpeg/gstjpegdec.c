@@ -151,12 +151,14 @@ gst_jpeg_dec_class_init (GstJpegDecClass * klass)
    *
    * Deprecated: 1.3.1: Property wasn't used internally
    */
+#ifndef GST_REMOVE_DEPRECATED
   g_object_class_install_property (gobject_class, PROP_MAX_ERRORS,
       g_param_spec_int ("max-errors", "Maximum Consecutive Decoding Errors",
           "(Deprecated) Error out after receiving N consecutive decoding errors"
           " (-1 = never fail, 0 = automatic, 1 = fail on first error)",
           -1, G_MAXINT, JPEG_DEFAULT_MAX_ERRORS,
-          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_DEPRECATED));
+#endif
 
   gst_element_class_add_pad_template (element_class,
       gst_static_pad_template_get (&gst_jpeg_dec_src_pad_template));
@@ -276,6 +278,10 @@ gst_jpeg_dec_init (GstJpegDec * dec)
   /* init properties */
   dec->idct_method = JPEG_DEFAULT_IDCT_METHOD;
   dec->max_errors = JPEG_DEFAULT_MAX_ERRORS;
+
+  gst_video_decoder_set_use_default_pad_acceptcaps (GST_VIDEO_DECODER_CAST
+      (dec), TRUE);
+  GST_PAD_SET_ACCEPT_TEMPLATE (GST_VIDEO_DECODER_SINK_PAD (dec));
 }
 
 static inline gboolean
@@ -593,12 +599,8 @@ static gboolean
 gst_jpeg_dec_set_format (GstVideoDecoder * dec, GstVideoCodecState * state)
 {
   GstJpegDec *jpeg = GST_JPEG_DEC (dec);
-  GstVideoInfo *info = &state->info;
 
-  /* FIXME : previously jpegdec would handled input as packetized
-   * if the framerate was present. Here we consider it packetized if
-   * the fps is != 1/1 */
-  if (GST_VIDEO_INFO_FPS_N (info) != 1 && GST_VIDEO_INFO_FPS_D (info) != 1)
+  if (dec->input_segment.format == GST_FORMAT_TIME)
     gst_video_decoder_set_packetized (dec, TRUE);
   else
     gst_video_decoder_set_packetized (dec, FALSE);
@@ -996,6 +998,7 @@ gst_jpeg_dec_handle_frame (GstVideoDecoder * bdec, GstVideoCodecFrame * frame)
   guint code, hdr_ok;
   gboolean need_unmap = TRUE;
   GstVideoCodecState *state = NULL;
+  gboolean release_frame = TRUE;
 
   dec->current_frame = frame;
   gst_buffer_map (frame->input_buffer, &dec->current_frame_map, GST_MAP_READ);
@@ -1143,6 +1146,7 @@ gst_jpeg_dec_handle_frame (GstVideoDecoder * bdec, GstVideoCodecFrame * frame)
 
   gst_buffer_unmap (frame->input_buffer, &dec->current_frame_map);
   ret = gst_video_decoder_finish_frame (bdec, frame);
+  release_frame = FALSE;
   need_unmap = FALSE;
 
 done:
@@ -1151,6 +1155,9 @@ exit:
 
   if (need_unmap)
     gst_buffer_unmap (frame->input_buffer, &dec->current_frame_map);
+
+  if (release_frame)
+    gst_video_decoder_release_frame (bdec, frame);
 
   if (state)
     gst_video_codec_state_unref (state);
@@ -1185,6 +1192,7 @@ decode_error:
 
     gst_buffer_unmap (frame->input_buffer, &dec->current_frame_map);
     gst_video_decoder_drop_frame (bdec, frame);
+    release_frame = FALSE;
     need_unmap = FALSE;
     jpeg_abort_decompress (&dec->cinfo);
 
@@ -1306,10 +1314,11 @@ gst_jpeg_dec_set_property (GObject * object, guint prop_id,
     case PROP_IDCT_METHOD:
       dec->idct_method = g_value_get_enum (value);
       break;
+#ifndef GST_REMOVE_DEPRECATED
     case PROP_MAX_ERRORS:
       g_atomic_int_set (&dec->max_errors, g_value_get_int (value));
       break;
-
+#endif
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -1328,10 +1337,11 @@ gst_jpeg_dec_get_property (GObject * object, guint prop_id, GValue * value,
     case PROP_IDCT_METHOD:
       g_value_set_enum (value, dec->idct_method);
       break;
+#ifndef GST_REMOVE_DEPRECATED
     case PROP_MAX_ERRORS:
       g_value_set_int (value, g_atomic_int_get (&dec->max_errors));
       break;
-
+#endif
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;

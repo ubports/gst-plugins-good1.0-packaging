@@ -38,6 +38,8 @@ libgstrtp_la_SOURCES = \
 	gstrtpgsmpay.c \
 	gstrtpamrdepay.c \
 	gstrtpamrpay.c \
+	gstrtph261pay.c \
+	gstrtph261depay.c \
 	gstrtph263pdepay.c \
 	gstrtph263ppay.c \
 	gstrtph263depay.c \
@@ -48,6 +50,8 @@ libgstrtp_la_SOURCES = \
 	gstrtpj2kpay.c \
 	gstrtpjpegdepay.c \
 	gstrtpjpegpay.c \
+	gstrtpklvdepay.c \
+	gstrtpklvpay.c \
 	gstrtpL16depay.c \
 	gstrtpL16pay.c \
 	gstrtpL24depay.c \
@@ -80,7 +84,8 @@ libgstrtp_la_SOURCES = \
 	gstrtpvrawdepay.c  \
 	gstrtpvrawpay.c \
 	gstrtpstreampay.c \
-	gstrtpstreamdepay.c
+	gstrtpstreamdepay.c \
+	gstrtputils.c
 
 libgstrtp_la_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_BASE_CFLAGS) \
 	$(GST_CFLAGS) -Dvp8_norm=gst_rtpvp8_vp8_norm \
@@ -139,6 +144,8 @@ noinst_HEADERS =			\
 	gstrtpmpapay.h \
 	gstrtpmpvdepay.h \
 	gstrtpmpvpay.h \
+	gstrtph261pay.h \
+	gstrtph261depay.h \
 	gstrtph263pdepay.h \
 	gstrtph263ppay.h \
 	gstrtph263depay.h \
@@ -149,6 +156,8 @@ noinst_HEADERS =			\
 	gstrtpj2kpay.h \
 	gstrtpjpegdepay.h \
 	gstrtpjpegpay.h \
+	gstrtpklvdepay.h \
+	gstrtpklvpay.h \
 	gstrtpmp1sdepay.h \
 	gstrtpmp2tdepay.h \
 	gstrtpmp2tpay.h \
@@ -177,20 +186,7 @@ noinst_HEADERS =			\
 	gstrtpvrawdepay.h \
 	gstrtpvrawpay.h \
 	gstrtpstreampay.h \
-	gstrtpstreamdepay.h
+	gstrtpstreamdepay.h \
+	gstrtputils.h
 
 EXTRA_DIST = dboolhuff.LICENSE
-
-Android.mk: Makefile.am $(BUILT_SOURCES)
-	androgenizer \
-	-:PROJECT libgstrtp -:SHARED libgstrtp \
-	 -:TAGS eng debug \
-         -:REL_TOP $(top_srcdir) -:ABS_TOP $(abs_top_srcdir) \
-	 -:SOURCES $(libgstrtp_la_SOURCES) \
-	 -:CFLAGS $(DEFS) $(DEFAULT_INCLUDES) $(libgstrtp_la_CFLAGS) \
-	 -:LDFLAGS $(libgstrtp_la_LDFLAGS) \
-	  $(libgstrtp_la_LIBADD) \
-	  -ldl \
-	 -:PASSTHROUGH LOCAL_ARM_MODE:=arm \
-	      LOCAL_MODULE_PATH:='$$(TARGET_OUT)/lib/gstreamer-0.10' \
-	> $@

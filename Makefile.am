@@ -35,13 +35,17 @@ include $(top_srcdir)/common/release.mak
 include $(top_srcdir)/common/po.mak
 
 check-valgrind:
-	cd tests/check && make check-valgrind
+	$(MAKE) -C tests/check check-valgrind
 
 if HAVE_GST_CHECK
 check-torture:
-	cd tests/check && make torture
+	$(MAKE) -C tests/check torture
+build-checks:
+	$(MAKE) -C tests/check build-checks
 else
 check-torture:
+	true
+build-checks:
 	true
 endif
 
@@ -64,6 +68,7 @@ CRUFT_FILES = \
 	$(top_builddir)/gst/videofilter/.libs/*gamma.{so,dll,DLL,dylib}
 
 CRUFT_DIRS = \
+	$(top_srcdir)/docs/plugins/tmpl \
 	$(top_srcdir)/gst/median \
 	$(top_srcdir)/gst/qtdemux \
 	$(top_srcdir)/gst/quicktime \

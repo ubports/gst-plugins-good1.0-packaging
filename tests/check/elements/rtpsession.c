@@ -232,8 +232,12 @@ GST_START_TEST (test_multiple_ssrc_rr)
       gst_clock_id_unref (tid);
   }
 
+  out_buf = g_async_queue_try_pop (data.rtcp_queue);
+  if (out_buf)
+    gst_buffer_unref (out_buf);
+
   gst_test_clock_set_time (GST_TEST_CLOCK (data.clock),
-      gst_clock_id_get_time (id) + (2 * GST_SECOND));
+      gst_clock_id_get_time (id) + (5 * GST_SECOND));
   gst_test_clock_wait_for_next_pending_id (GST_TEST_CLOCK (data.clock), &id);
   tid = gst_test_clock_process_next_clock_id (GST_TEST_CLOCK (data.clock));
   gst_clock_id_unref (id);
@@ -446,6 +450,7 @@ GST_START_TEST (test_internal_sources_timeout)
   GstRTCPPacket rtcp_packet;
   GstFlowReturn res;
   gint i, j;
+  GstCaps *caps;
 
   setup_testharness (&data, TRUE);
   g_object_get (data.session, "internal-session", &internal_session, NULL);
@@ -477,6 +482,12 @@ GST_START_TEST (test_internal_sources_timeout)
   gst_buffer_unref (buf);
 
   /* ok, now let's push some RTP packets */
+  caps =
+      gst_caps_new_simple ("application/x-rtp", "ssrc", G_TYPE_UINT, 0x01BADBAD,
+      NULL);
+  gst_pad_set_caps (data.src, caps);
+  gst_caps_unref (caps);
+
   for (i = 1; i < 4; i++) {
     gst_test_clock_advance_time (GST_TEST_CLOCK (data.clock),
         200 * GST_MSECOND);
@@ -566,7 +577,7 @@ GST_START_TEST (test_internal_sources_timeout)
 GST_END_TEST;
 
 static Suite *
-gstrtpsession_suite (void)
+rtpsession_suite (void)
 {
   Suite *s = suite_create ("rtpsession");
   TCase *tc_chain = tcase_create ("general");
@@ -579,19 +590,4 @@ gstrtpsession_suite (void)
   return s;
 }
 
-int
-main (int argc, char **argv)
-{
-  int nf;
-
-  Suite *s = gstrtpsession_suite ();
-  SRunner *sr = srunner_create (s);
-
-  gst_check_init (&argc, &argv);
-
-  srunner_run_all (sr, CK_NORMAL);
-  nf = srunner_ntests_failed (sr);
-  srunner_free (sr);
-
-  return nf;
-}
+GST_CHECK_MAIN (rtpsession);

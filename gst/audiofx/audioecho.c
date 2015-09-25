@@ -35,7 +35,7 @@
  * <refsect2>
  * <title>Example launch line</title>
  * |[
- * gst-launch-1.0 filesrc location="melo1.ogg" ! audioconvert ! audioecho delay=500000000 intensity=0.6 feedback=0.4 ! audioconvert ! autoaudiosink
+ * gst-launch-1.0 autoaudiosrc ! audioconvert ! audioecho delay=500000000 intensity=0.6 feedback=0.4 ! audioconvert ! autoaudiosink
  * gst-launch-1.0 filesrc location="melo1.ogg" ! decodebin ! audioconvert ! audioecho delay=50000000 intensity=0.6 feedback=0.4 ! audioconvert ! autoaudiosink
  * ]|
  * </refsect2>
@@ -200,6 +200,10 @@ gst_audio_echo_set_property (GObject * object, guint prop_id,
       } else {
         self->delay = delay;
         self->max_delay = MAX (delay, max_delay);
+        if (delay > max_delay) {
+          g_free (self->buffer);
+          self->buffer = NULL;
+        }
       }
       rate = GST_AUDIO_FILTER_RATE (self);
       if (rate > 0)
@@ -210,18 +214,18 @@ gst_audio_echo_set_property (GObject * object, guint prop_id,
       break;
     }
     case PROP_MAX_DELAY:{
-      guint64 max_delay, delay;
+      guint64 max_delay;
 
       g_mutex_lock (&self->lock);
       max_delay = g_value_get_uint64 (value);
-      delay = self->delay;
 
       if (GST_STATE (self) > GST_STATE_READY) {
         GST_ERROR_OBJECT (self, "Can't change maximum delay in"
             " PLAYING or PAUSED state");
       } else {
-        self->delay = delay;
         self->max_delay = max_delay;
+        g_free (self->buffer);
+        self->buffer = NULL;
       }
       g_mutex_unlock (&self->lock);
       break;

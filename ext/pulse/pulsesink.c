@@ -1516,6 +1516,12 @@ gst_pulseringbuffer_commit (GstAudioRingBuffer * buf, guint64 * sample,
   if (pbuf->paused)
     goto was_paused;
 
+  /* ensure running clock for whatever out there */
+  if (pbuf->corked) {
+    if (!gst_pulsering_set_corked (pbuf, FALSE, FALSE))
+      goto uncork_failed;
+  }
+
   /* offset is in bytes */
   offset = *sample * bpf;
 
@@ -2136,6 +2142,8 @@ gst_pulsesink_query_getcaps (GstPulseSink * psink, GstCaps * filter)
     goto unlock;
   }
 
+  ret = gst_caps_new_empty ();
+
   if (pbuf->stream) {
     /* We're in PAUSED or higher */
     stream = pbuf->stream;
@@ -2158,17 +2166,16 @@ gst_pulsesink_query_getcaps (GstPulseSink * psink, GstCaps * filter)
 
     pbuf->probe_stream = gst_pulsesink_create_probe_stream (psink, pbuf,
         format);
+
+    pa_format_info_free (format);
+
     if (!pbuf->probe_stream) {
       GST_WARNING_OBJECT (psink, "Could not create probe stream");
       goto unlock;
     }
 
-    pa_format_info_free (format);
-
     stream = pbuf->probe_stream;
   }
-
-  ret = gst_caps_new_empty ();
 
   if (!(o = pa_context_get_sink_info_by_name (pbuf->context,
               pa_stream_get_device_name (stream), gst_pulsesink_sink_info_cb,
@@ -2186,17 +2193,17 @@ gst_pulsesink_query_getcaps (GstPulseSink * psink, GstCaps * filter)
         gst_pulse_format_info_to_caps ((pa_format_info *) i->data));
   }
 
+unlock:
+  pa_threaded_mainloop_unlock (mainloop);
+  /* FIXME: this could be freed after device_name is got */
+  GST_OBJECT_UNLOCK (pbuf);
+
   if (filter) {
     GstCaps *tmp = gst_caps_intersect_full (filter, ret,
         GST_CAPS_INTERSECT_FIRST);
     gst_caps_unref (ret);
     ret = tmp;
   }
-
-unlock:
-  pa_threaded_mainloop_unlock (mainloop);
-  /* FIXME: this could be freed after device_name is got */
-  GST_OBJECT_UNLOCK (pbuf);
 
 out:
   free_device_info (&device_info);
@@ -3167,7 +3174,7 @@ static gboolean
 gst_pulsesink_query (GstBaseSink * sink, GstQuery * query)
 {
   GstPulseSink *pulsesink = GST_PULSESINK_CAST (sink);
-  gboolean ret;
+  gboolean ret = FALSE;
 
   switch (GST_QUERY_TYPE (query)) {
     case GST_QUERY_CAPS:
@@ -3180,10 +3187,9 @@ gst_pulsesink_query (GstBaseSink * sink, GstQuery * query)
       if (caps) {
         gst_query_set_caps_result (query, caps);
         gst_caps_unref (caps);
-        return TRUE;
-      } else {
-        return FALSE;
+        ret = TRUE;
       }
+      break;
     }
     case GST_QUERY_ACCEPT_CAPS:
     {

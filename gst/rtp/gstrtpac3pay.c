@@ -27,7 +27,7 @@
  * <refsect2>
  * <title>Example pipeline</title>
  * |[
- * gst-launch -v audiotestsrc ! avenc_ac3 ! rtpac3pay ! udpsink
+ * gst-launch-1.0 -v audiotestsrc ! avenc_ac3 ! rtpac3pay ! udpsink
  * ]| This example pipeline will encode and payload AC3 stream. Refer to
  * the rtpac3depay example to depayload and decode the RTP stream.
  * </refsect2>
@@ -40,8 +40,10 @@
 #include <string.h>
 
 #include <gst/rtp/gstrtpbuffer.h>
+#include <gst/audio/audio.h>
 
 #include "gstrtpac3pay.h"
+#include "gstrtputils.h"
 
 GST_DEBUG_CATEGORY_STATIC (rtpac3pay_debug);
 #define GST_CAT_DEFAULT (rtpac3pay_debug)
@@ -260,6 +262,7 @@ gst_rtp_ac3_pay_flush (GstRtpAC3Pay * rtpac3pay)
     guint payload_len;
     guint packet_len;
     GstRTPBuffer rtp = { NULL, };
+    GstBuffer *payload_buffer;
 
     /* this will be the total length of the packet */
     packet_len = gst_rtp_buffer_calc_packet_len (2 + avail, 0, 0);
@@ -271,7 +274,7 @@ gst_rtp_ac3_pay_flush (GstRtpAC3Pay * rtpac3pay)
     payload_len = gst_rtp_buffer_calc_payload_len (towrite, 0, 0);
 
     /* create buffer to hold the payload */
-    outbuf = gst_rtp_buffer_new_allocate (payload_len, 0, 0);
+    outbuf = gst_rtp_buffer_new_allocate (2, 0, 0);
 
     if (FT == 0) {
       /* check if it all fits */
@@ -314,15 +317,20 @@ gst_rtp_ac3_pay_flush (GstRtpAC3Pay * rtpac3pay)
     payload[1] = NF;
     payload_len -= 2;
 
-    gst_adapter_copy (rtpac3pay->adapter, &payload[2], 0, payload_len);
-    gst_adapter_flush (rtpac3pay->adapter, payload_len);
-
-    avail -= payload_len;
-    if (avail == 0)
+    if (avail == payload_len)
       gst_rtp_buffer_set_marker (&rtp, TRUE);
     gst_rtp_buffer_unmap (&rtp);
 
-    GST_BUFFER_TIMESTAMP (outbuf) = rtpac3pay->first_ts;
+    payload_buffer =
+        gst_adapter_take_buffer_fast (rtpac3pay->adapter, payload_len);
+    gst_rtp_copy_meta (GST_ELEMENT_CAST (rtpac3pay), outbuf, payload_buffer,
+        g_quark_from_static_string (GST_META_TAG_AUDIO_STR));
+
+    outbuf = gst_buffer_append (outbuf, payload_buffer);
+
+    avail -= payload_len;
+
+    GST_BUFFER_PTS (outbuf) = rtpac3pay->first_ts;
     GST_BUFFER_DURATION (outbuf) = rtpac3pay->duration;
 
     ret = gst_rtp_base_payload_push (GST_RTP_BASE_PAYLOAD (rtpac3pay), outbuf);
@@ -347,7 +355,7 @@ gst_rtp_ac3_pay_handle_buffer (GstRTPBasePayload * basepayload,
 
   gst_buffer_map (buffer, &map, GST_MAP_READ);
   duration = GST_BUFFER_DURATION (buffer);
-  timestamp = GST_BUFFER_TIMESTAMP (buffer);
+  timestamp = GST_BUFFER_PTS (buffer);
 
   if (GST_BUFFER_IS_DISCONT (buffer)) {
     GST_DEBUG_OBJECT (rtpac3pay, "DISCONT");

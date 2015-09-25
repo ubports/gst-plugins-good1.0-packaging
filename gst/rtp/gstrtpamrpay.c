@@ -27,7 +27,7 @@
  * <refsect2>
  * <title>Example pipeline</title>
  * |[
- * gst-launch -v audiotestsrc ! amrnbenc ! rtpamrpay ! udpsink
+ * gst-launch-1.0 -v audiotestsrc ! amrnbenc ! rtpamrpay ! udpsink
  * ]| This example pipeline will encode and payload an AMR stream. Refer to
  * the rtpamrdepay example to depayload and decode the RTP stream.
  * </refsect2>
@@ -53,8 +53,10 @@
 #include <string.h>
 
 #include <gst/rtp/gstrtpbuffer.h>
+#include <gst/audio/audio.h>
 
 #include "gstrtpamrpay.h"
+#include "gstrtputils.h"
 
 GST_DEBUG_CATEGORY_STATIC (rtpamrpay_debug);
 #define GST_CAT_DEFAULT (rtpamrpay_debug)
@@ -259,7 +261,7 @@ gst_rtp_amr_pay_handle_buffer (GstRTPBasePayload * basepayload,
 
   gst_buffer_map (buffer, &map, GST_MAP_READ);
 
-  timestamp = GST_BUFFER_TIMESTAMP (buffer);
+  timestamp = GST_BUFFER_PTS (buffer);
   duration = GST_BUFFER_DURATION (buffer);
 
   /* setup frame size pointer */
@@ -315,7 +317,7 @@ gst_rtp_amr_pay_handle_buffer (GstRTPBasePayload * basepayload,
   gst_rtp_buffer_map (outbuf, GST_MAP_WRITE, &rtp);
 
   /* copy timestamp */
-  GST_BUFFER_TIMESTAMP (outbuf) = timestamp;
+  GST_BUFFER_PTS (outbuf) = timestamp;
 
   if (duration != GST_CLOCK_TIME_NONE)
     GST_BUFFER_DURATION (outbuf) = duration;
@@ -388,9 +390,12 @@ gst_rtp_amr_pay_handle_buffer (GstRTPBasePayload * basepayload,
   }
 
   gst_buffer_unmap (buffer, &map);
-  gst_buffer_unref (buffer);
-
   gst_rtp_buffer_unmap (&rtp);
+
+  gst_rtp_copy_meta (GST_ELEMENT_CAST (rtpamrpay), outbuf, buffer,
+      g_quark_from_static_string (GST_META_TAG_AUDIO_STR));
+
+  gst_buffer_unref (buffer);
 
   ret = gst_rtp_base_payload_push (basepayload, outbuf);
 

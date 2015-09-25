@@ -2,13 +2,13 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>GStreamer Good Plugins 1.0 Plugins Reference Manual: v4l2sink</title>
+<title>v4l2sink: GStreamer Good Plugins 1.0 Plugins Reference Manual</title>
 <meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
 <link rel="home" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
-<link rel="prev" href="gst-plugins-good-plugins-v4l2src.html" title="v4l2src">
-<link rel="next" href="gst-plugins-good-plugins-v4l2radio.html" title="v4l2radio">
-<meta name="generator" content="GTK-Doc V1.21 (XML mode)">
+<link rel="prev" href="gst-plugins-good-plugins-v4l2radio.html" title="v4l2radio">
+<link rel="next" href="gst-plugins-good-plugins-v4l2src.html" title="v4l2src">
+<meta name="generator" content="GTK-Doc V1.24 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -22,15 +22,15 @@
 </td>
 <td><a accesskey="h" href="index.html"><img src="home.png" width="16" height="16" border="0" alt="Home"></a></td>
 <td><a accesskey="u" href="ch01.html"><img src="up.png" width="16" height="16" border="0" alt="Up"></a></td>
-<td><a accesskey="p" href="gst-plugins-good-plugins-v4l2src.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
-<td><a accesskey="n" href="gst-plugins-good-plugins-v4l2radio.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
+<td><a accesskey="p" href="gst-plugins-good-plugins-v4l2radio.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
+<td><a accesskey="n" href="gst-plugins-good-plugins-v4l2src.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
 </tr></table>
 <div class="refentry">
 <a name="gst-plugins-good-plugins-v4l2sink"></a><div class="titlepage"></div>
 <div class="refnamediv"><table width="100%"><tr>
 <td valign="top">
 <h2><span class="refentrytitle"><a name="gst-plugins-good-plugins-v4l2sink.top_of_page"></a>v4l2sink</span></h2>
-<p>v4l2sink — Displays frames on a video4linux2 device</p>
+<p>v4l2sink</p>
 </td>
 <td class="gallery_image" valign="top" align="right"></td>
 </tr></table></div>
@@ -86,11 +86,6 @@
 <td class="property_flags">Read / Write</td>
 </tr>
 <tr>
-<td class="property_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a></td>
-<td class="property_name"><a class="link" href="gst-plugins-good-plugins-v4l2sink.html#GstV4l2Sink--queue-size" title="The “queue-size” property">queue-size</a></td>
-<td class="property_flags">Read / Write</td>
-</tr>
-<tr>
 <td class="property_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-v4l2sink.html#GstV4l2Sink--brightness" title="The “brightness” property">brightness</a></td>
 <td class="property_flags">Read / Write</td>
@@ -128,11 +123,6 @@
 <tr>
 <td class="property_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-v4l2sink.html#GstV4l2Sink--crop-width" title="The “crop-width” property">crop-width</a></td>
-<td class="property_flags">Read / Write</td>
-</tr>
-<tr>
-<td class="property_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a></td>
-<td class="property_name"><a class="link" href="gst-plugins-good-plugins-v4l2sink.html#GstV4l2Sink--min-queued-bufs" title="The “min-queued-bufs” property">min-queued-bufs</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
 <tr>
@@ -200,7 +190,7 @@ GstV4l2Sink implements
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.151.8.2.1"></a><h3>Element Information</h3>
+<a name="id-1.2.171.8.2.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -226,7 +216,7 @@ GstV4l2Sink implements
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.151.8.2.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.171.8.2.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -263,7 +253,7 @@ GstV4l2Sink implements
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> video/x-bayer, width=(int)[ 1, 32768 ], height=(int)[ 1, 32768 ], framerate=(fraction)[ 0/1, 100/1 ]</td>
+<td> video/x-bayer, format=(string){ bggr, gbrg, grbg, rggb }, width=(int)[ 1, 32768 ], height=(int)[ 1, 32768 ], framerate=(fraction)[ 0/1, 2147483647/1 ]</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
@@ -279,19 +269,19 @@ GstV4l2Sink implements
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> video/x-pwc1, width=(int)[ 1, 32768 ], height=(int)[ 1, 32768 ], framerate=(fraction)[ 0/1, 100/1 ]</td>
+<td> video/x-pwc1, width=(int)[ 1, 32768 ], height=(int)[ 1, 32768 ], framerate=(fraction)[ 0/1, 2147483647/1 ]</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> video/x-pwc2, width=(int)[ 1, 32768 ], height=(int)[ 1, 32768 ], framerate=(fraction)[ 0/1, 100/1 ]</td>
+<td> video/x-pwc2, width=(int)[ 1, 32768 ], height=(int)[ 1, 32768 ], framerate=(fraction)[ 0/1, 2147483647/1 ]</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> video/x-raw, format=(string){ RGB15, RGB16, BGR, RGB, BGRx, BGRA, xRGB, ARGB, GRAY8, YVU9, YV12, YUY2, UYVY, Y42B, Y41B, NV12_64Z32, YUV9, I420, YVYU, NV21, NV12 }, width=(int)[ 1, 32768 ], height=(int)[ 1, 32768 ], framerate=(fraction)[ 0/1, 100/1 ]</td>
+<td> video/x-raw, format=(string){ RGB15, RGB16, BGR, RGB, BGRx, BGRA, xRGB, ARGB, GRAY8, YVU9, YV12, YUY2, UYVY, Y42B, Y41B, NV12_64Z32, YUV9, I420, YVYU, NV21, NV12 }, width=(int)[ 1, 32768 ], height=(int)[ 1, 32768 ], framerate=(fraction)[ 0/1, 2147483647/1 ]</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> video/x-sonix, width=(int)[ 1, 32768 ], height=(int)[ 1, 32768 ], framerate=(fraction)[ 0/1, 100/1 ]</td>
+<td> video/x-sonix, width=(int)[ 1, 32768 ], height=(int)[ 1, 32768 ], framerate=(fraction)[ 0/1, 2147483647/1 ]</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
@@ -301,19 +291,16 @@ GstV4l2Sink implements
 </table></div>
 </div>
 </div>
-<p>
-</p>
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-v4l2sink.functions_details"></a><h2>Functions</h2>
+<p></p>
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-v4l2sink.other_details"></a><h2>Types and Values</h2>
 <div class="refsect2">
 <a name="GstV4l2Sink-struct"></a><h3>struct GstV4l2Sink</h3>
 <pre class="programlisting">struct GstV4l2Sink;</pre>
-<p>
-</p>
 </div>
 </div>
 <div class="refsect1">
@@ -383,15 +370,6 @@ GstV4l2Sink implements
 </div>
 <hr>
 <div class="refsect2">
-<a name="GstV4l2Sink--queue-size"></a><h3>The <code class="literal">“queue-size”</code> property</h3>
-<pre class="programlisting">  “queue-size”               <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a></pre>
-<p>Number of buffers to be enqueud in the driver in streaming mode.</p>
-<p>Flags: Read / Write</p>
-<p>Allowed values: [1,16]</p>
-<p>Default value: 12</p>
-</div>
-<hr>
-<div class="refsect2">
 <a name="GstV4l2Sink--brightness"></a><h3>The <code class="literal">“brightness”</code> property</h3>
 <pre class="programlisting">  “brightness”               <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a></pre>
 <p>Picture brightness, or more precisely, the black level.</p>
@@ -456,15 +434,6 @@ GstV4l2Sink implements
 </div>
 <hr>
 <div class="refsect2">
-<a name="GstV4l2Sink--min-queued-bufs"></a><h3>The <code class="literal">“min-queued-bufs”</code> property</h3>
-<pre class="programlisting">  “min-queued-bufs”          <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a></pre>
-<p>Minimum number of queued bufs; v4l2sink won't dqbuf if the driver doesn't have more than this number (which normally you shouldn't change).</p>
-<p>Flags: Read / Write</p>
-<p>Allowed values: &lt;= 16</p>
-<p>Default value: 1</p>
-</div>
-<hr>
-<div class="refsect2">
 <a name="GstV4l2Sink--io-mode"></a><h3>The <code class="literal">“io-mode”</code> property</h3>
 <pre class="programlisting">  “io-mode”                  <span class="type">GstV4l2IOMode</span></pre>
 <p>I/O mode.</p>
@@ -505,7 +474,6 @@ GstV4l2Sink implements
 </div>
 </div>
 <div class="footer">
-<hr>
-          Generated by GTK-Doc V1.21</div>
+<hr>Generated by GTK-Doc V1.24</div>
 </body>
 </html>

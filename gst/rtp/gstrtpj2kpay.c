@@ -34,8 +34,10 @@
 
 #include <string.h>
 #include <gst/rtp/gstrtpbuffer.h>
+#include <gst/video/video.h>
 
 #include "gstrtpj2kpay.h"
+#include "gstrtputils.h"
 
 static GstStaticPadTemplate gst_rtp_j2k_pay_sink_template =
 GST_STATIC_PAD_TEMPLATE ("sink",
@@ -333,7 +335,7 @@ gst_rtp_j2k_pay_handle_buffer (GstRTPBasePayload * basepayload,
   mtu = GST_RTP_BASE_PAYLOAD_MTU (pay);
 
   gst_buffer_map (buffer, &map, GST_MAP_READ);
-  timestamp = GST_BUFFER_TIMESTAMP (buffer);
+  timestamp = GST_BUFFER_PTS (buffer);
   offset = pos = end = 0;
 
   GST_LOG_OBJECT (pay,
@@ -427,7 +429,7 @@ gst_rtp_j2k_pay_handle_buffer (GstRTPBasePayload * basepayload,
       /* make buffer for header */
       outbuf = gst_rtp_buffer_new_allocate (HEADER_SIZE, 0, 0);
 
-      GST_BUFFER_TIMESTAMP (outbuf) = timestamp;
+      GST_BUFFER_PTS (outbuf) = timestamp;
 
       gst_rtp_buffer_map (outbuf, GST_MAP_WRITE, &rtp);
 
@@ -481,9 +483,10 @@ gst_rtp_j2k_pay_handle_buffer (GstRTPBasePayload * basepayload,
       gst_rtp_buffer_unmap (&rtp);
 
       /* make subbuffer of j2k data */
-      paybuf = gst_buffer_copy_region (buffer, GST_BUFFER_COPY_MEMORY,
+      paybuf = gst_buffer_copy_region (buffer, GST_BUFFER_COPY_ALL,
           offset, data_size);
-
+      gst_rtp_copy_meta (GST_ELEMENT_CAST (basepayload), outbuf, paybuf,
+          g_quark_from_static_string (GST_META_TAG_VIDEO_STR));
       outbuf = gst_buffer_append (outbuf, paybuf);
 
       gst_buffer_list_add (list, outbuf);

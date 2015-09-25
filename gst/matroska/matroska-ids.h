@@ -23,6 +23,7 @@
 #define __GST_MATROSKA_IDS_H__
 
 #include <gst/gst.h>
+#include <gst/video/video-info.h>
 
 #include "ebml-ids.h"
 
@@ -489,6 +490,16 @@ typedef enum {
   GST_MATROSKA_VIDEOTRACK_INTERLACED = (GST_MATROSKA_TRACK_SHIFT<<0)
 } GstMatroskaVideoTrackFlags;
 
+typedef enum {
+  GST_MATROSKA_STEREO_MODE_SBS_LR      = 0x1,
+  GST_MATROSKA_STEREO_MODE_TB_RL       = 0x2,
+  GST_MATROSKA_STEREO_MODE_TB_LR       = 0x3,
+  GST_MATROSKA_STEREO_MODE_CHECKER_RL  = 0x4,
+  GST_MATROSKA_STEREO_MODE_CHECKER_LR  = 0x5,
+  GST_MATROSKA_STEREO_MODE_SBS_RL      = 0x9,
+  GST_MATROSKA_STEREO_MODE_FBF_LR      = 0xD,
+  GST_MATROSKA_STEREO_MODE_FBF_RL      = 0xE
+} GstMatroskaStereoMode;
 
 typedef struct _GstMatroskaTrackContext GstMatroskaTrackContext;
 
@@ -507,6 +518,7 @@ struct _GstMatroskaTrackContext {
   gint          index_writer_id;
 
   /* some often-used info */
+  guint64       track_uid;
   gchar        *codec_id, *codec_name, *name, *language;
   gpointer      codec_priv;
   gsize         codec_priv_size;
@@ -539,8 +551,10 @@ struct _GstMatroskaTrackContext {
                                       GstMatroskaTrackContext *context,
 				      GstBuffer **buffer);
 
-  /* Tags to send after newsegment event */
-  GstTagList   *pending_tags;
+  /* List of tags for this stream */
+  GstTagList   *tags;
+  /* Tags changed and should be pushed again */
+  gboolean      tags_changed;
 
   /* A GArray of GstMatroskaTrackEncoding structures which contain the
    * encoding (compression/encryption) settings for this track, if any */
@@ -551,6 +565,12 @@ struct _GstMatroskaTrackContext {
 
   /* any alignment we need our output buffers to have */
   gint          alignment;
+  
+  /* for compatibility with VFW files, where timestamp represents DTS */
+  gboolean      dts_only;
+  
+  /* indicate that the track is raw (jpeg,raw variants) and so pts=dts */
+  gboolean		intra_only;
 };
 
 typedef struct _GstMatroskaTrackVideoContext {
@@ -561,6 +581,9 @@ typedef struct _GstMatroskaTrackVideoContext {
   gdouble       default_fps;
   GstMatroskaAspectRatioMode asr_mode;
   guint32       fourcc;
+
+  GstVideoMultiviewMode multiview_mode;
+  GstVideoMultiviewFlags multiview_flags;
 
   /* QoS */
   GstClockTime  earliest_time;
@@ -640,8 +663,12 @@ GstBufferList * gst_matroska_parse_xiph_stream_headers  (gpointer codec_data,
 GstBufferList * gst_matroska_parse_speex_stream_headers (gpointer codec_data,
                                                          gsize codec_data_size);
 
+GstBufferList * gst_matroska_parse_opus_stream_headers  (gpointer codec_data,
+                                                         gsize codec_data_size);
+
 GstBufferList * gst_matroska_parse_flac_stream_headers  (gpointer codec_data,
                                                          gsize codec_data_size);
 void gst_matroska_track_free (GstMatroskaTrackContext * track);
+GstClockTime gst_matroska_track_get_buffer_timestamp (GstMatroskaTrackContext * track, GstBuffer *buf);
 
 #endif /* __GST_MATROSKA_IDS_H__ */

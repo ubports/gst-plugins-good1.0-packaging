@@ -47,7 +47,7 @@ enum
 
 enum
 {
-  ARG_0
+  PROP_0
 };
 
 #define gst_mulawdec_parent_class parent_class
@@ -135,6 +135,14 @@ error_failed_map_input_buffer:
   return GST_FLOW_ERROR;
 }
 
+static gboolean
+gst_mulawdec_start (GstAudioDecoder * dec)
+{
+  gst_audio_decoder_set_estimate_rate (dec, TRUE);
+
+  return TRUE;
+}
+
 static void
 gst_mulawdec_class_init (GstMuLawDecClass * klass)
 {
@@ -147,6 +155,7 @@ gst_mulawdec_class_init (GstMuLawDecClass * klass)
       gst_static_pad_template_get (&mulaw_dec_sink_factory));
 
 
+  audiodec_class->start = GST_DEBUG_FUNCPTR (gst_mulawdec_start);
   audiodec_class->set_format = GST_DEBUG_FUNCPTR (gst_mulawdec_set_format);
   audiodec_class->handle_frame = GST_DEBUG_FUNCPTR (gst_mulawdec_handle_frame);
 
@@ -160,4 +169,7 @@ static void
 gst_mulawdec_init (GstMuLawDec * mulawdec)
 {
   gst_audio_decoder_set_needs_format (GST_AUDIO_DECODER (mulawdec), TRUE);
+  gst_audio_decoder_set_use_default_pad_acceptcaps (GST_AUDIO_DECODER_CAST
+      (mulawdec), TRUE);
+  GST_PAD_SET_ACCEPT_TEMPLATE (GST_AUDIO_DECODER_SINK_PAD (mulawdec));
 }

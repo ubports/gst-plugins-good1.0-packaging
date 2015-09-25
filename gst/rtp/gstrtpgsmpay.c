@@ -25,8 +25,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <gst/rtp/gstrtpbuffer.h>
+#include <gst/audio/audio.h>
 
 #include "gstrtpgsmpay.h"
+#include "gstrtputils.h"
 
 GST_DEBUG_CATEGORY_STATIC (rtpgsmpay_debug);
 #define GST_CAT_DEFAULT (rtpgsmpay_debug)
@@ -107,7 +109,8 @@ gst_rtp_gsm_pay_setcaps (GstRTPBasePayload * payload, GstCaps * caps)
   if (strcmp ("audio/x-gsm", stname))
     goto invalid_type;
 
-  gst_rtp_base_payload_set_options (payload, "audio", FALSE, "GSM", 8000);
+  gst_rtp_base_payload_set_options (payload, "audio",
+      payload->pt != GST_RTP_PAYLOAD_GSM, "GSM", 8000);
   res = gst_rtp_base_payload_set_outcaps (payload, NULL);
 
   return res;
@@ -127,21 +130,16 @@ gst_rtp_gsm_pay_handle_buffer (GstRTPBasePayload * basepayload,
   GstRTPGSMPay *rtpgsmpay;
   guint payload_len;
   GstBuffer *outbuf;
-  GstMapInfo map;
-  guint8 *payload;
   GstClockTime timestamp, duration;
   GstFlowReturn ret;
-  GstRTPBuffer rtp = { NULL };
 
   rtpgsmpay = GST_RTP_GSM_PAY (basepayload);
 
-  gst_buffer_map (buffer, &map, GST_MAP_READ);
-
-  timestamp = GST_BUFFER_TIMESTAMP (buffer);
+  timestamp = GST_BUFFER_PTS (buffer);
   duration = GST_BUFFER_DURATION (buffer);
 
   /* FIXME, only one GSM frame per RTP packet for now */
-  payload_len = map.size;
+  payload_len = gst_buffer_get_size (buffer);
 
   /* FIXME, just error out for now */
   if (payload_len > GST_RTP_BASE_PAYLOAD_MTU (rtpgsmpay))
@@ -150,20 +148,14 @@ gst_rtp_gsm_pay_handle_buffer (GstRTPBasePayload * basepayload,
   outbuf = gst_rtp_buffer_new_allocate (payload_len, 0, 0);
 
   /* copy timestamp and duration */
-  GST_BUFFER_TIMESTAMP (outbuf) = timestamp;
+  GST_BUFFER_PTS (outbuf) = timestamp;
   GST_BUFFER_DURATION (outbuf) = duration;
 
-  /* get payload */
-  gst_rtp_buffer_map (outbuf, GST_MAP_WRITE, &rtp);
+  gst_rtp_copy_meta (GST_ELEMENT_CAST (rtpgsmpay), outbuf, buffer,
+      g_quark_from_static_string (GST_META_TAG_AUDIO_STR));
 
-  /* copy data in payload */
-  payload = gst_rtp_buffer_get_payload (&rtp);
-  memcpy (payload, map.data, map.size);
-
-  gst_rtp_buffer_unmap (&rtp);
-
-  gst_buffer_unmap (buffer, &map);
-  gst_buffer_unref (buffer);
+  /* append payload */
+  outbuf = gst_buffer_append (outbuf, buffer);
 
   GST_DEBUG ("gst_rtp_gsm_pay_chain: pushing buffer of size %" G_GSIZE_FORMAT,
       gst_buffer_get_size (outbuf));
@@ -178,7 +170,6 @@ too_big:
     GST_ELEMENT_ERROR (rtpgsmpay, STREAM, ENCODE, (NULL),
         ("payload_len %u > mtu %u", payload_len,
             GST_RTP_BASE_PAYLOAD_MTU (rtpgsmpay)));
-    gst_buffer_unmap (buffer, &map);
     return GST_FLOW_ERROR;
   }
 }

@@ -22,6 +22,7 @@
 
 #include <gst/gst.h>
 #include <gst/net/gstnetaddressmeta.h>
+#include <gst/rtp/rtp.h>
 #include <gio/gio.h>
 
 /**
@@ -105,7 +106,7 @@ typedef struct {
  *                 protocol level overhead
  * @max_seqnr: highest sequence number received
  * @transit: previous transit time used for calculating @jitter
- * @jitter: current jitter
+ * @jitter: current jitter (in clock rate units scaled by 16 for precision)
  * @prev_rtptime: previous time when an RTP packet was received
  * @prev_rtcptime: previous time when an RTCP packet was received
  * @last_rtptime: time when last RTP packet received
@@ -134,6 +135,11 @@ typedef struct {
 
   guint64      packets_sent;
   guint64      octets_sent;
+
+  guint        sent_pli_count;
+  guint        recv_pli_count;
+  guint        sent_fir_count;
+  guint        recv_fir_count;
 
   /* when we received stuff */
   GstClockTime prev_rtptime;
@@ -177,12 +183,12 @@ typedef struct {
 #define RTP_STATS_BYE_TIMEOUT           (2 * GST_SECOND)
 
 /*
- * The maximum number of missing packets we tollerate. These are packets with a
+ * The maximum number of missing packets we tolerate. These are packets with a
  * sequence number bigger than the last seen packet.
  */
 #define RTP_MAX_DROPOUT      3000
 /*
- * The maximum number of misordered packets we tollerate. These are packets with
+ * The maximum number of misordered packets we tolerate. These are packets with
  * a sequence number smaller than the last seen packet.
  */
 #define RTP_MAX_MISORDER     100
@@ -217,7 +223,7 @@ void           rtp_stats_set_bandwidths             (RTPSessionStats *stats,
                                                      gdouble rtcp_bw,
                                                      guint rs, guint rr);
 
-GstClockTime   rtp_stats_calculate_rtcp_interval    (RTPSessionStats *stats, gboolean sender, gboolean first);
+GstClockTime   rtp_stats_calculate_rtcp_interval    (RTPSessionStats *stats, gboolean sender, GstRTPProfile profile, gboolean ptp, gboolean first);
 GstClockTime   rtp_stats_add_rtcp_jitter            (RTPSessionStats *stats, GstClockTime interval);
 GstClockTime   rtp_stats_calculate_bye_interval     (RTPSessionStats *stats);
 gint64         rtp_stats_get_packets_lost           (const RTPSourceStats *stats);

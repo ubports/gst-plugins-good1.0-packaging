@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good-1.4.1\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2014-12-18 12:05+0100\n"
+"POT-Creation-Date: 2015-09-18 19:22+0200\n"
 "PO-Revision-Date: 2014-09-13 10:50+0200\n"
 "Last-Translator: Мирослав Николић <miroslavnikolic@rocketmail.com>\n"
 "Language-Team: Serbian <(nothing)>\n"
@@ -47,8 +47,9 @@ msgstr "Не могу да успоставим везу са сервером."
 msgid "Secure connection setup failed."
 msgstr "Подешавање безбедне везе није успело."
 
+#, fuzzy
 msgid ""
-"A network error occured, or the server closed the connection unexpectedly."
+"A network error occurred, or the server closed the connection unexpectedly."
 msgstr "Дошло је до грешке на мрежи, или је сервер неочекивано затворио везу."
 
 msgid "Server sent bad data."
@@ -86,6 +87,9 @@ msgstr "Видео у овој датотеци можда неће бити п�
 msgid "This file contains too many streams. Only playing first %d"
 msgstr "Ова датотека садржи превише токова. Пуштам само први %d"
 
+msgid "Internal data flow error."
+msgstr "Унутрaшња грешка протока података."
+
 msgid ""
 "No supported stream was found. You might need to install a GStreamer RTSP "
 "extension plugin for Real media streams."
@@ -101,9 +105,6 @@ msgstr ""
 "Није пронађен ниједан подржани ток. Можда ћете морати да омогућите више "
 "протокола преноса или можда на неки други начин недостаје прави прикључак "
 "РТСП проширења ГСтримера."
-
-msgid "Internal data flow error."
-msgstr "Унутрaшња грешка протока података."
 
 msgid ""
 "Could not open audio device for playback. Device is being used by another "

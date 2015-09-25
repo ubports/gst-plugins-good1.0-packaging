@@ -43,7 +43,7 @@ enum
 
 enum
 {
-  ARG_0
+  PROP_0
 };
 
 static gboolean gst_mulawenc_start (GstAudioEncoder * audioenc);
@@ -207,5 +207,5 @@ gst_mulawenc_class_init (GstMuLawEncClass * klass)
 static void
 gst_mulawenc_init (GstMuLawEnc * mulawenc)
 {
-
+  GST_PAD_SET_ACCEPT_TEMPLATE (GST_AUDIO_ENCODER_SINK_PAD (mulawenc));
 }

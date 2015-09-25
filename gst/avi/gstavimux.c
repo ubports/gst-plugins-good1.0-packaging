@@ -76,8 +76,8 @@ GST_DEBUG_CATEGORY_STATIC (avimux_debug);
 
 enum
 {
-  ARG_0,
-  ARG_BIGFILE
+  PROP_0,
+  PROP_BIGFILE
 };
 
 #define DEFAULT_BIGFILE TRUE
@@ -242,7 +242,7 @@ gst_avi_mux_class_init (GstAviMuxClass * klass)
   gobject_class->set_property = gst_avi_mux_set_property;
   gobject_class->finalize = gst_avi_mux_finalize;
 
-  g_object_class_install_property (gobject_class, ARG_BIGFILE,
+  g_object_class_install_property (gobject_class, PROP_BIGFILE,
       g_param_spec_boolean ("bigfile", "Bigfile Support (>2GB)",
           "Support for openDML-2.0 (big) AVI files", DEFAULT_BIGFILE,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
@@ -262,7 +262,7 @@ gst_avi_mux_class_init (GstAviMuxClass * klass)
   gst_element_class_set_static_metadata (gstelement_class, "Avi muxer",
       "Codec/Muxer",
       "Muxes audio and video into an avi stream",
-      "GStreamer maintainers <gstreamer-devel@lists.sourceforge.net>");
+      "GStreamer maintainers <gstreamer-devel@lists.freedesktop.org>");
 }
 
 /* reset pad to initial state
@@ -997,14 +997,14 @@ gst_avi_mux_request_new_pad (GstElement * element,
 
   newpad = gst_pad_new_from_template (templ, pad_name);
 
-  g_free (name);
-
   avipad->collect = gst_collect_pads_add_pad (avimux->collect,
       newpad, sizeof (GstAviCollectData), NULL, TRUE);
   ((GstAviCollectData *) (avipad->collect))->avipad = avipad;
 
   if (!gst_element_add_pad (element, newpad))
     goto pad_add_failed;
+
+  g_free (name);
 
   GST_DEBUG_OBJECT (newpad, "Added new request pad");
 
@@ -1034,6 +1034,7 @@ too_many_video_pads:
 pad_add_failed:
   {
     GST_WARNING_OBJECT (avimux, "Adding the new pad '%s' failed", pad_name);
+    g_free (name);
     gst_object_unref (newpad);
     return NULL;
   }
@@ -1076,16 +1077,15 @@ static inline guint
 gst_avi_mux_start_chunk (GstByteWriter * bw, const gchar * tag, guint32 fourcc)
 {
   guint chunk_offset;
-  gboolean hdl = TRUE;
 
   if (tag)
-    hdl &= gst_byte_writer_put_data (bw, (const guint8 *) tag, 4);
+    gst_byte_writer_put_data (bw, (const guint8 *) tag, 4);
   else
-    hdl &= gst_byte_writer_put_uint32_le (bw, fourcc);
+    gst_byte_writer_put_uint32_le (bw, fourcc);
 
   chunk_offset = gst_byte_writer_get_pos (bw);
   /* real chunk size comes later */
-  hdl &= gst_byte_writer_put_uint32_le (bw, 0);
+  gst_byte_writer_put_uint32_le (bw, 0);
 
   return chunk_offset;
 }
@@ -1094,17 +1094,16 @@ static inline void
 gst_avi_mux_end_chunk (GstByteWriter * bw, guint chunk_offset)
 {
   guint size;
-  gboolean hdl = TRUE;
 
   size = gst_byte_writer_get_pos (bw);
 
   gst_byte_writer_set_pos (bw, chunk_offset);
-  hdl &= gst_byte_writer_put_uint32_le (bw, size - chunk_offset - 4);
+  gst_byte_writer_put_uint32_le (bw, size - chunk_offset - 4);
   gst_byte_writer_set_pos (bw, size);
 
   /* arrange for even padding */
   if (size & 1)
-    hdl &= gst_byte_writer_put_uint8 (bw, 0);
+    gst_byte_writer_put_uint8 (bw, 0);
 }
 
 /* maybe some of these functions should be moved to riff.h? */
@@ -2218,7 +2217,7 @@ gst_avi_mux_get_property (GObject * object,
   avimux = GST_AVI_MUX (object);
 
   switch (prop_id) {
-    case ARG_BIGFILE:
+    case PROP_BIGFILE:
       g_value_set_boolean (value, avimux->enable_large_avi);
       break;
     default:
@@ -2236,7 +2235,7 @@ gst_avi_mux_set_property (GObject * object,
   avimux = GST_AVI_MUX (object);
 
   switch (prop_id) {
-    case ARG_BIGFILE:
+    case PROP_BIGFILE:
       avimux->enable_large_avi = g_value_get_boolean (value);
       break;
     default:

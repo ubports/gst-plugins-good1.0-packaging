@@ -24,7 +24,12 @@
 #include <string.h>
 
 #include <gst/rtp/gstrtpbuffer.h>
+#include <gst/video/video.h>
 #include "gstrtph263pdepay.h"
+#include "gstrtputils.h"
+
+GST_DEBUG_CATEGORY_STATIC (rtph263pdepay_debug);
+#define GST_CAT_DEFAULT (rtph263pdepay_debug)
 
 static GstStaticPadTemplate gst_rtp_h263p_depay_src_template =
 GST_STATIC_PAD_TEMPLATE ("src",
@@ -86,7 +91,7 @@ static GstStateChangeReturn gst_rtp_h263p_depay_change_state (GstElement *
     element, GstStateChange transition);
 
 static GstBuffer *gst_rtp_h263p_depay_process (GstRTPBaseDepayload * depayload,
-    GstBuffer * buf);
+    GstRTPBuffer * rtp);
 gboolean gst_rtp_h263p_depay_setcaps (GstRTPBaseDepayload * filter,
     GstCaps * caps);
 
@@ -115,8 +120,11 @@ gst_rtp_h263p_depay_class_init (GstRtpH263PDepayClass * klass)
       "Extracts H263/+/++ video from RTP packets (RFC 4629)",
       "Wim Taymans <wim.taymans@gmail.com>");
 
-  gstrtpbasedepayload_class->process = gst_rtp_h263p_depay_process;
+  gstrtpbasedepayload_class->process_rtp_packet = gst_rtp_h263p_depay_process;
   gstrtpbasedepayload_class->set_caps = gst_rtp_h263p_depay_setcaps;
+
+  GST_DEBUG_CATEGORY_INIT (rtph263pdepay_debug, "rtph263pdepay", 0,
+      "H263+ Video RTP Depayloader");
 }
 
 static void
@@ -224,7 +232,8 @@ no_caps:
 }
 
 static GstBuffer *
-gst_rtp_h263p_depay_process (GstRTPBaseDepayload * depayload, GstBuffer * buf)
+gst_rtp_h263p_depay_process (GstRTPBaseDepayload * depayload,
+    GstRTPBuffer * rtp)
 {
   GstRtpH263PDepay *rtph263pdepay;
   GstBuffer *outbuf;
@@ -233,28 +242,25 @@ gst_rtp_h263p_depay_process (GstRTPBaseDepayload * depayload, GstBuffer * buf)
   gboolean P, V, M;
   guint header_len;
   guint8 PLEN, PEBIT;
-  GstRTPBuffer rtp = { NULL };
 
   rtph263pdepay = GST_RTP_H263P_DEPAY (depayload);
 
   /* flush remaining data on discont */
-  if (GST_BUFFER_IS_DISCONT (buf)) {
+  if (GST_BUFFER_IS_DISCONT (rtp->buffer)) {
     GST_LOG_OBJECT (depayload, "DISCONT, flushing adapter");
     gst_adapter_clear (rtph263pdepay->adapter);
     rtph263pdepay->wait_start = TRUE;
   }
 
-  gst_rtp_buffer_map (buf, GST_MAP_READ, &rtp);
-
-  payload_len = gst_rtp_buffer_get_payload_len (&rtp);
+  payload_len = gst_rtp_buffer_get_payload_len (rtp);
   header_len = 2;
 
   if (payload_len < header_len)
     goto too_small;
 
-  payload = gst_rtp_buffer_get_payload (&rtp);
+  payload = gst_rtp_buffer_get_payload (rtp);
 
-  M = gst_rtp_buffer_get_marker (&rtp);
+  M = gst_rtp_buffer_get_marker (rtp);
 
   /*  0                   1
    *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5
@@ -305,39 +311,37 @@ gst_rtp_h263p_depay_process (GstRTPBaseDepayload * depayload, GstBuffer * buf)
     /* frame is completed: append to previous, push it out */
     guint len, padlen;
     guint avail;
-    GstMapInfo map;
+    GstBuffer *padbuf;
 
     GST_LOG_OBJECT (depayload, "Frame complete");
+
+    outbuf =
+        gst_rtp_buffer_get_payload_subbuffer (rtp, header_len, payload_len);
+    gst_adapter_push (rtph263pdepay->adapter, outbuf);
+    outbuf = NULL;
 
     avail = gst_adapter_available (rtph263pdepay->adapter);
     len = avail + payload_len;
     padlen = (len % 4) + 4;
 
-    outbuf = gst_buffer_new_and_alloc (len + padlen);
-
-    gst_buffer_map (outbuf, &map, GST_MAP_WRITE);
-    memset (map.data + len, 0, padlen);
-
-    /* prepend previous data */
-    if (avail > 0) {
-      gst_adapter_copy (rtph263pdepay->adapter, map.data, 0, avail);
-      gst_adapter_flush (rtph263pdepay->adapter, avail);
+    outbuf = gst_adapter_take_buffer (rtph263pdepay->adapter, avail);
+    if (padlen) {
+      padbuf = gst_buffer_new_and_alloc (padlen);
+      gst_buffer_memset (padbuf, 0, 0, padlen);
+      outbuf = gst_buffer_append (outbuf, padbuf);
     }
-    memcpy (map.data + avail, payload, payload_len);
-    gst_buffer_unmap (outbuf, &map);
-    gst_rtp_buffer_unmap (&rtp);
+
+    gst_rtp_drop_meta (GST_ELEMENT_CAST (rtph263pdepay), outbuf,
+        g_quark_from_static_string (GST_META_TAG_VIDEO_STR));
 
     return outbuf;
-
   } else {
     /* frame not completed: store in adapter */
-    outbuf = gst_buffer_new_and_alloc (payload_len);
-
     GST_LOG_OBJECT (depayload, "Frame incomplete, storing %d", payload_len);
-    gst_buffer_fill (outbuf, 0, payload, payload_len);
 
+    outbuf =
+        gst_rtp_buffer_get_payload_subbuffer (rtp, header_len, payload_len);
     gst_adapter_push (rtph263pdepay->adapter, outbuf);
-    gst_rtp_buffer_unmap (&rtp);
   }
   return NULL;
 
@@ -345,13 +349,11 @@ too_small:
   {
     GST_ELEMENT_WARNING (rtph263pdepay, STREAM, DECODE,
         ("Packet payload was too small"), (NULL));
-    gst_rtp_buffer_unmap (&rtp);
     return NULL;
   }
 waiting_start:
   {
     GST_DEBUG_OBJECT (rtph263pdepay, "waiting for picture start");
-    gst_rtp_buffer_unmap (&rtp);
     return NULL;
   }
 }

@@ -135,7 +135,7 @@ gst_avi_demux_class_init (GstAviDemuxClass * klass)
   GstElementClass *gstelement_class = GST_ELEMENT_CLASS (klass);
   GObjectClass *gobject_class = (GObjectClass *) klass;
   GstPadTemplate *videosrctempl, *audiosrctempl, *subsrctempl, *subpicsrctempl;
-  GstCaps *audcaps, *vidcaps, *subcaps, *subpiccaps;;
+  GstCaps *audcaps, *vidcaps, *subcaps, *subpiccaps;
 
   GST_DEBUG_CATEGORY_INIT (avidemux_debug, "avidemux",
       0, "Demuxer for AVI streams");
@@ -482,18 +482,11 @@ gst_avi_demux_handle_src_query (GstPad * pad, GstObject * parent,
           guint64 xlen = avi->avih->us_frame *
               avi->avih->tot_frames * GST_USECOND;
 
-          if (stream->is_vbr) {
-            pos = gst_util_uint64_scale (xlen, stream->current_entry,
-                stream->idx_n);
-            GST_DEBUG_OBJECT (avi, "VBR perc convert frame %u, time %"
-                GST_TIME_FORMAT, stream->current_entry, GST_TIME_ARGS (pos));
-          } else {
-            pos = gst_util_uint64_scale (xlen, stream->current_total,
-                stream->total_bytes);
-            GST_DEBUG_OBJECT (avi,
-                "CBR perc convert bytes %u, time %" GST_TIME_FORMAT,
-                stream->current_total, GST_TIME_ARGS (pos));
-          }
+          pos = gst_util_uint64_scale (xlen, stream->current_total,
+              stream->total_bytes);
+          GST_DEBUG_OBJECT (avi,
+              "CBR perc convert bytes %u, time %" GST_TIME_FORMAT,
+              stream->current_total, GST_TIME_ARGS (pos));
         } else {
           /* we don't know */
           res = FALSE;
@@ -673,7 +666,7 @@ gst_avi_demux_seek_streams (GstAviDemux * avi, guint64 offset, gboolean before)
 }
 #endif
 
-static guint
+static gint
 gst_avi_demux_index_entry_offset_search (GstAviIndexEntry * entry,
     guint64 * offset)
 {
@@ -3016,7 +3009,7 @@ static GstFlowReturn
 gst_avi_demux_peek_tag (GstAviDemux * avi, guint64 offset, guint32 * tag,
     guint * size)
 {
-  GstFlowReturn res = GST_FLOW_OK;
+  GstFlowReturn res;
   GstBuffer *buf = NULL;
   GstMapInfo map;
 
@@ -3472,6 +3465,7 @@ gst_avi_demux_stream_header_push (GstAviDemux * avi)
                     if (avi->globaltags) {
                       gst_tag_list_insert (avi->globaltags, tags,
                           GST_TAG_MERGE_REPLACE);
+                      gst_tag_list_unref (tags);
                     } else {
                       avi->globaltags = tags;
                     }
@@ -4058,6 +4052,7 @@ gst_avi_demux_stream_header_pull (GstAviDemux * avi)
               if (avi->globaltags) {
                 gst_tag_list_insert (avi->globaltags, tags,
                     GST_TAG_MERGE_REPLACE);
+                gst_tag_list_unref (tags);
               } else {
                 avi->globaltags = tags;
               }
@@ -4074,6 +4069,7 @@ gst_avi_demux_stream_header_pull (GstAviDemux * avi)
               if (avi->globaltags) {
                 gst_tag_list_insert (avi->globaltags, tags,
                     GST_TAG_MERGE_REPLACE);
+                gst_tag_list_unref (tags);
               } else {
                 avi->globaltags = tags;
               }
@@ -4187,6 +4183,7 @@ gst_avi_demux_stream_header_pull (GstAviDemux * avi)
               if (avi->globaltags) {
                 gst_tag_list_insert (avi->globaltags, tags,
                     GST_TAG_MERGE_REPLACE);
+                gst_tag_list_unref (tags);
               } else {
                 avi->globaltags = tags;
               }
@@ -4221,6 +4218,7 @@ gst_avi_demux_stream_header_pull (GstAviDemux * avi)
               if (avi->globaltags) {
                 gst_tag_list_insert (avi->globaltags, tags,
                     GST_TAG_MERGE_REPLACE);
+                gst_tag_list_unref (tags);
               } else {
                 avi->globaltags = tags;
               }
@@ -4362,9 +4360,11 @@ no_index:
   }
 pull_range_failed:
   {
+    if (res == GST_FLOW_FLUSHING)
+      return res;
     GST_ELEMENT_ERROR (avi, STREAM, DEMUX, (NULL),
         ("pull_range flow reading header: %s", gst_flow_get_name (res)));
-    return GST_FLOW_ERROR;
+    return res;
   }
 }
 
@@ -4641,6 +4641,8 @@ gst_avi_demux_handle_seek (GstAviDemux * avi, GstPad * pad, GstEvent * event)
     GST_DEBUG_OBJECT (avi, "marking DISCONT");
     avi->stream[i].discont = TRUE;
   }
+  /* likewise for the whole new segment */
+  gst_flow_combiner_reset (avi->flowcombiner);
   GST_PAD_STREAM_UNLOCK (avi->sinkpad);
 
   return TRUE;
@@ -5005,7 +5007,7 @@ gst_avi_demux_combine_flows (GstAviDemux * avi, GstAviStream * stream,
 {
   GST_LOG_OBJECT (avi, "Stream %s:%s flow return: %s",
       GST_DEBUG_PAD_NAME (stream->pad), gst_flow_get_name (ret));
-  ret = gst_flow_combiner_update_flow (avi->flowcombiner, ret);
+  ret = gst_flow_combiner_update_pad_flow (avi->flowcombiner, stream->pad, ret);
   GST_LOG_OBJECT (avi, "combined to return %s", gst_flow_get_name (ret));
 
   return ret;
@@ -5761,8 +5763,10 @@ gst_avi_demux_chain (GstPad * pad, GstObject * parent, GstBuffer * buf)
       GST_OBJECT_UNLOCK (avi);
 
       /* calculate and perform seek */
-      if (!avi_demux_handle_seek_push (avi, avi->sinkpad, event))
+      if (!avi_demux_handle_seek_push (avi, avi->sinkpad, event)) {
+        gst_event_unref (event);
         goto seek_failed;
+      }
 
       gst_event_unref (event);
       avi->state = GST_AVI_DEMUX_MOVI;

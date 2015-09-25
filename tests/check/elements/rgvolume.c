@@ -162,7 +162,7 @@ send_caps_event (GstElement * element)
   GstCaps *caps;
   gboolean res;
 
-  caps = gst_caps_from_string ("audio/x-raw, format = F32LE, "
+  caps = gst_caps_from_string ("audio/x-raw, format = " GST_AUDIO_NE (F32) ", "
       "layout = interleaved, rate = 8000, channels = 1");
   res = gst_pad_push_event (mysrcpad, gst_event_new_caps (caps));
   fail_unless (res, "CAPS event not handled");
@@ -669,19 +669,4 @@ rgvolume_suite (void)
   return s;
 }
 
-int
-main (int argc, char **argv)
-{
-  gint nf;
-
-  Suite *s = rgvolume_suite ();
-  SRunner *sr = srunner_create (s);
-
-  gst_check_init (&argc, &argv);
-
-  srunner_run_all (sr, CK_ENV);
-  nf = srunner_ntests_failed (sr);
-  srunner_free (sr);
-
-  return nf;
-}
+GST_CHECK_MAIN (rgvolume);

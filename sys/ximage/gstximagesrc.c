@@ -66,7 +66,6 @@ enum
 {
   PROP_0,
   PROP_DISPLAY_NAME,
-  PROP_SCREEN_NUM,
   PROP_SHOW_POINTER,
   PROP_USE_DAMAGE,
   PROP_STARTX,
@@ -169,6 +168,9 @@ gst_ximage_src_open_display (GstXImageSrc * s, const gchar * name)
     int status;
     XWindowAttributes attrs;
     Window window;
+    int x, y;
+    Window child;
+    Bool coord_translated;
 
     if (s->xid != 0) {
       status = XGetWindowAttributes (s->xcontext->disp, s->xid, &attrs);
@@ -205,8 +207,19 @@ gst_ximage_src_open_display (GstXImageSrc * s, const gchar * name)
     g_assert (s->xwindow != 0);
     s->width = attrs.width;
     s->height = attrs.height;
-    GST_INFO_OBJECT (s, "Using default window size of %dx%d",
-        s->width, s->height);
+
+    coord_translated = XTranslateCoordinates (s->xcontext->disp, s->xwindow,
+        s->xcontext->root, 0, 0, &x, &y, &child);
+    if (coord_translated) {
+      s->x = x;
+      s->y = y;
+    } else {
+      s->x = 0;
+      s->y = 0;
+    }
+
+    GST_INFO_OBJECT (s, "Using default window size of %dx%d at location %d,%d",
+        s->width, s->height, s->x, s->y);
   }
 use_root_window:
 
@@ -358,6 +371,25 @@ gst_ximage_src_recalc (GstXImageSrc * src)
   /* We could use XQueryPointer to get only the current window. */
   return TRUE;
 }
+
+#ifdef HAVE_XFIXES
+static gboolean
+gst_ximage_is_pointer_in_region (GstXImageSrc * src)
+{
+  Window window_returned;
+  int root_x, root_y;
+  int win_x, win_y;
+  unsigned int mask_return;
+  Bool on_window;
+
+  on_window = XQueryPointer (src->xcontext->disp, src->xwindow,
+      &window_returned, &window_returned, &root_x, &root_y, &win_x, &win_y,
+      &mask_return);
+
+  return (on_window && (win_x >= src->startx) && (win_y >= src->starty) &&
+      (win_x < src->endx) && (win_y < src->endy));
+}
+#endif
 
 #ifdef HAVE_XFIXES
 static void
@@ -601,8 +633,10 @@ gst_ximage_src_ximage_get (GstXImageSrc * ximagesrc)
     if (ximagesrc->cursor_image) {
       gint x, y, width, height;
 
-      x = ximagesrc->cursor_image->x - ximagesrc->cursor_image->xhot;
-      y = ximagesrc->cursor_image->y - ximagesrc->cursor_image->yhot;
+      x = ximagesrc->cursor_image->x - ximagesrc->cursor_image->xhot -
+          ximagesrc->x;
+      y = ximagesrc->cursor_image->y - ximagesrc->cursor_image->yhot -
+          ximagesrc->y;
       width = ximagesrc->cursor_image->width;
       height = ximagesrc->cursor_image->height;
 
@@ -684,7 +718,8 @@ gst_ximage_src_ximage_get (GstXImageSrc * ximagesrc)
 #endif
 
 #ifdef HAVE_XFIXES
-  if (ximagesrc->show_pointer && ximagesrc->have_xfixes) {
+  if (ximagesrc->show_pointer && ximagesrc->have_xfixes
+      && gst_ximage_is_pointer_in_region (ximagesrc)) {
 
     GST_DEBUG_OBJECT (ximagesrc, "Using XFixes to draw cursor");
     /* get cursor */
@@ -696,31 +731,29 @@ gst_ximage_src_ximage_get (GstXImageSrc * ximagesrc)
       int startx, starty, iwidth, iheight;
       gboolean cursor_in_image = TRUE;
 
-      cx = ximagesrc->cursor_image->x - ximagesrc->cursor_image->xhot;
-      if (cx < 0)
-        cx = 0;
-      cy = ximagesrc->cursor_image->y - ximagesrc->cursor_image->yhot;
-      if (cy < 0)
-        cy = 0;
+      cx = ximagesrc->cursor_image->x - ximagesrc->cursor_image->xhot -
+          ximagesrc->x;
+      cy = ximagesrc->cursor_image->y - ximagesrc->cursor_image->yhot -
+          ximagesrc->y;
       count = ximagesrc->cursor_image->width * ximagesrc->cursor_image->height;
 
       /* only get where cursor last was, if it is in our range */
       if (ximagesrc->endx > ximagesrc->startx &&
           ximagesrc->endy > ximagesrc->starty) {
         /* check bounds */
-        if (cx + ximagesrc->cursor_image->width < ximagesrc->startx ||
-            cx > ximagesrc->endx) {
+        if (cx + ximagesrc->cursor_image->width < (int) ximagesrc->startx ||
+            cx > (int) ximagesrc->endx) {
           /* trivial reject */
           cursor_in_image = FALSE;
-        } else if (cy + ximagesrc->cursor_image->height < ximagesrc->starty ||
-            cy > ximagesrc->endy) {
+        } else if (cy + ximagesrc->cursor_image->height <
+            (int) ximagesrc->starty || cy > (int) ximagesrc->endy) {
           /* trivial reject */
           cursor_in_image = FALSE;
         } else {
           /* find intersect region */
 
-          startx = (cx < ximagesrc->startx) ? ximagesrc->startx : cx;
-          starty = (cy < ximagesrc->starty) ? ximagesrc->starty : cy;
+          startx = (cx < (int) ximagesrc->startx) ? ximagesrc->startx : cx;
+          starty = (cy < (int) ximagesrc->starty) ? ximagesrc->starty : cy;
           iwidth = (cx + ximagesrc->cursor_image->width < ximagesrc->endx) ?
               cx + ximagesrc->cursor_image->width - startx :
               ximagesrc->endx - startx;
@@ -888,9 +921,6 @@ gst_ximage_src_set_property (GObject * object, guint prop_id,
       g_free (src->display_name);
       src->display_name = g_strdup (g_value_get_string (value));
       break;
-    case PROP_SCREEN_NUM:
-      src->screen_num = g_value_get_uint (value);
-      break;
     case PROP_SHOW_POINTER:
       src->show_pointer = g_value_get_boolean (value);
       break;
@@ -945,9 +975,6 @@ gst_ximage_src_get_property (GObject * object, guint prop_id, GValue * value,
       else
         g_value_set_string (value, src->display_name);
 
-      break;
-    case PROP_SCREEN_NUM:
-      g_value_set_uint (value, src->screen_num);
       break;
     case PROP_SHOW_POINTER:
       g_value_set_boolean (value, src->show_pointer);
@@ -1161,9 +1188,6 @@ gst_ximage_src_class_init (GstXImageSrcClass * klass)
   g_object_class_install_property (gc, PROP_DISPLAY_NAME,
       g_param_spec_string ("display-name", "Display", "X Display Name", NULL,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
-  g_object_class_install_property (gc, PROP_SCREEN_NUM,
-      g_param_spec_uint ("screen-num", "Screen number", "X Screen Number",
-          0, G_MAXINT, 0, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (gc, PROP_SHOW_POINTER,
       g_param_spec_boolean ("show-pointer", "Show Mouse Pointer",
           "Show mouse pointer (if XFixes extension enabled)", TRUE,

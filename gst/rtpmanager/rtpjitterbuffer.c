@@ -170,6 +170,7 @@ rtp_jitter_buffer_set_delay (RTPJitterBuffer * jbuf, GstClockTime delay)
 /**
  * rtp_jitter_buffer_set_clock_rate:
  * @jbuf: an #RTPJitterBuffer
+ * @clock_rate: the new clock rate
  *
  * Set the clock rate in the jitterbuffer.
  */
@@ -177,13 +178,8 @@ void
 rtp_jitter_buffer_set_clock_rate (RTPJitterBuffer * jbuf, guint32 clock_rate)
 {
   if (jbuf->clock_rate != clock_rate) {
-    if (jbuf->clock_rate == -1) {
-      GST_DEBUG ("Clock rate changed from %" G_GUINT32_FORMAT " to %"
-          G_GUINT32_FORMAT, jbuf->clock_rate, clock_rate);
-    } else {
-      GST_WARNING ("Clock rate changed from %" G_GUINT32_FORMAT " to %"
-          G_GUINT32_FORMAT, jbuf->clock_rate, clock_rate);
-    }
+    GST_DEBUG ("Clock rate changed from %" G_GUINT32_FORMAT " to %"
+        G_GUINT32_FORMAT, jbuf->clock_rate, clock_rate);
     jbuf->clock_rate = clock_rate;
     rtp_jitter_buffer_reset_skew (jbuf);
   }
@@ -223,6 +219,7 @@ rtp_jitter_buffer_reset_skew (RTPJitterBuffer * jbuf)
   jbuf->skew = 0;
   jbuf->prev_send_diff = -1;
   jbuf->prev_out_time = -1;
+  jbuf->need_resync = TRUE;
   GST_DEBUG ("reset skew correction");
 }
 
@@ -255,6 +252,7 @@ rtp_jitter_buffer_resync (RTPJitterBuffer * jbuf, GstClockTime time,
     jbuf->window_size = 0;
     jbuf->skew = 0;
   }
+  jbuf->need_resync = FALSE;
 }
 
 static guint64
@@ -263,7 +261,7 @@ get_buffer_level (RTPJitterBuffer * jbuf)
   RTPJitterBufferItem *high_buf = NULL, *low_buf = NULL;
   guint64 level;
 
-  /* first first buffer with timestamp */
+  /* first buffer with timestamp */
   high_buf = (RTPJitterBufferItem *) g_queue_peek_tail_link (jbuf->packets);
   while (high_buf) {
     if (high_buf->dts != -1 || high_buf->pts != -1)
@@ -429,33 +427,28 @@ calculate_skew (RTPJitterBuffer * jbuf, guint32 rtptime, GstClockTime time)
   /* keep track of the last extended rtptime */
   jbuf->last_rtptime = ext_rtptime;
 
-  /* first time, lock on to time and gstrtptime */
-  if (G_UNLIKELY (jbuf->base_time == -1)) {
-    jbuf->base_time = time;
-    jbuf->prev_out_time = -1;
-    GST_DEBUG ("Taking new base time %" GST_TIME_FORMAT, GST_TIME_ARGS (time));
-  }
-  if (G_UNLIKELY (jbuf->base_rtptime == -1)) {
-    jbuf->base_rtptime = gstrtptime;
-    jbuf->base_extrtp = ext_rtptime;
-    jbuf->prev_send_diff = -1;
-    GST_DEBUG ("Taking new base rtptime %" GST_TIME_FORMAT,
-        GST_TIME_ARGS (gstrtptime));
+  send_diff = 0;
+  if (G_LIKELY (jbuf->base_rtptime != -1)) {
+    /* check elapsed time in RTP units */
+    if (G_LIKELY (gstrtptime >= jbuf->base_rtptime)) {
+      send_diff = gstrtptime - jbuf->base_rtptime;
+    } else {
+      /* elapsed time at sender, timestamps can go backwards and thus be
+       * smaller than our base time, schedule to take a new base time in
+       * that case. */
+      GST_WARNING ("backward timestamps at server, schedule resync");
+      jbuf->need_resync = TRUE;
+      send_diff = 0;
+    }
   }
 
-  if (G_LIKELY (gstrtptime >= jbuf->base_rtptime))
-    send_diff = gstrtptime - jbuf->base_rtptime;
-  else if (time != -1) {
-    /* elapsed time at sender, timestamps can go backwards and thus be smaller
-     * than our base time, take a new base time in that case. */
-    GST_WARNING ("backward timestamps at server, taking new base time");
+  /* need resync, lock on to time and gstrtptime if we can, otherwise we
+   * do with the previous values */
+  if (G_UNLIKELY (jbuf->need_resync && time != -1)) {
+    GST_INFO ("resync to time %" GST_TIME_FORMAT ", rtptime %"
+        GST_TIME_FORMAT, GST_TIME_ARGS (time), GST_TIME_ARGS (gstrtptime));
     rtp_jitter_buffer_resync (jbuf, time, gstrtptime, ext_rtptime, FALSE);
     send_diff = 0;
-  } else {
-    GST_WARNING ("backward timestamps at server but no timestamps");
-    send_diff = 0;
-    /* at least try to get a new timestamp.. */
-    jbuf->base_time = -1;
   }
 
   GST_DEBUG ("extrtp %" G_GUINT64_FORMAT ", gstrtp %" GST_TIME_FORMAT ", base %"
@@ -748,7 +741,7 @@ rtp_jitter_buffer_insert (RTPJitterBuffer * jbuf, RTPJitterBufferItem * item,
     case RTP_JITTER_BUFFER_MODE_NONE:
     case RTP_JITTER_BUFFER_MODE_BUFFER:
       /* send 0 as the first timestamp and -1 for the other ones. This will
-       * interpollate them from the RTP timestamps with a 0 origin. In buffering
+       * interpolate them from the RTP timestamps with a 0 origin. In buffering
        * mode we will adjust the outgoing timestamps according to the amount of
        * time we spent buffering. */
       if (jbuf->base_time == -1)
