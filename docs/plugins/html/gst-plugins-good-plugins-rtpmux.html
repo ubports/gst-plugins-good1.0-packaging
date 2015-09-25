@@ -2,13 +2,13 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>GStreamer Good Plugins 1.0 Plugins Reference Manual: rtpmux</title>
+<title>rtpmux: GStreamer Good Plugins 1.0 Plugins Reference Manual</title>
 <meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
 <link rel="home" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
-<link rel="prev" href="gst-plugins-good-plugins-rtpjitterbuffer.html" title="rtpjitterbuffer">
+<link rel="prev" href="gst-plugins-good-plugins-rtpL16pay.html" title="rtpL16pay">
 <link rel="next" href="gst-plugins-good-plugins-rtpptdemux.html" title="rtpptdemux">
-<meta name="generator" content="GTK-Doc V1.21 (XML mode)">
+<meta name="generator" content="GTK-Doc V1.24 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -21,7 +21,7 @@
 </td>
 <td><a accesskey="h" href="index.html"><img src="home.png" width="16" height="16" border="0" alt="Home"></a></td>
 <td><a accesskey="u" href="ch01.html"><img src="up.png" width="16" height="16" border="0" alt="Up"></a></td>
-<td><a accesskey="p" href="gst-plugins-good-plugins-rtpjitterbuffer.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
+<td><a accesskey="p" href="gst-plugins-good-plugins-rtpL16pay.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
 <td><a accesskey="n" href="gst-plugins-good-plugins-rtpptdemux.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
 </tr></table>
 <div class="refentry">
@@ -29,7 +29,7 @@
 <div class="refnamediv"><table width="100%"><tr>
 <td valign="top">
 <h2><span class="refentrytitle"><a name="gst-plugins-good-plugins-rtpmux.top_of_page"></a>rtpmux</span></h2>
-<p>rtpmux — multiplex N rtp streams into one</p>
+<p>rtpmux</p>
 </td>
 <td class="gallery_image" valign="top" align="right"></td>
 </tr></table></div>
@@ -93,7 +93,7 @@
 <p>The rtp muxer takes multiple RTP streams having the same clock-rate and
 muxes into a single stream with a single SSRC.</p>
 <div class="refsect2">
-<a name="id-1.2.128.7.3"></a><h3>Example pipelines</h3>
+<a name="id-1.2.141.7.3"></a><h3>Example pipelines</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
@@ -104,7 +104,7 @@ muxes into a single stream with a single SSRC.</p>
 4
 5
 6</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch rtpmux name<span class="gtkdoc opt">=</span>mux <span class="gtkdoc opt">!</span> udpsink host<span class="gtkdoc opt">=</span><span class="number">127.0.0.1</span> port<span class="gtkdoc opt">=</span><span class="number">8888</span>        \
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> rtpmux name<span class="gtkdoc opt">=</span>mux <span class="gtkdoc opt">!</span> udpsink host<span class="gtkdoc opt">=</span><span class="number">127.0.0.1</span> port<span class="gtkdoc opt">=</span><span class="number">8888</span>        \
              alsasrc <span class="gtkdoc opt">!</span> alawenc <span class="gtkdoc opt">!</span> rtppcmapay <span class="gtkdoc opt">!</span>                        \
              application<span class="gtkdoc opt">/</span>x<span class="gtkdoc opt">-</span>rtp<span class="gtkdoc opt">,</span> payload<span class="gtkdoc opt">=</span><span class="number">8</span><span class="gtkdoc opt">,</span> rate<span class="gtkdoc opt">=</span><span class="number">8000</span> <span class="gtkdoc opt">!</span> mux<span class="gtkdoc opt">.</span>sink_0    \
              audiotestsrc is<span class="gtkdoc opt">-</span>live<span class="gtkdoc opt">=</span><span class="number">1</span> <span class="gtkdoc opt">!</span>                                \
@@ -122,7 +122,7 @@ so they can be sent on the same port.
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.128.7.4.1"></a><h3>Element Information</h3>
+<a name="id-1.2.141.7.4.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -148,7 +148,7 @@ so they can be sent on the same port.
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.128.7.4.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.141.7.4.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -199,11 +199,10 @@ so they can be sent on the same port.
 </table></div>
 </div>
 </div>
-<p>
-</p>
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-rtpmux.functions_details"></a><h2>Functions</h2>
+<p></p>
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-rtpmux.other_details"></a><h2>Types and Values</h2>
@@ -255,7 +254,6 @@ so they can be sent on the same port.
 </div>
 </div>
 <div class="footer">
-<hr>
-          Generated by GTK-Doc V1.21</div>
+<hr>Generated by GTK-Doc V1.24</div>
 </body>
 </html>

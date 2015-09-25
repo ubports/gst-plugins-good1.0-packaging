@@ -24,8 +24,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <gst/rtp/gstrtpbuffer.h>
+#include <gst/audio/audio.h>
 
 #include "gstrtpceltpay.h"
+#include "gstrtputils.h"
 
 GST_DEBUG_CATEGORY_STATIC (rtpceltpay_debug);
 #define GST_CAT_DEFAULT (rtpceltpay_debug)
@@ -334,8 +336,8 @@ gst_rtp_celt_pay_flush_queued (GstRtpCELTPay * rtpceltpay)
     guint size;
 
     /* copy first timestamp to output */
-    if (GST_BUFFER_TIMESTAMP (outbuf) == -1)
-      GST_BUFFER_TIMESTAMP (outbuf) = GST_BUFFER_TIMESTAMP (buf);
+    if (GST_BUFFER_PTS (outbuf) == -1)
+      GST_BUFFER_PTS (outbuf) = GST_BUFFER_PTS (buf);
 
     /* write the size to the header */
     size = gst_buffer_get_size (buf);
@@ -349,6 +351,9 @@ gst_rtp_celt_pay_flush_queued (GstRtpCELTPay * rtpceltpay)
     size = gst_buffer_get_size (buf);
     gst_buffer_extract (buf, 0, payload, size);
     payload += size;
+
+    gst_rtp_copy_meta (GST_ELEMENT_CAST (rtpceltpay), outbuf, buf,
+        g_quark_from_static_string (GST_META_TAG_AUDIO_STR));
 
     gst_buffer_unref (buf);
   }

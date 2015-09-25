@@ -38,8 +38,7 @@ GST_DEBUG_CATEGORY_STATIC (rtpg726pay_debug);
 enum
 {
   PROP_0,
-  PROP_FORCE_AAL2,
-  PROP_LAST
+  PROP_FORCE_AAL2
 };
 
 static GstStaticPadTemplate gst_rtp_g726_pay_sink_template =
@@ -203,6 +202,7 @@ gst_rtp_g726_pay_setcaps (GstRTPBasePayload * payload, GstCaps * caps)
     /* intersect to filter */
     intersect = gst_caps_intersect (peercaps, filter);
     gst_caps_unref (peercaps);
+    gst_caps_unref (filter);
 
     GST_DEBUG_OBJECT (payload, "intersected to %" GST_PTR_FORMAT, intersect);
 

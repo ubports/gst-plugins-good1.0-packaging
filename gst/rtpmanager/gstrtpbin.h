@@ -23,6 +23,7 @@
 #include <gst/gst.h>
 
 #include "rtpsession.h"
+#include "gstrtpsession.h"
 #include "rtpjitterbuffer.h"
 
 #define GST_TYPE_RTP_BIN \
@@ -35,6 +36,13 @@
   (G_TYPE_CHECK_INSTANCE_TYPE((obj),GST_TYPE_RTP_BIN))
 #define GST_IS_RTP_BIN_CLASS(klass) \
   (G_TYPE_CHECK_CLASS_TYPE((klass),GST_TYPE_RTP_BIN))
+
+typedef enum
+{
+  GST_RTP_BIN_RTCP_SYNC_ALWAYS,
+  GST_RTP_BIN_RTCP_SYNC_INITIAL,
+  GST_RTP_BIN_RTCP_SYNC_RTP
+} GstRTCPSync;
 
 typedef struct _GstRtpBin GstRtpBin;
 typedef struct _GstRtpBinClass GstRtpBinClass;
@@ -56,9 +64,12 @@ struct _GstRtpBin {
   RTPJitterBufferMode buffer_mode;
   gboolean        buffering;
   gboolean        use_pipeline_clock;
+  GstRtpNtpTimeSource ntp_time_source;
   gboolean        send_sync_event;
   GstClockTime    buffer_start;
   gboolean        do_retransmission;
+  GstRTPProfile   rtp_profile;
+
   /* a list of session */
   GSList         *sessions;
 
@@ -80,7 +91,7 @@ struct _GstRtpBinClass {
 
   void        (*payload_type_change)  (GstRtpBin *rtpbin, guint session, guint pt);
 
-  void        (*new_jitterbuffer)     (GstRtpBin *rtpbin, guint session, guint32 ssrc);
+  void        (*new_jitterbuffer)     (GstRtpBin *rtpbin, GstElement *jitterbuffer, guint session, guint32 ssrc);
 
   /* action signals */
   void        (*clear_pt_map)         (GstRtpBin *rtpbin);

@@ -428,6 +428,7 @@ gst_soup_http_client_sink_finalize (GObject * object)
   if (souphttpsink->proxy)
     soup_uri_free (souphttpsink->proxy);
   g_free (souphttpsink->location);
+  g_strfreev (souphttpsink->cookies);
 
   g_cond_clear (&souphttpsink->cond);
   g_mutex_clear (&souphttpsink->mutex);
@@ -535,11 +536,19 @@ gst_soup_http_client_sink_start (GstBaseSink * sink)
     g_mutex_unlock (&souphttpsink->mutex);
     GST_LOG_OBJECT (souphttpsink, "main loop thread running");
 
-    souphttpsink->session =
-        soup_session_async_new_with_options (SOUP_SESSION_ASYNC_CONTEXT,
-        souphttpsink->context, SOUP_SESSION_USER_AGENT,
-        souphttpsink->user_agent, SOUP_SESSION_TIMEOUT, souphttpsink->timeout,
-        NULL);
+    if (souphttpsink->proxy == NULL) {
+      souphttpsink->session =
+          soup_session_async_new_with_options (SOUP_SESSION_ASYNC_CONTEXT,
+          souphttpsink->context, SOUP_SESSION_USER_AGENT,
+          souphttpsink->user_agent, SOUP_SESSION_TIMEOUT, souphttpsink->timeout,
+          NULL);
+    } else {
+      souphttpsink->session =
+          soup_session_async_new_with_options (SOUP_SESSION_ASYNC_CONTEXT,
+          souphttpsink->context, SOUP_SESSION_USER_AGENT,
+          souphttpsink->user_agent, SOUP_SESSION_TIMEOUT, souphttpsink->timeout,
+          SOUP_SESSION_PROXY_URI, souphttpsink->proxy, NULL);
+    }
 
     g_signal_connect (souphttpsink->session, "authenticate",
         G_CALLBACK (authenticate), souphttpsink);
@@ -647,6 +656,17 @@ send_message_locked (GstSoupHttpClientSink * souphttpsink)
   }
 
   souphttpsink->message = soup_message_new ("PUT", souphttpsink->location);
+  soup_message_set_flags (souphttpsink->message,
+      (souphttpsink->automatic_redirect ? 0 : SOUP_MESSAGE_NO_REDIRECT));
+
+  if (souphttpsink->cookies) {
+    gchar **cookie;
+
+    for (cookie = souphttpsink->cookies; *cookie != NULL; cookie++) {
+      soup_message_headers_append (souphttpsink->message->request_headers,
+          "Cookie", *cookie);
+    }
+  }
 
   n = 0;
   if (souphttpsink->offset == 0) {
@@ -793,9 +813,15 @@ authenticate (SoupSession * session, SoupMessage * msg,
   GstSoupHttpClientSink *souphttpsink = GST_SOUP_HTTP_CLIENT_SINK (user_data);
 
   if (!retrying) {
-    if (souphttpsink->user_id && souphttpsink->user_pw) {
-      soup_auth_authenticate (auth,
-          souphttpsink->user_id, souphttpsink->user_pw);
+    /* First time authentication only, if we fail and are called again with retry true fall through */
+    if (msg->status_code == SOUP_STATUS_UNAUTHORIZED) {
+      if (souphttpsink->user_id && souphttpsink->user_pw)
+        soup_auth_authenticate (auth, souphttpsink->user_id,
+            souphttpsink->user_pw);
+    } else if (msg->status_code == SOUP_STATUS_PROXY_AUTHENTICATION_REQUIRED) {
+      if (souphttpsink->proxy_id && souphttpsink->proxy_pw)
+        soup_auth_authenticate (auth, souphttpsink->proxy_id,
+            souphttpsink->proxy_pw);
     }
   }
 }

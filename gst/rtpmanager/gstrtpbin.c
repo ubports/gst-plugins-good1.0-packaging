@@ -80,7 +80,7 @@
  * sink_\%u pad that matches the sessionid in the signal and it should have 1 or
  * more src_\%u pads. For each src_%\u pad, a session will be made (if needed)
  * and the pad will be linked to the session send_rtp_sink pad. Each session will
- * then expose its source pad ad send_rtp_src_\%u on #GstRtpBin.
+ * then expose its source pad as send_rtp_src_\%u on #GstRtpBin.
  * An AUX receiver has 1 src_\%u pad that much match the sessionid in the signal
  * and 1 or more sink_\%u pads. A session will be made for each sink_\%u pad
  * when the corresponding recv_rtp_sink_\%u pad is requested on #GstRtpBin.
@@ -235,8 +235,8 @@ struct _GstRtpBinPrivate
 
   gboolean autoremove;
 
-  /* UNIX (ntp) time of last SR sync used */
-  guint64 last_unix;
+  /* NTP time in ns of last SR sync used */
+  guint64 last_ntpnstime;
 
   /* list of extra elements */
   GList *elements;
@@ -288,6 +288,8 @@ enum
 #define DEFAULT_RTCP_SYNC_INTERVAL   0
 #define DEFAULT_DO_SYNC_EVENT        FALSE
 #define DEFAULT_DO_RETRANSMISSION    FALSE
+#define DEFAULT_RTP_PROFILE          GST_RTP_PROFILE_AVP
+#define DEFAULT_NTP_TIME_SOURCE      GST_RTP_NTP_TIME_SOURCE_NTP
 
 enum
 {
@@ -305,14 +307,8 @@ enum
   PROP_USE_PIPELINE_CLOCK,
   PROP_DO_SYNC_EVENT,
   PROP_DO_RETRANSMISSION,
-  PROP_LAST
-};
-
-enum
-{
-  GST_RTP_BIN_RTCP_SYNC_ALWAYS,
-  GST_RTP_BIN_RTCP_SYNC_INITIAL,
-  GST_RTP_BIN_RTCP_SYNC_RTP
+  PROP_RTP_PROFILE,
+  PROP_NTP_TIME_SOURCE
 };
 
 #define GST_RTP_BIN_RTCP_SYNC_TYPE (gst_rtp_bin_rtcp_sync_get_type())
@@ -628,8 +624,13 @@ create_session (GstRtpBin * rtpbin, gint id)
 
   /* configure SDES items */
   GST_OBJECT_LOCK (rtpbin);
-  g_object_set (session, "sdes", rtpbin->sdes, "use-pipeline-clock",
-      rtpbin->use_pipeline_clock, NULL);
+  g_object_set (session, "sdes", rtpbin->sdes, "rtp-profile",
+      rtpbin->rtp_profile, NULL);
+  if (rtpbin->use_pipeline_clock)
+    g_object_set (session, "use-pipeline-clock", rtpbin->use_pipeline_clock,
+        NULL);
+  else
+    g_object_set (session, "ntp-time-source", rtpbin->ntp_time_source, NULL);
   GST_OBJECT_UNLOCK (rtpbin);
 
   /* provide clock_rate to the session manager when needed */
@@ -1010,23 +1011,40 @@ get_current_times (GstRtpBin * bin, GstClockTime * running_time,
     gst_object_ref (clock);
     GST_OBJECT_UNLOCK (bin);
 
+    /* get current clock time and convert to running time */
     clock_time = gst_clock_get_time (clock);
+    rt = clock_time - base_time;
 
     if (bin->use_pipeline_clock) {
-      ntpns = clock_time - base_time;
+      ntpns = rt;
+      /* add constant to convert from 1970 based time to 1900 based time */
+      ntpns += (2208988800LL * GST_SECOND);
     } else {
-      GTimeVal current;
+      switch (bin->ntp_time_source) {
+        case GST_RTP_NTP_TIME_SOURCE_NTP:
+        case GST_RTP_NTP_TIME_SOURCE_UNIX:{
+          GTimeVal current;
 
-      /* get current NTP time */
-      g_get_current_time (&current);
-      ntpns = GST_TIMEVAL_TO_TIME (current);
+          /* get current NTP time */
+          g_get_current_time (&current);
+          ntpns = GST_TIMEVAL_TO_TIME (current);
+
+          /* add constant to convert from 1970 based time to 1900 based time */
+          if (bin->ntp_time_source == GST_RTP_NTP_TIME_SOURCE_NTP)
+            ntpns += (2208988800LL * GST_SECOND);
+          break;
+        }
+        case GST_RTP_NTP_TIME_SOURCE_RUNNING_TIME:
+          ntpns = rt;
+          break;
+        case GST_RTP_NTP_TIME_SOURCE_CLOCK_TIME:
+          ntpns = clock_time;
+          break;
+        default:
+          g_assert_not_reached ();
+          break;
+      }
     }
-
-    /* add constant to convert from 1970 based time to 1900 based time */
-    ntpns += (2208988800LL * GST_SECOND);
-
-    /* get current clock time and convert to running time */
-    rt = clock_time - base_time;
 
     gst_object_unref (clock);
   } else {
@@ -1108,12 +1126,8 @@ gst_rtp_bin_associate (GstRtpBin * bin, GstRtpBinStream * stream, guint8 len,
   GstRtpBinClient *client;
   gboolean created;
   GSList *walk;
-  guint64 local_rt;
-  guint64 local_rtp;
-  GstClockTime running_time;
+  GstClockTime running_time, running_time_rtp;
   guint64 ntpnstime;
-  gint64 ntpdiff, rtdiff;
-  guint64 last_unix;
 
   /* first find or create the CNAME */
   client = get_client (bin, len, data, &created);
@@ -1155,51 +1169,56 @@ gst_rtp_bin_associate (GstRtpBin * bin, GstRtpBinStream * stream, guint8 len,
    * local rtptime. The local rtp time is used to construct timestamps on the
    * buffers so we will calculate what running_time corresponds to the RTP
    * timestamp in the SR packet. */
-  local_rtp = last_extrtptime - base_rtptime;
+  running_time_rtp = last_extrtptime - base_rtptime;
 
   GST_DEBUG_OBJECT (bin,
       "base %" G_GUINT64_FORMAT ", extrtptime %" G_GUINT64_FORMAT
       ", local RTP %" G_GUINT64_FORMAT ", clock-rate %d, "
       "clock-base %" G_GINT64_FORMAT, base_rtptime,
-      last_extrtptime, local_rtp, clock_rate, rtp_clock_base);
+      last_extrtptime, running_time_rtp, clock_rate, rtp_clock_base);
 
   /* calculate local RTP time in gstreamer timestamp, we essentially perform the
    * same conversion that a jitterbuffer would use to convert an rtp timestamp
    * into a corresponding gstreamer timestamp. Note that the base_time also
    * contains the drift between sender and receiver. */
-  local_rt = gst_util_uint64_scale_int (local_rtp, GST_SECOND, clock_rate);
-  local_rt += base_time;
+  running_time =
+      gst_util_uint64_scale_int (running_time_rtp, GST_SECOND, clock_rate);
+  running_time += base_time;
 
-  /* convert ntptime to unix time since 1900 */
-  last_unix = gst_util_uint64_scale (ntptime, GST_SECOND,
+  /* convert ntptime to nanoseconds */
+  ntpnstime = gst_util_uint64_scale (ntptime, GST_SECOND,
       (G_GINT64_CONSTANT (1) << 32));
 
   stream->have_sync = TRUE;
 
   GST_DEBUG_OBJECT (bin,
-      "local UNIX %" G_GUINT64_FORMAT ", remote UNIX %" G_GUINT64_FORMAT,
-      local_rt, last_unix);
+      "SR RTP running time %" G_GUINT64_FORMAT ", SR NTP %" G_GUINT64_FORMAT,
+      running_time, ntpnstime);
 
   /* recalc inter stream playout offset, but only if there is more than one
    * stream or we're doing NTP sync. */
   if (bin->ntp_sync) {
+    gint64 ntpdiff, rtdiff;
+    guint64 local_ntpnstime;
+    GstClockTime local_running_time;
+
     /* For NTP sync we need to first get a snapshot of running_time and NTP
      * time. We know at what running_time we play a certain RTP time, we also
      * calculated when we would play the RTP time in the SR packet. Now we need
      * to know how the running_time and the NTP time relate to eachother. */
-    get_current_times (bin, &running_time, &ntpnstime);
+    get_current_times (bin, &local_running_time, &local_ntpnstime);
 
     /* see how far away the NTP time is. This is the difference between the
      * current NTP time and the NTP time in the last SR packet. */
-    ntpdiff = ntpnstime - last_unix;
+    ntpdiff = local_ntpnstime - ntpnstime;
     /* see how far away the running_time is. This is the difference between the
      * current running_time and the running_time of the RTP timestamp in the
      * last SR packet. */
-    rtdiff = running_time - local_rt;
+    rtdiff = local_running_time - running_time;
 
     GST_DEBUG_OBJECT (bin,
-        "NTP time %" G_GUINT64_FORMAT ", last unix %" G_GUINT64_FORMAT,
-        ntpnstime, last_unix);
+        "local NTP time %" G_GUINT64_FORMAT ", SR NTP time %" G_GUINT64_FORMAT,
+        local_ntpnstime, ntpnstime);
     GST_DEBUG_OBJECT (bin,
         "NTP diff %" G_GINT64_FORMAT ", RT diff %" G_GINT64_FORMAT, ntpdiff,
         rtdiff);
@@ -1213,12 +1232,12 @@ gst_rtp_bin_associate (GstRtpBin * bin, GstRtpBinStream * stream, guint8 len,
     gboolean all_sync, use_rtp;
     gboolean rtcp_sync = g_atomic_int_get (&bin->rtcp_sync);
 
-    /* calculate delta between server and receiver. last_unix is created by
+    /* calculate delta between server and receiver. ntpnstime is created by
      * converting the ntptime in the last SR packet to a gstreamer timestamp. This
      * delta expresses the difference to our timeline and the server timeline. The
      * difference in itself doesn't mean much but we can combine the delta of
      * multiple streams to create a stream specific offset. */
-    stream->rt_delta = last_unix - local_rt;
+    stream->rt_delta = ntpnstime - running_time;
 
     /* calculate the min of all deltas, ignoring streams that did not yet have a
      * valid rt_delta because we did not yet receive an SR packet for those
@@ -1332,14 +1351,14 @@ gst_rtp_bin_associate (GstRtpBin * bin, GstRtpBinStream * stream, guint8 len,
     }
 
     /* bail out if we adjusted recently enough */
-    if (all_sync && (last_unix - bin->priv->last_unix) <
+    if (all_sync && (ntpnstime - bin->priv->last_ntpnstime) <
         bin->rtcp_sync_interval * GST_MSECOND) {
       GST_DEBUG_OBJECT (bin, "discarding RTCP sender packet for sync; "
           "previous sender info too recent "
-          "(previous UNIX %" G_GUINT64_FORMAT ")", bin->priv->last_unix);
+          "(previous NTP %" G_GUINT64_FORMAT ")", bin->priv->last_ntpnstime);
       return;
     }
-    bin->priv->last_unix = last_unix;
+    bin->priv->last_ntpnstime = ntpnstime;
 
     /* calculate offsets for each stream */
     for (walk = client->streams; walk; walk = g_slist_next (walk)) {
@@ -2066,9 +2085,10 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
 
   g_object_class_install_property (gobject_class, PROP_USE_PIPELINE_CLOCK,
       g_param_spec_boolean ("use-pipeline-clock", "Use pipeline clock",
-          "Use the pipeline running-time to set the NTP time in the RTCP SR messages",
+          "Use the pipeline running-time to set the NTP time in the RTCP SR messages "
+          "(DEPRECATED: Use ntp-time-source property)",
           DEFAULT_USE_PIPELINE_CLOCK,
-          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_DEPRECATED));
   /**
    * GstRtpBin:buffer-mode:
    *
@@ -2119,10 +2139,36 @@ gst_rtp_bin_class_init (GstRtpBinClass * klass)
           "Send event downstream when a stream is synchronized to the sender",
           DEFAULT_DO_SYNC_EVENT, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
+  /**
+   * GstRtpBin:do-retransmission:
+   *
+   * Enables RTP retransmission on all streams. To control retransmission on
+   * a per-SSRC basis, connect to the #GstRtpBin::new-jitterbuffer signal and
+   * set the #GstRtpJitterBuffer::do-retransmission property on the
+   * #GstRtpJitterBuffer object instead.
+   */
   g_object_class_install_property (gobject_class, PROP_DO_RETRANSMISSION,
       g_param_spec_boolean ("do-retransmission", "Do retransmission",
-          "Send an event downstream to request packet retransmission",
+          "Enable retransmission on all streams",
           DEFAULT_DO_RETRANSMISSION,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+  /**
+   * GstRtpBin:rtp-profile:
+   *
+   * Sets the default RTP profile of newly created RTP sessions. The
+   * profile can be changed afterwards on a per-session basis.
+   */
+  g_object_class_install_property (gobject_class, PROP_RTP_PROFILE,
+      g_param_spec_enum ("rtp-profile", "RTP Profile",
+          "Default RTP profile of newly created sessions",
+          GST_TYPE_RTP_PROFILE, DEFAULT_RTP_PROFILE,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+  g_object_class_install_property (gobject_class, PROP_NTP_TIME_SOURCE,
+      g_param_spec_enum ("ntp-time-source", "NTP Time Source",
+          "NTP time source for RTCP packets",
+          gst_rtp_ntp_time_source_get_type (), DEFAULT_NTP_TIME_SOURCE,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   gstelement_class->change_state = GST_DEBUG_FUNCPTR (gst_rtp_bin_change_state);
@@ -2187,6 +2233,8 @@ gst_rtp_bin_init (GstRtpBin * rtpbin)
   rtpbin->use_pipeline_clock = DEFAULT_USE_PIPELINE_CLOCK;
   rtpbin->send_sync_event = DEFAULT_DO_SYNC_EVENT;
   rtpbin->do_retransmission = DEFAULT_DO_RETRANSMISSION;
+  rtpbin->rtp_profile = DEFAULT_RTP_PROFILE;
+  rtpbin->ntp_time_source = DEFAULT_NTP_TIME_SOURCE;
 
   /* some default SDES entries */
   cname = g_strdup_printf ("user%u@host-%x", g_random_int (), g_random_int ());
@@ -2347,6 +2395,23 @@ gst_rtp_bin_set_property (GObject * object, guint prop_id,
       gst_rtp_bin_propagate_property_to_jitterbuffer (rtpbin,
           "do-retransmission", value);
       break;
+    case PROP_RTP_PROFILE:
+      rtpbin->rtp_profile = g_value_get_enum (value);
+      break;
+    case PROP_NTP_TIME_SOURCE:{
+      GSList *sessions;
+      GST_RTP_BIN_LOCK (rtpbin);
+      rtpbin->ntp_time_source = g_value_get_enum (value);
+      for (sessions = rtpbin->sessions; sessions;
+          sessions = g_slist_next (sessions)) {
+        GstRtpBinSession *session = (GstRtpBinSession *) sessions->data;
+
+        g_object_set (G_OBJECT (session->session),
+            "ntp-time-source", rtpbin->ntp_time_source, NULL);
+      }
+      GST_RTP_BIN_UNLOCK (rtpbin);
+      break;
+    }
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -2408,6 +2473,12 @@ gst_rtp_bin_get_property (GObject * object, guint prop_id,
       GST_RTP_BIN_LOCK (rtpbin);
       g_value_set_boolean (value, rtpbin->do_retransmission);
       GST_RTP_BIN_UNLOCK (rtpbin);
+      break;
+    case PROP_RTP_PROFILE:
+      g_value_set_enum (value, rtpbin->rtp_profile);
+      break;
+    case PROP_NTP_TIME_SOURCE:
+      g_value_set_enum (value, rtpbin->ntp_time_source);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -2626,7 +2697,7 @@ gst_rtp_bin_change_state (GstElement * element, GstStateChange transition)
     case GST_STATE_CHANGE_NULL_TO_READY:
       break;
     case GST_STATE_CHANGE_READY_TO_PAUSED:
-      priv->last_unix = 0;
+      priv->last_ntpnstime = 0;
       GST_LOG_OBJECT (rtpbin, "clearing shutdown flag");
       g_atomic_int_set (&priv->shutdown, 0);
       break;

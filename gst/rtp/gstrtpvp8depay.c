@@ -23,15 +23,22 @@
 #endif
 
 #include "gstrtpvp8depay.h"
+#include "gstrtputils.h"
+
+#include <gst/video/video.h>
+
+#include <stdio.h>
 
 GST_DEBUG_CATEGORY_STATIC (gst_rtp_vp8_depay_debug);
 #define GST_CAT_DEFAULT gst_rtp_vp8_depay_debug
 
 static void gst_rtp_vp8_depay_dispose (GObject * object);
 static GstBuffer *gst_rtp_vp8_depay_process (GstRTPBaseDepayload * depayload,
-    GstBuffer * buf);
-static gboolean gst_rtp_vp8_depay_set_caps (GstRTPBaseDepayload * depayload,
-    GstCaps * caps);
+    GstRTPBuffer * rtp);
+static GstStateChangeReturn gst_rtp_vp8_depay_change_state (GstElement *
+    element, GstStateChange transition);
+static gboolean gst_rtp_vp8_depay_handle_event (GstRTPBaseDepayload * depay,
+    GstEvent * event);
 
 G_DEFINE_TYPE (GstRtpVP8Depay, gst_rtp_vp8_depay, GST_TYPE_RTP_BASE_DEPAYLOAD);
 
@@ -48,7 +55,7 @@ GST_STATIC_PAD_TEMPLATE ("sink",
     GST_STATIC_CAPS ("application/x-rtp, "
         "clock-rate = (int) 90000,"
         "media = (string) \"video\","
-        "encoding-name = (string) \"VP8-DRAFT-IETF-01\""));
+        "encoding-name = (string) { \"VP8\", \"VP8-DRAFT-IETF-01\" }"));
 
 static void
 gst_rtp_vp8_depay_init (GstRtpVP8Depay * self)
@@ -78,8 +85,10 @@ gst_rtp_vp8_depay_class_init (GstRtpVP8DepayClass * gst_rtp_vp8_depay_class)
 
   object_class->dispose = gst_rtp_vp8_depay_dispose;
 
-  depay_class->process = gst_rtp_vp8_depay_process;
-  depay_class->set_caps = gst_rtp_vp8_depay_set_caps;
+  element_class->change_state = gst_rtp_vp8_depay_change_state;
+
+  depay_class->process_rtp_packet = gst_rtp_vp8_depay_process;
+  depay_class->handle_event = gst_rtp_vp8_depay_handle_event;
 
   GST_DEBUG_CATEGORY_INIT (gst_rtp_vp8_depay_debug, "rtpvp8depay", 0,
       "VP8 Video RTP Depayloader");
@@ -101,34 +110,32 @@ gst_rtp_vp8_depay_dispose (GObject * object)
 }
 
 static GstBuffer *
-gst_rtp_vp8_depay_process (GstRTPBaseDepayload * depay, GstBuffer * buf)
+gst_rtp_vp8_depay_process (GstRTPBaseDepayload * depay, GstRTPBuffer * rtp)
 {
   GstRtpVP8Depay *self = GST_RTP_VP8_DEPAY (depay);
   GstBuffer *payload;
   guint8 *data;
   guint hdrsize;
   guint size;
-  GstRTPBuffer rtpbuffer = GST_RTP_BUFFER_INIT;
 
-  if (G_UNLIKELY (GST_BUFFER_IS_DISCONT (buf))) {
+  if (G_UNLIKELY (GST_BUFFER_IS_DISCONT (rtp->buffer))) {
     GST_LOG_OBJECT (self, "Discontinuity, flushing adapter");
     gst_adapter_clear (self->adapter);
     self->started = FALSE;
   }
 
-  gst_rtp_buffer_map (buf, GST_MAP_READ, &rtpbuffer);
-  size = gst_rtp_buffer_get_payload_len (&rtpbuffer);
+  size = gst_rtp_buffer_get_payload_len (rtp);
 
   /* At least one header and one vp8 byte */
   if (G_UNLIKELY (size < 2))
     goto too_small;
 
-  data = gst_rtp_buffer_get_payload (&rtpbuffer);
+  data = gst_rtp_buffer_get_payload (rtp);
 
   if (G_UNLIKELY (!self->started)) {
     /* Check if this is the start of a VP8 frame, otherwise bail */
     /* S=1 and PartID= 0 */
-    if ((data[0] & 0x1F) != 0x10)
+    if ((data[0] & 0x17) != 0x10)
       goto done;
 
     self->started = TRUE;
@@ -159,34 +166,74 @@ gst_rtp_vp8_depay_process (GstRTPBaseDepayload * depay, GstBuffer * buf)
   if (G_UNLIKELY (hdrsize >= size))
     goto too_small;
 
-  payload = gst_rtp_buffer_get_payload_subbuffer (&rtpbuffer, hdrsize, -1);
+  payload = gst_rtp_buffer_get_payload_subbuffer (rtp, hdrsize, -1);
   gst_adapter_push (self->adapter, payload);
 
   /* Marker indicates that it was the last rtp packet for this frame */
-  if (gst_rtp_buffer_get_marker (&rtpbuffer)) {
+  if (gst_rtp_buffer_get_marker (rtp)) {
     GstBuffer *out;
-    guint8 flag0;
+    guint8 header[10];
 
-    gst_adapter_copy (self->adapter, &flag0, 0, 1);
+    if (gst_adapter_available (self->adapter) < 10)
+      goto too_small;
+    gst_adapter_copy (self->adapter, &header, 0, 10);
 
     out = gst_adapter_take_buffer (self->adapter,
         gst_adapter_available (self->adapter));
 
     self->started = FALSE;
-    gst_rtp_buffer_unmap (&rtpbuffer);
 
     /* mark keyframes */
     out = gst_buffer_make_writable (out);
-    if ((flag0 & 0x01))
+    /* Filter away all metas that are not sensible to copy */
+    gst_rtp_drop_meta (GST_ELEMENT_CAST (self), out,
+        g_quark_from_static_string (GST_META_TAG_VIDEO_STR));
+    if ((header[0] & 0x01)) {
       GST_BUFFER_FLAG_SET (out, GST_BUFFER_FLAG_DELTA_UNIT);
-    else
+
+      if (!self->caps_sent) {
+        gst_buffer_unref (out);
+        out = NULL;
+        GST_INFO_OBJECT (self, "Dropping inter-frame before intra-frame");
+        gst_pad_push_event (GST_RTP_BASE_DEPAYLOAD_SINKPAD (depay),
+            gst_video_event_new_upstream_force_key_unit (GST_CLOCK_TIME_NONE,
+                TRUE, 0));
+      }
+    } else {
+      guint profile, width, height;
+
       GST_BUFFER_FLAG_UNSET (out, GST_BUFFER_FLAG_DELTA_UNIT);
+
+      profile = (header[0] & 0x0e) >> 1;
+      width = GST_READ_UINT16_LE (header + 6) & 0x3fff;
+      height = GST_READ_UINT16_LE (header + 8) & 0x3fff;
+
+      if (G_UNLIKELY (self->last_width != width ||
+              self->last_height != height || self->last_profile != profile)) {
+        gchar profile_str[3];
+        GstCaps *srccaps;
+
+        snprintf (profile_str, 3, "%u", profile);
+        srccaps = gst_caps_new_simple ("video/x-vp8",
+            "framerate", GST_TYPE_FRACTION, 0, 1,
+            "height", G_TYPE_INT, height,
+            "width", G_TYPE_INT, width,
+            "profile", G_TYPE_STRING, profile_str, NULL);
+
+        gst_pad_set_caps (GST_RTP_BASE_DEPAYLOAD_SRCPAD (depay), srccaps);
+        gst_caps_unref (srccaps);
+
+        self->caps_sent = TRUE;
+        self->last_width = width;
+        self->last_height = height;
+        self->last_profile = profile;
+      }
+    }
 
     return out;
   }
 
 done:
-  gst_rtp_buffer_unmap (&rtpbuffer);
   return NULL;
 
 too_small:
@@ -197,17 +244,45 @@ too_small:
   goto done;
 }
 
-static gboolean
-gst_rtp_vp8_depay_set_caps (GstRTPBaseDepayload * depayload, GstCaps * caps)
+static GstStateChangeReturn
+gst_rtp_vp8_depay_change_state (GstElement * element, GstStateChange transition)
 {
-  GstCaps *srccaps = gst_caps_new_simple ("video/x-vp8",
-      "framerate", GST_TYPE_FRACTION, 0, 1,
-      NULL);
+  GstRtpVP8Depay *self = GST_RTP_VP8_DEPAY (element);
 
-  gst_pad_set_caps (GST_RTP_BASE_DEPAYLOAD_SRCPAD (depayload), srccaps);
-  gst_caps_unref (srccaps);
+  switch (transition) {
+    case GST_STATE_CHANGE_READY_TO_PAUSED:
+      self->last_profile = -1;
+      self->last_height = -1;
+      self->last_width = -1;
+      self->caps_sent = FALSE;
+      break;
+    default:
+      break;
+  }
 
-  return TRUE;
+  return
+      GST_ELEMENT_CLASS (gst_rtp_vp8_depay_parent_class)->change_state (element,
+      transition);
+}
+
+static gboolean
+gst_rtp_vp8_depay_handle_event (GstRTPBaseDepayload * depay, GstEvent * event)
+{
+  GstRtpVP8Depay *self = GST_RTP_VP8_DEPAY (depay);
+
+  switch (GST_EVENT_TYPE (event)) {
+    case GST_EVENT_FLUSH_STOP:
+      self->last_profile = -1;
+      self->last_height = -1;
+      self->last_width = -1;
+      break;
+    default:
+      break;
+  }
+
+  return
+      GST_RTP_BASE_DEPAYLOAD_CLASS
+      (gst_rtp_vp8_depay_parent_class)->handle_event (depay, event);
 }
 
 gboolean

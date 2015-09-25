@@ -120,8 +120,7 @@ enum
   PROP_NOISE_LEVEL,
   PROP_BLACK_SENSITIVITY,
   PROP_WHITE_SENSITIVITY,
-  PROP_PREFER_PASSTHROUGH,
-  PROP_LAST
+  PROP_PREFER_PASSTHROUGH
 };
 
 static GstStaticPadTemplate gst_alpha_src_template =
@@ -1880,7 +1879,7 @@ gst_alpha_set_packed_422_ayuv (const GstVideoFrame * in_frame,
 
         y = src[p[0]];
         u = src[p[1]];
-        v = src[p[3]];;
+        v = src[p[3]];
 
         dest[1] = y;
         dest[2] = u;
@@ -1901,7 +1900,7 @@ gst_alpha_set_packed_422_ayuv (const GstVideoFrame * in_frame,
 
         y = src[p[0]];
         u = src[p[1]];
-        v = src[p[3]];;
+        v = src[p[3]];
 
         dest[1] = y;
         dest[2] = u;
@@ -2455,7 +2454,6 @@ gst_alpha_set_process_function_full (GstAlpha * alpha, GstVideoInfo * in_info,
               break;
           }
           break;
-          break;
         default:
           break;
       }
@@ -2536,7 +2534,6 @@ gst_alpha_set_process_function_full (GstAlpha * alpha, GstVideoInfo * in_info,
             default:
               break;
           }
-          break;
           break;
         default:
           break;

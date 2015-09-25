@@ -73,6 +73,8 @@ struct _GstVP9Enc
   gint n_ts_layer_id;
   /* Global two-pass options */
   gchar *multipass_cache_file;
+  gchar *multipass_cache_prefix;
+  guint multipass_cache_idx;
   GByteArray *first_pass_cache_content;
 
   /* Encode parameter */
@@ -102,8 +104,7 @@ struct _GstVP9Enc
 
   vpx_image_t image;
 
-  int n_frames;
-
+  GstClockTime last_pts;
   GstVideoCodecState *input_state;
 };
 

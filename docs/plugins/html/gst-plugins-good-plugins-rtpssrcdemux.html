@@ -2,13 +2,13 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>GStreamer Good Plugins 1.0 Plugins Reference Manual: rtpssrcdemux</title>
+<title>rtpssrcdemux: GStreamer Good Plugins 1.0 Plugins Reference Manual</title>
 <meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
 <link rel="home" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-rtpsession.html" title="rtpsession">
-<link rel="next" href="gst-plugins-good-plugins-rtprtxsend.html" title="rtprtxsend">
-<meta name="generator" content="GTK-Doc V1.21 (XML mode)">
+<link rel="next" href="gst-plugins-good-plugins-rtspsrc.html" title="rtspsrc">
+<meta name="generator" content="GTK-Doc V1.24 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -22,14 +22,14 @@
 <td><a accesskey="h" href="index.html"><img src="home.png" width="16" height="16" border="0" alt="Home"></a></td>
 <td><a accesskey="u" href="ch01.html"><img src="up.png" width="16" height="16" border="0" alt="Up"></a></td>
 <td><a accesskey="p" href="gst-plugins-good-plugins-rtpsession.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
-<td><a accesskey="n" href="gst-plugins-good-plugins-rtprtxsend.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
+<td><a accesskey="n" href="gst-plugins-good-plugins-rtspsrc.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
 </tr></table>
 <div class="refentry">
 <a name="gst-plugins-good-plugins-rtpssrcdemux"></a><div class="titlepage"></div>
 <div class="refnamediv"><table width="100%"><tr>
 <td valign="top">
 <h2><span class="refentrytitle"><a name="gst-plugins-good-plugins-rtpssrcdemux.top_of_page"></a>rtpssrcdemux</span></h2>
-<p>rtpssrcdemux — Splits RTP streams based on the SSRC</p>
+<p>rtpssrcdemux</p>
 </td>
 <td class="gallery_image" valign="top" align="right"></td>
 </tr></table></div>
@@ -45,17 +45,17 @@
 <tr>
 <td class="signal_type"><span class="returnvalue">void</span></td>
 <td class="signal_name"><a class="link" href="gst-plugins-good-plugins-rtpssrcdemux.html#GstRtpSsrcDemux-clear-ssrc" title="The “clear-ssrc” signal">clear-ssrc</a></td>
-<td class="signal_flags">Action</td>
+<td class="signal_flags"><a href="https://developer.gnome.org/gobject/unstable/gobject-Signals.html#G-SIGNAL-ACTION:CAPS">Action</a></td>
 </tr>
 <tr>
 <td class="signal_type"><span class="returnvalue">void</span></td>
 <td class="signal_name"><a class="link" href="gst-plugins-good-plugins-rtpssrcdemux.html#GstRtpSsrcDemux-new-ssrc-pad" title="The “new-ssrc-pad” signal">new-ssrc-pad</a></td>
-<td class="signal_flags">Run Last</td>
+<td class="signal_flags"><a href="https://developer.gnome.org/gobject/unstable/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></td>
 </tr>
 <tr>
 <td class="signal_type"><span class="returnvalue">void</span></td>
 <td class="signal_name"><a class="link" href="gst-plugins-good-plugins-rtpssrcdemux.html#GstRtpSsrcDemux-removed-ssrc-pad" title="The “removed-ssrc-pad” signal">removed-ssrc-pad</a></td>
-<td class="signal_flags">Run Last</td>
+<td class="signal_flags"><a href="https://developer.gnome.org/gobject/unstable/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></td>
 </tr>
 </tbody>
 </table></div>
@@ -90,7 +90,7 @@ decode an RTP stream with multiple SSRCs.</p>
 <p>For each SSRC that is detected, a new pad will be created and the
 <a class="link" href="gst-plugins-good-plugins-rtpssrcdemux.html#GstRtpSsrcDemux-new-ssrc-pad" title="The “new-ssrc-pad” signal"><span class="type">“new-ssrc-pad”</span></a> signal will be emitted. </p>
 <div class="refsect2">
-<a name="id-1.2.131.7.4"></a><h3>Example pipelines</h3>
+<a name="id-1.2.147.7.4"></a><h3>Example pipelines</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
@@ -107,7 +107,7 @@ to fakesink, discarding the other SSRCs.
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.131.7.5.1"></a><h3>Element Information</h3>
+<a name="id-1.2.147.7.5.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -133,7 +133,7 @@ to fakesink, discarding the other SSRCs.
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.131.7.5.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.147.7.5.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -232,19 +232,16 @@ to fakesink, discarding the other SSRCs.
 </table></div>
 </div>
 </div>
-<p>
-</p>
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-rtpssrcdemux.functions_details"></a><h2>Functions</h2>
+<p></p>
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-rtpssrcdemux.other_details"></a><h2>Types and Values</h2>
 <div class="refsect2">
 <a name="GstRtpSsrcDemux-struct"></a><h3>struct GstRtpSsrcDemux</h3>
 <pre class="programlisting">struct GstRtpSsrcDemux;</pre>
-<p>
-</p>
 </div>
 </div>
 <div class="refsect1">
@@ -257,7 +254,7 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpssrcdemux.html#
                <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>         user_data)</pre>
 <p>Action signal to remove the pad for SSRC.</p>
 <div class="refsect3">
-<a name="id-1.2.131.10.2.5"></a><h4>Parameters</h4>
+<a name="id-1.2.147.10.2.5"></a><h4>Parameters</h4>
 <div class="informaltable"><table width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
@@ -283,7 +280,7 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpssrcdemux.html#
 </tbody>
 </table></div>
 </div>
-<p>Flags: Action</p>
+<p>Flags: <a href="https://developer.gnome.org/gobject/unstable/gobject-Signals.html#G-SIGNAL-ACTION:CAPS">Action</a></p>
 </div>
 <hr>
 <div class="refsect2">
@@ -295,7 +292,7 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpssrcdemux.html#
                <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>         user_data)</pre>
 <p>Emited when a new SSRC pad has been created.</p>
 <div class="refsect3">
-<a name="id-1.2.131.10.3.5"></a><h4>Parameters</h4>
+<a name="id-1.2.147.10.3.5"></a><h4>Parameters</h4>
 <div class="informaltable"><table width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
@@ -326,7 +323,7 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpssrcdemux.html#
 </tbody>
 </table></div>
 </div>
-<p>Flags: Run Last</p>
+<p>Flags: <a href="https://developer.gnome.org/gobject/unstable/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></p>
 </div>
 <hr>
 <div class="refsect2">
@@ -338,7 +335,7 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpssrcdemux.html#
                <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>         user_data)</pre>
 <p>Emited when a SSRC pad has been removed.</p>
 <div class="refsect3">
-<a name="id-1.2.131.10.4.5"></a><h4>Parameters</h4>
+<a name="id-1.2.147.10.4.5"></a><h4>Parameters</h4>
 <div class="informaltable"><table width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
@@ -369,12 +366,11 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpssrcdemux.html#
 </tbody>
 </table></div>
 </div>
-<p>Flags: Run Last</p>
+<p>Flags: <a href="https://developer.gnome.org/gobject/unstable/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></p>
 </div>
 </div>
 </div>
 <div class="footer">
-<hr>
-          Generated by GTK-Doc V1.21</div>
+<hr>Generated by GTK-Doc V1.24</div>
 </body>
 </html>

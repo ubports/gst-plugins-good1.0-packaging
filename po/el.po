@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 0.10.28.2\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2014-12-18 12:05+0100\n"
+"POT-Creation-Date: 2015-09-18 19:22+0200\n"
 "PO-Revision-Date: 2012-05-05 19:05+0100\n"
 "Last-Translator: Savvas Radevic <vicedar@gmail.com>\n"
 "Language-Team: Greek <team@lists.gnome.gr>\n"
@@ -48,8 +48,9 @@ msgstr "Δεν ήταν δυνατή η σύνδεση με τον διακομ�
 msgid "Secure connection setup failed."
 msgstr "Αποτυχία εκκίνησης ασφαλούς σύνδεσης."
 
+#, fuzzy
 msgid ""
-"A network error occured, or the server closed the connection unexpectedly."
+"A network error occurred, or the server closed the connection unexpectedly."
 msgstr ""
 "Προέκυψε ένα σφάλμα δικτύου ή ο διακομιστής έκλεισε ξαφνικά τη σύνδεση."
 
@@ -87,6 +88,9 @@ msgstr "Το βίντεο σε αυτό το αρχείο μπορεί να μη
 msgid "This file contains too many streams. Only playing first %d"
 msgstr "Αυτό το αρχείο περιέχει πολλές ροές. Αναπαράγεται μόνο η πρώτη %d"
 
+msgid "Internal data flow error."
+msgstr "Εσωτερικό σφάλμα ροής δεδομένων."
+
 msgid ""
 "No supported stream was found. You might need to install a GStreamer RTSP "
 "extension plugin for Real media streams."
@@ -102,9 +106,6 @@ msgstr ""
 "Δεν βρέθηκε καμία υποστηριζόμενη ροή. Είναι πιθανόν να χρειασθεί να "
 "επιτρέψετε περισσότερα πρωτόκολλα μεταγωγής ή αλλιώς να σας λείπει το σωστό "
 "πρόσθετο RTSP του GStreamer."
-
-msgid "Internal data flow error."
-msgstr "Εσωτερικό σφάλμα ροής δεδομένων."
 
 msgid ""
 "Could not open audio device for playback. Device is being used by another "

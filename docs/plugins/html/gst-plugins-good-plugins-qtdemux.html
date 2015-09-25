@@ -2,13 +2,13 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>GStreamer Good Plugins 1.0 Plugins Reference Manual: qtdemux</title>
+<title>qtdemux: GStreamer Good Plugins 1.0 Plugins Reference Manual</title>
 <meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
 <link rel="home" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
-<link rel="prev" href="gst-plugins-good-plugins-quarktv.html" title="quarktv">
-<link rel="next" href="gst-plugins-good-plugins-qtmux.html" title="qtmux">
-<meta name="generator" content="GTK-Doc V1.21 (XML mode)">
+<link rel="prev" href="gst-plugins-good-plugins-pulsesrc.html" title="pulsesrc">
+<link rel="next" href="gst-plugins-good-plugins-qtmoovrecover.html" title="qtmoovrecover">
+<meta name="generator" content="GTK-Doc V1.24 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -16,38 +16,22 @@
 <td width="100%" align="left" class="shortcuts">
 <a href="#" class="shortcut">Top</a><span id="nav_description">  <span class="dim">|</span> 
                   <a href="#gst-plugins-good-plugins-qtdemux.description" class="shortcut">Description</a></span><span id="nav_hierarchy">  <span class="dim">|</span> 
-                  <a href="#gst-plugins-good-plugins-qtdemux.object-hierarchy" class="shortcut">Object Hierarchy</a></span><span id="nav_signals">  <span class="dim">|</span> 
-                  <a href="#gst-plugins-good-plugins-qtdemux.signals" class="shortcut">Signals</a></span>
+                  <a href="#gst-plugins-good-plugins-qtdemux.object-hierarchy" class="shortcut">Object Hierarchy</a></span>
 </td>
 <td><a accesskey="h" href="index.html"><img src="home.png" width="16" height="16" border="0" alt="Home"></a></td>
 <td><a accesskey="u" href="ch01.html"><img src="up.png" width="16" height="16" border="0" alt="Up"></a></td>
-<td><a accesskey="p" href="gst-plugins-good-plugins-quarktv.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
-<td><a accesskey="n" href="gst-plugins-good-plugins-qtmux.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
+<td><a accesskey="p" href="gst-plugins-good-plugins-pulsesrc.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
+<td><a accesskey="n" href="gst-plugins-good-plugins-qtmoovrecover.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
 </tr></table>
 <div class="refentry">
 <a name="gst-plugins-good-plugins-qtdemux"></a><div class="titlepage"></div>
 <div class="refnamediv"><table width="100%"><tr>
 <td valign="top">
 <h2><span class="refentrytitle"><a name="gst-plugins-good-plugins-qtdemux.top_of_page"></a>qtdemux</span></h2>
-<p>qtdemux — Demultiplex a QuickTime file into audio and video streams</p>
+<p>qtdemux</p>
 </td>
 <td class="gallery_image" valign="top" align="right"></td>
 </tr></table></div>
-<div class="refsect1">
-<a name="gst-plugins-good-plugins-qtdemux.signals"></a><h2>Signals</h2>
-<div class="informaltable"><table border="0">
-<colgroup>
-<col width="150px" class="signals_return">
-<col width="300px" class="signals_name">
-<col width="200px" class="signals_flags">
-</colgroup>
-<tbody><tr>
-<td class="signal_type"><span class="returnvalue">void</span></td>
-<td class="signal_name"><a class="link" href="gst-plugins-good-plugins-qtdemux.html#GstQTDemux-got-redirect" title="The “got-redirect” signal">got-redirect</a></td>
-<td class="signal_flags"> </td>
-</tr></tbody>
-</table></div>
-</div>
 <a name="GstQTDemux"></a><div class="refsect1">
 <a name="gst-plugins-good-plugins-qtdemux.other"></a><h2>Types and Values</h2>
 <div class="informaltable"><table width="100%" border="0">
@@ -76,13 +60,13 @@
 <p>This element supports both push and pull-based scheduling, depending on the
 capabilities of the upstream elements.</p>
 <div class="refsect2">
-<a name="id-1.2.102.7.4"></a><h3>Example launch line</h3>
+<a name="id-1.2.104.6.4"></a><h3>Example launch line</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
       <tr>
         <td class="listing_lines" align="right"><pre>1</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> filesrc location<span class="gtkdoc opt">=</span>test<span class="gtkdoc opt">.</span>mov <span class="gtkdoc opt">!</span> qtdemux name<span class="gtkdoc opt">=</span>demux  demux<span class="gtkdoc opt">.</span>audio_0 <span class="gtkdoc opt">!</span> decodebin <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audioresample <span class="gtkdoc opt">!</span> autoaudiosink   demux<span class="gtkdoc opt">.</span>video_0 <span class="gtkdoc opt">!</span> queue <span class="gtkdoc opt">!</span> decodebin <span class="gtkdoc opt">!</span> videoconvert <span class="gtkdoc opt">!</span> videoscale <span class="gtkdoc opt">!</span> autovideosink</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> filesrc location<span class="gtkdoc opt">=</span>test<span class="gtkdoc opt">.</span>mov <span class="gtkdoc opt">!</span> qtdemux name<span class="gtkdoc opt">=</span>demux  demux<span class="gtkdoc opt">.</span>audio_0 <span class="gtkdoc opt">!</span> queue <span class="gtkdoc opt">!</span> decodebin <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audioresample <span class="gtkdoc opt">!</span> autoaudiosink   demux<span class="gtkdoc opt">.</span>video_0 <span class="gtkdoc opt">!</span> queue <span class="gtkdoc opt">!</span> decodebin <span class="gtkdoc opt">!</span> videoconvert <span class="gtkdoc opt">!</span> videoscale <span class="gtkdoc opt">!</span> autovideosink</pre></td>
       </tr>
     </tbody>
   </table>
@@ -95,7 +79,7 @@ right decoder elements/plugins installed.
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.102.7.5.1"></a><h3>Element Information</h3>
+<a name="id-1.2.104.6.5.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -121,7 +105,7 @@ right decoder elements/plugins installed.
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.102.7.5.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.104.6.5.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -232,58 +216,20 @@ right decoder elements/plugins installed.
 </table></div>
 </div>
 </div>
-<p>
-</p>
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-qtdemux.functions_details"></a><h2>Functions</h2>
+<p></p>
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-qtdemux.other_details"></a><h2>Types and Values</h2>
 <div class="refsect2">
 <a name="GstQTDemux-struct"></a><h3>struct GstQTDemux</h3>
 <pre class="programlisting">struct GstQTDemux;</pre>
-<p>
-</p>
-</div>
-</div>
-<div class="refsect1">
-<a name="gst-plugins-good-plugins-qtdemux.signal-details"></a><h2>Signal Details</h2>
-<div class="refsect2">
-<a name="GstQTDemux-got-redirect"></a><h3>The <code class="literal">“got-redirect”</code> signal</h3>
-<pre class="programlisting"><span class="returnvalue">void</span>
-user_function (<a class="link" href="gst-plugins-good-plugins-qtdemux.html#GstQTDemux"><span class="type">GstQTDemux</span></a> *gstqtdemux,
-               <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a>      *arg1,
-               <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>    user_data)</pre>
-<p>
-</p>
-<div class="refsect3">
-<a name="id-1.2.102.10.2.5"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
-<colgroup>
-<col width="150px" class="parameters_name">
-<col class="parameters_description">
-<col width="200px" class="parameters_annotations">
-</colgroup>
-<tbody>
-<tr>
-<td class="parameter_name"><p>gstqtdemux</p></td>
-<td class="parameter_description"><p>the object which received the signal.</p></td>
-<td class="parameter_annotations"> </td>
-</tr>
-<tr>
-<td class="parameter_name"><p>user_data</p></td>
-<td class="parameter_description"><p>user data set when the signal handler was connected.</p></td>
-<td class="parameter_annotations"> </td>
-</tr>
-</tbody>
-</table></div>
-</div>
 </div>
 </div>
 </div>
 <div class="footer">
-<hr>
-          Generated by GTK-Doc V1.21</div>
+<hr>Generated by GTK-Doc V1.24</div>
 </body>
 </html>

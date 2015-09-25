@@ -94,8 +94,7 @@ enum
   PROP_BORDER,
   PROP_DEPTH,
   PROP_DURATION,
-  PROP_INVERT,
-  PROP_LAST,
+  PROP_INVERT
 };
 
 /* FIXME: should use video meta etc. */
@@ -469,6 +468,9 @@ gst_smpte_collected (GstCollectPads * pads, GstSMPTE * smpte)
       !gst_pad_has_current_caps (smpte->sinkpad2))
     goto not_negotiated;
 
+  if (!gst_video_info_is_equal (&smpte->vinfo1, &smpte->vinfo2))
+    goto input_formats_do_not_match;
+
   if (smpte->send_stream_start) {
     gchar s_id[32];
 
@@ -506,9 +508,6 @@ gst_smpte_collected (GstCollectPads * pads, GstSMPTE * smpte)
     fill_i420 (map.data, smpte->width, smpte->height, 0);
     gst_buffer_unmap (in2, &map);
   }
-
-  if (!gst_video_info_is_equal (&smpte->vinfo1, &smpte->vinfo2))
-    goto input_formats_do_not_match;
 
   if (smpte->position < smpte->end_position) {
     outbuf = gst_buffer_new_and_alloc (I420_SIZE (smpte->width, smpte->height));

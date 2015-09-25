@@ -35,7 +35,7 @@
  * <refsect2>
  * <title>Example pipelines</title>
  * |[
- * gst-launch rtpmux name=mux ! udpsink host=127.0.0.1 port=8888        \
+ * gst-launch-1.0 rtpmux name=mux ! udpsink host=127.0.0.1 port=8888        \
  *              alsasrc ! alawenc ! rtppcmapay !                        \
  *              application/x-rtp, payload=8, rate=8000 ! mux.sink_0    \
  *              audiotestsrc is-live=1 !                                \
@@ -63,7 +63,7 @@ GST_DEBUG_CATEGORY_STATIC (gst_rtp_mux_debug);
 
 enum
 {
-  ARG_0,
+  PROP_0,
   PROP_TIMESTAMP_OFFSET,
   PROP_SEQNUM_OFFSET,
   PROP_SEQNUM,
@@ -191,7 +191,7 @@ gst_rtp_mux_src_event (GstPad * pad, GstObject * parent, GstEvent * event)
 {
   GstRTPMux *rtp_mux = GST_RTP_MUX (parent);
   GstRTPMuxClass *klass;
-  gboolean ret = FALSE;
+  gboolean ret;
 
   klass = GST_RTP_MUX_GET_CLASS (rtp_mux);
 
@@ -394,8 +394,8 @@ process_list_item (GstBuffer ** buffer, guint idx, gpointer user_data)
     return FALSE;
 
   if (GST_BUFFER_DURATION_IS_VALID (*buffer) &&
-      GST_BUFFER_TIMESTAMP_IS_VALID (*buffer))
-    bd->rtp_mux->last_stop = GST_BUFFER_TIMESTAMP (*buffer) +
+      GST_BUFFER_PTS_IS_VALID (*buffer))
+    bd->rtp_mux->last_stop = GST_BUFFER_PTS (*buffer) +
         GST_BUFFER_DURATION (*buffer);
   else
     bd->rtp_mux->last_stop = GST_CLOCK_TIME_NONE;
@@ -504,8 +504,8 @@ gst_rtp_mux_chain (GstPad * pad, GstObject * parent, GstBuffer * buffer)
     }
 
     if (GST_BUFFER_DURATION_IS_VALID (buffer) &&
-        GST_BUFFER_TIMESTAMP_IS_VALID (buffer))
-      rtp_mux->last_stop = GST_BUFFER_TIMESTAMP (buffer) +
+        GST_BUFFER_PTS_IS_VALID (buffer))
+      rtp_mux->last_stop = GST_BUFFER_PTS (buffer) +
           GST_BUFFER_DURATION (buffer);
     else
       rtp_mux->last_stop = GST_CLOCK_TIME_NONE;
@@ -602,7 +602,6 @@ same_clock_rate_fold (const GValue * item, GValue * ret, gpointer user_data)
   GstPad *pad = g_value_get_object (item);
   GstCaps *peercaps;
   GstCaps *accumcaps;
-  GstCaps *intersect;
 
   if (pad == mypad)
     return TRUE;
@@ -616,12 +615,9 @@ same_clock_rate_fold (const GValue * item, GValue * ret, gpointer user_data)
   peercaps = gst_caps_make_writable (peercaps);
   clear_caps (peercaps, TRUE);
 
-  intersect = gst_caps_intersect (accumcaps, peercaps);
+  g_value_take_boxed (ret, peercaps);
 
-  g_value_take_boxed (ret, intersect);
-  gst_caps_unref (peercaps);
-
-  return !gst_caps_is_empty (intersect);
+  return !gst_caps_is_empty (peercaps);
 }
 
 static GstCaps *
@@ -634,6 +630,7 @@ gst_rtp_mux_getcaps (GstPad * pad, GstRTPMux * mux, GstCaps * filter)
   GstCaps *peercaps;
   GstCaps *othercaps;
   GstCaps *tcaps;
+  GstCaps *other_filtered;
 
   peercaps = gst_pad_peer_query_caps (mux->srcpad, filter);
 
@@ -654,24 +651,30 @@ gst_rtp_mux_getcaps (GstPad * pad, GstRTPMux * mux, GstCaps * filter)
 
   clear_caps (othercaps, FALSE);
 
+  other_filtered = gst_caps_copy (othercaps);
+  clear_caps (other_filtered, TRUE);
+
   g_value_init (&v, GST_TYPE_CAPS);
 
   iter = gst_element_iterate_sink_pads (GST_ELEMENT (mux));
   do {
-    gst_value_set_caps (&v, othercaps);
+    gst_value_set_caps (&v, other_filtered);
     res = gst_iterator_fold (iter, same_clock_rate_fold, &v, pad);
     gst_iterator_resync (iter);
   } while (res == GST_ITERATOR_RESYNC);
   gst_iterator_free (iter);
+  gst_caps_unref (other_filtered);
 
-  caps = (GstCaps *) gst_value_get_caps (&v);
+  caps = gst_caps_intersect ((GstCaps *) gst_value_get_caps (&v), othercaps);
+
+  g_value_unset (&v);
+  gst_caps_unref (othercaps);
 
   if (res == GST_ITERATOR_ERROR) {
     gst_caps_unref (caps);
     caps = gst_caps_new_empty ();
   }
 
-  gst_caps_unref (othercaps);
 
   return caps;
 }

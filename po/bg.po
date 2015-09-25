@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gst-plugins-good 0.10.28.2\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2014-12-18 12:05+0100\n"
+"POT-Creation-Date: 2015-09-18 19:22+0200\n"
 "PO-Revision-Date: 2011-04-26 22:35+0300\n"
 "Last-Translator: Alexander Shopov <ash@kambanaria.org>\n"
 "Language-Team: Bulgarian <dict@fsa-bg.org>\n"
@@ -47,8 +47,9 @@ msgstr "Не може да се осъществи връзка към сърв�
 msgid "Secure connection setup failed."
 msgstr "Неуспешно осъществяване на шифрирана връзка."
 
+#, fuzzy
 msgid ""
-"A network error occured, or the server closed the connection unexpectedly."
+"A network error occurred, or the server closed the connection unexpectedly."
 msgstr "Възникна мрежова грешка или сървърът неочаквано прекъсна връзката."
 
 msgid "Server sent bad data."
@@ -86,6 +87,9 @@ msgid "This file contains too many streams. Only playing first %d"
 msgstr ""
 "Този файл съдържа прекалено много потоци. Изпълняват се само първите %d"
 
+msgid "Internal data flow error."
+msgstr "Вътрешна грешка в потока с данни."
+
 msgid ""
 "No supported stream was found. You might need to install a GStreamer RTSP "
 "extension plugin for Real media streams."
@@ -100,9 +104,6 @@ msgid ""
 msgstr ""
 "Не е открит поддържан поток. Може би трябва да разрешите повече транспортни "
 "протоколи или ви липсва правилната приставка на GStreamer за RTSP."
-
-msgid "Internal data flow error."
-msgstr "Вътрешна грешка в потока с данни."
 
 msgid ""
 "Could not open audio device for playback. Device is being used by another "

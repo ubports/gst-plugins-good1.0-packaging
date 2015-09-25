@@ -109,15 +109,21 @@ struct _GstQTPad
   /* dts of last_buf */
   GstClockTime last_dts;
 
+  /* This is compensate for CTTS */
+  GstClockTime dts_adjustment;
+
   /* store the first timestamp for comparing with other streams and
    * know if there are late streams */
   GstClockTime first_ts;
+  GstClockTime first_dts;
+
   guint buf_head;
   guint buf_tail;
 
   /* all the atom and chunk book-keeping is delegated here
    * unowned/uncounted reference, parent MOOV owns */
   AtomTRAK *trak;
+  SampleTableEntry *trak_ste;
   /* fragmented support */
   /* meta data book-keeping delegated here */
   AtomTRAF *traf;
@@ -127,6 +133,11 @@ struct _GstQTPad
   gint64 fragment_duration;
   /* optional fragment index book-keeping */
   AtomTFRA *tfra;
+
+  /* Set when tags are received, cleared when written to moov */
+  gboolean tags_changed;
+
+  GstTagList *tags;
 
   /* if nothing is set, it won't be called */
   GstQTPadPrepareBufferFunc prepare_buf_func;
@@ -142,6 +153,14 @@ typedef enum _GstQTMuxState
   GST_QT_MUX_STATE_EOS
 } GstQTMuxState;
 
+typedef enum _GstQtMuxMode {
+    GST_QT_MUX_MODE_MOOV_AT_END,
+    GST_QT_MUX_MODE_FRAGMENTED,
+    GST_QT_MUX_MODE_FRAGMENTED_STREAMABLE,
+    GST_QT_MUX_MODE_FAST_START,
+    GST_QT_MUX_MODE_ROBUST_RECORDING
+} GstQtMuxMode;
+
 struct _GstQTMux
 {
   GstElement element;
@@ -153,15 +172,28 @@ struct _GstQTMux
   /* state */
   GstQTMuxState state;
 
-  /* size of header (prefix, atoms (ftyp, mdat)) */
+  /* Mux mode, inferred from property
+   * set in gst_qt_mux_start_file() */
+  GstQtMuxMode mux_mode;
+
+  /* size of header (prefix, atoms (ftyp, possibly moov, mdat header)) */
   guint64 header_size;
-  /* accumulated size of raw media data (a priori not including mdat header) */
+  /* accumulated size of raw media data (not including mdat header) */
   guint64 mdat_size;
-  /* position of mdat atom (for later updating) */
+  /* position of the moov (for fragmented mode) or reserved moov atom
+   * area (for robust-muxing mode) */
+  guint64 moov_pos;
+  /* position of mdat atom header (for later updating of size) in
+   * moov-at-end, fragmented and robust-muxing modes */
   guint64 mdat_pos;
 
   /* keep track of the largest chunk to fine-tune brands */
   GstClockTime longest_chunk;
+
+  /* Earliest timestamp across all pads/traks */
+  GstClockTime first_ts;
+  /* Last DTS across all pads (= duration) */
+  GstClockTime last_dts;
 
   /* atom helper objects */
   AtomsContext *context;
@@ -169,6 +201,10 @@ struct _GstQTMux
   AtomMOOV *moov;
   GSList *extra_atoms; /* list of extra top-level atoms (e.g. UUID for xmp)
                         * Stored as AtomInfo structs */
+
+  /* Set when tags are received, cleared when written to moov */
+  gboolean tags_changed;
+
 
   /* fragmented file index */
   AtomMFRA *mfra;
@@ -194,7 +230,34 @@ struct _GstQTMux
   gchar *fast_start_file_path;
   gchar *moov_recov_file_path;
   guint32 fragment_duration;
+  /* Whether or not to work in 'streamable' mode and not
+   * seek to rewrite headers - only valid for fragmented
+   * mode. */
   gboolean streamable;
+
+  /* Requested target maximum duration */
+  GstClockTime reserved_max_duration;
+  /* Estimate of remaining reserved header space (in ns of recording) */
+  GstClockTime reserved_duration_remaining;
+  /* Multiplier for conversion from reserved_max_duration to bytes */
+  guint reserved_bytes_per_sec_per_trak;
+
+  /* Reserved minimum MOOV size in bytes
+   * This is converted from reserved_max_duration
+   * using the bytes/trak/sec estimate */
+  guint32 reserved_moov_size;
+  /* Basic size of the moov (static headers + tags) */
+  guint32 base_moov_size;
+  /* Size of the most recently generated moov header */
+  guint32 last_moov_size;
+  /* True if the first moov in the ping-pong buffers
+   * is the active one. See gst_qt_mux_robust_recording_rewrite_moov() */
+  gboolean reserved_moov_first_active;
+
+  /* Tracking of periodic MOOV updates */
+  GstClockTime last_moov_update;
+  GstClockTime reserved_moov_update_period;
+  GstClockTime muxed_since_last_update;
 
   /* for request pad naming */
   guint video_pads, audio_pads, subtitle_pads;

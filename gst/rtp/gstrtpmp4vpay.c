@@ -24,8 +24,10 @@
 #include <string.h>
 
 #include <gst/rtp/gstrtpbuffer.h>
+#include <gst/video/video.h>
 
 #include "gstrtpmp4vpay.h"
+#include "gstrtputils.h"
 
 GST_DEBUG_CATEGORY_STATIC (rtpmp4vpay_debug);
 #define GST_CAT_DEFAULT (rtpmp4vpay_debug)
@@ -58,8 +60,8 @@ GST_STATIC_PAD_TEMPLATE ("src",
 
 enum
 {
-  ARG_0,
-  ARG_CONFIG_INTERVAL
+  PROP_0,
+  PROP_CONFIG_INTERVAL
 };
 
 
@@ -103,7 +105,7 @@ G_DEFINE_TYPE (GstRtpMP4VPay, gst_rtp_mp4v_pay, GST_TYPE_RTP_BASE_PAYLOAD)
       "Payload MPEG-4 video as RTP packets (RFC 3016)",
       "Wim Taymans <wim.taymans@gmail.com>");
 
-  g_object_class_install_property (G_OBJECT_CLASS (klass), ARG_CONFIG_INTERVAL,
+  g_object_class_install_property (G_OBJECT_CLASS (klass), PROP_CONFIG_INTERVAL,
       g_param_spec_uint ("config-interval", "Config Send Interval",
           "Send Config Insertion Interval in seconds (configuration headers "
           "will be multiplexed in the data stream when detected.) (0 = disabled)",
@@ -285,10 +287,11 @@ gst_rtp_mp4v_pay_flush (GstRtpMP4VPay * rtpmp4vpay)
     gst_rtp_buffer_map (outbuf, GST_MAP_WRITE, &rtp);
     gst_rtp_buffer_set_marker (&rtp, avail == 0);
     gst_rtp_buffer_unmap (&rtp);
-
+    gst_rtp_copy_meta (GST_ELEMENT_CAST (rtpmp4vpay), outbuf, outbuf_data,
+        g_quark_from_static_string (GST_META_TAG_VIDEO_STR));
     outbuf = gst_buffer_append (outbuf, outbuf_data);
 
-    GST_BUFFER_TIMESTAMP (outbuf) = rtpmp4vpay->first_timestamp;
+    GST_BUFFER_PTS (outbuf) = rtpmp4vpay->first_timestamp;
 
     /* add to list */
     gst_buffer_list_insert (list, -1, outbuf);
@@ -434,7 +437,7 @@ gst_rtp_mp4v_pay_handle_buffer (GstRTPBasePayload * basepayload,
 
   gst_buffer_map (buffer, &map, GST_MAP_READ);
   size = map.size;
-  timestamp = GST_BUFFER_TIMESTAMP (buffer);
+  timestamp = GST_BUFFER_PTS (buffer);
   duration = GST_BUFFER_DURATION (buffer);
   avail = gst_adapter_available (rtpmp4vpay->adapter);
 
@@ -462,9 +465,9 @@ gst_rtp_mp4v_pay_handle_buffer (GstRTPBasePayload * basepayload,
           (gint) size - strip);
 
       /* strip off header */
-      subbuf = gst_buffer_copy_region (buffer, GST_BUFFER_COPY_MEMORY, strip,
+      subbuf = gst_buffer_copy_region (buffer, GST_BUFFER_COPY_ALL, strip,
           size - strip);
-      GST_BUFFER_TIMESTAMP (subbuf) = timestamp;
+      GST_BUFFER_PTS (subbuf) = timestamp;
       gst_buffer_unref (buffer);
       buffer = subbuf;
 
@@ -513,7 +516,7 @@ gst_rtp_mp4v_pay_handle_buffer (GstRTPBasePayload * basepayload,
       /* insert header */
       buffer = gst_buffer_append (gst_buffer_ref (rtpmp4vpay->config), buffer);
 
-      GST_BUFFER_TIMESTAMP (buffer) = timestamp;
+      GST_BUFFER_PTS (buffer) = timestamp;
       size = gst_buffer_get_size (buffer);
 
       if (timestamp != -1) {
@@ -584,7 +587,7 @@ gst_rtp_mp4v_pay_set_property (GObject * object, guint prop_id,
   rtpmp4vpay = GST_RTP_MP4V_PAY (object);
 
   switch (prop_id) {
-    case ARG_CONFIG_INTERVAL:
+    case PROP_CONFIG_INTERVAL:
       rtpmp4vpay->config_interval = g_value_get_uint (value);
       break;
     default:
@@ -601,7 +604,7 @@ gst_rtp_mp4v_pay_get_property (GObject * object, guint prop_id,
   rtpmp4vpay = GST_RTP_MP4V_PAY (object);
 
   switch (prop_id) {
-    case ARG_CONFIG_INTERVAL:
+    case PROP_CONFIG_INTERVAL:
       g_value_set_uint (value, rtpmp4vpay->config_interval);
       break;
     default:

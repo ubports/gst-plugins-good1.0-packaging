@@ -26,11 +26,13 @@
 
 #include <gst/rtp/gstrtpbuffer.h>
 #include <gst/pbutils/pbutils.h>
+#include <gst/video/video.h>
 
 /* Included to not duplicate gst_rtp_h264_add_sps_pps () */
 #include "gstrtph264depay.h"
 
 #include "gstrtph264pay.h"
+#include "gstrtputils.h"
 
 
 #define IDR_TYPE_ID  5
@@ -72,8 +74,7 @@ enum
 {
   PROP_0,
   PROP_SPROP_PARAMETER_SETS,
-  PROP_CONFIG_INTERVAL,
-  PROP_LAST
+  PROP_CONFIG_INTERVAL
 };
 
 #define IS_ACCESS_UNIT(x) (((x) > 0x00) && ((x) < 0x06))
@@ -390,12 +391,21 @@ gst_rtp_h264_pay_set_sps_pps (GstRTPBasePayload * basepayload)
   }
 
   if (G_LIKELY (count)) {
-    /* profile is 24 bit. Force it to respect the limit */
-    profile = g_strdup_printf ("%06x", payloader->profile & 0xffffff);
-    /* combine into output caps */
-    res = gst_rtp_base_payload_set_outcaps (basepayload,
-        "sprop-parameter-sets", G_TYPE_STRING, sprops->str, NULL);
-    g_free (profile);
+    if (payloader->profile != 0) {
+      /* profile is 24 bit. Force it to respect the limit */
+      profile = g_strdup_printf ("%06x", payloader->profile & 0xffffff);
+      /* combine into output caps */
+      res = gst_rtp_base_payload_set_outcaps (basepayload,
+          "packetization-mode", G_TYPE_STRING, "1",
+          "profile-level-id", G_TYPE_STRING, profile,
+          "sprop-parameter-sets", G_TYPE_STRING, sprops->str, NULL);
+      g_free (profile);
+    } else {
+      res = gst_rtp_base_payload_set_outcaps (basepayload,
+          "packetization-mode", G_TYPE_STRING, "1",
+          "sprop-parameter-sets", G_TYPE_STRING, sprops->str, NULL);
+    }
+
   } else {
     res = gst_rtp_base_payload_set_outcaps (basepayload, NULL);
   }
@@ -728,7 +738,7 @@ gst_rtp_h264_pay_send_sps_pps (GstRTPBasePayload * basepayload,
     /* Not critical here; but throw a warning */
     if (ret != GST_FLOW_OK) {
       sent_all_sps_pps = FALSE;
-      GST_WARNING ("Problem pushing SPS");
+      GST_WARNING_OBJECT (basepayload, "Problem pushing SPS");
     }
   }
   for (i = 0; i < rtph264pay->pps->len; i++) {
@@ -742,7 +752,7 @@ gst_rtp_h264_pay_send_sps_pps (GstRTPBasePayload * basepayload,
     /* Not critical here; but throw a warning */
     if (ret != GST_FLOW_OK) {
       sent_all_sps_pps = FALSE;
-      GST_WARNING ("Problem pushing PPS");
+      GST_WARNING_OBJECT (basepayload, "Problem pushing PPS");
     }
   }
 
@@ -869,6 +879,8 @@ gst_rtp_h264_pay_payload_nal (GstRTPBasePayload * basepayload,
     gst_rtp_buffer_unmap (&rtp);
 
     /* insert payload memory block */
+    gst_rtp_copy_meta (GST_ELEMENT_CAST (rtph264pay), outbuf, paybuf,
+        g_quark_from_static_string (GST_META_TAG_VIDEO_STR));
     outbuf = gst_buffer_append (outbuf, paybuf);
 
     /* push the buffer to the next element */
@@ -928,9 +940,10 @@ gst_rtp_h264_pay_payload_nal (GstRTPBasePayload * basepayload,
       gst_rtp_buffer_unmap (&rtp);
 
       /* insert payload memory block */
-      gst_buffer_append (outbuf,
-          gst_buffer_copy_region (paybuf, GST_BUFFER_COPY_MEMORY, pos,
-              limitedSize));
+      gst_rtp_copy_meta (GST_ELEMENT_CAST (rtph264pay), outbuf, paybuf,
+          g_quark_from_static_string (GST_META_TAG_VIDEO_STR));
+      gst_buffer_copy_into (outbuf, paybuf, GST_BUFFER_COPY_MEMORY, pos,
+          limitedSize);
 
       if (!delta_unit)
         /* Only the first packet sent should not have the flag */
@@ -1080,7 +1093,7 @@ gst_rtp_h264_pay_handle_buffer (GstRTPBasePayload * basepayload,
         end_of_au = TRUE;
       }
 
-      paybuf = gst_buffer_copy_region (buffer, GST_BUFFER_COPY_MEMORY, offset,
+      paybuf = gst_buffer_copy_region (buffer, GST_BUFFER_COPY_ALL, offset,
           nal_len);
       ret =
           gst_rtp_h264_pay_payload_nal (basepayload, paybuf, dts, pts,

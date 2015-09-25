@@ -19,20 +19,24 @@ GObject
         GstV4l2DeviceProvider
       GstElement
         Gst3GPPMux
-        GstALawDec
-        GstALawEnc
         GstAsteriskh263
         GstAuParse
         GstAudioDecoder
+          GstALawDec
           GstFlacDec
           GstMuLawDec
           GstSpeexDec
           GstWavpackDec
         GstAudioEncoder
+          GstALawEnc
           GstFlacEnc
           GstMuLawEnc
           GstSpeexEnc
           GstWavpackEnc
+        GstAudioVisualizer-ExtGoom
+          GstGoom
+        GstAudioVisualizer-ExtGoom2k1
+          GstGoom2k1
         GstAviDemux
         GstAviMux
         GstAviSubtitle
@@ -152,6 +156,8 @@ GObject
           GstRTSPSrc
           GstRgVolume
           GstRtpBin
+          GstSplitMuxSink
+          GstSplitMuxSrc
         GstCutter
         GstDVDec
         GstDVDemux
@@ -162,8 +168,6 @@ GObject
         GstFlvMux
         GstFlxDec
         GstGdkPixbufDec
-        GstGoom
-        GstGoom2k1
         GstICYDemux
         GstISMLMux
         GstImageFreeze
@@ -193,11 +197,13 @@ GObject
           GstRtpG726Depay
           GstRtpG729Depay
           GstRtpGSTDepay
+          GstRtpH261Depay
           GstRtpH263Depay
           GstRtpH263PDepay
           GstRtpH264Depay
           GstRtpJ2KDepay
           GstRtpJPEGDepay
+          GstRtpKlvDepay
           GstRtpL16Depay
           GstRtpL24Depay
           GstRtpMP1SDepay
@@ -241,11 +247,13 @@ GObject
           GstRtpAMRPay
           GstRtpCELTPay
           GstRtpGSTPay
+          GstRtpH261Pay
           GstRtpH263PPay
           GstRtpH263Pay
           GstRtpH264Pay
           GstRtpJ2KPay
           GstRtpJPEGPay
+          GstRtpKlvPay
           GstRtpMP4APay
           GstRtpMP4GPay
           GstRtpMP4VPay
@@ -287,10 +295,10 @@ GObject
           GstPngEnc
           GstVP8Enc
           GstVP9Enc
+          GstY4mEncode
         GstVideoMixer2
         GstWavEnc
         GstWavParse
-        GstY4mEncode
       GstPad
         GstInterleavePad
         GstVideoMixer2Pad
@@ -305,6 +313,7 @@ GObject
       GstTaskPool
   GSocket
   GTlsDatabase
+  GTlsInteraction
   GUdevClient
   GUdevDevice
   GdkPixbuf

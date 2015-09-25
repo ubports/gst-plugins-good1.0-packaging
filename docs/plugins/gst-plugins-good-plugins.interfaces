@@ -2,6 +2,7 @@ GSocket GInitable
 GdkPixbuf GIcon
 GdkPixbuf GIcon GLoadableIcon
 Gst3GPPMux GstTagSetter GstTagXmpWriter
+GstALawEnc GstPreset
 GstApev2Mux GstTagSetter
 GstAspectRatioCrop GstChildProxy
 GstAudioEncoder GstPreset
@@ -71,6 +72,8 @@ GstSoupHTTPSrc GstURIHandler
 GstSpeexEnc GstPreset GstTagSetter
 GstSpeexEnc GstTagSetter GstPreset
 GstSplitFileSrc GstURIHandler
+GstSplitMuxSink GstChildProxy
+GstSplitMuxSrc GstChildProxy GstURIHandler
 GstSwitchSink GstChildProxy
 GstSwitchSrc GstChildProxy
 GstTagLibMux GstTagSetter
@@ -95,3 +98,4 @@ GstWavEnc GstTagSetter GstTocSetter
 GstWavpackEnc GstPreset
 GstWebMMux GstTagSetter
 GstWebMMux GstTagSetter GstTocSetter
+GstY4mEncode GstPreset

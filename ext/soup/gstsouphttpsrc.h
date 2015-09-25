@@ -71,6 +71,7 @@ struct _GstSoupHTTPSrc {
   gboolean retry;              /* Should attempt to reconnect. */
   gint retry_count;            /* Number of retries since we received data */
   gint max_retries;            /* Maximum number of retries */
+  gchar *method;               /* HTTP method */
 
   gboolean got_headers;        /* Already received headers from the server */
   gboolean have_size;          /* Received and parsed Content-Length
@@ -90,6 +91,7 @@ struct _GstSoupHTTPSrc {
   gboolean ssl_strict;
   gchar *ssl_ca_file;
   gboolean ssl_use_system_ca_file;
+  GTlsDatabase *tls_database;
 
   /* Shoutcast/icecast metadata extraction handling. */
   gboolean iradio_mode;

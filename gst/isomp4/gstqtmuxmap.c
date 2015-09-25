@@ -115,6 +115,10 @@
   "stream-format = (string) raw, " \
   COMMON_AUDIO_CAPS (8, MAX)
 
+#define AC3_CAPS \
+  "audio/x-ac3, " \
+  COMMON_AUDIO_CAPS (6, MAX)
+
 #define AMR_CAPS \
   "audio/AMR, " \
   "rate = (int) 8000, " \
@@ -149,7 +153,7 @@ GstQTMuxFormatProp gst_qt_mux_format_list[] = {
         GST_STATIC_CAPS ("video/quicktime, variant = (string) apple; "
             "video/quicktime"),
         GST_STATIC_CAPS ("video/x-raw, "
-            "format = (string) { RGB, UYVY }, "
+            "format = (string) { RGB, UYVY, v210 }, "
             COMMON_VIDEO_CAPS "; "
             MPEG4V_CAPS "; "
             H263_CAPS "; "
@@ -184,7 +188,7 @@ GstQTMuxFormatProp gst_qt_mux_format_list[] = {
         GST_STATIC_CAPS ("video/quicktime, variant = (string) iso"),
         GST_STATIC_CAPS (MPEG4V_CAPS "; " H264_CAPS ";"
             "video/x-mp4-part," COMMON_VIDEO_CAPS),
-        GST_STATIC_CAPS (MP3_CAPS "; " AAC_CAPS " ; " ALAC_CAPS),
+        GST_STATIC_CAPS (MP3_CAPS "; " AAC_CAPS " ; " AC3_CAPS " ; " ALAC_CAPS),
       GST_STATIC_CAPS (TEXT_UTF8)}
   ,
   /* Microsoft Smooth Streaming fmp4/isml */
@@ -210,7 +214,7 @@ GstQTMuxFormatProp gst_qt_mux_format_list[] = {
         "Gst3GPPMux",
         GST_STATIC_CAPS ("video/quicktime, variant = (string) 3gpp"),
         GST_STATIC_CAPS (H263_CAPS "; " MPEG4V_CAPS "; " H264_CAPS),
-        GST_STATIC_CAPS (AMR_CAPS "; " MP3_CAPS "; " AAC_CAPS),
+        GST_STATIC_CAPS (AMR_CAPS "; " MP3_CAPS "; " AAC_CAPS "; " AC3_CAPS),
       GST_STATIC_CAPS (TEXT_UTF8)}
   ,
   /* ISO 15444-3: Motion-JPEG-2000 (also ISO base media extension) */
@@ -284,14 +288,15 @@ gst_qt_mux_map_format_to_header (GstQTMuxFormat format, GstBuffer ** _prefix,
     guint32 * _major, guint32 * _version, GList ** _compatible, AtomMOOV * moov,
     GstClockTime longest_chunk, gboolean faststart)
 {
-  static guint32 qt_brands[] = { 0 };
-  static guint32 mp4_brands[] = { FOURCC_mp41, FOURCC_isom, FOURCC_iso2, 0 };
-  static guint32 isml_brands[] = { FOURCC_iso2, 0 };
-  static guint32 gpp_brands[] = { FOURCC_isom, FOURCC_iso2, 0 };
-  static guint32 mjp2_brands[] = { FOURCC_isom, FOURCC_iso2, 0 };
-  static guint8 mjp2_prefix[] =
+  static const guint32 qt_brands[] = { 0 };
+  static const guint32 mp4_brands[] =
+      { FOURCC_mp41, FOURCC_isom, FOURCC_iso2, 0 };
+  static const guint32 isml_brands[] = { FOURCC_iso2, 0 };
+  static const guint32 gpp_brands[] = { FOURCC_isom, FOURCC_iso2, 0 };
+  static const guint32 mjp2_brands[] = { FOURCC_isom, FOURCC_iso2, 0 };
+  static const guint8 mjp2_prefix[] =
       { 0, 0, 0, 12, 'j', 'P', ' ', ' ', 0x0D, 0x0A, 0x87, 0x0A };
-  guint32 *comp = NULL;
+  const guint32 *comp = NULL;
   guint32 major = 0, version = 0;
   GstBuffer *prefix = NULL;
   GList *result = NULL;

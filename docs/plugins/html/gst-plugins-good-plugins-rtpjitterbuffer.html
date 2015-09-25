@@ -2,13 +2,13 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>GStreamer Good Plugins 1.0 Plugins Reference Manual: rtpjitterbuffer</title>
+<title>rtpjitterbuffer: GStreamer Good Plugins 1.0 Plugins Reference Manual</title>
 <meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
 <link rel="home" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
-<link rel="prev" href="gst-plugins-good-plugins-rtpdtmfsrc.html" title="rtpdtmfsrc">
-<link rel="next" href="gst-plugins-good-plugins-rtpmux.html" title="rtpmux">
-<meta name="generator" content="GTK-Doc V1.21 (XML mode)">
+<link rel="prev" href="gst-plugins-good-plugins-rtpj2kpay.html" title="rtpj2kpay">
+<link rel="next" href="gst-plugins-good-plugins-rtpjpegpay.html" title="rtpjpegpay">
+<meta name="generator" content="GTK-Doc V1.24 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -22,15 +22,15 @@
 </td>
 <td><a accesskey="h" href="index.html"><img src="home.png" width="16" height="16" border="0" alt="Home"></a></td>
 <td><a accesskey="u" href="ch01.html"><img src="up.png" width="16" height="16" border="0" alt="Up"></a></td>
-<td><a accesskey="p" href="gst-plugins-good-plugins-rtpdtmfsrc.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
-<td><a accesskey="n" href="gst-plugins-good-plugins-rtpmux.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
+<td><a accesskey="p" href="gst-plugins-good-plugins-rtpj2kpay.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
+<td><a accesskey="n" href="gst-plugins-good-plugins-rtpjpegpay.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
 </tr></table>
 <div class="refentry">
 <a name="gst-plugins-good-plugins-rtpjitterbuffer"></a><div class="titlepage"></div>
 <div class="refnamediv"><table width="100%"><tr>
 <td valign="top">
 <h2><span class="refentrytitle"><a name="gst-plugins-good-plugins-rtpjitterbuffer.top_of_page"></a>rtpjitterbuffer</span></h2>
-<p>rtpjitterbuffer — A buffer that deals with network jitter and other transmission faults</p>
+<p>rtpjitterbuffer</p>
 </td>
 <td class="gallery_image" valign="top" align="right"></td>
 </tr></table></div>
@@ -64,7 +64,7 @@
 <td class="property_flags">Read / Write</td>
 </tr>
 <tr>
-<td class="property_type"><span class="type">RTPJitterBufferMode</span></td>
+<td class="property_type"><a class="link" href="gst-plugins-good-plugins-rtpbin.html#RTPJitterBufferMode" title="enum RTPJitterBufferMode"><span class="type">RTPJitterBufferMode</span></a></td>
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer--mode" title="The “mode” property">mode</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
@@ -104,6 +104,26 @@
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer--stats" title="The “stats” property">stats</a></td>
 <td class="property_flags">Read</td>
 </tr>
+<tr>
+<td class="property_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer--rtx-min-delay" title="The “rtx-min-delay” property">rtx-min-delay</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
+<tr>
+<td class="property_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer--rtx-min-retry-timeout" title="The “rtx-min-retry-timeout” property">rtx-min-retry-timeout</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
+<tr>
+<td class="property_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer--rtx-max-retries" title="The “rtx-max-retries” property">rtx-max-retries</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
+<tr>
+<td class="property_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer--rtx-next-seqnum" title="The “rtx-next-seqnum” property">rtx-next-seqnum</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
 </tbody>
 </table></div>
 </div>
@@ -119,28 +139,28 @@
 <tr>
 <td class="signal_type"><span class="returnvalue">void</span></td>
 <td class="signal_name"><a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer-clear-pt-map" title="The “clear-pt-map” signal">clear-pt-map</a></td>
-<td class="signal_flags">Action</td>
+<td class="signal_flags"><a href="https://developer.gnome.org/gobject/unstable/gobject-Signals.html#G-SIGNAL-ACTION:CAPS">Action</a></td>
 </tr>
 <tr>
 <td class="signal_type"><span class="returnvalue">void</span></td>
 <td class="signal_name"><a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer-handle-sync" title="The “handle-sync” signal">handle-sync</a></td>
-<td class="signal_flags">Run Last</td>
+<td class="signal_flags"><a href="https://developer.gnome.org/gobject/unstable/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></td>
 </tr>
 <tr>
 <td class="signal_type"><span class="returnvalue">void</span></td>
 <td class="signal_name"><a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer-on-npt-stop" title="The “on-npt-stop” signal">on-npt-stop</a></td>
-<td class="signal_flags">Run Last</td>
+<td class="signal_flags"><a href="https://developer.gnome.org/gobject/unstable/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></td>
 </tr>
 <tr>
 <td class="signal_type">
 <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstCaps.html"><span class="returnvalue">GstCaps</span></a>*</td>
 <td class="signal_name"><a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer-request-pt-map" title="The “request-pt-map” signal">request-pt-map</a></td>
-<td class="signal_flags">Run Last</td>
+<td class="signal_flags"><a href="https://developer.gnome.org/gobject/unstable/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></td>
 </tr>
 <tr>
 <td class="signal_type"><span class="returnvalue">guint64</span></td>
 <td class="signal_name"><a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer-set-active" title="The “set-active” signal">set-active</a></td>
-<td class="signal_flags">Action</td>
+<td class="signal_flags"><a href="https://developer.gnome.org/gobject/unstable/gobject-Signals.html#G-SIGNAL-ACTION:CAPS">Action</a></td>
 </tr>
 </tbody>
 </table></div>
@@ -218,7 +238,7 @@ schedule a lost packet as discussed above.</p>
 to the pipeline.</p>
 <p>This element will automatically be used inside rtpbin.</p>
 <div class="refsect2">
-<a name="id-1.2.127.8.11"></a><h3>Example pipelines</h3>
+<a name="id-1.2.135.8.11"></a><h3>Example pipelines</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
@@ -236,7 +256,7 @@ out-of-order RTP packets.
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.127.8.12.1"></a><h3>Element Information</h3>
+<a name="id-1.2.135.8.12.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -262,7 +282,7 @@ out-of-order RTP packets.
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.127.8.12.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.135.8.12.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -283,7 +303,7 @@ out-of-order RTP packets.
 </tr>
 <tr>
 <td><p><span class="term">details</span></p></td>
-<td>application/x-rtp, clock-rate=(int)[ 1, 2147483647 ]</td>
+<td>application/x-rtp</td>
 </tr>
 </tbody>
 </table></div>
@@ -337,11 +357,10 @@ out-of-order RTP packets.
 </table></div>
 </div>
 </div>
-<p>
-</p>
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-rtpjitterbuffer.functions_details"></a><h2>Functions</h2>
+<p></p>
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-rtpjitterbuffer.other_details"></a><h2>Types and Values</h2>
@@ -390,7 +409,7 @@ This is mainly used to ensure interstream synchronisation.</p>
 <hr>
 <div class="refsect2">
 <a name="GstRtpJitterBuffer--mode"></a><h3>The <code class="literal">“mode”</code> property</h3>
-<pre class="programlisting">  “mode”                     <span class="type">RTPJitterBufferMode</span></pre>
+<pre class="programlisting">  “mode”                     <a class="link" href="gst-plugins-good-plugins-rtpbin.html#RTPJitterBufferMode" title="enum RTPJitterBufferMode"><span class="type">RTPJitterBufferMode</span></a></pre>
 <p>Control the buffering and timestamping mode used by the jitterbuffer.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: Slave receiver to sender clock</p>
@@ -412,7 +431,7 @@ This is mainly used to ensure interstream synchronisation.</p>
 late and should be retransmitted.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: FALSE</p>
-<p class="since">Since 1.2</p>
+<p class="since">Since: 1.2</p>
 </div>
 <hr>
 <div class="refsect2">
@@ -424,7 +443,7 @@ of time before sending a retransmission event.</p>
 <p>Flags: Read / Write</p>
 <p>Allowed values: &gt;= G_MAXULONG</p>
 <p>Default value: -1</p>
-<p class="since">Since 1.2</p>
+<p class="since">Since: 1.2</p>
 </div>
 <hr>
 <div class="refsect2">
@@ -437,7 +456,7 @@ reordering.</p>
 <p>Flags: Read / Write</p>
 <p>Allowed values: &gt;= G_MAXULONG</p>
 <p>Default value: 3</p>
-<p class="since">Since 1.2</p>
+<p class="since">Since: 1.2</p>
 </div>
 <hr>
 <div class="refsect2">
@@ -449,7 +468,7 @@ latency and the observed round trip time.</p>
 <p>Flags: Read / Write</p>
 <p>Allowed values: &gt;= G_MAXULONG</p>
 <p>Default value: -1</p>
-<p class="since">Since 1.2</p>
+<p class="since">Since: 1.2</p>
 </div>
 <hr>
 <div class="refsect2">
@@ -466,12 +485,74 @@ latency and the observed round trip time.</p>
 <pre class="programlisting">  “stats”                    <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstStructure.html"><span class="type">GstStructure</span></a> *</pre>
 <p>Various jitterbuffer statistics. This property returns a GstStructure
 with name application/x-rtp-jitterbuffer-stats with the following fields:</p>
-<p> "rtx-count"         G_TYPE_UINT64 The number of retransmissions requested
- "rtx-success-count" G_TYPE_UINT64 The number of successful retransmissions
- "rtx-per-packet"    G_TYPE_DOUBLE Average number of RTX per packet
- "rtx-rtt"           G_TYPE_UINT64 Average round trip time per RTX</p>
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem"><p>
+  <span class="type">guint64</span>
+  <code class="classname">"rtx-count"</code>:
+  the number of retransmissions requested.
+  </p></li>
+<li class="listitem"><p>
+  <span class="type">guint64</span>
+  <code class="classname">"rtx-success-count"</code>:
+  the number of successful retransmissions.
+  </p></li>
+<li class="listitem"><p>
+  <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gdouble"><span class="type">gdouble</span></a>
+  <code class="classname">"rtx-per-packet"</code>:
+  average number of RTX per packet.
+  </p></li>
+<li class="listitem"><p>
+  <span class="type">guint64</span>
+  <code class="classname">"rtx-rtt"</code>:
+  average round trip time per RTX.
+  </p></li>
+</ul></div>
 <p>Flags: Read</p>
-<p class="since">Since 1.4</p>
+<p class="since">Since: 1.4</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRtpJitterBuffer--rtx-min-delay"></a><h3>The <code class="literal">“rtx-min-delay”</code> property</h3>
+<pre class="programlisting">  “rtx-min-delay”            <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a></pre>
+<p>When a packet did not arrive at the expected time, wait at least this extra amount
+of time before sending a retransmission event.</p>
+<p>Flags: Read / Write</p>
+<p>Default value: 0</p>
+<p class="since">Since: 1.6</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRtpJitterBuffer--rtx-min-retry-timeout"></a><h3>The <code class="literal">“rtx-min-retry-timeout”</code> property</h3>
+<pre class="programlisting">  “rtx-min-retry-timeout”    <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a></pre>
+<p>Minimum timeout between sending a transmission event in ms (-1 automatic).</p>
+<p>Flags: Read / Write</p>
+<p>Allowed values: &gt;= G_MAXULONG</p>
+<p>Default value: -1</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRtpJitterBuffer--rtx-max-retries"></a><h3>The <code class="literal">“rtx-max-retries”</code> property</h3>
+<pre class="programlisting">  “rtx-max-retries”          <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a></pre>
+<p>The maximum number of retries to request a retransmission.</p>
+<p>This implies that as maximum (rtx-max-retries + 1) retransmissions will be requested.
+When -1 is used, the number of retransmission request will not be limited.</p>
+<p>Flags: Read / Write</p>
+<p>Allowed values: &gt;= G_MAXULONG</p>
+<p>Default value: -1</p>
+<p class="since">Since: 1.6</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRtpJitterBuffer--rtx-next-seqnum"></a><h3>The <code class="literal">“rtx-next-seqnum”</code> property</h3>
+<pre class="programlisting">  “rtx-next-seqnum”          <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
+<p>Estimate when the next packet should arrive and schedule a retransmission
+request for it.
+This is, when packet N arrives, a GstRTPRetransmission event is schedule
+for packet N+1. So it will be requested if it does not arrive at the expected time.
+The expected time is calculated using the dts of N and the packet spacing.</p>
+<p>Flags: Read / Write</p>
+<p>Default value: TRUE</p>
+<p class="since">Since: 1.6</p>
 </div>
 </div>
 <div class="refsect1">
@@ -484,7 +565,7 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.ht
 <p>Invalidate the clock-rate as obtained with the
 <a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer-request-pt-map" title="The “request-pt-map” signal"><span class="type">“request-pt-map”</span></a> signal.</p>
 <div class="refsect3">
-<a name="id-1.2.127.12.2.5"></a><h4>Parameters</h4>
+<a name="id-1.2.135.12.2.5"></a><h4>Parameters</h4>
 <div class="informaltable"><table width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
@@ -505,7 +586,7 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.ht
 </tbody>
 </table></div>
 </div>
-<p>Flags: Action</p>
+<p>Flags: <a href="https://developer.gnome.org/gobject/unstable/gobject-Signals.html#G-SIGNAL-ACTION:CAPS">Action</a></p>
 </div>
 <hr>
 <div class="refsect2">
@@ -516,7 +597,7 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.ht
                <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>            user_data)</pre>
 <p>Be notified of new sync values.</p>
 <div class="refsect3">
-<a name="id-1.2.127.12.3.5"></a><h4>Parameters</h4>
+<a name="id-1.2.135.12.3.5"></a><h4>Parameters</h4>
 <div class="informaltable"><table width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
@@ -542,7 +623,7 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.ht
 </tbody>
 </table></div>
 </div>
-<p>Flags: Run Last</p>
+<p>Flags: <a href="https://developer.gnome.org/gobject/unstable/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></p>
 </div>
 <hr>
 <div class="refsect2">
@@ -553,7 +634,7 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.ht
 <p>Signal that the jitterbufer has pushed the RTP packet that corresponds to
 the npt-stop position.</p>
 <div class="refsect3">
-<a name="id-1.2.127.12.4.5"></a><h4>Parameters</h4>
+<a name="id-1.2.135.12.4.5"></a><h4>Parameters</h4>
 <div class="informaltable"><table width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
@@ -574,7 +655,7 @@ the npt-stop position.</p>
 </tbody>
 </table></div>
 </div>
-<p>Flags: Run Last</p>
+<p>Flags: <a href="https://developer.gnome.org/gobject/unstable/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></p>
 </div>
 <hr>
 <div class="refsect2">
@@ -586,7 +667,7 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.ht
 <p>Request the payload type as <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstCaps.html"><span class="type">GstCaps</span></a> for <em class="parameter"><code>pt</code></em>
 .</p>
 <div class="refsect3">
-<a name="id-1.2.127.12.5.5"></a><h4>Parameters</h4>
+<a name="id-1.2.135.12.5.5"></a><h4>Parameters</h4>
 <div class="informaltable"><table width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
@@ -612,7 +693,7 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.ht
 </tbody>
 </table></div>
 </div>
-<p>Flags: Run Last</p>
+<p>Flags: <a href="https://developer.gnome.org/gobject/unstable/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></p>
 </div>
 <hr>
 <div class="refsect2">
@@ -625,7 +706,7 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.ht
 <p>Start pushing out packets with the given base time. This signal is only
 useful in buffering mode.</p>
 <div class="refsect3">
-<a name="id-1.2.127.12.6.5"></a><h4>Parameters</h4>
+<a name="id-1.2.135.12.6.5"></a><h4>Parameters</h4>
 <div class="informaltable"><table width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
@@ -647,16 +728,14 @@ useful in buffering mode.</p>
 </table></div>
 </div>
 <div class="refsect3">
-<a name="id-1.2.127.12.6.6"></a><h4>Returns</h4>
+<a name="id-1.2.135.12.6.6"></a><h4>Returns</h4>
 <p> the time of the last pushed packet.</p>
-<p></p>
 </div>
-<p>Flags: Action</p>
+<p>Flags: <a href="https://developer.gnome.org/gobject/unstable/gobject-Signals.html#G-SIGNAL-ACTION:CAPS">Action</a></p>
 </div>
 </div>
 </div>
 <div class="footer">
-<hr>
-          Generated by GTK-Doc V1.21</div>
+<hr>Generated by GTK-Doc V1.24</div>
 </body>
 </html>

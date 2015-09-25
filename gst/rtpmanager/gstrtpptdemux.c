@@ -35,9 +35,9 @@
  * the RTP stream changes, the #GstRtpPtDemux::payload-type-change signal will be
  * emitted.
  * 
- * The element will try to set complete and unique application/x-rtp caps on the
- * outgoing buffers and pads based on the result of the
- * #GstRtpPtDemux::request-pt-map signal.
+ * The element will try to set complete and unique application/x-rtp caps
+ * on the output pads based on the result of the #GstRtpPtDemux::request-pt-map
+ * signal.
  * 
  * <refsect2>
  * <title>Example pipelines</title>
@@ -448,8 +448,8 @@ gst_rtp_pt_demux_chain (GstPad * pad, GstObject * parent, GstBuffer * buf)
   /* ERRORS */
 invalid_buffer:
   {
-    /* this is fatal and should be filtered earlier */
-    GST_ELEMENT_ERROR (rtpdemux, STREAM, DECODE, (NULL),
+    /* this should not be fatal */
+    GST_ELEMENT_WARNING (rtpdemux, STREAM, DEMUX, (NULL),
         ("Dropping invalid RTP payload"));
     gst_buffer_unref (buf);
     return GST_FLOW_ERROR;

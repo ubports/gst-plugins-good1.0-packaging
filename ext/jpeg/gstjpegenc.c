@@ -98,8 +98,8 @@ GST_STATIC_PAD_TEMPLATE ("sink",
     GST_PAD_SINK,
     GST_PAD_ALWAYS,
     GST_STATIC_CAPS (GST_VIDEO_CAPS_MAKE
-        ("{ I420, YV12, YUY2, UYVY, Y41B, Y42B, YVYU, Y444, "
-         "RGB, BGR, RGBx, xRGB, BGRx, xBGR, GRAY8 }"))
+        ("{ I420, YV12, YUY2, UYVY, Y41B, Y42B, YVYU, Y444, NV21, "
+         "NV12, RGB, BGR, RGBx, xRGB, BGRx, xBGR, GRAY8 }"))
     );
 /* *INDENT-ON* */
 
@@ -283,6 +283,8 @@ gst_jpegenc_term_destination (j_compress_ptr cinfo)
 static void
 gst_jpegenc_init (GstJpegEnc * jpegenc)
 {
+  GST_PAD_SET_ACCEPT_TEMPLATE (GST_VIDEO_ENCODER_SINK_PAD (jpegenc));
+
   /* setup jpeglib */
   memset (&jpegenc->cinfo, 0, sizeof (jpegenc->cinfo));
   memset (&jpegenc->jerr, 0, sizeof (jpegenc->jerr));

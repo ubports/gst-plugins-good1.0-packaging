@@ -2,13 +2,13 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>GStreamer Good Plugins 1.0 Plugins Reference Manual: audioecho</title>
+<title>audioecho: GStreamer Good Plugins 1.0 Plugins Reference Manual</title>
 <meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
 <link rel="home" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
-<link rel="prev" href="gst-plugins-good-plugins-audiowsinclimit.html" title="audiowsinclimit">
-<link rel="next" href="gst-plugins-good-plugins-audiodynamic.html" title="audiodynamic">
-<meta name="generator" content="GTK-Doc V1.21 (XML mode)">
+<link rel="prev" href="gst-plugins-good-plugins-audiodynamic.html" title="audiodynamic">
+<link rel="next" href="gst-plugins-good-plugins-audiofirfilter.html" title="audiofirfilter">
+<meta name="generator" content="GTK-Doc V1.24 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
@@ -21,15 +21,15 @@
 </td>
 <td><a accesskey="h" href="index.html"><img src="home.png" width="16" height="16" border="0" alt="Home"></a></td>
 <td><a accesskey="u" href="ch01.html"><img src="up.png" width="16" height="16" border="0" alt="Up"></a></td>
-<td><a accesskey="p" href="gst-plugins-good-plugins-audiowsinclimit.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
-<td><a accesskey="n" href="gst-plugins-good-plugins-audiodynamic.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
+<td><a accesskey="p" href="gst-plugins-good-plugins-audiodynamic.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
+<td><a accesskey="n" href="gst-plugins-good-plugins-audiofirfilter.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
 </tr></table>
 <div class="refentry">
 <a name="gst-plugins-good-plugins-audioecho"></a><div class="titlepage"></div>
 <div class="refnamediv"><table width="100%"><tr>
 <td valign="top">
 <h2><span class="refentrytitle"><a name="gst-plugins-good-plugins-audioecho.top_of_page"></a>audioecho</span></h2>
-<p>audioecho — Adds an echo or reverb effect to an audio stream</p>
+<p>audioecho</p>
 </td>
 <td class="gallery_image" valign="top" align="right"></td>
 </tr></table></div>
@@ -100,14 +100,14 @@ reverb effect, which results in a slightly metallic sound.</p>
 will be used. This can only be set before going to the PAUSED or PLAYING
 state and will be set to the current delay by default.</p>
 <div class="refsect2">
-<a name="id-1.2.22.7.5"></a><h3>Example launch line</h3>
+<a name="id-1.2.19.7.5"></a><h3>Example launch line</h3>
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
       <tr>
         <td class="listing_lines" align="right"><pre>1
 2</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> filesrc location<span class="gtkdoc opt">=</span><span class="string">&quot;melo1.ogg&quot;</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audioecho delay<span class="gtkdoc opt">=</span><span class="number">500000000</span> intensity<span class="gtkdoc opt">=</span><span class="number">0.6</span> feedback<span class="gtkdoc opt">=</span><span class="number">0.4</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> autoaudiosink
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> autoaudiosrc <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audioecho delay<span class="gtkdoc opt">=</span><span class="number">500000000</span> intensity<span class="gtkdoc opt">=</span><span class="number">0.6</span> feedback<span class="gtkdoc opt">=</span><span class="number">0.4</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> autoaudiosink
 gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> filesrc location<span class="gtkdoc opt">=</span><span class="string">&quot;melo1.ogg&quot;</span> <span class="gtkdoc opt">!</span> decodebin <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audioecho delay<span class="gtkdoc opt">=</span><span class="number">50000000</span> intensity<span class="gtkdoc opt">=</span><span class="number">0.6</span> feedback<span class="gtkdoc opt">=</span><span class="number">0.4</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> autoaudiosink</pre></td>
       </tr>
     </tbody>
@@ -118,7 +118,7 @@ gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.22.7.6.1"></a><h3>Element Information</h3>
+<a name="id-1.2.19.7.6.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -144,7 +144,7 @@ gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.22.7.6.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.19.7.6.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -195,19 +195,16 @@ gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span
 </table></div>
 </div>
 </div>
-<p>
-</p>
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-audioecho.functions_details"></a><h2>Functions</h2>
+<p></p>
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-audioecho.other_details"></a><h2>Types and Values</h2>
 <div class="refsect2">
 <a name="GstAudioEcho-struct"></a><h3>struct GstAudioEcho</h3>
 <pre class="programlisting">struct GstAudioEcho;</pre>
-<p>
-</p>
 </div>
 </div>
 <div class="refsect1">
@@ -250,7 +247,6 @@ gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span
 </div>
 </div>
 <div class="footer">
-<hr>
-          Generated by GTK-Doc V1.21</div>
+<hr>Generated by GTK-Doc V1.24</div>
 </body>
 </html>

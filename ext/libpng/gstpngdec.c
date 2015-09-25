@@ -111,6 +111,11 @@ gst_pngdec_init (GstPngDec * pngdec)
   pngdec->color_type = -1;
 
   pngdec->image_ready = FALSE;
+  pngdec->read_data = 0;
+
+  gst_video_decoder_set_use_default_pad_acceptcaps (GST_VIDEO_DECODER_CAST
+      (pngdec), TRUE);
+  GST_PAD_SET_ACCEPT_TEMPLATE (GST_VIDEO_DECODER_SINK_PAD (pngdec));
 }
 
 static void
@@ -129,7 +134,7 @@ static void
 user_info_callback (png_structp png_ptr, png_infop info)
 {
   GstPngDec *pngdec = NULL;
-  GstFlowReturn ret = GST_FLOW_OK;
+  GstFlowReturn ret;
 
   GST_LOG ("info ready");
 
@@ -155,13 +160,12 @@ static gboolean
 gst_pngdec_set_format (GstVideoDecoder * decoder, GstVideoCodecState * state)
 {
   GstPngDec *pngdec = (GstPngDec *) decoder;
-  GstVideoInfo *info = &state->info;
 
   if (pngdec->input_state)
     gst_video_codec_state_unref (pngdec->input_state);
   pngdec->input_state = gst_video_codec_state_ref (state);
 
-  if (GST_VIDEO_INFO_FPS_N (info) != 1 && GST_VIDEO_INFO_FPS_D (info) != 1)
+  if (decoder->input_segment.format == GST_FORMAT_TIME)
     gst_video_decoder_set_packetized (decoder, TRUE);
   else
     gst_video_decoder_set_packetized (decoder, FALSE);
@@ -412,6 +416,7 @@ gst_pngdec_parse (GstVideoDecoder * decoder, GstVideoCodecFrame * frame,
   gconstpointer data;
   guint64 signature;
   gsize size;
+  GstPngDec *pngdec = (GstPngDec *) decoder;
 
   GST_VIDEO_CODEC_FRAME_SET_SYNC_POINT (frame);
 
@@ -426,39 +431,42 @@ gst_pngdec_parse (GstVideoDecoder * decoder, GstVideoCodecFrame * frame,
   data = gst_adapter_map (adapter, size);
   gst_byte_reader_init (&reader, data, size);
 
-  if (!gst_byte_reader_peek_uint64_be (&reader, &signature))
-    goto need_more_data;
+  if (pngdec->read_data == 0) {
+    if (!gst_byte_reader_peek_uint64_be (&reader, &signature))
+      goto need_more_data;
 
-  if (signature != PNG_SIGNATURE) {
-    for (;;) {
-      guint offset;
+    if (signature != PNG_SIGNATURE) {
+      for (;;) {
+        guint offset;
 
-      offset = gst_byte_reader_masked_scan_uint32 (&reader, 0xffffffff,
-          0x89504E47, 0, gst_byte_reader_get_remaining (&reader));
+        offset = gst_byte_reader_masked_scan_uint32 (&reader, 0xffffffff,
+            0x89504E47, 0, gst_byte_reader_get_remaining (&reader));
 
-      if (offset == -1) {
-        gst_adapter_flush (adapter,
-            gst_byte_reader_get_remaining (&reader) - 4);
-        goto need_more_data;
+        if (offset == -1) {
+          gst_adapter_flush (adapter,
+              gst_byte_reader_get_remaining (&reader) - 4);
+          goto need_more_data;
+        }
+
+        if (!gst_byte_reader_skip (&reader, offset))
+          goto need_more_data;
+
+        if (!gst_byte_reader_peek_uint64_be (&reader, &signature))
+          goto need_more_data;
+
+        if (signature == PNG_SIGNATURE) {
+          /* We're skipping, go out, we'll be back */
+          gst_adapter_flush (adapter, gst_byte_reader_get_pos (&reader));
+          goto need_more_data;
+        }
+        if (!gst_byte_reader_skip (&reader, 4))
+          goto need_more_data;
       }
-
-      if (!gst_byte_reader_skip (&reader, offset))
-        goto need_more_data;
-
-      if (!gst_byte_reader_peek_uint64_be (&reader, &signature))
-        goto need_more_data;
-
-      if (signature == PNG_SIGNATURE) {
-        /* We're skipping, go out, we'll be back */
-        gst_adapter_flush (adapter, gst_byte_reader_get_pos (&reader));
-        goto need_more_data;
-      }
-      if (!gst_byte_reader_skip (&reader, 4))
-        goto need_more_data;
     }
+    pngdec->read_data = 8;
   }
 
-  if (!gst_byte_reader_skip (&reader, 8))
+  if (!gst_byte_reader_skip (&reader, pngdec->read_data))
     goto need_more_data;
 
   for (;;) {
@@ -478,8 +486,10 @@ gst_pngdec_parse (GstVideoDecoder * decoder, GstVideoCodecFrame * frame,
       toadd = gst_byte_reader_get_pos (&reader);
       GST_DEBUG_OBJECT (decoder, "Have complete frame of size %" G_GSIZE_FORMAT,
           toadd);
+      pngdec->read_data = 0;
       goto have_full_frame;
-    }
+    } else
+      pngdec->read_data += length + 12;
   }
 
   g_assert_not_reached ();
@@ -592,6 +602,7 @@ gst_pngdec_libpng_clear (GstPngDec * pngdec)
   }
 
   pngdec->color_type = -1;
+  pngdec->read_data = 0;
 }
 
 static gboolean

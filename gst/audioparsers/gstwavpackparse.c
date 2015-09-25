@@ -124,6 +124,7 @@ gst_wavpack_parse_init (GstWavpackParse * wvparse)
 {
   gst_wavpack_parse_reset (wvparse);
   GST_PAD_SET_ACCEPT_INTERSECT (GST_BASE_PARSE_SINK_PAD (wvparse));
+  GST_PAD_SET_ACCEPT_TEMPLATE (GST_BASE_PARSE_SINK_PAD (wvparse));
 }
 
 static void
@@ -543,11 +544,12 @@ gst_wavpack_parse_handle_frame (GstBaseParse * parse,
 
   GST_LOG_OBJECT (parse, "rate: %u, width: %u, chans: %u", rate, width, chans);
 
-  GST_BUFFER_TIMESTAMP (buf) =
+  GST_BUFFER_PTS (buf) =
       gst_util_uint64_scale_int (wph.block_index, GST_SECOND, rate);
+  GST_BUFFER_DTS (buf) = GST_BUFFER_PTS (buf);
   GST_BUFFER_DURATION (buf) =
       gst_util_uint64_scale_int (wph.block_index + wph.block_samples,
-      GST_SECOND, rate) - GST_BUFFER_TIMESTAMP (buf);
+      GST_SECOND, rate) - GST_BUFFER_PTS (buf);
 
   if (G_UNLIKELY (wvparse->sample_rate != rate || wvparse->channels != chans
           || wvparse->width != width || wvparse->channel_mask != mask)) {
@@ -686,8 +688,8 @@ gst_wavpack_parse_pre_push_frame (GstBaseParse * parse,
         GST_TAG_AUDIO_CODEC, caps);
     gst_caps_unref (caps);
 
-    gst_pad_push_event (GST_BASE_PARSE_SRC_PAD (wavpackparse),
-        gst_event_new_tag (taglist));
+    gst_base_parse_merge_tags (parse, taglist, GST_TAG_MERGE_REPLACE);
+    gst_tag_list_unref (taglist);
 
     /* also signals the end of first-frame processing */
     wavpackparse->sent_codec_tag = TRUE;

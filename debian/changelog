@@ -1,14 +1,42 @@
-gst-plugins-good1.0 (1.4.5-3) UNRELEASED; urgency=medium
+gst-plugins-good1.0 (1.5.91-1) experimental; urgency=medium
 
+  * New upstream release candidate.
+
+ -- Sebastian Dröge <slomo@debian.org>  Fri, 18 Sep 2015 19:28:00 +0200
+
+gst-plugins-good1.0 (1.5.90-1) experimental; urgency=medium
+
+  * New upstream release candidate.
+
+ -- Sebastian Dröge <slomo@debian.org>  Wed, 19 Aug 2015 13:21:38 +0300
+
+gst-plugins-good1.0 (1.5.2-1) experimental; urgency=medium
+
+  [ Iain Lane ]
   * debian/watch: Update for current URL scheme
 
- -- Iain Lane <laney@debian.org>  Mon, 15 Jun 2015 12:59:04 +0100
+  [ Sebastian Dröge ]
+  * New unstable upstream release.
 
-gst-plugins-good1.0 (1.4.5-2) unstable; urgency=medium
+ -- Iain Lane <laney@debian.org>  Mon, 15 Jun 2015 10:56:07 +0100
 
-  * Upload to unstable.
+gst-plugins-good1.0 (1.5.1-1) experimental; urgency=medium
 
- -- Sebastian Dröge <slomo@debian.org>  Wed, 13 May 2015 12:25:10 +0300
+  * New unstable upstream release.
+
+ -- Sebastian Dröge <slomo@debian.org>  Sun, 07 Jun 2015 10:45:39 +0200
+
+gst-plugins-good1.0 (1.5.0.1+git20150513-1) experimental; urgency=medium
+
+  * New upstream GIT snapshot.
+
+ -- Sebastian Dröge <slomo@debian.org>  Wed, 13 May 2015 13:24:34 +0300
+
+gst-plugins-good1.0 (1.5.0.1+git20150316-1) experimental; urgency=medium
+
+  * New upstream GIT snapshot.
+
+ -- Sebastian Dröge <slomo@debian.org>  Tue, 17 Mar 2015 09:14:23 +0100
 
 gst-plugins-good1.0 (1.4.5-1) experimental; urgency=medium
 

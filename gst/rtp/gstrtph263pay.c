@@ -27,8 +27,10 @@
 #include <string.h>
 #include <math.h>
 #include <gst/rtp/gstrtpbuffer.h>
+#include <gst/video/video.h>
 
 #include "gstrtph263pay.h"
+#include "gstrtputils.h"
 
 typedef enum
 {
@@ -440,8 +442,7 @@ gst_rtp_h263_pay_class_init (GstRtpH263PayClass * klass)
 static void
 gst_rtp_h263_pay_init (GstRtpH263Pay * rtph263pay)
 {
-  rtph263pay->adapter = gst_adapter_new ();
-
+  GST_RTP_BASE_PAYLOAD_PT (rtph263pay) = GST_RTP_PAYLOAD_H263;
   rtph263pay->prop_payload_mode = DEFAULT_MODE_A;
 }
 
@@ -452,8 +453,7 @@ gst_rtp_h263_pay_finalize (GObject * object)
 
   rtph263pay = GST_RTP_H263_PAY (object);
 
-  g_object_unref (rtph263pay->adapter);
-  rtph263pay->adapter = NULL;
+  gst_buffer_replace (&rtph263pay->current_buffer, NULL);
 
   G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -461,13 +461,43 @@ gst_rtp_h263_pay_finalize (GObject * object)
 static gboolean
 gst_rtp_h263_pay_setcaps (GstRTPBasePayload * payload, GstCaps * caps)
 {
+  GstStructure *s = gst_caps_get_structure (caps, 0);
+  gint width, height;
+  gchar *framesize = NULL;
   gboolean res;
 
-  payload->pt = GST_RTP_PAYLOAD_H263;
-  gst_rtp_base_payload_set_options (payload, "video", TRUE, "H263", 90000);
-  res = gst_rtp_base_payload_set_outcaps (payload, NULL);
+  if (gst_structure_has_field (s, "width") &&
+      gst_structure_has_field (s, "height")) {
+    if (!gst_structure_get_int (s, "width", &width) || width <= 0) {
+      goto invalid_dimension;
+    }
+
+    if (!gst_structure_get_int (s, "height", &height) || height <= 0) {
+      goto invalid_dimension;
+    }
+
+    framesize = g_strdup_printf ("%d-%d", width, height);
+  }
+
+  gst_rtp_base_payload_set_options (payload, "video",
+      payload->pt != GST_RTP_PAYLOAD_H263, "H263", 90000);
+
+  if (framesize != NULL) {
+    res = gst_rtp_base_payload_set_outcaps (payload,
+        "a-framesize", G_TYPE_STRING, framesize, NULL);
+  } else {
+    res = gst_rtp_base_payload_set_outcaps (payload, NULL);
+  }
+  g_free (framesize);
 
   return res;
+
+  /* ERRORS */
+invalid_dimension:
+  {
+    GST_ERROR_OBJECT (payload, "Invalid width/height from caps");
+    return FALSE;
+  }
 }
 
 static void
@@ -1238,14 +1268,12 @@ gst_rtp_h263_pay_push (GstRtpH263Pay * rtph263pay,
    * Splat the payload header values
    */
   guint8 *header;
-  guint8 *payload;
   GstFlowReturn ret;
   GstRTPBuffer rtp = { NULL };
 
   gst_rtp_buffer_map (package->outbuf, GST_MAP_WRITE, &rtp);
 
   header = gst_rtp_buffer_get_payload (&rtp);
-  payload = header + package->mode;
 
   switch (package->mode) {
     case GST_RTP_H263_PAYLOAD_HEADER_MODE_A:
@@ -1263,23 +1291,27 @@ gst_rtp_h263_pay_push (GstRtpH263Pay * rtph263pay,
       return GST_FLOW_ERROR;
   }
 
-
-  /*
-   * Copy the payload data in the buffer
-   */
-  GST_DEBUG ("Copying memory");
-  memcpy (payload, (guint8 *) package->payload_start, package->payload_len);
-
   /*
    * timestamp the buffer
    */
-  GST_BUFFER_TIMESTAMP (package->outbuf) = rtph263pay->first_ts;
+  GST_BUFFER_PTS (package->outbuf) = rtph263pay->first_ts;
 
   gst_rtp_buffer_set_marker (&rtp, package->marker);
   if (package->marker)
     GST_DEBUG ("Marker set!");
 
   gst_rtp_buffer_unmap (&rtp);
+
+  /*
+   * Copy the payload data in the buffer
+   */
+  GST_DEBUG ("Copying memory");
+  gst_buffer_copy_into (package->outbuf, rtph263pay->current_buffer,
+      GST_BUFFER_COPY_MEMORY, package->payload_start - rtph263pay->map.data,
+      package->payload_len);
+  gst_rtp_copy_meta (GST_ELEMENT_CAST (rtph263pay), package->outbuf,
+      rtph263pay->current_buffer,
+      g_quark_from_static_string (GST_META_TAG_VIDEO_STR));
 
   ret =
       gst_rtp_base_payload_push (GST_RTP_BASE_PAYLOAD (rtph263pay),
@@ -1313,8 +1345,7 @@ gst_rtp_h263_pay_A_fragment_push (GstRtpH263Pay * rtph263pay,
 
   pack->gobn = context->gobs[first]->gobn;
   pack->mode = GST_RTP_H263_PAYLOAD_HEADER_MODE_A;
-  pack->outbuf =
-      gst_rtp_buffer_new_allocate (pack->payload_len + pack->mode, 0, 0);
+  pack->outbuf = gst_rtp_buffer_new_allocate (pack->mode, 0, 0);
 
   GST_DEBUG ("Sending len:%d data to push function", pack->payload_len);
 
@@ -1370,8 +1401,7 @@ gst_rtp_h263_pay_B_fragment_push (GstRtpH263Pay * rtph263pay,
   }
 
   pack->payload_len = pack->payload_end - pack->payload_start + 1;
-  pack->outbuf =
-      gst_rtp_buffer_new_allocate (pack->payload_len + pack->mode, 0, 0);
+  pack->outbuf = gst_rtp_buffer_new_allocate (pack->mode, 0, 0);
 
   return gst_rtp_h263_pay_push (rtph263pay, context, pack);
 }
@@ -1384,12 +1414,11 @@ gst_rtp_h263_pay_mode_B_fragment (GstRtpH263Pay * rtph263pay,
 
 
     /*---------- MODE B MODE FRAGMENTATION ----------*/
-  GstRtpH263PayMB *mac;
+  GstRtpH263PayMB *mac = NULL;
   guint max_payload_size;
   GstRtpH263PayBoundry boundry;
   guint mb;
-  //TODO remove m
-  GstRtpH263PayMB *m;
+  guint8 ebit;
 
   guint first = 0;
   guint payload_len;
@@ -1412,7 +1441,6 @@ gst_rtp_h263_pay_mode_B_fragment (GstRtpH263Pay * rtph263pay,
           &boundry.end, &gob->end) != 0) {
     GST_ERROR
         ("The rest of the bits should be 0, exiting, because something bad happend");
-    gst_adapter_flush (rtph263pay->adapter, rtph263pay->available_data);
     goto decode_error;
   }
   //The first GOB of a frame "has no" actual header - PICTURE header is his header
@@ -1482,15 +1510,16 @@ gst_rtp_h263_pay_mode_B_fragment (GstRtpH263Pay * rtph263pay,
 
   // We are on MB layer
 
-  m = mac = gst_rtp_h263_pay_mb_new (&boundry, 0);
+  mac = gst_rtp_h263_pay_mb_new (&boundry, 0);
   for (mb = 0; mb < format_props[context->piclayer->ptype_srcformat][1]; mb++) {
 
     GST_DEBUG ("================ START MB %d =================", mb);
 
     //Find next macroblock boundaries
+    ebit = mac->ebit;
     if (!(mac = gst_rtp_h263_pay_B_mbfinder (context, gob, mac, mb))) {
 
-      GST_DEBUG ("Error decoding MB - sbit: %d", 8 - m->ebit);
+      GST_DEBUG ("Error decoding MB - sbit: %d", 8 - ebit);
       GST_ERROR ("Error decoding in GOB");
 
       goto decode_error;
@@ -1513,7 +1542,6 @@ gst_rtp_h263_pay_mode_B_fragment (GstRtpH263Pay * rtph263pay,
       gob->end = mac->end;
       break;
     }
-    m = mac;
     GST_DEBUG ("Found MB: mba: %d start: %p end: %p len: %d sbit: %d ebit: %d",
         mac->mba, mac->start, mac->end, mac->length, mac->sbit, mac->ebit);
     GST_DEBUG ("================ END MB %d =================", mb);
@@ -1538,7 +1566,7 @@ gst_rtp_h263_pay_mode_B_fragment (GstRtpH263Pay * rtph263pay,
       if (gst_rtp_h263_pay_B_fragment_push (rtph263pay, context, gob, first,
               mb - 1, &boundry)) {
         GST_ERROR ("Oooops, there was an error sending");
-        return FALSE;
+        goto decode_error;
       }
 
       payload_len = 0;
@@ -1556,15 +1584,17 @@ gst_rtp_h263_pay_mode_B_fragment (GstRtpH263Pay * rtph263pay,
     if (gst_rtp_h263_pay_B_fragment_push (rtph263pay, context, gob, first,
             mb - 1, &boundry)) {
       GST_ERROR ("Oooops, there was an error sending!");
-      return FALSE;
+      goto decode_error;
     }
   }
 
     /*---------- END OF MODE B FRAGMENTATION ----------*/
 
+  gst_rtp_h263_pay_mb_destroy (mac);
   return TRUE;
 
 decode_error:
+  gst_rtp_h263_pay_mb_destroy (mac);
   return FALSE;
 }
 
@@ -1582,8 +1612,7 @@ gst_rtp_h263_send_entire_frame (GstRtpH263Pay * rtph263pay,
   GST_DEBUG ("Available data: %d", rtph263pay->available_data);
 
   pack->outbuf =
-      gst_rtp_buffer_new_allocate (pack->payload_len +
-      GST_RTP_H263_PAYLOAD_HEADER_MODE_A, 0, 0);
+      gst_rtp_buffer_new_allocate (GST_RTP_H263_PAYLOAD_HEADER_MODE_A, 0, 0);
 
   return gst_rtp_h263_pay_push (rtph263pay, context, pack);
 }
@@ -1608,16 +1637,15 @@ gst_rtp_h263_pay_flush (GstRtpH263Pay * rtph263pay)
       GST_RTP_H263_PAYLOAD_HEADER_MODE_C);
 
   GST_DEBUG ("MTU: %d", context->mtu);
-  rtph263pay->available_data = gst_adapter_available (rtph263pay->adapter);
+  rtph263pay->available_data = gst_buffer_get_size (rtph263pay->current_buffer);
   if (rtph263pay->available_data == 0) {
     ret = GST_FLOW_OK;
     goto end;
   }
 
   /* Get a pointer to all the data for the frame */
-  rtph263pay->data =
-      (guint8 *) gst_adapter_map (rtph263pay->adapter,
-      rtph263pay->available_data);
+  gst_buffer_map (rtph263pay->current_buffer, &rtph263pay->map, GST_MAP_READ);
+  rtph263pay->data = (guint8 *) rtph263pay->map.data;
 
   /* Picture header */
   context->piclayer = (GstRtpH263PayPic *) rtph263pay->data;
@@ -1773,8 +1801,8 @@ gst_rtp_h263_pay_flush (GstRtpH263Pay * rtph263pay)
 end:
   gst_rtp_h263_pay_context_destroy (context,
       context->piclayer->ptype_srcformat);
-  gst_adapter_unmap (rtph263pay->adapter);
-  gst_adapter_flush (rtph263pay->adapter, rtph263pay->available_data);
+  gst_buffer_unmap (rtph263pay->current_buffer, &rtph263pay->map);
+  gst_buffer_replace (&rtph263pay->current_buffer, NULL);
 
   return ret;
 }
@@ -1789,10 +1817,12 @@ gst_rtp_h263_pay_handle_buffer (GstRTPBasePayload * payload, GstBuffer * buffer)
   GST_DEBUG ("-------------------- NEW FRAME ---------------");
   rtph263pay = GST_RTP_H263_PAY (payload);
 
-  rtph263pay->first_ts = GST_BUFFER_TIMESTAMP (buffer);
+  rtph263pay->first_ts = GST_BUFFER_PTS (buffer);
+
+  gst_buffer_replace (&rtph263pay->current_buffer, buffer);
+  gst_buffer_unref (buffer);
 
   /* we always encode and flush a full picture */
-  gst_adapter_push (rtph263pay->adapter, buffer);
   ret = gst_rtp_h263_pay_flush (rtph263pay);
   GST_DEBUG ("-------------------- END FRAME ---------------");
 
