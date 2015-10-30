@@ -73,6 +73,10 @@
   "divxversion = (int) 5, "\
   COMMON_VIDEO_CAPS
 
+#define PRORES_CAPS \
+  "video/x-prores, variant = (string) {standard, lt, hq, proxy}, " \
+  COMMON_VIDEO_CAPS
+
 #define SVQ_CAPS \
   "video/x-svq, " \
   "svqversion = (int) 3, " \
@@ -93,15 +97,11 @@
   COMMON_AUDIO_CAPS (2, MAX)
 
 #define PCM_CAPS_FULL \
-  PCM_CAPS "; " \
   "audio/x-raw, " \
-  "format = (string) { S24LE, S24BE }, " \
+  "format = (string) { S32LE, S32BE, S24LE, S24BE }, " \
   "layout = (string) interleaved, " \
   COMMON_AUDIO_CAPS (2, MAX) "; " \
-  "audio/x-raw, " \
-  "format = (string) { S32LE, S32BE }, " \
-  "layout = (string) interleaved, " \
-  COMMON_AUDIO_CAPS (2, MAX)
+  PCM_CAPS
 
 #define MP3_CAPS \
   "audio/mpeg, " \
@@ -156,6 +156,7 @@ GstQTMuxFormatProp gst_qt_mux_format_list[] = {
             "format = (string) { RGB, UYVY, v210 }, "
             COMMON_VIDEO_CAPS "; "
             MPEG4V_CAPS "; "
+            PRORES_CAPS "; "
             H263_CAPS "; "
             H264_CAPS "; "
             SVQ_CAPS "; "

@@ -5,9 +5,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: gst-plugins-good 1.6.0\n"
+"Project-Id-Version: gst-plugins-good 1.6.1\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2015-09-25 22:54+0200\n"
+"POT-Creation-Date: 2015-10-30 14:27+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -90,7 +90,7 @@ msgstr ""
 #: gst/isomp4/qtdemux.c:3498 gst/isomp4/qtdemux.c:6595
 #: gst/isomp4/qtdemux.c:6602 gst/isomp4/qtdemux.c:7376
 #: gst/isomp4/qtdemux.c:7805 gst/isomp4/qtdemux.c:7812
-#: gst/isomp4/qtdemux.c:10091
+#: gst/isomp4/qtdemux.c:10099
 msgid "This file is corrupt and cannot be played."
 msgstr ""
 
@@ -102,11 +102,11 @@ msgstr ""
 msgid "This file is incomplete and cannot be played."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:8735
+#: gst/isomp4/qtdemux.c:8737
 msgid "The video in this file might not play correctly."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:10132
+#: gst/isomp4/qtdemux.c:10140
 #, c-format
 msgid "This file contains too many streams. Only playing first %d"
 msgstr ""
