@@ -130,15 +130,16 @@ GstSplitMuxSink implements
 <p>This element wraps a muxer and a sink, and starts a new file when the mux
 contents are about to cross a threshold of maximum size of maximum time,
 splitting at video keyframe boundaries. Exactly one input video stream
-is required, with as many accompanying audio and subtitle streams as
+can be muxed, with as many accompanying audio and subtitle streams as
 desired.</p>
 <p>By default, it uses mp4mux and filesink, but they can be changed via
 the 'muxer' and 'sink' properties.</p>
 <p>The minimum file size is 1 GOP, however - so limits may be overrun if the
 distance between any 2 keyframes is larger than the limits.</p>
-<p>The splitting process is driven by the video stream contents, and
-the video stream must contain closed GOPs for the output file parts
-to be played individually correctly.</p>
+<p>If a video stream is available, the splitting process is driven by the video
+stream contents, and the video stream must contain closed GOPs for the output
+file parts to be played individually correctly. In the absence of a video
+stream, the first available stream is used as reference for synchronization.</p>
 <div class="refsect2">
 <a name="id-1.2.164.9.6"></a><h3>Example pipelines</h3>
 <div class="informalexample">
