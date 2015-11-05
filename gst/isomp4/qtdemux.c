@@ -8547,7 +8547,8 @@ qtdemux_parse_trak (GstQTDemux * qtdemux, GNode * trak)
           "found, assuming preview image or something; skipping track",
           stream->duration, stream->timescale, qtdemux->duration,
           qtdemux->timescale);
-      g_free (stream);
+      if (new_stream)
+        gst_qtdemux_stream_free (qtdemux, stream);
       return TRUE;
     }
   }
@@ -8625,7 +8626,8 @@ qtdemux_parse_trak (GstQTDemux * qtdemux, GNode * trak)
   if (stsd_len < 24) {
     /* .. but skip stream with empty stsd produced by some Vivotek cameras */
     if (stream->subtype == FOURCC_vivo) {
-      g_free (stream);
+      if (new_stream)
+        gst_qtdemux_stream_free (qtdemux, stream);
       return TRUE;
     } else {
       goto corrupt_file;
@@ -8774,6 +8776,9 @@ qtdemux_parse_trak (GstQTDemux * qtdemux, GNode * trak)
             (g & 0xff00) | (b >> 8);
       }
     }
+
+    if (stream->caps)
+      gst_caps_unref (stream->caps);
 
     stream->caps =
         qtdemux_video_caps (qtdemux, stream, fourcc, stsd_data, &codec);
@@ -9504,6 +9509,9 @@ qtdemux_parse_trak (GstQTDemux * qtdemux, GNode * trak)
     } else if (version != 0x00000) {
       GST_WARNING_OBJECT (qtdemux, "unknown audio STSD version %08x", version);
     }
+
+    if (stream->caps)
+      gst_caps_unref (stream->caps);
 
     stream->caps = qtdemux_audio_caps (qtdemux, stream, fourcc,
         stsd_data + 32, len - 16, &codec);
