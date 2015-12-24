@@ -1,3 +1,13 @@
+gst-plugins-good1.0 (1.7.1-1) experimental; urgency=medium
+
+  * New upstream unstable release:
+    + debian/build-deps.in,
+      debian/rules:
+      - Build-depend on GLib >= 2.40 and GStreamer >= 1.7.1.
+      - Build-depend on Soup >= 2.48.
+
+ -- Sebastian Dröge <slomo@debian.org>  Thu, 24 Dec 2015 14:13:58 +0100
+
 gst-plugins-good1.0 (1.6.2-1) unstable; urgency=medium
 
   * New upstream bugfix release.
