@@ -120,6 +120,11 @@
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-udpsrc.html#GstUDPSrc--address" title="The “address” property">address</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
+<tr>
+<td class="property_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-udpsrc.html#GstUDPSrc--loop" title="The “loop” property">loop</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
 </tbody>
 </table></div>
 </div>
@@ -166,7 +171,7 @@ property to the IP address of the multicast group.</p>
 property, udpsrc will then not allocate a socket itself but use the provided
 one.</p>
 <p>The <a class="link" href="gst-plugins-good-plugins-udpsrc.html#GstUDPSrc--caps" title="The “caps” property"><span class="type">“caps”</span></a> property is mainly used to give a type to the UDP packet
-so that they can be autoplugged in GStreamer pipelines. This is very usefull
+so that they can be autoplugged in GStreamer pipelines. This is very useful
 for RTP implementations where the contents of the UDP packets is transfered
 out-of-bounds using SDP or other means.</p>
 <p>The <a class="link" href="gst-plugins-good-plugins-udpsrc.html#GstUDPSrc--buffer-size" title="The “buffer-size” property"><span class="type">“buffer-size”</span></a> property is used to change the default kernel
@@ -419,6 +424,14 @@ above mentioned pipeline should dump data packets to the console.
 <p>Address to receive packets for. This is equivalent to the multicast-group property for now.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: "0.0.0.0"</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstUDPSrc--loop"></a><h3>The <code class="literal">“loop”</code> property</h3>
+<pre class="programlisting">  “loop”                     <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gboolean"><span class="type">gboolean</span></a></pre>
+<p>Used for setting the multicast loop parameter. TRUE = enable, FALSE = disable.</p>
+<p>Flags: Read / Write</p>
+<p>Default value: TRUE</p>
 </div>
 </div>
 <div class="refsect1">

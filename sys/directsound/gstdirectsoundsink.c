@@ -430,8 +430,15 @@ gst_directsound_sink_open (GstAudioSink * asink)
 
   dsoundsink = GST_DIRECTSOUND_SINK (asink);
 
-  if (dsoundsink->device_id)
+  if (dsoundsink->device_id) {
     lpGuid = string_to_guid (dsoundsink->device_id);
+    if (lpGuid == NULL) {
+      GST_ELEMENT_ERROR (dsoundsink, RESOURCE, OPEN_READ,
+          ("gst_directsound_sink_open: device set, but guid not found: %s",
+              dsoundsink->device_id), (NULL));
+      return FALSE;
+    }
+  }
 
   /* create and initialize a DirecSound object */
   if (FAILED (hRes = DirectSoundCreate (lpGuid, &dsoundsink->pDS, NULL))) {
@@ -608,7 +615,8 @@ gst_directsound_sink_write (GstAudioSink * asink, gpointer data, guint length)
       &dwCurrentPlayCursor, NULL);
 
   if (SUCCEEDED (hRes) && SUCCEEDED (hRes2) && (dwStatus & DSBSTATUS_PLAYING)) {
-    DWORD dwFreeBufferSize;
+    DWORD dwFreeBufferSize = 0;
+    DWORD sleepTime = 0;
 
   calculate_freesize:
     /* calculate the free size of the circular buffer */
@@ -621,7 +629,17 @@ gst_directsound_sink_write (GstAudioSink * asink, gpointer data, guint length)
           dwCurrentPlayCursor - dsoundsink->current_circular_offset;
 
     if (length >= dwFreeBufferSize) {
-      Sleep (100);
+      sleepTime =
+          ((length -
+              dwFreeBufferSize) * 1000) / (dsoundsink->bytes_per_sample *
+          GST_AUDIO_BASE_SINK (asink)->ringbuffer->spec.info.rate);
+      if (sleepTime > 0) {
+        GST_DEBUG_OBJECT (dsoundsink,
+            "gst_directsound_sink_write: length:%i, FreeBufSiz: %ld, sleepTime: %ld, bps: %i, rate: %i",
+            length, dwFreeBufferSize, sleepTime, dsoundsink->bytes_per_sample,
+            GST_AUDIO_BASE_SINK (asink)->ringbuffer->spec.info.rate);
+        Sleep (sleepTime);
+      }
       hRes = IDirectSoundBuffer_GetCurrentPosition (dsoundsink->pDSBSecondary,
           &dwCurrentPlayCursor, NULL);
 

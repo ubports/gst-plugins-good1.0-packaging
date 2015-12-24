@@ -124,6 +124,21 @@
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer--rtx-next-seqnum" title="The “rtx-next-seqnum” property">rtx-next-seqnum</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
+<tr>
+<td class="property_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer--max-dropout-time" title="The “max-dropout-time” property">max-dropout-time</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
+<tr>
+<td class="property_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer--max-misorder-time" title="The “max-misorder-time” property">max-misorder-time</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
+<tr>
+<td class="property_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtpjitterbuffer.html#GstRtpJitterBuffer--max-rtcp-rtp-time-diff" title="The “max-rtcp-rtp-time-diff” property">max-rtcp-rtp-time-diff</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
 </tbody>
 </table></div>
 </div>
@@ -553,6 +568,34 @@ The expected time is calculated using the dts of N and the packet spacing.</p>
 <p>Flags: Read / Write</p>
 <p>Default value: TRUE</p>
 <p class="since">Since: 1.6</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRtpJitterBuffer--max-dropout-time"></a><h3>The <code class="literal">“max-dropout-time”</code> property</h3>
+<pre class="programlisting">  “max-dropout-time”         <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a></pre>
+<p>The maximum time (milliseconds) of missing packets tolerated.</p>
+<p>Flags: Read / Write</p>
+<p>Default value: 60000</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRtpJitterBuffer--max-misorder-time"></a><h3>The <code class="literal">“max-misorder-time”</code> property</h3>
+<pre class="programlisting">  “max-misorder-time”        <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a></pre>
+<p>The maximum time (milliseconds) of misordered packets tolerated.</p>
+<p>Flags: Read / Write</p>
+<p>Default value: 2000</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRtpJitterBuffer--max-rtcp-rtp-time-diff"></a><h3>The <code class="literal">“max-rtcp-rtp-time-diff”</code> property</h3>
+<pre class="programlisting">  “max-rtcp-rtp-time-diff”   <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a></pre>
+<p>The maximum amount of time in ms that the RTP time in the RTCP SRs
+is allowed to be ahead of the last RTP packet we received. Use
+-1 to disable ignoring of RTCP packets.</p>
+<p>Flags: Read / Write</p>
+<p>Allowed values: &gt;= G_MAXULONG</p>
+<p>Default value: 1000</p>
+<p class="since">Since: 1.8</p>
 </div>
 </div>
 <div class="refsect1">

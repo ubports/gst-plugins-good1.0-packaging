@@ -241,7 +241,7 @@ GstV4l2Src implements
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> video/x-h264, stream-format=(string)byte-stream, alignment=(string)au</td>
+<td> video/x-h264, stream-format=(string){ byte-stream, avc }, alignment=(string)au</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
@@ -253,7 +253,7 @@ GstV4l2Src implements
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> video/x-raw, format=(string){ RGB15, RGB16, BGR, RGB, BGRx, BGRA, xRGB, ARGB, GRAY8, YVU9, YV12, YUY2, UYVY, Y42B, Y41B, NV12_64Z32, YUV9, I420, YVYU, NV21, NV12 }, width=(int)[ 1, 32768 ], height=(int)[ 1, 32768 ], framerate=(fraction)[ 0/1, 2147483647/1 ]</td>
+<td> video/x-raw, format=(string){ RGB16, BGR, RGB, GRAY8, GRAY16_LE, GRAY16_BE, YVU9, YV12, YUY2, YVYU, UYVY, Y42B, Y41B, YUV9, NV12_64Z32, NV24, NV61, NV16, NV21, NV12, I420, BGRA, BGRx, ARGB, xRGB, BGR15, RGB15 }, width=(int)[ 1, 32768 ], height=(int)[ 1, 32768 ], framerate=(fraction)[ 0/1, 2147483647/1 ]</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
@@ -262,6 +262,10 @@ GstV4l2Src implements
 <tr>
 <td><p><span class="term"></span></p></td>
 <td> video/x-vp8</td>
+</tr>
+<tr>
+<td><p><span class="term"></span></p></td>
+<td> video/x-wmv, wmvversion=(int)3, format=(string)WVC1</td>
 </tr>
 </tbody>
 </table></div>
