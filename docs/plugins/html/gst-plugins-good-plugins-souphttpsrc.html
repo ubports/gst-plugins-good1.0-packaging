@@ -164,6 +164,12 @@
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-souphttpsrc.html#GstSoupHTTPSrc--method" title="The “method” property">method</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
+<tr>
+<td class="property_type">
+<a href="https://developer.gnome.org/gio/unstable/GTlsInteraction.html"><span class="type">GTlsInteraction</span></a> *</td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-souphttpsrc.html#GstSoupHTTPSrc--tls-interaction" title="The “tls-interaction” property">tls-interaction</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
 </tbody>
 </table></div>
 </div>
@@ -442,6 +448,13 @@ GstSoupHTTPSrc implements
 <p>The HTTP method to use (GET, HEAD, OPTIONS, etc).</p>
 <p>Flags: Read / Write</p>
 <p>Default value: NULL</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstSoupHTTPSrc--tls-interaction"></a><h3>The <code class="literal">“tls-interaction”</code> property</h3>
+<pre class="programlisting">  “tls-interaction”          <a href="https://developer.gnome.org/gio/unstable/GTlsInteraction.html"><span class="type">GTlsInteraction</span></a> *</pre>
+<p>A GTlsInteraction object to be used when the connection or certificate database need to interact with the user.</p>
+<p>Flags: Read / Write</p>
 </div>
 </div>
 </div>

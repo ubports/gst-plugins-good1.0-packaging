@@ -41,7 +41,7 @@
  * one.
  *
  * The #GstUDPSrc:caps property is mainly used to give a type to the UDP packet
- * so that they can be autoplugged in GStreamer pipelines. This is very usefull
+ * so that they can be autoplugged in GStreamer pipelines. This is very useful
  * for RTP implementations where the contents of the UDP packets is transfered
  * out-of-bounds using SDP or other means.
  *
@@ -112,24 +112,7 @@
 
 #include <gst/net/gstnetaddressmeta.h>
 
-#if GLIB_CHECK_VERSION (2, 35, 7)
 #include <gio/gnetworking.h>
-#else
-
-/* nicked from gnetworking.h */
-#ifdef G_OS_WIN32
-#ifndef _WIN32_WINNT
-#define _WIN32_WINNT 0x0501
-#endif
-#include <winsock2.h>
-#undef interface
-#include <ws2tcpip.h>           /* for socklen_t */
-#endif /* G_OS_WIN32 */
-
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-#endif
 
 /* not 100% correct, but a good upper bound for memory allocation purposes */
 #define MAX_IPV4_UDP_PACKET_SIZE (65536 - 8)
@@ -155,6 +138,7 @@ static GstStaticPadTemplate src_template = GST_STATIC_PAD_TEMPLATE ("src",
 #define UDP_DEFAULT_USED_SOCKET        NULL
 #define UDP_DEFAULT_AUTO_MULTICAST     TRUE
 #define UDP_DEFAULT_REUSE              TRUE
+#define UDP_DEFAULT_LOOP               TRUE
 
 enum
 {
@@ -173,7 +157,8 @@ enum
   PROP_USED_SOCKET,
   PROP_AUTO_MULTICAST,
   PROP_REUSE,
-  PROP_ADDRESS
+  PROP_ADDRESS,
+  PROP_LOOP
 };
 
 static void gst_udpsrc_uri_handler_init (gpointer g_iface, gpointer iface_data);
@@ -283,6 +268,11 @@ gst_udpsrc_class_init (GstUDPSrcClass * klass)
           "Address to receive packets for. This is equivalent to the "
           "multicast-group property for now", UDP_DEFAULT_MULTICAST_GROUP,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+  g_object_class_install_property (gobject_class, PROP_LOOP,
+      g_param_spec_boolean ("loop", "Multicast Loopback",
+          "Used for setting the multicast loop parameter. TRUE = enable,"
+          " FALSE = disable", UDP_DEFAULT_LOOP,
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   gst_element_class_add_pad_template (gstelement_class,
       gst_static_pad_template_get (&src_template));
@@ -322,6 +312,7 @@ gst_udpsrc_init (GstUDPSrc * udpsrc)
   udpsrc->auto_multicast = UDP_DEFAULT_AUTO_MULTICAST;
   udpsrc->used_socket = UDP_DEFAULT_USED_SOCKET;
   udpsrc->reuse = UDP_DEFAULT_REUSE;
+  udpsrc->loop = UDP_DEFAULT_LOOP;
 
   /* configure basesrc to be a live source */
   gst_base_src_set_live (GST_BASE_SRC (udpsrc), TRUE);
@@ -808,6 +799,9 @@ gst_udpsrc_set_property (GObject * object, guint prop_id, const GValue * value,
     case PROP_REUSE:
       udpsrc->reuse = g_value_get_boolean (value);
       break;
+    case PROP_LOOP:
+      udpsrc->loop = g_value_get_boolean (value);
+      break;
     default:
       break;
   }
@@ -861,6 +855,9 @@ gst_udpsrc_get_property (GObject * object, guint prop_id, GValue * value,
       break;
     case PROP_REUSE:
       g_value_set_boolean (value, udpsrc->reuse);
+      break;
+    case PROP_LOOP:
+      g_value_set_boolean (value, udpsrc->loop);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -969,6 +966,7 @@ gst_udpsrc_open (GstUDPSrc * src)
       goto bind_error;
 
     g_object_unref (bind_saddr);
+    g_socket_set_multicast_loopback (src->used_socket, src->loop);
   } else {
     GST_DEBUG_OBJECT (src, "using provided socket %p", src->socket);
     /* we use the configured socket, try to get some info about it */
@@ -984,7 +982,6 @@ gst_udpsrc_open (GstUDPSrc * src)
       goto getsockname_error;
   }
 
-#if GLIB_CHECK_VERSION (2, 35, 7)
   {
     gint val = 0;
 
@@ -1016,47 +1013,6 @@ gst_udpsrc_open (GstUDPSrc * src)
       GST_DEBUG_OBJECT (src, "could not get udp buffer size");
     }
   }
-#elif defined (SO_RCVBUF)
-  {
-    gint rcvsize, ret;
-    socklen_t len;
-
-    len = sizeof (rcvsize);
-    if (src->buffer_size != 0) {
-      rcvsize = src->buffer_size;
-
-      GST_DEBUG_OBJECT (src, "setting udp buffer of %d bytes", rcvsize);
-      /* set buffer size, Note that on Linux this is typically limited to a
-       * maximum of around 100K. Also a minimum of 128 bytes is required on
-       * Linux. */
-      ret =
-          setsockopt (g_socket_get_fd (src->used_socket), SOL_SOCKET, SO_RCVBUF,
-          (void *) &rcvsize, len);
-      if (ret != 0) {
-        GST_ELEMENT_WARNING (src, RESOURCE, SETTINGS, (NULL),
-            ("Could not create a buffer of requested %d bytes, %d: %s (%d)",
-                rcvsize, ret, g_strerror (errno), errno));
-      }
-    }
-
-    /* read the value of the receive buffer. Note that on linux this returns 2x the
-     * value we set because the kernel allocates extra memory for metadata.
-     * The default on Linux is about 100K (which is about 50K without metadata) */
-    ret =
-        getsockopt (g_socket_get_fd (src->used_socket), SOL_SOCKET, SO_RCVBUF,
-        (void *) &rcvsize, &len);
-    if (ret == 0)
-      GST_DEBUG_OBJECT (src, "have udp buffer of %d bytes", rcvsize);
-    else
-      GST_DEBUG_OBJECT (src, "could not get udp buffer size");
-  }
-#else
-  if (src->buffer_size != 0) {
-    GST_WARNING_OBJECT (src, "don't know how to set udp buffer size on this "
-        "OS. Consider upgrading your GLib to >= 2.35.7 and re-compiling the "
-        "GStreamer udp plugin");
-  }
-#endif
 
   g_socket_set_broadcast (src->used_socket, TRUE);
 

@@ -226,6 +226,11 @@
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--user-agent" title="The “user-agent” property">user-agent</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
+<tr>
+<td class="property_type"><a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--max-rtcp-rtp-time-diff" title="The “max-rtcp-rtp-time-diff” property">max-rtcp-rtp-time-diff</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
 </tbody>
 </table></div>
 </div>
@@ -683,7 +688,16 @@ keep alive and then this property needs to be set to FALSE.</p>
 <pre class="programlisting">  “user-agent”               <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gchar"><span class="type">gchar</span></a> *</pre>
 <p>The User-Agent string to send to the server.</p>
 <p>Flags: Read / Write</p>
-<p>Default value: "GStreamer/1.6.2"</p>
+<p>Default value: "GStreamer/1.7.1"</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRTSPSrc--max-rtcp-rtp-time-diff"></a><h3>The <code class="literal">“max-rtcp-rtp-time-diff”</code> property</h3>
+<pre class="programlisting">  “max-rtcp-rtp-time-diff”   <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gint"><span class="type">gint</span></a></pre>
+<p>Maximum amount of time in ms that the RTP time in RTCP SRs is allowed to be ahead (-1 disabled).</p>
+<p>Flags: Read / Write</p>
+<p>Allowed values: &gt;= G_MAXULONG</p>
+<p>Default value: 1000</p>
 </div>
 </div>
 <div class="refsect1">
