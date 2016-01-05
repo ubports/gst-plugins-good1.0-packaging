@@ -166,7 +166,8 @@ am__DEPENDENCIES_1 =
 libgstvpx_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
-am_libgstvpx_la_OBJECTS = libgstvpx_la-gstvp8dec.lo \
+am_libgstvpx_la_OBJECTS = libgstvpx_la-gstvpxdec.lo \
+	libgstvpx_la-gstvpxenc.lo libgstvpx_la-gstvp8dec.lo \
 	libgstvpx_la-gstvp8enc.lo libgstvpx_la-gstvp8utils.lo \
 	libgstvpx_la-gstvp9dec.lo libgstvpx_la-gstvp9enc.lo \
 	libgstvpx_la-plugin.lo
@@ -482,6 +483,8 @@ VALGRIND_PATH = @VALGRIND_PATH@
 VERSION = @VERSION@
 VPX_130_CFLAGS = @VPX_130_CFLAGS@
 VPX_130_LIBS = @VPX_130_LIBS@
+VPX_140_CFLAGS = @VPX_140_CFLAGS@
+VPX_140_LIBS = @VPX_140_LIBS@
 VPX_CFLAGS = @VPX_CFLAGS@
 VPX_LIBS = @VPX_LIBS@
 WARNING_CFLAGS = @WARNING_CFLAGS@
@@ -571,6 +574,8 @@ plugin_LTLIBRARIES = \
 	libgstvpx.la
 
 libgstvpx_la_SOURCES = \
+    gstvpxdec.c \
+    gstvpxenc.c \
 	gstvp8dec.c \
 	gstvp8enc.c \
 	gstvp8utils.c \
@@ -592,6 +597,8 @@ libgstvpx_la_LIBADD = \
 libgstvpx_la_LDFLAGS = $(GST_PLUGIN_LDFLAGS)
 libgstvpx_la_LIBTOOLFLAGS = $(GST_PLUGIN_LIBTOOLFLAGS)
 noinst_HEADERS = \
+    gstvpxdec.h \
+    gstvpxenc.h \
 	gstvp8dec.h \
 	gstvp8enc.h \
 	gstvp9dec.h \
@@ -684,6 +691,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstvpx_la-gstvp8utils.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstvpx_la-gstvp9dec.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstvpx_la-gstvp9enc.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstvpx_la-gstvpxdec.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstvpx_la-gstvpxenc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstvpx_la-plugin.Plo@am__quote@
 
 .c.o:
@@ -709,6 +718,20 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
+
+libgstvpx_la-gstvpxdec.lo: gstvpxdec.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstvpx_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstvpx_la_CFLAGS) $(CFLAGS) -MT libgstvpx_la-gstvpxdec.lo -MD -MP -MF $(DEPDIR)/libgstvpx_la-gstvpxdec.Tpo -c -o libgstvpx_la-gstvpxdec.lo `test -f 'gstvpxdec.c' || echo '$(srcdir)/'`gstvpxdec.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstvpx_la-gstvpxdec.Tpo $(DEPDIR)/libgstvpx_la-gstvpxdec.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstvpxdec.c' object='libgstvpx_la-gstvpxdec.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstvpx_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstvpx_la_CFLAGS) $(CFLAGS) -c -o libgstvpx_la-gstvpxdec.lo `test -f 'gstvpxdec.c' || echo '$(srcdir)/'`gstvpxdec.c
+
+libgstvpx_la-gstvpxenc.lo: gstvpxenc.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstvpx_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstvpx_la_CFLAGS) $(CFLAGS) -MT libgstvpx_la-gstvpxenc.lo -MD -MP -MF $(DEPDIR)/libgstvpx_la-gstvpxenc.Tpo -c -o libgstvpx_la-gstvpxenc.lo `test -f 'gstvpxenc.c' || echo '$(srcdir)/'`gstvpxenc.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstvpx_la-gstvpxenc.Tpo $(DEPDIR)/libgstvpx_la-gstvpxenc.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstvpxenc.c' object='libgstvpx_la-gstvpxenc.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstvpx_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstvpx_la_CFLAGS) $(CFLAGS) -c -o libgstvpx_la-gstvpxenc.lo `test -f 'gstvpxenc.c' || echo '$(srcdir)/'`gstvpxenc.c
 
 libgstvpx_la-gstvp8dec.lo: gstvp8dec.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstvpx_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstvpx_la_CFLAGS) $(CFLAGS) -MT libgstvpx_la-gstvp8dec.lo -MD -MP -MF $(DEPDIR)/libgstvpx_la-gstvp8dec.Tpo -c -o libgstvpx_la-gstvp8dec.lo `test -f 'gstvp8dec.c' || echo '$(srcdir)/'`gstvp8dec.c
