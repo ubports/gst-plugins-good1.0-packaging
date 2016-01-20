@@ -534,6 +534,9 @@ gst_wavparse_perform_seek (GstWavParse * wav, GstEvent * event)
   if (gst_pad_peer_query_duration (wav->sinkpad, bformat, &upstream_size))
     wav->end_offset = MIN (wav->end_offset, upstream_size);
 
+  if (wav->datasize > 0 && wav->end_offset > wav->datastart + wav->datasize)
+    wav->end_offset = wav->datastart + wav->datasize;
+
   /* this is the range of bytes we will use for playback */
   wav->offset = MIN (wav->offset, wav->end_offset);
   wav->dataleft = wav->end_offset - wav->offset;
@@ -2315,8 +2318,6 @@ gst_wavparse_flush_data (GstWavParse * wav)
   guint av;
 
   if ((av = gst_adapter_available (wav->adapter)) > 0) {
-    wav->dataleft = av;
-    wav->end_offset = wav->offset + av;
     ret = gst_wavparse_stream_data (wav);
   }
 
@@ -2415,7 +2416,12 @@ gst_wavparse_sink_event (GstPad * pad, GstObject * parent, GstEvent * event)
       /* and set up streaming thread for next one */
       wav->offset = offset;
       wav->end_offset = end_offset;
-      if (wav->end_offset > 0) {
+
+      if (wav->datasize > 0 && (wav->end_offset == -1
+              || wav->end_offset > wav->datastart + wav->datasize))
+        wav->end_offset = wav->datastart + wav->datasize;
+
+      if (wav->end_offset != -1) {
         wav->dataleft = wav->end_offset - wav->offset;
       } else {
         /* infinity; upstream will EOS when done */
