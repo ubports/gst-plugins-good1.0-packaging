@@ -1303,6 +1303,34 @@ gst_v4l2_object_v4l2fourcc_to_video_format (guint32 fourcc)
   return format;
 }
 
+static gboolean
+gst_v4l2_object_v4l2fourcc_is_rgb (guint32 fourcc)
+{
+  gboolean ret = FALSE;
+
+  switch (fourcc) {
+    case V4L2_PIX_FMT_XRGB555:
+    case V4L2_PIX_FMT_RGB555:
+    case V4L2_PIX_FMT_XRGB555X:
+    case V4L2_PIX_FMT_RGB555X:
+    case V4L2_PIX_FMT_RGB565:
+    case V4L2_PIX_FMT_RGB24:
+    case V4L2_PIX_FMT_BGR24:
+    case V4L2_PIX_FMT_XRGB32:
+    case V4L2_PIX_FMT_RGB32:
+    case V4L2_PIX_FMT_XBGR32:
+    case V4L2_PIX_FMT_BGR32:
+    case V4L2_PIX_FMT_ABGR32:
+    case V4L2_PIX_FMT_ARGB32:
+      ret = TRUE;
+      break;
+    default:
+      break;
+  }
+
+  return ret;
+}
+
 static GstStructure *
 gst_v4l2_object_v4l2fourcc_to_bare_struct (guint32 fourcc)
 {
@@ -1857,33 +1885,41 @@ gst_v4l2_object_get_colorspace (enum v4l2_colorspace colorspace,
   /* First step, set the defaults for each primaries */
   switch (colorspace) {
     case V4L2_COLORSPACE_SMPTE170M:
-      ret = gst_video_colorimetry_from_string (cinfo,
-          GST_VIDEO_COLORIMETRY_BT601);
+      cinfo->range = GST_VIDEO_COLOR_RANGE_16_235;
+      cinfo->matrix = GST_VIDEO_COLOR_MATRIX_BT601;
+      cinfo->transfer = GST_VIDEO_TRANSFER_BT709;
+      cinfo->primaries = GST_VIDEO_COLOR_PRIMARIES_SMPTE170M;
       break;
     case V4L2_COLORSPACE_REC709:
-      ret = gst_video_colorimetry_from_string (cinfo,
-          GST_VIDEO_COLORIMETRY_BT709);
+      cinfo->range = GST_VIDEO_COLOR_RANGE_16_235;
+      cinfo->matrix = GST_VIDEO_COLOR_MATRIX_BT709;
+      cinfo->transfer = GST_VIDEO_TRANSFER_BT709;
+      cinfo->primaries = GST_VIDEO_COLOR_PRIMARIES_BT709;
       break;
     case V4L2_COLORSPACE_SRGB:
     case V4L2_COLORSPACE_JPEG:
-      /* This is in fact sYCC */
       cinfo->range = GST_VIDEO_COLOR_RANGE_0_255;
       cinfo->matrix = GST_VIDEO_COLOR_MATRIX_BT601;
       cinfo->transfer = GST_VIDEO_TRANSFER_SRGB;
       cinfo->primaries = GST_VIDEO_COLOR_PRIMARIES_BT709;
       break;
     case V4L2_COLORSPACE_ADOBERGB:
-      GST_FIXME ("AdobeRGB is not yet supported by GStreamer");
-      /* We are missing the primaries and the transfer function */
-      ret = FALSE;
+      cinfo->range = GST_VIDEO_COLOR_RANGE_16_235;
+      cinfo->matrix = GST_VIDEO_COLOR_MATRIX_BT601;
+      cinfo->transfer = GST_VIDEO_TRANSFER_ADOBERGB;
+      cinfo->primaries = GST_VIDEO_COLOR_PRIMARIES_ADOBERGB;
       break;
     case V4L2_COLORSPACE_BT2020:
-      ret = gst_video_colorimetry_from_string (cinfo,
-          GST_VIDEO_COLORIMETRY_BT2020);
+      cinfo->range = GST_VIDEO_COLOR_RANGE_16_235;
+      cinfo->matrix = GST_VIDEO_COLOR_MATRIX_BT2020;
+      cinfo->transfer = GST_VIDEO_TRANSFER_BT709;
+      cinfo->primaries = GST_VIDEO_COLOR_PRIMARIES_BT2020;
       break;
     case V4L2_COLORSPACE_SMPTE240M:
-      ret = gst_video_colorimetry_from_string (cinfo,
-          GST_VIDEO_COLORIMETRY_SMPTE240M);
+      cinfo->range = GST_VIDEO_COLOR_RANGE_16_235;
+      cinfo->matrix = GST_VIDEO_COLOR_MATRIX_SMPTE240M;
+      cinfo->transfer = GST_VIDEO_TRANSFER_SMPTE240M;
+      cinfo->primaries = GST_VIDEO_COLOR_PRIMARIES_SMPTE240M;
       break;
     case V4L2_COLORSPACE_470_SYSTEM_M:
       cinfo->range = GST_VIDEO_COLOR_RANGE_16_235;
@@ -1970,8 +2006,7 @@ gst_v4l2_object_get_colorspace (enum v4l2_colorspace colorspace,
       cinfo->transfer = GST_VIDEO_TRANSFER_SRGB;
       break;
     case V4L2_XFER_FUNC_ADOBERGB:
-      GST_FIXME ("AdobeRGB is not yet supported by GStreamer");
-      cinfo->transfer = GST_VIDEO_TRANSFER_UNKNOWN;
+      cinfo->transfer = GST_VIDEO_TRANSFER_ADOBERGB;
       break;
     case V4L2_XFER_FUNC_SMPTE240M:
       cinfo->transfer = GST_VIDEO_TRANSFER_SMPTE240M;
@@ -2118,14 +2153,18 @@ gst_v4l2_object_add_colorspace (GstV4l2Object * v4l2object, GstStructure * s,
 
     if (gst_v4l2_object_get_colorspace (colorspace, range, matrix, transfer,
             &cinfo)) {
+      /* Set identity matrix for R'G'B' formats to avoid creating
+       * confusion. This though is cosmetic as it's now properly ignored by
+       * the video info API and videoconvert. */
+      if (gst_v4l2_object_v4l2fourcc_is_rgb (pixelformat))
+        cinfo.matrix = GST_VIDEO_COLOR_MATRIX_RGB;
+
       g_value_init (&colorimetry, G_TYPE_STRING);
       g_value_take_string (&colorimetry,
           gst_video_colorimetry_to_string (&cinfo));
       gst_structure_take_value (s, "colorimetry", &colorimetry);
     }
   }
-
-  return;
 }
 
 /* The frame interval enumeration code first appeared in Linux 2.6.19. */

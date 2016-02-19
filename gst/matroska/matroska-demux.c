@@ -2584,6 +2584,7 @@ gst_matroska_ebmlnum_sint (guint8 * data, guint size, gint64 * num)
 static void
 gst_matroska_demux_sync_streams (GstMatroskaDemux * demux)
 {
+  GstClockTime gap_threshold;
   gint stream_nr;
 
   GST_OBJECT_LOCK (demux);
@@ -2601,21 +2602,22 @@ gst_matroska_demux_sync_streams (GstMatroskaDemux * demux)
         "Checking for resync on stream %d (%" GST_TIME_FORMAT ")", stream_nr,
         GST_TIME_ARGS (context->pos));
 
-    if (G_LIKELY (context->type != GST_MATROSKA_TRACK_TYPE_SUBTITLE)) {
-      GST_LOG_OBJECT (demux, "Skipping sync on non-subtitle stream");
-      continue;
-    }
+    /* Only send gap events on non-subtitle streams if lagging way behind.
+     * The 0.5 second threshold for subtitle streams is also quite random. */
+    if (context->type == GST_MATROSKA_TRACK_TYPE_SUBTITLE)
+      gap_threshold = GST_SECOND / 2;
+    else
+      gap_threshold = 3 * GST_SECOND;
 
-    /* does it lag? 0.5 seconds is a random threshold...
-     * lag need only be considered if we have advanced into requested segment */
+    /* Lag need only be considered if we have advanced into requested segment */
     if (GST_CLOCK_TIME_IS_VALID (context->pos) &&
         GST_CLOCK_TIME_IS_VALID (demux->common.segment.position) &&
         demux->common.segment.position > demux->common.segment.start &&
-        context->pos + (GST_SECOND / 2) < demux->common.segment.position) {
+        context->pos + gap_threshold < demux->common.segment.position) {
 
       GstEvent *event;
       guint64 start = context->pos;
-      guint64 stop = demux->common.segment.position - (GST_SECOND / 2);
+      guint64 stop = demux->common.segment.position - gap_threshold;
 
       GST_DEBUG_OBJECT (demux,
           "Synchronizing stream %d with other by advancing time from %"
@@ -2870,6 +2872,7 @@ gst_matroska_demux_add_wvpk_header (GstElement * element,
     GST_WRITE_UINT8 (data + 11, wvh.index_no);
     GST_WRITE_UINT32_LE (data + 12, wvh.total_samples);
     GST_WRITE_UINT32_LE (data + 16, wvh.block_index);
+    gst_buffer_unmap (newbuf, &outmap);
 
     /* Append data from buf: */
     gst_buffer_copy_into (newbuf, *buf, GST_BUFFER_COPY_TIMESTAMPS |
@@ -3534,15 +3537,26 @@ gst_matroska_demux_parse_blockgroup_or_simpleblock (GstMatroskaDemux * demux,
     }
     /* else duration is diff between timecode of this and next block */
 
-    /* For SimpleBlock, look at the keyframe bit in flags. Otherwise,
-       a ReferenceBlock implies that this is not a keyframe. In either
-       case, it only makes sense for video streams. */
     if (stream->type == GST_MATROSKA_TRACK_TYPE_VIDEO) {
+      /* For SimpleBlock, look at the keyframe bit in flags. Otherwise,
+         a ReferenceBlock implies that this is not a keyframe. In either
+         case, it only makes sense for video streams. */
       if ((is_simpleblock && !(flags & 0x80)) || referenceblock) {
         delta_unit = TRUE;
         invisible_frame = ((flags & 0x08)) &&
             (!strcmp (stream->codec_id, GST_MATROSKA_CODEC_ID_VIDEO_VP8) ||
             !strcmp (stream->codec_id, GST_MATROSKA_CODEC_ID_VIDEO_VP9));
+      }
+
+      /* If we're doing a keyframe-only trickmode, only push keyframes on video
+       * streams */
+      if (delta_unit
+          && demux->common.
+          segment.flags & GST_SEGMENT_FLAG_TRICKMODE_KEY_UNITS) {
+        GST_LOG_OBJECT (demux, "Skipping non-keyframe on stream %d",
+            stream->index);
+        ret = GST_FLOW_OK;
+        goto done;
       }
     }
 
@@ -5260,8 +5274,8 @@ gst_matroska_demux_video_caps (GstMatroskaTrackVideoContext *
     const gchar *variant, *variant_descr = "";
 
     /* Expect a fourcc in the codec private data */
-    if (size < 4) {
-      GST_WARNING ("Too small PRORESS fourcc (%d bytes)", size);
+    if (!data || size < 4) {
+      GST_WARNING ("No or too small PRORESS fourcc (%d bytes)", size);
       return NULL;
     }
 

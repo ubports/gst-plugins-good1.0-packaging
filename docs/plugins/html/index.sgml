@@ -1549,6 +1549,7 @@
 <ANCHOR id="GstRtpBin-request-rtp-encoder" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbin.html#GstRtpBin-request-rtp-encoder">
 <ANCHOR id="GstRtpBin-on-new-sender-ssrc" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbin.html#GstRtpBin-on-new-sender-ssrc">
 <ANCHOR id="GstRtpBin-on-sender-ssrc-active" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbin.html#GstRtpBin-on-sender-ssrc-active">
+<ANCHOR id="GstRtpBin-get-session" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbin.html#GstRtpBin-get-session">
 <ANCHOR id="gst-plugins-good-plugins-rtpbin.see-also" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbin.html#gst-plugins-good-plugins-rtpbin.see-also">
 <ANCHOR id="gst-plugins-good-plugins-rtpbvdepay" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbvdepay.html">
 <ANCHOR id="gst-plugins-good-plugins-rtpbvdepay.description" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbvdepay.html#gst-plugins-good-plugins-rtpbvdepay.description">
@@ -1746,6 +1747,7 @@
 <ANCHOR id="GstRtpBin-request-rtp-encoder" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbin.html#GstRtpBin-request-rtp-encoder">
 <ANCHOR id="GstRtpBin-on-new-sender-ssrc" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbin.html#GstRtpBin-on-new-sender-ssrc">
 <ANCHOR id="GstRtpBin-on-sender-ssrc-active" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbin.html#GstRtpBin-on-sender-ssrc-active">
+<ANCHOR id="GstRtpBin-get-session" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbin.html#GstRtpBin-get-session">
 <ANCHOR id="gst-plugins-good-plugins-rtpbin.see-also" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpbin.html#gst-plugins-good-plugins-rtpbin.see-also">
 <ANCHOR id="gst-plugins-good-plugins-rtpdec" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpdec.html">
 <ANCHOR id="gst-plugins-good-plugins-rtpdec.properties" href="gst-plugins-good-plugins-1.0/gst-plugins-good-plugins-rtpdec.html#gst-plugins-good-plugins-rtpdec.properties">

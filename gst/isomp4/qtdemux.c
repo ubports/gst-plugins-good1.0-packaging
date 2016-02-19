@@ -253,6 +253,9 @@ struct _QtDemuxStream
   gboolean all_keyframe;        /* TRUE when all samples are keyframes (no stss) */
   guint32 first_duration;       /* duration in timescale of first sample, used for figuring out
                                    the framerate, in timescale units */
+  guint32 n_samples_moof;       /* sample count in a moof */
+  guint64 duration_moof;        /* duration in timescale of a moof, used for figure out
+                                 * the framerate of fragmented format stream */
   guint32 offset_in_sample;
   guint32 max_buffer_size;
 
@@ -583,6 +586,7 @@ gst_qtdemux_init (GstQTDemux * qtdemux)
   qtdemux->state = QTDEMUX_STATE_INITIAL;
   qtdemux->pullbased = FALSE;
   qtdemux->posted_redirect = FALSE;
+  qtdemux->pending_configure = FALSE;
   qtdemux->neededbytes = 16;
   qtdemux->todrop = 0;
   qtdemux->adapter = gst_adapter_new ();
@@ -1816,6 +1820,8 @@ _create_stream (void)
   stream->protection_scheme_type = 0;
   stream->protection_scheme_version = 0;
   stream->protection_scheme_info = NULL;
+  stream->n_samples_moof = 0;
+  stream->duration_moof = 0;
   g_queue_init (&stream->protection_scheme_event_queue);
   return stream;
 }
@@ -1983,6 +1989,7 @@ gst_qtdemux_reset (GstQTDemux * qtdemux, gboolean hard)
     gst_caps_replace (&qtdemux->media_caps, NULL);
     qtdemux->timescale = 0;
     qtdemux->got_moov = FALSE;
+    qtdemux->pending_configure = FALSE;
   } else if (qtdemux->mss_mode) {
     gst_flow_combiner_reset (qtdemux->flowcombiner);
     for (n = 0; n < qtdemux->n_streams; n++)
@@ -2291,6 +2298,9 @@ gst_qtdemux_stream_flush_samples_data (GstQTDemux * qtdemux,
   stream->stbl_index = -1;
   stream->n_samples = 0;
   stream->time_position = 0;
+
+  stream->n_samples_moof = 0;
+  stream->duration_moof = 0;
 }
 
 static void
@@ -2896,6 +2906,7 @@ qtdemux_parse_trun (GstQTDemux * qtdemux, GstByteReader * trun,
     sample->keyframe = ismv ? ((sflags & 0xff) == 0x40) : !(sflags & 0x10000);
     *running_offset += size;
     timestamp += dur;
+    stream->duration_moof += dur;
     sample++;
   }
 
@@ -2903,6 +2914,7 @@ qtdemux_parse_trun (GstQTDemux * qtdemux, GstByteReader * trun,
   check_update_duration (qtdemux, QTSTREAMTIME_TO_GSTTIME (stream, timestamp));
 
   stream->n_samples += samples_count;
+  stream->n_samples_moof += samples_count;
 
   if (stream->pending_seek != NULL)
     stream->pending_seek = NULL;
@@ -3245,7 +3257,7 @@ qtdemux_parse_cenc_aux_info (GstQTDemux * qtdemux, QtDemuxStream * stream,
 
   for (i = 0; i < sample_count; ++i) {
     GstStructure *properties;
-    guint16 n_subsamples;
+    guint16 n_subsamples = 0;
     guint8 *data;
     guint iv_size;
     GstBuffer *buf;
@@ -3267,6 +3279,7 @@ qtdemux_parse_cenc_aux_info (GstQTDemux * qtdemux, QtDemuxStream * stream,
     }
     buf = gst_buffer_new_wrapped (data, iv_size);
     gst_structure_set (properties, "iv", GST_TYPE_BUFFER, buf, NULL);
+    gst_buffer_unref (buf);
     size = info_sizes[i];
     if (size > iv_size) {
       if (!gst_byte_reader_get_uint16_be (br, &n_subsamples)
@@ -3291,6 +3304,7 @@ qtdemux_parse_cenc_aux_info (GstQTDemux * qtdemux, QtDemuxStream * stream,
       gst_structure_set (properties,
           "subsample_count", G_TYPE_UINT, n_subsamples,
           "subsamples", GST_TYPE_BUFFER, buf, NULL);
+      gst_buffer_unref (buf);
     } else {
       gst_structure_set (properties, "subsample_count", G_TYPE_UINT, 0, NULL);
     }
@@ -3496,6 +3510,10 @@ qtdemux_parse_moof (GstQTDemux * qtdemux, const guint8 * buffer, guint length,
     if (qtdemux->upstream_format_is_time)
       gst_qtdemux_stream_flush_samples_data (qtdemux, stream);
 
+    /* initialise moof sample data */
+    stream->n_samples_moof = 0;
+    stream->duration_moof = 0;
+
     /* Track Run node */
     trun_node =
         qtdemux_tree_get_child_by_type_full (traf_node, FOURCC_trun,
@@ -3512,6 +3530,10 @@ qtdemux_parse_moof (GstQTDemux * qtdemux, const guint8 * buffer, guint length,
      * base is end of current traf */
     base_offset = running_offset;
     running_offset = -1;
+
+    if (stream->n_samples_moof && stream->duration_moof)
+      stream->new_caps = TRUE;
+
   next:
     /* iterate all siblings */
     traf_node = qtdemux_tree_get_sibling_by_type (traf_node, FOURCC_traf);
@@ -5778,6 +5800,7 @@ gst_qtdemux_process_adapter (GstQTDemux * demux, gboolean force)
             &fourcc);
         if (fourcc == FOURCC_moov) {
           gint n;
+          gboolean got_samples = FALSE;
 
           /* in usual fragmented setup we could try to scan for more
            * and end up at the the moov (after mdat) again */
@@ -5809,19 +5832,27 @@ gst_qtdemux_process_adapter (GstQTDemux * demux, gboolean force)
             qtdemux_node_dump (demux, demux->moov_node);
             qtdemux_parse_tree (demux);
             qtdemux_prepare_streams (demux);
-            if (!demux->got_moov)
-              qtdemux_expose_streams (demux);
-            else {
 
-              for (n = 0; n < demux->n_streams; n++) {
-                QtDemuxStream *stream = demux->streams[n];
-
-                gst_qtdemux_configure_stream (demux, stream);
+            for (n = 0; n < demux->n_streams; n++) {
+              QtDemuxStream *stream = demux->streams[n];
+              got_samples |= stream->stbl_index >= 0;
+            }
+            if (!demux->fragmented || got_samples) {
+              if (!demux->got_moov) {
+                qtdemux_expose_streams (demux);
+              } else {
+                for (n = 0; n < demux->n_streams; n++) {
+                  QtDemuxStream *stream = demux->streams[n];
+                  gst_qtdemux_configure_stream (demux, stream);
+                }
               }
+              gst_qtdemux_check_send_pending_segment (demux);
+              demux->pending_configure = FALSE;
+            } else {
+              demux->pending_configure = TRUE;
             }
 
             demux->got_moov = TRUE;
-            gst_qtdemux_check_send_pending_segment (demux);
 
             /* fragmented streams headers shouldn't contain edts atoms */
             if (!demux->fragmented) {
@@ -5840,6 +5871,7 @@ gst_qtdemux_process_adapter (GstQTDemux * demux, gboolean force)
             guint64 dist = 0;
             GstClockTime prev_pts;
             guint64 prev_offset;
+            gint n;
 
             GST_DEBUG_OBJECT (demux, "Parsing [moof]");
 
@@ -5873,15 +5905,25 @@ gst_qtdemux_process_adapter (GstQTDemux * demux, gboolean force)
               ret = GST_FLOW_ERROR;
               goto done;
             }
-            /* in MSS we need to expose the pads after the first moof as we won't get a moov */
-            if (demux->mss_mode && !demux->exposed) {
-              if (!demux->pending_newsegment) {
-                GstSegment segment;
-                gst_segment_init (&segment, GST_FORMAT_TIME);
-                GST_DEBUG_OBJECT (demux, "new pending_newsegment");
-                demux->pending_newsegment = gst_event_new_segment (&segment);
+            /* in MSS we need to expose the pads after the first moof as we won't get a moov 
+             * Also, fragmented format need to be exposed if a moov have no valid sample data */
+            if (demux->mss_mode || demux->pending_configure) {
+              if (!demux->exposed) {
+                if (!demux->pending_newsegment) {
+                  GstSegment segment;
+                  gst_segment_init (&segment, GST_FORMAT_TIME);
+                  GST_DEBUG_OBJECT (demux, "new pending_newsegment");
+                  demux->pending_newsegment = gst_event_new_segment (&segment);
+                }
+                qtdemux_expose_streams (demux);
+              } else {
+                for (n = 0; n < demux->n_streams; n++) {
+                  QtDemuxStream *stream = demux->streams[n];
+                  gst_qtdemux_configure_stream (demux, stream);
+                }
               }
-              qtdemux_expose_streams (demux);
+              gst_qtdemux_check_send_pending_segment (demux);
+              demux->pending_configure = FALSE;
             }
           } else {
             GST_DEBUG_OBJECT (demux, "Discarding [moof]");
@@ -6895,11 +6937,13 @@ gst_qtdemux_configure_protected_caps (GstQTDemux * qtdemux,
   }
 
   s = gst_caps_get_structure (stream->caps, 0);
-  gst_structure_set (s,
-      "original-media-type", G_TYPE_STRING, gst_structure_get_name (s),
-      GST_PROTECTION_SYSTEM_ID_CAPS_FIELD, G_TYPE_STRING, selected_system,
-      NULL);
-  gst_structure_set_name (s, "application/x-cenc");
+  if (!gst_structure_has_name (s, "application/x-cenc")) {
+    gst_structure_set (s,
+        "original-media-type", G_TYPE_STRING, gst_structure_get_name (s),
+        GST_PROTECTION_SYSTEM_ID_CAPS_FIELD, G_TYPE_STRING, selected_system,
+        NULL);
+    gst_structure_set_name (s, "application/x-cenc");
+  }
   return TRUE;
 }
 
@@ -6918,19 +6962,34 @@ gst_qtdemux_configure_stream (GstQTDemux * qtdemux, QtDemuxStream * stream)
         stream->fps_n = stream->timescale;
         stream->fps_d = 1;
       } else {
+        GstClockTime avg_duration;
+        guint64 duration;
+        guint32 n_samples;
+
+        /* duration and n_samples can be updated for fragmented format
+         * so, framerate of fragmented format is calculated using data in a moof */
+        if (qtdemux->fragmented && stream->n_samples_moof > 0
+            && stream->duration_moof > 0) {
+          n_samples = stream->n_samples_moof;
+          duration = stream->duration_moof;
+        } else {
+          n_samples = stream->n_samples;
+          duration = stream->duration;
+        }
+
         /* Calculate a framerate, ignoring the first sample which is sometimes truncated */
         /* stream->duration is guint64, timescale, n_samples are guint32 */
-        GstClockTime avg_duration =
-            gst_util_uint64_scale_round (stream->duration -
+        avg_duration =
+            gst_util_uint64_scale_round (duration -
             stream->first_duration, GST_SECOND,
-            (guint64) (stream->timescale) * (stream->n_samples - 1));
+            (guint64) (stream->timescale) * (n_samples - 1));
 
         GST_LOG_OBJECT (qtdemux,
-            "Calculating avg sample duration based on stream duration %"
+            "Calculating avg sample duration based on stream (or moof) duration %"
             G_GUINT64_FORMAT
             " minus first sample %u, leaving %d samples gives %"
-            GST_TIME_FORMAT, stream->duration, stream->first_duration,
-            stream->n_samples - 1, GST_TIME_ARGS (avg_duration));
+            GST_TIME_FORMAT, duration, stream->first_duration,
+            n_samples - 1, GST_TIME_ARGS (avg_duration));
 
         gst_video_guess_framerate (avg_duration, &stream->fps_n,
             &stream->fps_d);
@@ -7997,24 +8056,40 @@ qtdemux_parse_segments (GstQTDemux * qtdemux, QtDemuxStream * stream,
       guint64 media_time;
       QtDemuxSegment *segment;
       guint32 rate_int;
+      GstClockTime media_start = GST_CLOCK_TIME_NONE;
 
       media_time = QT_UINT32 (buffer + 20 + i * 12);
       duration = QT_UINT32 (buffer + 16 + i * 12);
+
+      if (media_time != G_MAXUINT32)
+        media_start = QTSTREAMTIME_TO_GSTTIME (stream, media_time);
 
       segment = &stream->segments[count++];
 
       /* time and duration expressed in global timescale */
       segment->time = stime;
       /* add non scaled values so we don't cause roundoff errors */
-      time += duration;
-      stime = QTTIME_TO_GSTTIME (qtdemux, time);
+      if (duration) {
+        time += duration;
+        stime = QTTIME_TO_GSTTIME (qtdemux, time);
+        segment->duration = stime - segment->time;
+      } else {
+        /* zero duration does not imply media_start == media_stop
+         * but, only specify media_start.*/
+        stime = QTTIME_TO_GSTTIME (qtdemux, qtdemux->duration);
+        if (GST_CLOCK_TIME_IS_VALID (stime) && media_time != G_MAXUINT32
+            && stime >= media_start) {
+          segment->duration = stime - media_start;
+        } else {
+          segment->duration = GST_CLOCK_TIME_NONE;
+        }
+      }
       segment->stop_time = stime;
-      segment->duration = stime - segment->time;
 
       segment->trak_media_start = media_time;
       /* media_time expressed in stream timescale */
       if (media_time != G_MAXUINT32) {
-        segment->media_start = QTSTREAMTIME_TO_GSTTIME (stream, media_time);
+        segment->media_start = media_start;
         segment->media_stop = segment->media_start + segment->duration;
         media_segments_count++;
       } else {
