@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>interleave: GStreamer Good Plugins 1.0 Plugins Reference Manual</title>
-<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
 <link rel="home" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-imagefreeze.html" title="imagefreeze">
@@ -35,7 +35,7 @@
 </tr></table></div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-interleave.properties"></a><h2>Properties</h2>
-<div class="informaltable"><table border="0">
+<div class="informaltable"><table class="informaltable" border="0">
 <colgroup>
 <col width="150px" class="properties_type">
 <col width="300px" class="properties_name">
@@ -58,7 +58,7 @@
 </div>
 <a name="GstInterleave"></a><div class="refsect1">
 <a name="gst-plugins-good-plugins-interleave.other"></a><h2>Types and Values</h2>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="name">
 <col class="description">
@@ -101,19 +101,22 @@ caps is _not_ supported yet.</p>
   </table>
 </div>
  Decodes and deinterleaves a Stereo MP3 file into separate channels and
-then interleaves the channels again to a WAV file with the channel with the
-channels exchanged.
+then interleaves the channels again to a WAV file with the channels
+exchanged.
 <div class="informalexample">
   <table class="listing_frame" border="0" cellpadding="0" cellspacing="0">
     <tbody>
       <tr>
         <td class="listing_lines" align="right"><pre>1</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> interleave name<span class="gtkdoc opt">=</span>i <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> wavenc <span class="gtkdoc opt">!</span> filesink location<span class="gtkdoc opt">=</span>file<span class="gtkdoc opt">.</span>wav  filesrc location<span class="gtkdoc opt">=</span>file1<span class="gtkdoc opt">.</span>wav <span class="gtkdoc opt">!</span> decodebin <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> <span class="string">&quot;audio/x-raw,channels=1&quot;</span> <span class="gtkdoc opt">!</span> queue <span class="gtkdoc opt">!</span> i<span class="gtkdoc opt">.</span>sink_0   filesrc location<span class="gtkdoc opt">=</span>file2<span class="gtkdoc opt">.</span>wav <span class="gtkdoc opt">!</span> decodebin <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> <span class="string">&quot;audio/x-raw,channels=1&quot;</span> <span class="gtkdoc opt">!</span> queue <span class="gtkdoc opt">!</span> i<span class="gtkdoc opt">.</span>sink_1</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> interleave name<span class="gtkdoc opt">=</span>i <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> wavenc <span class="gtkdoc opt">!</span> filesink location<span class="gtkdoc opt">=</span>file<span class="gtkdoc opt">.</span>wav  filesrc location<span class="gtkdoc opt">=</span>file1<span class="gtkdoc opt">.</span>wav <span class="gtkdoc opt">!</span> decodebin <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> <span class="string">&quot;audio/x-raw,channels=1,channel-mask=(bitmask)0x1&quot;</span> <span class="gtkdoc opt">!</span> queue <span class="gtkdoc opt">!</span> i<span class="gtkdoc opt">.</span>sink_0   filesrc location<span class="gtkdoc opt">=</span>file2<span class="gtkdoc opt">.</span>wav <span class="gtkdoc opt">!</span> decodebin <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> <span class="string">&quot;audio/x-raw,channels=1,channel-mask=(bitmask)0x2&quot;</span> <span class="gtkdoc opt">!</span> queue <span class="gtkdoc opt">!</span> i<span class="gtkdoc opt">.</span>sink_1</pre></td>
       </tr>
     </tbody>
   </table>
 </div>
- Interleaves two Mono WAV files to a single Stereo WAV file.
+ Interleaves two Mono WAV files to a single Stereo WAV file. Having
+channel-masks defined in the sink pads ensures a sane mapping of the mono
+streams into the stereo stream. NOTE: the proper way to map channels in
+code is by using the channel-positions property of the interleave element.
 </div>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
