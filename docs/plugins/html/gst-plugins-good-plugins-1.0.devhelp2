@@ -781,6 +781,7 @@
     <keyword type="signal" name="The “request-rtp-encoder” signal" link="gst-plugins-good-plugins-rtpbin.html#GstRtpBin-request-rtp-encoder"/>
     <keyword type="signal" name="The “on-new-sender-ssrc” signal" link="gst-plugins-good-plugins-rtpbin.html#GstRtpBin-on-new-sender-ssrc"/>
     <keyword type="signal" name="The “on-sender-ssrc-active” signal" link="gst-plugins-good-plugins-rtpbin.html#GstRtpBin-on-sender-ssrc-active"/>
+    <keyword type="signal" name="The “get-session” signal" link="gst-plugins-good-plugins-rtpbin.html#GstRtpBin-get-session"/>
     <keyword type="struct" name="struct GstRtpH261Depay" link="gst-plugins-good-plugins-rtph261depay.html#GstRtpH261Depay-struct"/>
     <keyword type="struct" name="struct GstRtpH261Pay" link="gst-plugins-good-plugins-rtph261pay.html#GstRtpH261Pay-struct"/>
     <keyword type="struct" name="struct GstRtpL16Depay" link="gst-plugins-good-plugins-rtpL16depay.html#GstRtpL16Depay-struct"/>
@@ -878,6 +879,7 @@
     <keyword type="signal" name="The “request-rtp-encoder” signal" link="gst-plugins-good-plugins-rtpbin.html#GstRtpBin-request-rtp-encoder"/>
     <keyword type="signal" name="The “on-new-sender-ssrc” signal" link="gst-plugins-good-plugins-rtpbin.html#GstRtpBin-on-new-sender-ssrc"/>
     <keyword type="signal" name="The “on-sender-ssrc-active” signal" link="gst-plugins-good-plugins-rtpbin.html#GstRtpBin-on-sender-ssrc-active"/>
+    <keyword type="signal" name="The “get-session” signal" link="gst-plugins-good-plugins-rtpbin.html#GstRtpBin-get-session"/>
     <keyword type="struct" name="struct GstRTPDec" link="gst-plugins-good-plugins-rtpdec.html#GstRTPDec-struct"/>
     <keyword type="property" name="The “latency” property" link="gst-plugins-good-plugins-rtpdec.html#GstRTPDec--latency"/>
     <keyword type="signal" name="The “clear-pt-map” signal" link="gst-plugins-good-plugins-rtpdec.html#GstRTPDec-clear-pt-map"/>

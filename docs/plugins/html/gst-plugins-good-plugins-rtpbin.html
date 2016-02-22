@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>rtpbin: GStreamer Good Plugins 1.0 Plugins Reference Manual</title>
-<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
 <link rel="home" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-rtspsrc.html" title="rtspsrc">
@@ -37,7 +37,7 @@
 </tr></table></div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-rtpbin.properties"></a><h2>Properties</h2>
-<div class="informaltable"><table border="0">
+<div class="informaltable"><table class="informaltable" border="0">
 <colgroup>
 <col width="150px" class="properties_type">
 <col width="300px" class="properties_name">
@@ -145,7 +145,7 @@
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-rtpbin.signals"></a><h2>Signals</h2>
-<div class="informaltable"><table border="0">
+<div class="informaltable"><table class="informaltable" border="0">
 <colgroup>
 <col width="150px" class="signals_return">
 <col width="300px" class="signals_name">
@@ -280,12 +280,18 @@
 <td class="signal_name"><a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin-on-sender-ssrc-active" title="The “on-sender-ssrc-active” signal">on-sender-ssrc-active</a></td>
 <td class="signal_flags"><a href="https://developer.gnome.org/gobject/unstable/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></td>
 </tr>
+<tr>
+<td class="signal_type">
+<a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstElement.html"><span class="returnvalue">GstElement</span></a>*</td>
+<td class="signal_name"><a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin-get-session" title="The “get-session” signal">get-session</a></td>
+<td class="signal_flags"><a href="https://developer.gnome.org/gobject/unstable/gobject-Signals.html#G-SIGNAL-ACTION:CAPS">Action</a></td>
+</tr>
 </tbody>
 </table></div>
 </div>
 <a name="GstRtpBin"></a><div class="refsect1">
 <a name="gst-plugins-good-plugins-rtpbin.other"></a><h2>Types and Values</h2>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="name">
 <col class="description">
@@ -690,7 +696,7 @@ RTP_JITTER_BUFFER_MODE_LAST: last buffer mode.</p>
 <p>The different buffer modes for a jitterbuffer.</p>
 <div class="refsect3">
 <a name="id-1.2.129.11.3.5"></a><h4>Members</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="300px" class="enum_members_name">
 <col class="enum_members_description">
@@ -731,7 +737,7 @@ RTP_JITTER_BUFFER_MODE_LAST: last buffer mode.</p>
 <a name="GstRTCPSync"></a><h3>enum GstRTCPSync</h3>
 <div class="refsect3">
 <a name="id-1.2.129.11.4.3"></a><h4>Members</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="300px" class="enum_members_name">
 <col class="enum_members_description">
@@ -932,7 +938,7 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtp
 <a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin-request-pt-map" title="The “request-pt-map” signal"><span class="type">“request-pt-map”</span></a>.</p>
 <div class="refsect3">
 <a name="id-1.2.129.13.2.5"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -965,7 +971,7 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtp
 .</p>
 <div class="refsect3">
 <a name="id-1.2.129.13.3.5"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -1003,7 +1009,7 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtp
 <p>Notify of an SSRC that became inactive because of a BYE packet.</p>
 <div class="refsect3">
 <a name="id-1.2.129.13.4.5"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -1046,7 +1052,7 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtp
 <p>Notify of an SSRC that has timed out because of BYE</p>
 <div class="refsect3">
 <a name="id-1.2.129.13.5.5"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -1090,7 +1096,7 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtp
 .</p>
 <div class="refsect3">
 <a name="id-1.2.129.13.6.5"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -1133,7 +1139,7 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtp
 <p>Notify that SSRC sender has sent data up to the configured NPT stop time.</p>
 <div class="refsect3">
 <a name="id-1.2.129.13.7.5"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -1176,7 +1182,7 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtp
 <p>Notify of a sender SSRC that has timed out and became a receiver</p>
 <div class="refsect3">
 <a name="id-1.2.129.13.8.5"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -1218,7 +1224,7 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtp
                <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>   user_data)</pre>
 <div class="refsect3">
 <a name="id-1.2.129.13.9.4"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -1262,7 +1268,7 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtp
 <p>Notify when we have an SSRC collision</p>
 <div class="refsect3">
 <a name="id-1.2.129.13.10.5"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -1305,7 +1311,7 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtp
 <p>Notify of a SSRC that is active, i.e., sending RTCP.</p>
 <div class="refsect3">
 <a name="id-1.2.129.13.11.5"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -1348,7 +1354,7 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtp
 <p>Notify of a new SSRC that became validated.</p>
 <div class="refsect3">
 <a name="id-1.2.129.13.12.5"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -1391,7 +1397,7 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtp
 <p>Notify of an SSRC that has timed out</p>
 <div class="refsect3">
 <a name="id-1.2.129.13.13.5"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -1436,7 +1442,7 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtp
 .</p>
 <div class="refsect3">
 <a name="id-1.2.129.13.14.5"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -1478,7 +1484,7 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtp
 packets for all streams before lip-sync is attempted again.</p>
 <div class="refsect3">
 <a name="id-1.2.129.13.15.5"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -1513,7 +1519,7 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtp
 .</p>
 <div class="refsect3">
 <a name="id-1.2.129.13.16.5"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -1562,7 +1568,7 @@ This signal can, for example, be used to configure <em class="parameter"><code>j
 .</p>
 <div class="refsect3">
 <a name="id-1.2.129.13.17.5"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -1613,7 +1619,7 @@ element will be added to the bin.</p>
 <p>If no handler is connected, no AUX element will be used.</p>
 <div class="refsect3">
 <a name="id-1.2.129.13.18.6"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -1654,7 +1660,7 @@ element will be added to the bin.</p>
 <p>If no handler is connected, no AUX element will be used.</p>
 <div class="refsect3">
 <a name="id-1.2.129.13.19.6"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -1695,7 +1701,7 @@ element will be added to the bin if not previously added.</p>
 <p>If no handler is connected, no encoder will be used.</p>
 <div class="refsect3">
 <a name="id-1.2.129.13.20.6"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -1736,7 +1742,7 @@ element will be added to the bin if not previously added.</p>
 <p>If no handler is connected, no encoder will be used.</p>
 <div class="refsect3">
 <a name="id-1.2.129.13.21.6"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -1777,7 +1783,7 @@ element will be added to the bin if not previously added.</p>
 <p>If no handler is connected, no encoder will be used.</p>
 <div class="refsect3">
 <a name="id-1.2.129.13.22.6"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -1818,7 +1824,7 @@ element will be added to the bin if not previously added.</p>
 <p>If no handler is connected, no encoder will be used.</p>
 <div class="refsect3">
 <a name="id-1.2.129.13.23.6"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -1856,7 +1862,7 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtp
                <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>   user_data)</pre>
 <div class="refsect3">
 <a name="id-1.2.129.13.24.4"></a><h4>Parameters</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="parameters_name">
 <col class="parameters_description">
@@ -1898,6 +1904,45 @@ user_function (<a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtp
                <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a>      arg2,
                <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>   user_data)</pre>
 <p>Flags: <a href="https://developer.gnome.org/gobject/unstable/gobject-Signals.html#G-SIGNAL-RUN-LAST:CAPS">Run Last</a></p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstRtpBin-get-session"></a><h3>The <code class="literal">“get-session”</code> signal</h3>
+<pre class="programlisting"><a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstElement.html"><span class="returnvalue">GstElement</span></a>*
+user_function (<a class="link" href="gst-plugins-good-plugins-rtpbin.html#GstRtpBin"><span class="type">GstRtpBin</span></a> *rtpbin,
+               <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#guint"><span class="type">guint</span></a>      id,
+               <a href="https://developer.gnome.org/glib/unstable/glib-Basic-Types.html#gpointer"><span class="type">gpointer</span></a>   user_data)</pre>
+<p>Request the related GstRtpSession as <a href="http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gstreamer/html/GstElement.html"><span class="type">GstElement</span></a> related with session <em class="parameter"><code>id</code></em>
+.</p>
+<div class="refsect3">
+<a name="id-1.2.129.13.26.5"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>rtpbin</p></td>
+<td class="parameter_description"><p>the object which received the signal</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>id</p></td>
+<td class="parameter_description"><p>the session id</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>user_data</p></td>
+<td class="parameter_description"><p>user data set when the signal handler was connected.</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<p>Flags: <a href="https://developer.gnome.org/gobject/unstable/gobject-Signals.html#G-SIGNAL-ACTION:CAPS">Action</a></p>
+<p class="since">Since: 1.8</p>
 </div>
 </div>
 <div class="refsect1">
