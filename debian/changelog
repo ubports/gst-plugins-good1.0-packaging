@@ -1,3 +1,15 @@
+gst-plugins-good1.0 (1.7.90-1) experimental; urgency=medium
+
+  * New upstream release candidate:
+    + debian/build-deps.in,
+      debian/rules:
+      - Build-depend on GStreamer >= 1.7.90.
+    + debian/control.in:
+      - Add Breaks for gst-plugins-bad << 1.7.90 because of the moved
+        Opus RTP payloader/depayloader.
+
+ -- Sebastian Dröge <slomo@debian.org>  Tue, 01 Mar 2016 17:13:54 +0200
+
 gst-plugins-good1.0 (1.7.2-1) experimental; urgency=medium
 
   * New upstream unstable release:
