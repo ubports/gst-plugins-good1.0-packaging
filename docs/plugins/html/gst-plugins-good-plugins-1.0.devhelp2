@@ -125,7 +125,6 @@
       <sub name="rtpj2kpay" link="gst-plugins-good-plugins-rtpj2kpay.html"/>
       <sub name="rtpjpegpay" link="gst-plugins-good-plugins-rtpjpegpay.html"/>
       <sub name="rtpsbcpay" link="gst-plugins-good-plugins-rtpsbcpay.html"/>
-      <sub name="rtspsrc" link="gst-plugins-good-plugins-rtspsrc.html"/>
       <sub name="rtpbin" link="gst-plugins-good-plugins-rtpbin.html"/>
       <sub name="rtpdec" link="gst-plugins-good-plugins-rtpdec.html"/>
       <sub name="rtpdtmfdepay" link="gst-plugins-good-plugins-rtpdtmfdepay.html"/>
@@ -139,6 +138,8 @@
       <sub name="rtpL16depay" link="gst-plugins-good-plugins-rtpL16depay.html"/>
       <sub name="rtpL16pay" link="gst-plugins-good-plugins-rtpL16pay.html"/>
       <sub name="rtpmux" link="gst-plugins-good-plugins-rtpmux.html"/>
+      <sub name="rtpopuspay" link="gst-plugins-good-plugins-rtpopuspay.html"/>
+      <sub name="rtpopusdepay" link="gst-plugins-good-plugins-rtpopusdepay.html"/>
       <sub name="rtpptdemux" link="gst-plugins-good-plugins-rtpptdemux.html"/>
       <sub name="rtprtxreceive" link="gst-plugins-good-plugins-rtprtxreceive.html"/>
       <sub name="rtprtxsend" link="gst-plugins-good-plugins-rtprtxsend.html"/>
@@ -792,47 +793,6 @@
     <keyword type="property" name="The “type” property" link="gst-plugins-good-plugins-rtpjpegpay.html#GstRtpJPEGPay--type"/>
     <keyword type="struct" name="struct GstRtpSBCPay" link="gst-plugins-good-plugins-rtpsbcpay.html#GstRtpSBCPay-struct"/>
     <keyword type="property" name="The “min-frames” property" link="gst-plugins-good-plugins-rtpsbcpay.html#GstRtpSBCPay--min-frames"/>
-    <keyword type="struct" name="struct GstRTSPSrc" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc-struct"/>
-    <keyword type="property" name="The “debug” property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--debug"/>
-    <keyword type="property" name="The “location” property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--location"/>
-    <keyword type="property" name="The “protocols” property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--protocols"/>
-    <keyword type="property" name="The “retry” property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--retry"/>
-    <keyword type="property" name="The “timeout” property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--timeout"/>
-    <keyword type="property" name="The “latency” property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--latency"/>
-    <keyword type="property" name="The “tcp-timeout” property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--tcp-timeout"/>
-    <keyword type="property" name="The “connection-speed” property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--connection-speed"/>
-    <keyword type="property" name="The “nat-method” property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--nat-method"/>
-    <keyword type="property" name="The “do-rtcp” property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--do-rtcp"/>
-    <keyword type="property" name="The “proxy” property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--proxy"/>
-    <keyword type="property" name="The “rtp-blocksize” property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--rtp-blocksize"/>
-    <keyword type="property" name="The “user-id” property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--user-id"/>
-    <keyword type="property" name="The “user-pw” property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--user-pw"/>
-    <keyword type="property" name="The “buffer-mode” property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--buffer-mode"/>
-    <keyword type="property" name="The “port-range” property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--port-range"/>
-    <keyword type="property" name="The “udp-buffer-size” property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--udp-buffer-size"/>
-    <keyword type="property" name="The “short-header” property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--short-header"/>
-    <keyword type="property" name="The “do-rtsp-keep-alive” property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--do-rtsp-keep-alive"/>
-    <keyword type="property" name="The “drop-on-latency” property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--drop-on-latency"/>
-    <keyword type="property" name="The “probation” property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--probation"/>
-    <keyword type="property" name="The “udp-reconnect” property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--udp-reconnect"/>
-    <keyword type="property" name="The “proxy-id” property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--proxy-id"/>
-    <keyword type="property" name="The “proxy-pw” property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--proxy-pw"/>
-    <keyword type="property" name="The “multicast-iface” property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--multicast-iface"/>
-    <keyword type="property" name="The “ntp-sync” property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--ntp-sync"/>
-    <keyword type="property" name="The “use-pipeline-clock” property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--use-pipeline-clock"/>
-    <keyword type="property" name="The “sdes” property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--sdes"/>
-    <keyword type="property" name="The “tls-database” property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--tls-database"/>
-    <keyword type="property" name="The “tls-validation-flags” property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--tls-validation-flags"/>
-    <keyword type="property" name="The “do-retransmission” property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--do-retransmission"/>
-    <keyword type="property" name="The “tls-interaction” property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--tls-interaction"/>
-    <keyword type="property" name="The “ntp-time-source” property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--ntp-time-source"/>
-    <keyword type="property" name="The “user-agent” property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--user-agent"/>
-    <keyword type="property" name="The “max-rtcp-rtp-time-diff” property" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc--max-rtcp-rtp-time-diff"/>
-    <keyword type="signal" name="The “handle-request” signal" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc-handle-request"/>
-    <keyword type="signal" name="The “on-sdp” signal" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc-on-sdp"/>
-    <keyword type="signal" name="The “select-stream” signal" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc-select-stream"/>
-    <keyword type="signal" name="The “new-manager” signal" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc-new-manager"/>
-    <keyword type="signal" name="The “request-rtcp-key” signal" link="gst-plugins-good-plugins-rtspsrc.html#GstRTSPSrc-request-rtcp-key"/>
     <keyword type="struct" name="struct GstRtpBin" link="gst-plugins-good-plugins-rtpbin.html#GstRtpBin-struct"/>
     <keyword type="enum" name="enum RTPJitterBufferMode" link="gst-plugins-good-plugins-rtpbin.html#RTPJitterBufferMode"/>
     <keyword type="enum" name="enum GstRTCPSync" link="gst-plugins-good-plugins-rtpbin.html#GstRTCPSync"/>
@@ -941,6 +901,8 @@
     <keyword type="property" name="The “seqnum-offset” property" link="gst-plugins-good-plugins-rtpmux.html#GstRTPMux--seqnum-offset"/>
     <keyword type="property" name="The “ssrc” property" link="gst-plugins-good-plugins-rtpmux.html#GstRTPMux--ssrc"/>
     <keyword type="property" name="The “timestamp-offset” property" link="gst-plugins-good-plugins-rtpmux.html#GstRTPMux--timestamp-offset"/>
+    <keyword type="struct" name="struct GstRtpOPUSPay" link="gst-plugins-good-plugins-rtpopuspay.html#GstRtpOPUSPay-struct"/>
+    <keyword type="struct" name="struct GstRTPOpusDepay" link="gst-plugins-good-plugins-rtpopusdepay.html#GstRTPOpusDepay-struct"/>
     <keyword type="struct" name="struct GstRtpPtDemux" link="gst-plugins-good-plugins-rtpptdemux.html#GstRtpPtDemux-struct"/>
     <keyword type="signal" name="The “clear-pt-map” signal" link="gst-plugins-good-plugins-rtpptdemux.html#GstRtpPtDemux-clear-pt-map"/>
     <keyword type="signal" name="The “new-payload-type” signal" link="gst-plugins-good-plugins-rtpptdemux.html#GstRtpPtDemux-new-payload-type"/>

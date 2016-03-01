@@ -1730,6 +1730,7 @@ no_caps:
   }
 out_flushing:
   {
+    JBUF_UNLOCK (jitterbuffer->priv);
     GST_DEBUG_OBJECT (jitterbuffer, "we are flushing");
     return GST_FLOW_FLUSHING;
   }
@@ -2810,7 +2811,7 @@ have_eos:
   }
 too_late:
   {
-    GST_WARNING_OBJECT (jitterbuffer, "Packet #%d too late as #%d was already"
+    GST_DEBUG_OBJECT (jitterbuffer, "Packet #%d too late as #%d was already"
         " popped, dropping", seqnum, priv->last_popped_seqnum);
     priv->num_late++;
     gst_buffer_unref (buffer);
@@ -2818,7 +2819,7 @@ too_late:
   }
 duplicate:
   {
-    GST_WARNING_OBJECT (jitterbuffer, "Duplicate packet #%d detected, dropping",
+    GST_DEBUG_OBJECT (jitterbuffer, "Duplicate packet #%d detected, dropping",
         seqnum);
     priv->num_duplicates++;
     free_item (item);
@@ -3051,6 +3052,7 @@ pop_and_push_next (GstRtpJitterBuffer * jitterbuffer, guint seqnum)
   /* ERRORS */
 out_flushing:
   {
+    JBUF_UNLOCK (priv);
     return priv->srcresult;
   }
 }

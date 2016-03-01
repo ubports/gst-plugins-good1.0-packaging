@@ -138,18 +138,20 @@ the transparent color.</p>
       <tr>
         <td class="listing_lines" align="right"><pre>1
 2
-3</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> videotestsrc pattern<span class="gtkdoc opt">=</span>smpte75 <span class="gtkdoc opt">!</span> alpha method<span class="gtkdoc opt">=</span>green <span class="gtkdoc opt">!</span> \
-  videomixer name<span class="gtkdoc opt">=</span>mixer <span class="gtkdoc opt">!</span> videoconvert <span class="gtkdoc opt">!</span> autovideosink     \
-  videotestsrc pattern<span class="gtkdoc opt">=</span>snow <span class="gtkdoc opt">!</span> mixer<span class="gtkdoc opt">.</span></pre></td>
+3
+4</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> videotestsrc pattern<span class="gtkdoc opt">=</span>snow <span class="gtkdoc opt">!</span> mixer<span class="gtkdoc opt">.</span>sink_0 \
+  videotestsrc pattern<span class="gtkdoc opt">=</span>smpte75 <span class="gtkdoc opt">!</span> alpha method<span class="gtkdoc opt">=</span>green <span class="gtkdoc opt">!</span> mixer<span class="gtkdoc opt">.</span>sink_1 \
+  videomixer name<span class="gtkdoc opt">=</span>mixer sink_0<span class="gtkdoc opt">::</span>zorder<span class="gtkdoc opt">=</span><span class="number">0</span> sink_1<span class="gtkdoc opt">::</span>zorder<span class="gtkdoc opt">=</span><span class="number">1</span> <span class="gtkdoc opt">!</span> \
+  videoconvert <span class="gtkdoc opt">!</span> autovideosink</pre></td>
       </tr>
     </tbody>
   </table>
 </div>
 
 <p> This pipeline adds a alpha channel to the SMPTE color bars
-with green as the transparent color and mixes the output with
-a snow video stream.</p>
+with green as the transparent color and overlays the output on
+top of a snow video stream.</p>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
