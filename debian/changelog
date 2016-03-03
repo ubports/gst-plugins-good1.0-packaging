@@ -1,3 +1,31 @@
+gst-plugins-good1.0 (1.7.90-1ubuntu1) UNRELEASED; urgency=medium
+
+  * Merge with Debian unstable; remaining changes:
+    + Import plugins from -bad that are needed for main applications.
+      - jpegformat
+      - camerabin2 (+ basecamerabinsrc + photography)
+    + Break and Replace -bad versions which contained these plugins.
+    + Add a library package containing the shared library and a -dev package for
+      compiling against it. Add Breaks and Replaces against the plugins packages
+      which formerly contained files shipped here.
+    + Add 'pluginsdir' variable to our added pcfile for compatibility with
+      some external software
+    + debian/control{,.in}: Update Vcs-* for Ubuntu
+
+ -- Iain Lane <iain.lane@canonical.com>  Thu, 03 Mar 2016 18:04:53 +0000
+
+gst-plugins-good1.0 (1.7.90-1) experimental; urgency=medium
+
+  * New upstream release candidate:
+    + debian/build-deps.in,
+      debian/rules:
+      - Build-depend on GStreamer >= 1.7.90.
+    + debian/control.in:
+      - Add Breaks for gst-plugins-bad << 1.7.90 because of the moved
+        Opus RTP payloader/depayloader.
+
+ -- Sebastian Dröge <slomo@debian.org>  Tue, 01 Mar 2016 17:13:54 +0200
+
 gst-plugins-good1.0 (1.7.2-1ubuntu1) xenial; urgency=medium
 
   * Merge with Debian unstable; remaining changes:

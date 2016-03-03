@@ -5,9 +5,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: gst-plugins-good 1.7.2\n"
+"Project-Id-Version: gst-plugins-good 1.7.90\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2016-02-19 10:31+0200\n"
+"POT-Creation-Date: 2016-03-01 16:53+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -66,7 +66,7 @@ msgstr ""
 msgid "Server sent bad data."
 msgstr ""
 
-#: gst/avi/gstavidemux.c:5688
+#: gst/avi/gstavidemux.c:5690
 msgid "Internal data stream error."
 msgstr ""
 
@@ -78,8 +78,8 @@ msgstr ""
 msgid "This file contains no playable streams."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:695 gst/isomp4/qtdemux.c:5707 gst/isomp4/qtdemux.c:5774
-#: gst/isomp4/qtdemux.c:6043
+#: gst/isomp4/qtdemux.c:695 gst/isomp4/qtdemux.c:5741 gst/isomp4/qtdemux.c:5808
+#: gst/isomp4/qtdemux.c:6077
 msgid "This file is invalid and cannot be played."
 msgstr ""
 
@@ -87,26 +87,26 @@ msgstr ""
 msgid "Cannot play stream because it is encrypted with PlayReady DRM."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:3572 gst/isomp4/qtdemux.c:6776
-#: gst/isomp4/qtdemux.c:6783 gst/isomp4/qtdemux.c:7574
-#: gst/isomp4/qtdemux.c:8003 gst/isomp4/qtdemux.c:8010
-#: gst/isomp4/qtdemux.c:10352
+#: gst/isomp4/qtdemux.c:3576 gst/isomp4/qtdemux.c:6810
+#: gst/isomp4/qtdemux.c:6817 gst/isomp4/qtdemux.c:7630
+#: gst/isomp4/qtdemux.c:8059 gst/isomp4/qtdemux.c:8066
+#: gst/isomp4/qtdemux.c:10416
 msgid "This file is corrupt and cannot be played."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:3814
+#: gst/isomp4/qtdemux.c:3818
 msgid "Invalid atom size."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:3892
+#: gst/isomp4/qtdemux.c:3896
 msgid "This file is incomplete and cannot be played."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:8961
+#: gst/isomp4/qtdemux.c:9025
 msgid "The video in this file might not play correctly."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:10393
+#: gst/isomp4/qtdemux.c:10457
 #, c-format
 msgid "This file contains too many streams. Only playing first %d"
 msgstr ""
@@ -115,13 +115,13 @@ msgstr ""
 msgid "Internal data flow error."
 msgstr ""
 
-#: gst/rtsp/gstrtspsrc.c:6343
+#: gst/rtsp/gstrtspsrc.c:6354
 msgid ""
 "No supported stream was found. You might need to install a GStreamer RTSP "
 "extension plugin for Real media streams."
 msgstr ""
 
-#: gst/rtsp/gstrtspsrc.c:6348
+#: gst/rtsp/gstrtspsrc.c:6359
 msgid ""
 "No supported stream was found. You might need to allow more transport "
 "protocols or may otherwise be missing the right GStreamer RTSP extension "
@@ -372,7 +372,7 @@ msgstr ""
 msgid "Failed to allocated required memory."
 msgstr ""
 
-#: sys/v4l2/gstv4l2src.c:510 sys/v4l2/gstv4l2videodec.c:611
+#: sys/v4l2/gstv4l2src.c:510 sys/v4l2/gstv4l2videodec.c:610
 msgid "Failed to allocate required memory."
 msgstr ""
 
@@ -396,11 +396,11 @@ msgstr ""
 msgid "Encoder on device %s has no supported output format"
 msgstr ""
 
-#: sys/v4l2/gstv4l2videodec.c:625
+#: sys/v4l2/gstv4l2videodec.c:624
 msgid "Failed to start decoding thread."
 msgstr ""
 
-#: sys/v4l2/gstv4l2videodec.c:633
+#: sys/v4l2/gstv4l2videodec.c:632
 msgid "Failed to process frame."
 msgstr ""
 

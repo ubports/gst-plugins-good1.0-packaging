@@ -1295,7 +1295,8 @@ gst_matroska_demux_add_stream (GstMatroskaDemux * demux, GstEbmlRead * ebml)
 
   stream_id =
       gst_pad_create_stream_id_printf (context->pad, GST_ELEMENT_CAST (demux),
-      "%03" G_GUINT64_FORMAT, context->uid);
+      "%03" G_GUINT64_FORMAT ":%03" G_GUINT64_FORMAT,
+      context->num, context->uid);
   stream_start =
       gst_pad_get_sticky_event (demux->common.sinkpad, GST_EVENT_STREAM_START,
       0);
@@ -1577,6 +1578,12 @@ gst_matroska_demux_element_send_event (GstElement * element, GstEvent * event)
   g_return_val_if_fail (event != NULL, FALSE);
 
   if (GST_EVENT_TYPE (event) == GST_EVENT_SEEK) {
+    /* no seeking until we are (safely) ready */
+    if (demux->common.state != GST_MATROSKA_READ_STATE_DATA) {
+      GST_DEBUG_OBJECT (demux, "not ready for seeking yet");
+      gst_event_unref (event);
+      return FALSE;
+    }
     res = gst_matroska_demux_handle_seek_event (demux, NULL, event);
   } else {
     GST_WARNING_OBJECT (demux, "Unhandled event of type %s",
@@ -2342,6 +2349,7 @@ gst_matroska_demux_handle_src_event (GstPad * pad, GstObject * parent,
       /* no seeking until we are (safely) ready */
       if (demux->common.state != GST_MATROSKA_READ_STATE_DATA) {
         GST_DEBUG_OBJECT (demux, "not ready for seeking yet");
+        gst_event_unref (event);
         return FALSE;
       }
       if (!demux->streaming)
@@ -5613,8 +5621,37 @@ gst_matroska_demux_audio_caps (GstMatroskaTrackAudioContext *
       caps = gst_codec_utils_opus_create_caps_from_header (tmp, NULL);
       gst_buffer_unref (tmp);
       *codec_name = g_strdup ("Opus");
+    } else if (context->codec_priv_size == 0) {
+      GST_WARNING ("No Opus codec data found, trying to create one");
+      if (audiocontext->channels <= 2) {
+        guint8 streams, coupled, channels;
+        guint32 samplerate;
+
+        samplerate =
+            audiocontext->samplerate == 0 ? 48000 : audiocontext->samplerate;
+        channels = audiocontext->channels == 0 ? 2 : audiocontext->channels;
+        if (channels == 1) {
+          streams = 1;
+          coupled = 0;
+        } else {
+          streams = 1;
+          coupled = 1;
+        }
+
+        caps =
+            gst_codec_utils_opus_create_caps (samplerate, channels, 0, streams,
+            coupled, NULL);
+        if (caps) {
+          *codec_name = g_strdup ("Opus");
+        } else {
+          GST_WARNING ("Failed to create Opus caps from audio context");
+        }
+      } else {
+        GST_WARNING ("No Opus codec data, and not enough info to create one");
+      }
     } else {
-      GST_WARNING ("Invalid Opus codec data size");
+      GST_WARNING ("Invalid Opus codec data size (got %" G_GSIZE_FORMAT
+          ", expected 19)", context->codec_priv_size);
     }
   } else if (!strcmp (codec_id, GST_MATROSKA_CODEC_ID_AUDIO_ACM)) {
     gst_riff_strf_auds auds;

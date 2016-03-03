@@ -33,7 +33,7 @@ GObject
           GstMuLawEnc
           GstSpeexEnc
           GstWavpackEnc
-        GstAudioVisualizer-BaseExtLibvisual
+        GstAudioVisualizer
           GstGoom
           GstGoom2k1
         GstAviDemux
@@ -185,6 +185,7 @@ GObject
           GstRTPBVDepay
           GstRTPDVDepay
           GstRTPGSMDepay
+          GstRTPOpusDepay
           GstRTPSirenDepay
           GstRTPiLBCDepay
           GstRtpAC3Depay
@@ -260,6 +261,7 @@ GObject
           GstRtpMP4GPay
           GstRtpMP4VPay
           GstRtpMPAPay
+          GstRtpOPUSPay
           GstRtpSBCPay
           GstRtpSPEEXPay
           GstRtpTheoraPay
