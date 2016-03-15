@@ -5,9 +5,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: gst-plugins-good 1.7.90\n"
+"Project-Id-Version: gst-plugins-good 1.7.91\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2016-03-01 16:53+0200\n"
+"POT-Creation-Date: 2016-03-15 11:40+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -78,35 +78,35 @@ msgstr ""
 msgid "This file contains no playable streams."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:695 gst/isomp4/qtdemux.c:5741 gst/isomp4/qtdemux.c:5808
-#: gst/isomp4/qtdemux.c:6077
+#: gst/isomp4/qtdemux.c:695 gst/isomp4/qtdemux.c:5745 gst/isomp4/qtdemux.c:5812
+#: gst/isomp4/qtdemux.c:6081
 msgid "This file is invalid and cannot be played."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:2490
+#: gst/isomp4/qtdemux.c:2492
 msgid "Cannot play stream because it is encrypted with PlayReady DRM."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:3576 gst/isomp4/qtdemux.c:6810
-#: gst/isomp4/qtdemux.c:6817 gst/isomp4/qtdemux.c:7630
-#: gst/isomp4/qtdemux.c:8059 gst/isomp4/qtdemux.c:8066
-#: gst/isomp4/qtdemux.c:10416
+#: gst/isomp4/qtdemux.c:3578 gst/isomp4/qtdemux.c:6814
+#: gst/isomp4/qtdemux.c:6821 gst/isomp4/qtdemux.c:7634
+#: gst/isomp4/qtdemux.c:8063 gst/isomp4/qtdemux.c:8070
+#: gst/isomp4/qtdemux.c:10420
 msgid "This file is corrupt and cannot be played."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:3818
+#: gst/isomp4/qtdemux.c:3820
 msgid "Invalid atom size."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:3896
+#: gst/isomp4/qtdemux.c:3898
 msgid "This file is incomplete and cannot be played."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:9025
+#: gst/isomp4/qtdemux.c:9029
 msgid "The video in this file might not play correctly."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:10457
+#: gst/isomp4/qtdemux.c:10461
 #, c-format
 msgid "This file contains too many streams. Only playing first %d"
 msgstr ""
@@ -266,75 +266,75 @@ msgstr ""
 msgid "Failed to enumerate possible video formats device '%s' can work with"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2779
+#: sys/v4l2/gstv4l2object.c:2798
 #, c-format
 msgid "Could not map buffers from device '%s'"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2787
+#: sys/v4l2/gstv4l2object.c:2806
 #, c-format
 msgid "The driver of device '%s' does not support the IO method %d"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:2794
+#: sys/v4l2/gstv4l2object.c:2813
 #, c-format
 msgid "The driver of device '%s' does not support any known IO method."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3417 sys/v4l2/gstv4l2object.c:3428
+#: sys/v4l2/gstv4l2object.c:3436 sys/v4l2/gstv4l2object.c:3447
 #, c-format
 msgid "Device '%s' is busy"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3434 sys/v4l2/gstv4l2object.c:3446
+#: sys/v4l2/gstv4l2object.c:3453 sys/v4l2/gstv4l2object.c:3465
 #, c-format
 msgid "Device '%s' cannot capture at %dx%d"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3457
+#: sys/v4l2/gstv4l2object.c:3476
 #, c-format
 msgid "Device '%s' cannot capture in the specified format"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3470
+#: sys/v4l2/gstv4l2object.c:3489
 #, c-format
 msgid "Device '%s' does support non-contiguous planes"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3481
+#: sys/v4l2/gstv4l2object.c:3500
 #, c-format
 msgid "Could not get parameters on device '%s'"
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3489
+#: sys/v4l2/gstv4l2object.c:3508
 msgid "Video device did not accept new frame rate setting."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3594
+#: sys/v4l2/gstv4l2object.c:3613
 msgid "Video device did not provide output format."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3600
+#: sys/v4l2/gstv4l2object.c:3619
 msgid "Video device returned invalid dimensions."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3608
+#: sys/v4l2/gstv4l2object.c:3627
 msgid "Video devices uses an unsupported interlacing method."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:3615
+#: sys/v4l2/gstv4l2object.c:3634
 msgid "Video devices uses an unsupported pixel format."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:4040
+#: sys/v4l2/gstv4l2object.c:4059
 msgid "Failed to configure internal buffer pool."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:4046
+#: sys/v4l2/gstv4l2object.c:4065
 msgid "Video device did not suggest any buffer size."
 msgstr ""
 
-#: sys/v4l2/gstv4l2object.c:4061
+#: sys/v4l2/gstv4l2object.c:4080
 msgid "No downstream pool to import from."
 msgstr ""
 
