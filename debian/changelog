@@ -1,3 +1,12 @@
+gst-plugins-good1.0 (1.7.91-1) experimental; urgency=medium
+
+  * New upstream release candidate:
+    + debian/build-deps.in,
+      debian/rules:
+      - Build-depend on GStreamer >= 1.7.91.
+
+ -- Sebastian Dröge <slomo@debian.org>  Tue, 15 Mar 2016 12:05:31 +0200
+
 gst-plugins-good1.0 (1.7.90-1) experimental; urgency=medium
 
   * New upstream release candidate:
