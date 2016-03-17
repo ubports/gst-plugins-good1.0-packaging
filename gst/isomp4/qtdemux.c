@@ -2105,6 +2105,8 @@ gst_qtdemux_handle_sink_event (GstPad * sinkpad, GstObject * parent,
       GST_DEBUG_OBJECT (demux, "Pushing newseg %" GST_SEGMENT_FORMAT, &segment);
       segment_event = gst_event_new_segment (&segment);
       gst_event_set_seqnum (segment_event, gst_event_get_seqnum (event));
+      /* erase any previously set segment */
+      gst_event_replace (&demux->pending_newsegment, NULL);
       gst_qtdemux_push_event (demux, segment_event);
 
       /* clear leftover in current segment, if any */
@@ -5223,25 +5225,27 @@ gst_qtdemux_loop_state_movie (GstQTDemux * qtdemux)
   if (qtdemux->cenc_aux_info_offset > 0) {
     GstMapInfo map;
     GstByteReader br;
-    GstBuffer* aux_info = NULL;
+    GstBuffer *aux_info = NULL;
 
     /* pull the data stored before the sample */
-    ret = gst_qtdemux_pull_atom (qtdemux, qtdemux->offset, offset + stream->offset_in_sample - qtdemux->offset, &aux_info);
+    ret =
+        gst_qtdemux_pull_atom (qtdemux, qtdemux->offset,
+        offset + stream->offset_in_sample - qtdemux->offset, &aux_info);
     if (G_UNLIKELY (ret != GST_FLOW_OK))
       goto beach;
-    gst_buffer_map(aux_info, &map, GST_MAP_READ);
+    gst_buffer_map (aux_info, &map, GST_MAP_READ);
     GST_DEBUG_OBJECT (qtdemux, "parsing cenc auxiliary info");
     gst_byte_reader_init (&br, map.data + 8, map.size);
     if (!qtdemux_parse_cenc_aux_info (qtdemux, stream, &br,
-                                      qtdemux->cenc_aux_info_sizes, qtdemux->cenc_aux_sample_count)) {
+            qtdemux->cenc_aux_info_sizes, qtdemux->cenc_aux_sample_count)) {
       GST_ERROR_OBJECT (qtdemux, "failed to parse cenc auxiliary info");
-      gst_buffer_unmap(aux_info, &map);
-      gst_buffer_unref(aux_info);
+      gst_buffer_unmap (aux_info, &map);
+      gst_buffer_unref (aux_info);
       ret = GST_FLOW_ERROR;
       goto beach;
     }
-    gst_buffer_unmap(aux_info, &map);
-    gst_buffer_unref(aux_info);
+    gst_buffer_unmap (aux_info, &map);
+    gst_buffer_unref (aux_info);
   }
 
   GST_LOG_OBJECT (qtdemux, "reading %d bytes @ %" G_GUINT64_FORMAT, size,
