@@ -180,7 +180,7 @@ static gboolean gst_multi_file_sink_event (GstBaseSink * sink,
 static GType
 gst_multi_file_sink_next_get_type (void)
 {
-  static GType multi_file_sync_next_type = 0;
+  static GType multi_file_sink_next_type = 0;
   static const GEnumValue next_types[] = {
     {GST_MULTI_FILE_SINK_NEXT_BUFFER, "New file for each buffer", "buffer"},
     {GST_MULTI_FILE_SINK_NEXT_DISCONT, "New file after each discontinuity",
@@ -199,12 +199,12 @@ gst_multi_file_sink_next_get_type (void)
     {0, NULL, NULL}
   };
 
-  if (!multi_file_sync_next_type) {
-    multi_file_sync_next_type =
+  if (!multi_file_sink_next_type) {
+    multi_file_sink_next_type =
         g_enum_register_static ("GstMultiFileSinkNext", next_types);
   }
 
-  return multi_file_sync_next_type;
+  return multi_file_sink_next_type;
 }
 
 #define gst_multi_file_sink_parent_class parent_class
@@ -627,8 +627,10 @@ gst_multi_file_sink_write_buffer (GstMultiFileSink * multifilesink,
           "Writing buffer data (%" G_GSIZE_FORMAT " bytes) to new file",
           map.size);
       ret = fwrite (map.data, map.size, 1, multifilesink->file);
-      if (ret != 1)
+      if (ret != 1) {
+        gst_multi_file_sink_close_file (multifilesink, NULL);
         goto stdio_write_error;
+      }
 
       gst_multi_file_sink_close_file (multifilesink, buffer);
       break;

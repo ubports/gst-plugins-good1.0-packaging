@@ -378,12 +378,14 @@ gst_wavparse_perform_seek (GstWavParse * wav, GstEvent * event)
   gboolean update;
   GstSegment seeksegment = { 0, };
   gint64 last_stop;
+  guint32 seqnum = 0;
 
   if (event) {
     GST_DEBUG_OBJECT (wav, "doing seek with event");
 
     gst_event_parse_seek (event, &rate, &format, &flags,
         &cur_type, &cur, &stop_type, &stop);
+    seqnum = gst_event_get_seqnum (event);
 
     /* no negative rates yet */
     if (rate < 0.0)
@@ -449,6 +451,7 @@ gst_wavparse_perform_seek (GstWavParse * wav, GstEvent * event)
       /* BYTE seek event */
       event = gst_event_new_seek (rate, GST_FORMAT_BYTES, flags, cur_type, cur,
           stop_type, stop);
+      gst_event_set_seqnum (event, seqnum);
       res = gst_pad_push_event (wav->sinkpad, event);
     }
     return res;
@@ -464,9 +467,13 @@ gst_wavparse_perform_seek (GstWavParse * wav, GstEvent * event)
    * as it completes one iteration (and thus might block when the sink is
    * blocking in preroll). */
   if (flush) {
+    GstEvent *fevent;
     GST_DEBUG_OBJECT (wav, "sending flush start");
-    gst_pad_push_event (wav->sinkpad, gst_event_new_flush_start ());
-    gst_pad_push_event (wav->srcpad, gst_event_new_flush_start ());
+
+    fevent = gst_event_new_flush_start ();
+    gst_event_set_seqnum (fevent, seqnum);
+    gst_pad_push_event (wav->sinkpad, gst_event_ref (fevent));
+    gst_pad_push_event (wav->srcpad, fevent);
   } else {
     gst_pad_pause_task (wav->sinkpad);
   }
@@ -548,10 +555,15 @@ gst_wavparse_perform_seek (GstWavParse * wav, GstEvent * event)
 
   /* prepare for streaming again */
   if (flush) {
+    GstEvent *fevent;
+
     /* if we sent a FLUSH_START, we now send a FLUSH_STOP */
     GST_DEBUG_OBJECT (wav, "sending flush stop");
-    gst_pad_push_event (wav->sinkpad, gst_event_new_flush_stop (TRUE));
-    gst_pad_push_event (wav->srcpad, gst_event_new_flush_stop (TRUE));
+
+    fevent = gst_event_new_flush_stop (TRUE);
+    gst_event_set_seqnum (fevent, seqnum);
+    gst_pad_push_event (wav->sinkpad, gst_event_ref (fevent));
+    gst_pad_push_event (wav->srcpad, fevent);
   }
 
   /* now we did the seek and can activate the new segment values */
@@ -572,6 +584,7 @@ gst_wavparse_perform_seek (GstWavParse * wav, GstEvent * event)
   if (wav->start_segment)
     gst_event_unref (wav->start_segment);
   wav->start_segment = gst_event_new_segment (&wav->segment);
+  gst_event_set_seqnum (wav->start_segment, seqnum);
 
   /* mark discont if we are going to stream from another position. */
   if (last_stop != wav->segment.position) {
@@ -1075,7 +1088,6 @@ gst_wavparse_stream_headers (GstWavParse * wav)
   gboolean gotdata = FALSE;
   GstCaps *caps = NULL;
   gchar *codec_name = NULL;
-  GstEvent **event_p;
   gint64 upstream_size = 0;
   GstStructure *s;
 
@@ -1669,8 +1681,7 @@ gst_wavparse_stream_headers (GstWavParse * wav)
    * the right newsegment event downstream. */
   gst_wavparse_perform_seek (wav, wav->seek_event);
   /* remove pending event */
-  event_p = &wav->seek_event;
-  gst_event_replace (event_p, NULL);
+  gst_event_replace (&wav->seek_event, NULL);
 
   /* we just started, we are discont */
   wav->discont = TRUE;
@@ -1696,10 +1707,8 @@ gst_wavparse_stream_headers (GstWavParse * wav)
   /* ERROR */
 exit:
   {
-    if (codec_name)
-      g_free (codec_name);
-    if (header)
-      g_free (header);
+    g_free (codec_name);
+    g_free (header);
     if (caps)
       gst_caps_unref (caps);
     return res;
@@ -1810,7 +1819,6 @@ gst_wavparse_send_event (GstElement * element, GstEvent * event)
 {
   GstWavParse *wav = GST_WAVPARSE (element);
   gboolean res = FALSE;
-  GstEvent **event_p;
 
   GST_DEBUG_OBJECT (wav, "received event %s", GST_EVENT_TYPE_NAME (event));
 
@@ -1822,8 +1830,7 @@ gst_wavparse_send_event (GstElement * element, GstEvent * event)
       } else {
         GST_DEBUG_OBJECT (wav, "queuing seek for later");
 
-        event_p = &wav->seek_event;
-        gst_event_replace (event_p, event);
+        gst_event_replace (&wav->seek_event, event);
 
         /* we always return true */
         res = TRUE;

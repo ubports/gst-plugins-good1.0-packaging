@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>v4l2src: GStreamer Good Plugins 1.0 Plugins Reference Manual</title>
-<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
 <link rel="home" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-v4l2sink.html" title="v4l2sink">
@@ -37,7 +37,7 @@
 </tr></table></div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-v4l2src.properties"></a><h2>Properties</h2>
-<div class="informaltable"><table border="0">
+<div class="informaltable"><table class="informaltable" border="0">
 <colgroup>
 <col width="150px" class="properties_type">
 <col width="300px" class="properties_name">
@@ -118,7 +118,7 @@
 </div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-v4l2src.signals"></a><h2>Signals</h2>
-<div class="informaltable"><table border="0">
+<div class="informaltable"><table class="informaltable" border="0">
 <colgroup>
 <col width="150px" class="signals_return">
 <col width="300px" class="signals_name">
@@ -133,7 +133,7 @@
 </div>
 <a name="GstV4l2Src"></a><div class="refsect1">
 <a name="gst-plugins-good-plugins-v4l2src.other"></a><h2>Types and Values</h2>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="name">
 <col class="description">
@@ -166,7 +166,7 @@ GstV4l2Src implements
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.172.9.2.1"></a><h3>Element Information</h3>
+<a name="id-1.2.173.9.2.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -192,7 +192,7 @@ GstV4l2Src implements
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.172.9.2.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.173.9.2.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -241,7 +241,7 @@ GstV4l2Src implements
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> video/x-h264, stream-format=(string)byte-stream, alignment=(string)au</td>
+<td> video/x-h264, stream-format=(string){ byte-stream, avc }, alignment=(string)au</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
@@ -253,7 +253,7 @@ GstV4l2Src implements
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
-<td> video/x-raw, format=(string){ RGB15, RGB16, BGR, RGB, BGRx, BGRA, xRGB, ARGB, GRAY8, YVU9, YV12, YUY2, UYVY, Y42B, Y41B, NV12_64Z32, YUV9, I420, YVYU, NV21, NV12 }, width=(int)[ 1, 32768 ], height=(int)[ 1, 32768 ], framerate=(fraction)[ 0/1, 2147483647/1 ]</td>
+<td> video/x-raw, format=(string){ RGB16, BGR, RGB, GRAY8, GRAY16_LE, GRAY16_BE, YVU9, YV12, YUY2, YVYU, UYVY, Y42B, Y41B, YUV9, NV12_64Z32, NV24, NV61, NV16, NV21, NV12, I420, BGRA, BGRx, ARGB, xRGB, BGR15, RGB15 }, width=(int)[ 1, 32768 ], height=(int)[ 1, 32768 ], framerate=(fraction)[ 0/1, 2147483647/1 ]</td>
 </tr>
 <tr>
 <td><p><span class="term"></span></p></td>
@@ -262,6 +262,10 @@ GstV4l2Src implements
 <tr>
 <td><p><span class="term"></span></p></td>
 <td> video/x-vp8</td>
+</tr>
+<tr>
+<td><p><span class="term"></span></p></td>
+<td> video/x-wmv, wmvversion=(int)3, format=(string)WVC1</td>
 </tr>
 </tbody>
 </table></div>

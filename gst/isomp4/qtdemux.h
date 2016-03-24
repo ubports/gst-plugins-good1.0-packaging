@@ -89,6 +89,7 @@ struct _GstQTDemux {
   gboolean posted_redirect;
 
   /* push based variables */
+  gboolean pending_configure;
   guint neededbytes;
   guint todrop;
   GstAdapter *adapter;
@@ -121,6 +122,7 @@ struct _GstQTDemux {
                                      * newsegment in TIME format which likely
                                      * means that upstream is driving the pipeline
                                      * (adaptive demuxers / dlna) */
+  guint32 offset_seek_seqnum;
   gint64 seek_offset;
   gint64 push_seek_start;
   gint64 push_seek_stop;

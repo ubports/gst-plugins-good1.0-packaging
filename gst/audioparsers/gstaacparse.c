@@ -1016,6 +1016,10 @@ gst_aac_parse_get_audio_profile_object_type (GstAacParse * aacparse)
   guint8 ret;
 
   srccaps = gst_pad_get_current_caps (GST_BASE_PARSE_SRC_PAD (aacparse));
+  if (G_UNLIKELY (srccaps == NULL)) {
+    return G_MAXUINT8;
+  }
+
   srcstruct = gst_caps_get_structure (srccaps, 0);
   profile = gst_structure_get_string (srcstruct, "profile");
   if (G_UNLIKELY (profile == NULL)) {
@@ -1302,7 +1306,10 @@ gst_aac_parse_handle_frame (GstBaseParse * parse,
       /* This is pretty normal when skipping data at the start of
        * random stream (MPEG-TS capture for example) */
       GST_DEBUG_OBJECT (aacparse, "Error reading LOAS config. Skipping.");
-      *skipsize = map.size;
+      /* Since we don't fully parse the LOAS config, we don't know for sure
+       * how much to skip. Just skip 1 to end up to the next marker and
+       * resume parsing from there */
+      *skipsize = 1;
       goto exit;
     }
 
@@ -1367,10 +1374,19 @@ gst_aac_parse_pre_push_frame (GstBaseParse * parse, GstBaseParseFrame * frame)
     GstTagList *taglist;
     GstCaps *caps;
 
-    taglist = gst_tag_list_new_empty ();
-
     /* codec tag */
     caps = gst_pad_get_current_caps (GST_BASE_PARSE_SRC_PAD (parse));
+    if (caps == NULL) {
+      if (GST_PAD_IS_FLUSHING (GST_BASE_PARSE_SRC_PAD (parse))) {
+        GST_INFO_OBJECT (parse, "Src pad is flushing");
+        return GST_FLOW_FLUSHING;
+      } else {
+        GST_INFO_OBJECT (parse, "Src pad is not negotiated!");
+        return GST_FLOW_NOT_NEGOTIATED;
+      }
+    }
+
+    taglist = gst_tag_list_new_empty ();
     gst_pb_utils_add_codec_description_to_tag_list (taglist,
         GST_TAG_AUDIO_CODEC, caps);
     gst_caps_unref (caps);

@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>alpha: GStreamer Good Plugins 1.0 Plugins Reference Manual</title>
-<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
 <link rel="home" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-alphacolor.html" title="alphacolor">
@@ -35,7 +35,7 @@
 </tr></table></div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-alpha.properties"></a><h2>Properties</h2>
-<div class="informaltable"><table border="0">
+<div class="informaltable"><table class="informaltable" border="0">
 <colgroup>
 <col width="150px" class="properties_type">
 <col width="300px" class="properties_name">
@@ -97,7 +97,7 @@
 </div>
 <a name="GstAlpha"></a><div class="refsect1">
 <a name="gst-plugins-good-plugins-alpha.other"></a><h2>Types and Values</h2>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="name">
 <col class="description">
@@ -138,18 +138,20 @@ the transparent color.</p>
       <tr>
         <td class="listing_lines" align="right"><pre>1
 2
-3</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> videotestsrc pattern<span class="gtkdoc opt">=</span>smpte75 <span class="gtkdoc opt">!</span> alpha method<span class="gtkdoc opt">=</span>green <span class="gtkdoc opt">!</span> \
-  videomixer name<span class="gtkdoc opt">=</span>mixer <span class="gtkdoc opt">!</span> videoconvert <span class="gtkdoc opt">!</span> autovideosink     \
-  videotestsrc pattern<span class="gtkdoc opt">=</span>snow <span class="gtkdoc opt">!</span> mixer<span class="gtkdoc opt">.</span></pre></td>
+3
+4</pre></td>
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> videotestsrc pattern<span class="gtkdoc opt">=</span>snow <span class="gtkdoc opt">!</span> mixer<span class="gtkdoc opt">.</span>sink_0 \
+  videotestsrc pattern<span class="gtkdoc opt">=</span>smpte75 <span class="gtkdoc opt">!</span> alpha method<span class="gtkdoc opt">=</span>green <span class="gtkdoc opt">!</span> mixer<span class="gtkdoc opt">.</span>sink_1 \
+  videomixer name<span class="gtkdoc opt">=</span>mixer sink_0<span class="gtkdoc opt">::</span>zorder<span class="gtkdoc opt">=</span><span class="number">0</span> sink_1<span class="gtkdoc opt">::</span>zorder<span class="gtkdoc opt">=</span><span class="number">1</span> <span class="gtkdoc opt">!</span> \
+  videoconvert <span class="gtkdoc opt">!</span> autovideosink</pre></td>
       </tr>
     </tbody>
   </table>
 </div>
 
 <p> This pipeline adds a alpha channel to the SMPTE color bars
-with green as the transparent color and mixes the output with
-a snow video stream.</p>
+with green as the transparent color and overlays the output on
+top of a snow video stream.</p>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
@@ -248,7 +250,7 @@ Jan Schmidt &lt;thaytan@noraisin.net&gt;</td>
 <a name="GstAlphaMethod"></a><h3>enum GstAlphaMethod</h3>
 <div class="refsect3">
 <a name="id-1.2.10.9.3.3"></a><h4>Members</h4>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="300px" class="enum_members_name">
 <col class="enum_members_description">

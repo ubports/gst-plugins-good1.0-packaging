@@ -305,10 +305,7 @@ gst_matroska_track_get_buffer_timestamp (GstMatroskaTrackContext * track,
     GstBuffer * buf)
 {
   if (track->dts_only) {
-    if (GST_BUFFER_DTS_IS_VALID (buf))
-      return GST_BUFFER_DTS (buf);
-    else
-      return GST_BUFFER_PTS (buf);
+    return GST_BUFFER_DTS_OR_PTS (buf);
   } else {
     return GST_BUFFER_PTS (buf);
   }

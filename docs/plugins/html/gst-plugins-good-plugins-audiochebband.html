@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>audiochebband: GStreamer Good Plugins 1.0 Plugins Reference Manual</title>
-<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
 <link rel="home" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-audioamplify.html" title="audioamplify">
@@ -35,7 +35,7 @@
 </tr></table></div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-audiochebband.properties"></a><h2>Properties</h2>
-<div class="informaltable"><table border="0">
+<div class="informaltable"><table class="informaltable" border="0">
 <colgroup>
 <col width="150px" class="properties_type">
 <col width="300px" class="properties_name">
@@ -77,7 +77,7 @@
 </div>
 <a name="GstAudioChebBand"></a><div class="refsect1">
 <a name="gst-plugins-good-plugins-audiochebband.other"></a><h2>Types and Values</h2>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="name">
 <col class="description">
@@ -126,7 +126,7 @@ a cutoff frequency at a quarter of the sampling rate.
         <td class="listing_lines" align="right"><pre>1
 2
 3</pre></td>
-        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> audiotestsrc freq<span class="gtkdoc opt">=</span><span class="number">1500</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audiochebband mode<span class="gtkdoc opt">=</span>band<span class="gtkdoc opt">-</span>pass lower<span class="gtkdoc opt">-</span>frequency<span class="gtkdoc opt">=</span><span class="number">1000</span> upper<span class="gtkdoc opt">-</span>frequenc<span class="gtkdoc opt">=</span><span class="number">6000</span> poles<span class="gtkdoc opt">=</span><span class="number">4</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> alsasink
+        <td class="listing_code"><pre class="programlisting">gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> audiotestsrc freq<span class="gtkdoc opt">=</span><span class="number">1500</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audiochebband mode<span class="gtkdoc opt">=</span>band<span class="gtkdoc opt">-</span>pass lower<span class="gtkdoc opt">-</span>frequency<span class="gtkdoc opt">=</span><span class="number">1000</span> upper<span class="gtkdoc opt">-</span>frequency<span class="gtkdoc opt">=</span><span class="number">6000</span> poles<span class="gtkdoc opt">=</span><span class="number">4</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> alsasink
 gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> filesrc location<span class="gtkdoc opt">=</span><span class="string">&quot;melo1.ogg&quot;</span> <span class="gtkdoc opt">!</span> oggdemux <span class="gtkdoc opt">!</span> vorbisdec <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audiochebband mode<span class="gtkdoc opt">=</span>band<span class="gtkdoc opt">-</span>reject lower<span class="gtkdoc opt">-</span>frequency<span class="gtkdoc opt">=</span><span class="number">1000</span> upper<span class="gtkdoc opt">-</span>frequency<span class="gtkdoc opt">=</span><span class="number">4000</span> ripple<span class="gtkdoc opt">=</span><span class="number">0.2</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> alsasink
 gst<span class="gtkdoc opt">-</span>launch<span class="gtkdoc opt">-</span><span class="number">1.0</span> audiotestsrc wave<span class="gtkdoc opt">=</span>white<span class="gtkdoc opt">-</span>noise <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> audiochebband mode<span class="gtkdoc opt">=</span>band<span class="gtkdoc opt">-</span>pass lower<span class="gtkdoc opt">-</span>frequency<span class="gtkdoc opt">=</span><span class="number">1000</span> upper<span class="gtkdoc opt">-</span>frequency<span class="gtkdoc opt">=</span><span class="number">4000</span> type<span class="gtkdoc opt">=</span><span class="number">2</span> <span class="gtkdoc opt">!</span> audioconvert <span class="gtkdoc opt">!</span> alsasink</pre></td>
       </tr>
