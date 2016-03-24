@@ -1,8 +1,45 @@
-gst-plugins-good1.0 (1.6.3-1) unstable; urgency=medium
+gst-plugins-good1.0 (1.7.91-1) experimental; urgency=medium
 
-  * New upstream bugfix release.
+  * New upstream release candidate:
+    + debian/build-deps.in,
+      debian/rules:
+      - Build-depend on GStreamer >= 1.7.91.
 
- -- Sebastian Dröge <slomo@debian.org>  Wed, 20 Jan 2016 14:49:43 +0200
+ -- Sebastian Dröge <slomo@debian.org>  Tue, 15 Mar 2016 12:05:31 +0200
+
+gst-plugins-good1.0 (1.7.90-1) experimental; urgency=medium
+
+  * New upstream release candidate:
+    + debian/build-deps.in,
+      debian/rules:
+      - Build-depend on GStreamer >= 1.7.90.
+    + debian/control.in:
+      - Add Breaks for gst-plugins-bad << 1.7.90 because of the moved
+        Opus RTP payloader/depayloader.
+
+ -- Sebastian Dröge <slomo@debian.org>  Tue, 01 Mar 2016 17:13:54 +0200
+
+gst-plugins-good1.0 (1.7.2-1) experimental; urgency=medium
+
+  * New upstream unstable release:
+    + debian/build-deps.in,
+      debian/rules:
+      - Build-depend on GStreamer >= 1.7.2.
+    + debian/control.in:
+      - Add Breaks for gst-plugins-bad << 1.7.2 because of the moved
+        h265/HEVC RTP payloader/depayloader.
+
+ -- Sebastian Dröge <slomo@debian.org>  Fri, 19 Feb 2016 11:19:04 +0200
+
+gst-plugins-good1.0 (1.7.1-1) experimental; urgency=medium
+
+  * New upstream unstable release:
+    + debian/build-deps.in,
+      debian/rules:
+      - Build-depend on GLib >= 2.40 and GStreamer >= 1.7.1.
+      - Build-depend on Soup >= 2.48.
+
+ -- Sebastian Dröge <slomo@debian.org>  Thu, 24 Dec 2015 14:13:58 +0100
 
 gst-plugins-good1.0 (1.6.2-1) unstable; urgency=medium
 

@@ -195,7 +195,8 @@ libparser_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 @USE_FLAC_TRUE@am__EXEEXT_11 = pipelines/flacdec$(EXEEXT)
 @USE_PLUGIN_FLV_TRUE@am__EXEEXT_12 = elements/flvdemux$(EXEEXT) \
 @USE_PLUGIN_FLV_TRUE@	elements/flvmux$(EXEEXT)
-@USE_GDK_PIXBUF_TRUE@am__EXEEXT_13 = elements/gdkpixbufsink$(EXEEXT)
+@USE_GDK_PIXBUF_TRUE@am__EXEEXT_13 = elements/gdkpixbufsink$(EXEEXT) \
+@USE_GDK_PIXBUF_TRUE@	elements/gdkpixbufoverlay$(EXEEXT)
 @USE_PLUGIN_ISOMP4_TRUE@am__EXEEXT_14 = elements/qtmux$(EXEEXT)
 @USE_PLUGIN_ICYDEMUX_TRUE@am__EXEEXT_15 = elements/icydemux$(EXEEXT)
 @USE_PLUGIN_ID3DEMUX_TRUE@am__EXEEXT_16 = elements/id3demux$(EXEEXT)
@@ -447,13 +448,23 @@ elements_flacparse_SOURCES = elements/flacparse.c
 elements_flacparse_OBJECTS = elements/flacparse.$(OBJEXT)
 elements_flacparse_DEPENDENCIES = libparser.la $(am__DEPENDENCIES_2)
 elements_flvdemux_SOURCES = elements/flvdemux.c
-elements_flvdemux_OBJECTS = elements/flvdemux.$(OBJEXT)
-elements_flvdemux_LDADD = $(LDADD)
-elements_flvdemux_DEPENDENCIES = $(am__DEPENDENCIES_1)
+elements_flvdemux_OBJECTS =  \
+	elements/elements_flvdemux-flvdemux.$(OBJEXT)
+elements_flvdemux_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_2)
+elements_flvdemux_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+	$(elements_flvdemux_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
+	-o $@
 elements_flvmux_SOURCES = elements/flvmux.c
 elements_flvmux_OBJECTS = elements/flvmux.$(OBJEXT)
 elements_flvmux_LDADD = $(LDADD)
 elements_flvmux_DEPENDENCIES = $(am__DEPENDENCIES_1)
+elements_gdkpixbufoverlay_SOURCES = elements/gdkpixbufoverlay.c
+elements_gdkpixbufoverlay_OBJECTS =  \
+	elements/gdkpixbufoverlay.$(OBJEXT)
+elements_gdkpixbufoverlay_LDADD = $(LDADD)
+elements_gdkpixbufoverlay_DEPENDENCIES = $(am__DEPENDENCIES_1)
 elements_gdkpixbufsink_SOURCES = elements/gdkpixbufsink.c
 elements_gdkpixbufsink_OBJECTS =  \
 	elements/elements_gdkpixbufsink-gdkpixbufsink.$(OBJEXT)
@@ -898,15 +909,16 @@ SOURCES = $(libparser_la_SOURCES) elements/aacparse.c \
 	elements/capssetter.c elements/deinterlace.c \
 	elements/deinterleave.c elements/dtmf.c elements/equalizer.c \
 	elements/flacparse.c elements/flvdemux.c elements/flvmux.c \
-	elements/gdkpixbufsink.c elements/icydemux.c \
-	elements/id3demux.c elements/id3v2mux.c elements/imagefreeze.c \
-	elements/interleave.c elements/jpegdec.c elements/jpegenc.c \
-	elements/level.c elements/matroskademux.c \
-	elements/matroskamux.c elements/matroskaparse.c \
-	elements/mpegaudioparse.c elements/mulawdec.c \
-	elements/mulawenc.c elements/multifile.c elements/qtmux.c \
-	elements/rganalysis.c elements/rglimiter.c elements/rgvolume.c \
-	elements/rtp-payloading.c elements/rtpaux.c elements/rtpbin.c \
+	elements/gdkpixbufoverlay.c elements/gdkpixbufsink.c \
+	elements/icydemux.c elements/id3demux.c elements/id3v2mux.c \
+	elements/imagefreeze.c elements/interleave.c \
+	elements/jpegdec.c elements/jpegenc.c elements/level.c \
+	elements/matroskademux.c elements/matroskamux.c \
+	elements/matroskaparse.c elements/mpegaudioparse.c \
+	elements/mulawdec.c elements/mulawenc.c elements/multifile.c \
+	elements/qtmux.c elements/rganalysis.c elements/rglimiter.c \
+	elements/rgvolume.c elements/rtp-payloading.c \
+	elements/rtpaux.c elements/rtpbin.c \
 	$(elements_rtpbin_buffer_list_SOURCES) elements/rtpcollision.c \
 	elements/rtph263.c elements/rtpjitterbuffer.c \
 	elements/rtpmux.c elements/rtprtx.c elements/rtpsession.c \
@@ -936,15 +948,16 @@ DIST_SOURCES = $(libparser_la_SOURCES) elements/aacparse.c \
 	elements/capssetter.c elements/deinterlace.c \
 	elements/deinterleave.c elements/dtmf.c elements/equalizer.c \
 	elements/flacparse.c elements/flvdemux.c elements/flvmux.c \
-	elements/gdkpixbufsink.c elements/icydemux.c \
-	elements/id3demux.c elements/id3v2mux.c elements/imagefreeze.c \
-	elements/interleave.c elements/jpegdec.c elements/jpegenc.c \
-	elements/level.c elements/matroskademux.c \
-	elements/matroskamux.c elements/matroskaparse.c \
-	elements/mpegaudioparse.c elements/mulawdec.c \
-	elements/mulawenc.c elements/multifile.c elements/qtmux.c \
-	elements/rganalysis.c elements/rglimiter.c elements/rgvolume.c \
-	elements/rtp-payloading.c elements/rtpaux.c elements/rtpbin.c \
+	elements/gdkpixbufoverlay.c elements/gdkpixbufsink.c \
+	elements/icydemux.c elements/id3demux.c elements/id3v2mux.c \
+	elements/imagefreeze.c elements/interleave.c \
+	elements/jpegdec.c elements/jpegenc.c elements/level.c \
+	elements/matroskademux.c elements/matroskamux.c \
+	elements/matroskaparse.c elements/mpegaudioparse.c \
+	elements/mulawdec.c elements/mulawenc.c elements/multifile.c \
+	elements/qtmux.c elements/rganalysis.c elements/rglimiter.c \
+	elements/rgvolume.c elements/rtp-payloading.c \
+	elements/rtpaux.c elements/rtpbin.c \
 	$(elements_rtpbin_buffer_list_SOURCES) elements/rtpcollision.c \
 	elements/rtph263.c elements/rtpjitterbuffer.c \
 	elements/rtpmux.c elements/rtprtx.c elements/rtpsession.c \
@@ -1361,6 +1374,7 @@ LOCALEDIR = @LOCALEDIR@
 LTLIBICONV = @LTLIBICONV@
 LTLIBINTL = @LTLIBINTL@
 LTLIBOBJS = @LTLIBOBJS@
+LT_SYS_LIBRARY_PATH = @LT_SYS_LIBRARY_PATH@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
 MANIFEST_TOOL = @MANIFEST_TOOL@
@@ -1428,6 +1442,8 @@ VALGRIND_PATH = @VALGRIND_PATH@
 VERSION = @VERSION@
 VPX_130_CFLAGS = @VPX_130_CFLAGS@
 VPX_130_LIBS = @VPX_130_LIBS@
+VPX_140_CFLAGS = @VPX_140_CFLAGS@
+VPX_140_LIBS = @VPX_140_LIBS@
 VPX_CFLAGS = @VPX_CFLAGS@
 VPX_LIBS = @VPX_LIBS@
 WARNING_CFLAGS = @WARNING_CFLAGS@
@@ -1513,6 +1529,16 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
+AM_TESTS_ENVIRONMENT = CK_DEFAULT_TIMEOUT=20 $(REGISTRY_ENVIRONMENT) \
+	GST_PLUGIN_SYSTEM_PATH_1_0= \
+	GST_PLUGIN_PATH_1_0=$(top_builddir)/gst:$(top_builddir)/ext:$(top_builddir)/sys:$(GSTPB_PLUGINS_DIR):$(GST_PLUGINS_DIR) \
+	GST_PLUGIN_LOADING_WHITELIST="gstreamer@$(GST_PLUGINS_DIR):gst-plugins-base@$(GSTPB_PLUGINS_DIR):gst-plugins-good@$(top_builddir)" \
+	GST_STATE_IGNORE_ELEMENTS="aasink autoaudiosrc autoaudiosink \
+	autovideosrc autovideosink cacasink cairotextoverlay \
+	halaudiosrc halaudiosink jackaudiosrc jackaudiosink osssrc \
+	osssink osxaudiosink osxaudiosrc osxvideosrc osxvideosink \
+	pulsesink pulsesrc pulsemixer v4l2src" \
+	GSETTINGS_BACKEND="memory"
 
 # inspect every plugin feature
 GST_INSPECT = $(GST_TOOLS_DIR)/gst-inspect-$(GST_API_VERSION)
@@ -1520,17 +1546,6 @@ CHECK_REGISTRY = $(top_builddir)/tests/check/test-registry.reg
 TEST_FILES_DIRECTORY = $(top_srcdir)/tests/files
 REGISTRY_ENVIRONMENT = \
 	GST_REGISTRY_1_0=$(CHECK_REGISTRY)
-
-AM_TESTS_ENVIRONMENT = \
-	$(REGISTRY_ENVIRONMENT)					\
-	GST_PLUGIN_SYSTEM_PATH_1_0=				\
-	GST_PLUGIN_PATH_1_0=$(top_builddir)/gst:$(top_builddir)/ext:$(top_builddir)/sys:$(GSTPB_PLUGINS_DIR):$(GST_PLUGINS_DIR)			\
-	GST_PLUGIN_LOADING_WHITELIST="gstreamer@$(GST_PLUGINS_DIR):gst-plugins-base@$(GSTPB_PLUGINS_DIR):gst-plugins-good@$(top_builddir)"	\
-	GST_STATE_IGNORE_ELEMENTS="aasink autoaudiosrc autoaudiosink autovideosrc autovideosink \
-		cacasink cairotextoverlay \
-		halaudiosrc halaudiosink jackaudiosrc jackaudiosink \
-		osssrc osssink osxaudiosink osxaudiosrc osxvideosrc osxvideosink \
-		pulsesink pulsesrc pulsemixer v4l2src"
 
 
 # fake device drivers: we could run hardware element tests against dummy drivers
@@ -1608,7 +1623,7 @@ CLEANFILES = core.* test-registry.*
 @USE_PLUGIN_LAW_TRUE@	elements/mulawenc
 
 @USE_GDK_PIXBUF_FALSE@check_gdkpixbuf = 
-@USE_GDK_PIXBUF_TRUE@check_gdkpixbuf = elements/gdkpixbufsink
+@USE_GDK_PIXBUF_TRUE@check_gdkpixbuf = elements/gdkpixbufsink elements/gdkpixbufoverlay
 @USE_PLUGIN_ICYDEMUX_FALSE@check_icydemux = 
 @USE_PLUGIN_ICYDEMUX_TRUE@check_icydemux = elements/icydemux
 @USE_PLUGIN_ID3DEMUX_FALSE@check_id3demux = 
@@ -1732,6 +1747,8 @@ elements_aacparse_LDADD = libparser.la $(LDADD)
 elements_ac3parse_LDADD = libparser.la $(LDADD)
 elements_amrparse_LDADD = libparser.la $(LDADD)
 elements_flacparse_LDADD = libparser.la $(LDADD)
+elements_flvdemux_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
+elements_flvdemux_LDADD = $(GST_PLUGINS_BASE_LIBS) -lgsttag-$(GST_API_VERSION) $(LDADD)
 elements_mpegaudioparse_LDADD = libparser.la $(LDADD)
 elements_aspectratiocrop_LDADD = $(LDADD)
 elements_aspectratiocrop_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(CFLAGS) $(AM_CFLAGS)
@@ -2094,18 +2111,24 @@ elements/flacparse.$(OBJEXT): elements/$(am__dirstamp) \
 elements/flacparse$(EXEEXT): $(elements_flacparse_OBJECTS) $(elements_flacparse_DEPENDENCIES) $(EXTRA_elements_flacparse_DEPENDENCIES) elements/$(am__dirstamp)
 	@rm -f elements/flacparse$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(elements_flacparse_OBJECTS) $(elements_flacparse_LDADD) $(LIBS)
-elements/flvdemux.$(OBJEXT): elements/$(am__dirstamp) \
-	elements/$(DEPDIR)/$(am__dirstamp)
+elements/elements_flvdemux-flvdemux.$(OBJEXT):  \
+	elements/$(am__dirstamp) elements/$(DEPDIR)/$(am__dirstamp)
 
 elements/flvdemux$(EXEEXT): $(elements_flvdemux_OBJECTS) $(elements_flvdemux_DEPENDENCIES) $(EXTRA_elements_flvdemux_DEPENDENCIES) elements/$(am__dirstamp)
 	@rm -f elements/flvdemux$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(elements_flvdemux_OBJECTS) $(elements_flvdemux_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(elements_flvdemux_LINK) $(elements_flvdemux_OBJECTS) $(elements_flvdemux_LDADD) $(LIBS)
 elements/flvmux.$(OBJEXT): elements/$(am__dirstamp) \
 	elements/$(DEPDIR)/$(am__dirstamp)
 
 elements/flvmux$(EXEEXT): $(elements_flvmux_OBJECTS) $(elements_flvmux_DEPENDENCIES) $(EXTRA_elements_flvmux_DEPENDENCIES) elements/$(am__dirstamp)
 	@rm -f elements/flvmux$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(elements_flvmux_OBJECTS) $(elements_flvmux_LDADD) $(LIBS)
+elements/gdkpixbufoverlay.$(OBJEXT): elements/$(am__dirstamp) \
+	elements/$(DEPDIR)/$(am__dirstamp)
+
+elements/gdkpixbufoverlay$(EXEEXT): $(elements_gdkpixbufoverlay_OBJECTS) $(elements_gdkpixbufoverlay_DEPENDENCIES) $(EXTRA_elements_gdkpixbufoverlay_DEPENDENCIES) elements/$(am__dirstamp)
+	@rm -f elements/gdkpixbufoverlay$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(elements_gdkpixbufoverlay_OBJECTS) $(elements_gdkpixbufoverlay_LDADD) $(LIBS)
 elements/elements_gdkpixbufsink-gdkpixbufsink.$(OBJEXT):  \
 	elements/$(am__dirstamp) elements/$(DEPDIR)/$(am__dirstamp)
 
@@ -2510,6 +2533,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_deinterleave-deinterleave.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_dtmf-dtmf.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_equalizer-equalizer.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_flvdemux-flvdemux.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_gdkpixbufsink-gdkpixbufsink.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_imagefreeze-imagefreeze.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_interleave-interleave.Po@am__quote@
@@ -2539,8 +2563,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_videofilter-videofilter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/elements_videomixer-videomixer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/flacparse.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/flvdemux.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/flvmux.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/gdkpixbufoverlay.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/icydemux.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/id3demux.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@elements/$(DEPDIR)/id3v2mux.Po@am__quote@
@@ -2841,6 +2865,20 @@ elements/elements_equalizer-equalizer.obj: elements/equalizer.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/equalizer.c' object='elements/elements_equalizer-equalizer.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_equalizer_CFLAGS) $(CFLAGS) -c -o elements/elements_equalizer-equalizer.obj `if test -f 'elements/equalizer.c'; then $(CYGPATH_W) 'elements/equalizer.c'; else $(CYGPATH_W) '$(srcdir)/elements/equalizer.c'; fi`
+
+elements/elements_flvdemux-flvdemux.o: elements/flvdemux.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_flvdemux_CFLAGS) $(CFLAGS) -MT elements/elements_flvdemux-flvdemux.o -MD -MP -MF elements/$(DEPDIR)/elements_flvdemux-flvdemux.Tpo -c -o elements/elements_flvdemux-flvdemux.o `test -f 'elements/flvdemux.c' || echo '$(srcdir)/'`elements/flvdemux.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) elements/$(DEPDIR)/elements_flvdemux-flvdemux.Tpo elements/$(DEPDIR)/elements_flvdemux-flvdemux.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/flvdemux.c' object='elements/elements_flvdemux-flvdemux.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_flvdemux_CFLAGS) $(CFLAGS) -c -o elements/elements_flvdemux-flvdemux.o `test -f 'elements/flvdemux.c' || echo '$(srcdir)/'`elements/flvdemux.c
+
+elements/elements_flvdemux-flvdemux.obj: elements/flvdemux.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_flvdemux_CFLAGS) $(CFLAGS) -MT elements/elements_flvdemux-flvdemux.obj -MD -MP -MF elements/$(DEPDIR)/elements_flvdemux-flvdemux.Tpo -c -o elements/elements_flvdemux-flvdemux.obj `if test -f 'elements/flvdemux.c'; then $(CYGPATH_W) 'elements/flvdemux.c'; else $(CYGPATH_W) '$(srcdir)/elements/flvdemux.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) elements/$(DEPDIR)/elements_flvdemux-flvdemux.Tpo elements/$(DEPDIR)/elements_flvdemux-flvdemux.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='elements/flvdemux.c' object='elements/elements_flvdemux-flvdemux.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_flvdemux_CFLAGS) $(CFLAGS) -c -o elements/elements_flvdemux-flvdemux.obj `if test -f 'elements/flvdemux.c'; then $(CYGPATH_W) 'elements/flvdemux.c'; else $(CYGPATH_W) '$(srcdir)/elements/flvdemux.c'; fi`
 
 elements/elements_gdkpixbufsink-gdkpixbufsink.o: elements/gdkpixbufsink.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(elements_gdkpixbufsink_CFLAGS) $(CFLAGS) -MT elements/elements_gdkpixbufsink-gdkpixbufsink.o -MD -MP -MF elements/$(DEPDIR)/elements_gdkpixbufsink-gdkpixbufsink.Tpo -c -o elements/elements_gdkpixbufsink-gdkpixbufsink.o `test -f 'elements/gdkpixbufsink.c' || echo '$(srcdir)/'`elements/gdkpixbufsink.c
@@ -3759,6 +3797,13 @@ elements/gdkpixbufsink.log: elements/gdkpixbufsink$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+elements/gdkpixbufoverlay.log: elements/gdkpixbufoverlay$(EXEEXT)
+	@p='elements/gdkpixbufoverlay$(EXEEXT)'; \
+	b='elements/gdkpixbufoverlay'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 elements/qtmux.log: elements/qtmux$(EXEEXT)
 	@p='elements/qtmux$(EXEEXT)'; \
 	b='elements/qtmux'; \
@@ -4330,31 +4375,26 @@ LOOPS ?= 10
 # if the test fails, run it again at at least debug level 2
 %.check: %
 	@$(AM_TESTS_ENVIRONMENT)					\
-	CK_DEFAULT_TIMEOUT=20					\
 	$* ||							\
 	$(AM_TESTS_ENVIRONMENT)					\
 	GST_DEBUG=$$GST_DEBUG,*:2				\
-	CK_DEFAULT_TIMEOUT=20					\
 	$*
 
 # just like 'check', but don't run it again if it fails (useful for debugging)
 %.check-norepeat: %
 	@$(AM_TESTS_ENVIRONMENT)					\
-	CK_DEFAULT_TIMEOUT=20					\
 	$*
 
 # run any given test in a loop
 %.torture: %
 	@for i in `seq 1 $(LOOPS)`; do				\
 	$(AM_TESTS_ENVIRONMENT)					\
-	CK_DEFAULT_TIMEOUT=20					\
 	$*; done
 
 # run any given test in an infinite loop
 %.forever: %
 	@while true; do						\
 	$(AM_TESTS_ENVIRONMENT)					\
-	CK_DEFAULT_TIMEOUT=20					\
 	$* || break; done
 
 # valgrind any given test by running make test.valgrind
@@ -4370,7 +4410,7 @@ LOOPS ?= 10
 	--show-possibly-lost=no                                 \
 	--leak-resolution=high --num-callers=20			\
 	./$* 2>&1 | tee $$valgrind_log ;			\
-	if grep "==" $$valgrind_log > /dev/null 2>&1; then	\
+	if grep "^==" $$valgrind_log > /dev/null 2>&1; then	\
 	    rm $$valgrind_log;					\
 	    exit 1;						\
 	fi ;							\

@@ -183,17 +183,9 @@ gst_jpeg_dec_class_init (GstJpegDecClass * klass)
 static boolean
 gst_jpeg_dec_fill_input_buffer (j_decompress_ptr cinfo)
 {
-  GstJpegDec *dec;
-
-  dec = CINFO_GET_JPEGDEC (cinfo);
-  g_return_val_if_fail (dec != NULL, FALSE);
-  g_return_val_if_fail (dec->current_frame != NULL, FALSE);
-  g_return_val_if_fail (dec->current_frame_map.data != NULL, FALSE);
-
-  cinfo->src->next_input_byte = dec->current_frame_map.data;
-  cinfo->src->bytes_in_buffer = dec->current_frame_map.size;
-
-  return TRUE;
+  /* We pass in full frame initially, if this get called, the frame is most likely
+   * corrupted */
+  return FALSE;
 }
 
 static void
@@ -1002,7 +994,9 @@ gst_jpeg_dec_handle_frame (GstVideoDecoder * bdec, GstVideoCodecFrame * frame)
 
   dec->current_frame = frame;
   gst_buffer_map (frame->input_buffer, &dec->current_frame_map, GST_MAP_READ);
-  gst_jpeg_dec_fill_input_buffer (&dec->cinfo);
+
+  dec->cinfo.src->next_input_byte = dec->current_frame_map.data;
+  dec->cinfo.src->bytes_in_buffer = dec->current_frame_map.size;
 
   if (setjmp (dec->jerr.setjmp_buffer)) {
     code = dec->jerr.pub.msg_code;
@@ -1108,6 +1102,12 @@ gst_jpeg_dec_handle_frame (GstVideoDecoder * bdec, GstVideoCodecFrame * frame)
           GST_MAP_READWRITE))
     goto alloc_failed;
 
+  if (setjmp (dec->jerr.setjmp_buffer)) {
+    code = dec->jerr.pub.msg_code;
+    gst_video_frame_unmap (&vframe);
+    goto decode_error;
+  }
+
   GST_LOG_OBJECT (dec, "width %d, height %d", width, height);
 
   if (dec->cinfo.jpeg_color_space == JCS_RGB) {
@@ -1140,6 +1140,11 @@ gst_jpeg_dec_handle_frame (GstVideoDecoder * bdec, GstVideoCodecFrame * frame)
   }
 
   gst_video_frame_unmap (&vframe);
+
+  if (setjmp (dec->jerr.setjmp_buffer)) {
+    code = dec->jerr.pub.msg_code;
+    goto decode_error;
+  }
 
   GST_LOG_OBJECT (dec, "decompressing finished");
   jpeg_finish_decompress (&dec->cinfo);

@@ -88,20 +88,15 @@
 
 #define PCM_CAPS \
   "audio/x-raw, " \
-  "format = (string) { S8, U8 }, " \
-  "layout = (string) interleaved, " \
-  COMMON_AUDIO_CAPS (2, MAX) "; " \
-  "audio/x-raw, " \
-  "format = (string) { S16LE, S16BE }, " \
+  "format = (string) { S16LE, S16BE, S8, U8 }, " \
   "layout = (string) interleaved, " \
   COMMON_AUDIO_CAPS (2, MAX)
 
 #define PCM_CAPS_FULL \
   "audio/x-raw, " \
-  "format = (string) { S32LE, S32BE, S24LE, S24BE }, " \
+  "format = (string) { S32LE, S32BE, S24LE, S24BE, S16LE, S16BE, S8, U8 }, " \
   "layout = (string) interleaved, " \
-  COMMON_AUDIO_CAPS (2, MAX) "; " \
-  PCM_CAPS
+  COMMON_AUDIO_CAPS (2, MAX)
 
 #define MP3_CAPS \
   "audio/mpeg, " \
@@ -136,6 +131,12 @@
 #define ALAC_CAPS \
   "audio/x-alac, " \
   COMMON_AUDIO_CAPS(2, MAX)
+
+#define OPUS_CAPS \
+  "audio/x-opus, " \
+  "channel-mapping-family = (int) [0, 255], " \
+  COMMON_AUDIO_CAPS(8, MAX)
+
 
 #define TEXT_UTF8 \
   "text/x-raw, " \
@@ -189,7 +190,8 @@ GstQTMuxFormatProp gst_qt_mux_format_list[] = {
         GST_STATIC_CAPS ("video/quicktime, variant = (string) iso"),
         GST_STATIC_CAPS (MPEG4V_CAPS "; " H264_CAPS ";"
             "video/x-mp4-part," COMMON_VIDEO_CAPS),
-        GST_STATIC_CAPS (MP3_CAPS "; " AAC_CAPS " ; " AC3_CAPS " ; " ALAC_CAPS),
+        GST_STATIC_CAPS (MP3_CAPS "; "
+            AAC_CAPS " ; " AC3_CAPS " ; " ALAC_CAPS " ; " OPUS_CAPS),
       GST_STATIC_CAPS (TEXT_UTF8)}
   ,
   /* Microsoft Smooth Streaming fmp4/isml */

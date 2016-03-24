@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>souphttpsrc: GStreamer Good Plugins 1.0 Plugins Reference Manual</title>
-<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
 <link rel="home" href="index.html" title="GStreamer Good Plugins 1.0 Plugins Reference Manual">
 <link rel="up" href="ch01.html" title="gst-plugins-good Elements">
 <link rel="prev" href="gst-plugins-good-plugins-smpte.html" title="smpte">
@@ -36,7 +36,7 @@
 </tr></table></div>
 <div class="refsect1">
 <a name="gst-plugins-good-plugins-souphttpsrc.properties"></a><h2>Properties</h2>
-<div class="informaltable"><table border="0">
+<div class="informaltable"><table class="informaltable" border="0">
 <colgroup>
 <col width="150px" class="properties_type">
 <col width="300px" class="properties_name">
@@ -164,12 +164,18 @@
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-souphttpsrc.html#GstSoupHTTPSrc--method" title="The “method” property">method</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
+<tr>
+<td class="property_type">
+<a href="https://developer.gnome.org/gio/unstable/GTlsInteraction.html"><span class="type">GTlsInteraction</span></a> *</td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-souphttpsrc.html#GstSoupHTTPSrc--tls-interaction" title="The “tls-interaction” property">tls-interaction</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
 </tbody>
 </table></div>
 </div>
 <a name="GstSoupHTTPSrc"></a><div class="refsect1">
 <a name="gst-plugins-good-plugins-souphttpsrc.other"></a><h2>Types and Values</h2>
-<div class="informaltable"><table width="100%" border="0">
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
 <colgroup>
 <col width="150px" class="name">
 <col class="description">
@@ -202,7 +208,7 @@ GstSoupHTTPSrc implements
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
 <div class="refsect2">
-<a name="id-1.2.158.8.2.1"></a><h3>Element Information</h3>
+<a name="id-1.2.159.8.2.1"></a><h3>Element Information</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -228,7 +234,7 @@ GstSoupHTTPSrc implements
 </div>
 <hr>
 <div class="refsect2">
-<a name="id-1.2.158.8.2.2"></a><h3>Element Pads</h3>
+<a name="id-1.2.159.8.2.2"></a><h3>Element Pads</h3>
 <div class="variablelist"><table border="0" class="variablelist">
 <colgroup>
 <col align="left" valign="top">
@@ -442,6 +448,13 @@ GstSoupHTTPSrc implements
 <p>The HTTP method to use (GET, HEAD, OPTIONS, etc).</p>
 <p>Flags: Read / Write</p>
 <p>Default value: NULL</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstSoupHTTPSrc--tls-interaction"></a><h3>The <code class="literal">“tls-interaction”</code> property</h3>
+<pre class="programlisting">  “tls-interaction”          <a href="https://developer.gnome.org/gio/unstable/GTlsInteraction.html"><span class="type">GTlsInteraction</span></a> *</pre>
+<p>A GTlsInteraction object to be used when the connection or certificate database need to interact with the user.</p>
+<p>Flags: Read / Write</p>
 </div>
 </div>
 </div>

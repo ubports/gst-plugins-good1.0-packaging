@@ -33,9 +33,8 @@ GObject
           GstMuLawEnc
           GstSpeexEnc
           GstWavpackEnc
-        GstAudioVisualizer-ExtGoom
+        GstAudioVisualizer
           GstGoom
-        GstAudioVisualizer-ExtGoom2k1
           GstGoom2k1
         GstAviDemux
         GstAviMux
@@ -186,6 +185,7 @@ GObject
           GstRTPBVDepay
           GstRTPDVDepay
           GstRTPGSMDepay
+          GstRTPOpusDepay
           GstRTPSirenDepay
           GstRTPiLBCDepay
           GstRtpAC3Depay
@@ -201,6 +201,7 @@ GObject
           GstRtpH263Depay
           GstRtpH263PDepay
           GstRtpH264Depay
+          GstRtpH265Depay
           GstRtpJ2KDepay
           GstRtpJPEGDepay
           GstRtpKlvDepay
@@ -223,6 +224,7 @@ GObject
           GstRtpSbcDepay
           GstRtpTheoraDepay
           GstRtpVP8Depay
+          GstRtpVP9Depay
           GstRtpVRawDepay
           GstRtpVorbisDepay
           GstRtpXQTDepay
@@ -251,6 +253,7 @@ GObject
           GstRtpH263PPay
           GstRtpH263Pay
           GstRtpH264Pay
+          GstRtpH265Pay
           GstRtpJ2KPay
           GstRtpJPEGPay
           GstRtpKlvPay
@@ -258,10 +261,12 @@ GObject
           GstRtpMP4GPay
           GstRtpMP4VPay
           GstRtpMPAPay
+          GstRtpOPUSPay
           GstRtpSBCPay
           GstRtpSPEEXPay
           GstRtpTheoraPay
           GstRtpVP8Pay
+          GstRtpVP9Pay
           GstRtpVRawPay
           GstRtpVorbisPay
         GstRTPDec
@@ -288,13 +293,15 @@ GObject
         GstVideoDecoder
           GstJpegDec
           GstPngDec
-          GstVP8Dec
-          GstVP9Dec
+          GstVPXDec
+            GstVP8Dec
+            GstVP9Dec
         GstVideoEncoder
           GstJpegEnc
           GstPngEnc
-          GstVP8Enc
-          GstVP9Enc
+          GstVPXEnc
+            GstVP8Enc
+            GstVP9Enc
           GstY4mEncode
         GstVideoMixer2
         GstWavEnc
@@ -307,6 +314,7 @@ GObject
       GstPluginFeature
         GstDeviceProviderFactory
         GstElementFactory
+        GstTracerFactory
         GstTypeFindFactory
       GstRegistry
       GstTask
@@ -314,8 +322,6 @@ GObject
   GSocket
   GTlsDatabase
   GTlsInteraction
-  GUdevClient
-  GUdevDevice
   GdkPixbuf
   GstColorBalanceChannel
   GstTunerChannel

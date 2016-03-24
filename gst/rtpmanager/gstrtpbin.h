@@ -69,6 +69,10 @@ struct _GstRtpBin {
   GstClockTime    buffer_start;
   gboolean        do_retransmission;
   GstRTPProfile   rtp_profile;
+  gboolean        rtcp_sync_send_time;
+  gint            max_rtcp_rtp_time_diff;
+  guint32         max_dropout_time;
+  guint32         max_misorder_time;
 
   /* a list of session */
   GSList         *sessions;
@@ -96,6 +100,7 @@ struct _GstRtpBinClass {
   /* action signals */
   void        (*clear_pt_map)         (GstRtpBin *rtpbin);
   void        (*reset_sync)           (GstRtpBin *rtpbin);
+  GstElement* (*get_session)          (GstRtpBin *rtpbin, guint session);
   RTPSession* (*get_internal_session) (GstRtpBin *rtpbin, guint session);
 
   /* session manager signals */
@@ -117,6 +122,9 @@ struct _GstRtpBinClass {
 
   GstElement* (*request_aux_sender)   (GstRtpBin *rtpbin, guint session);
   GstElement* (*request_aux_receiver) (GstRtpBin *rtpbin, guint session);
+
+  void     (*on_new_sender_ssrc)      (GstRtpBin *rtpbin, guint session, guint32 ssrc);
+  void     (*on_sender_ssrc_active)   (GstRtpBin *rtpbin, guint session, guint32 ssrc);
 };
 
 GType gst_rtp_bin_get_type (void);
