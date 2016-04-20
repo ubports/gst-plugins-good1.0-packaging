@@ -1,6 +1,6 @@
 @GST_LIB_DEV_DEP@
 @GST_EXTRA_BUILD_DEPENDS@
-libgstreamer-plugins-base@GST_ABI@-dev (>= 1.8.0)
+libgstreamer-plugins-base@GST_ABI@-dev (>= 1.8.1)
 autotools-dev
 dh-autoreconf
 automake (>= 1.14)
