@@ -5,9 +5,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: gst-plugins-good 1.8.0\n"
+"Project-Id-Version: gst-plugins-good 1.8.1\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/\n"
-"POT-Creation-Date: 2016-03-24 11:27+0200\n"
+"POT-Creation-Date: 2016-04-20 15:30+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -28,7 +28,7 @@ msgid "Failed to decode JPEG image"
 msgstr ""
 
 #. TRANSLATORS: 'song title' by 'artist name'
-#: ext/pulse/pulsesink.c:3133
+#: ext/pulse/pulsesink.c:3127
 #, c-format
 msgid "'%s' by '%s'"
 msgstr ""
@@ -78,35 +78,35 @@ msgstr ""
 msgid "This file contains no playable streams."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:695 gst/isomp4/qtdemux.c:5745 gst/isomp4/qtdemux.c:5812
-#: gst/isomp4/qtdemux.c:6081
+#: gst/isomp4/qtdemux.c:695 gst/isomp4/qtdemux.c:5748 gst/isomp4/qtdemux.c:5815
+#: gst/isomp4/qtdemux.c:6084
 msgid "This file is invalid and cannot be played."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:2492
+#: gst/isomp4/qtdemux.c:2495
 msgid "Cannot play stream because it is encrypted with PlayReady DRM."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:3578 gst/isomp4/qtdemux.c:6814
-#: gst/isomp4/qtdemux.c:6821 gst/isomp4/qtdemux.c:7634
-#: gst/isomp4/qtdemux.c:8063 gst/isomp4/qtdemux.c:8070
-#: gst/isomp4/qtdemux.c:10420
+#: gst/isomp4/qtdemux.c:3581 gst/isomp4/qtdemux.c:6817
+#: gst/isomp4/qtdemux.c:6824 gst/isomp4/qtdemux.c:7637
+#: gst/isomp4/qtdemux.c:8066 gst/isomp4/qtdemux.c:8073
+#: gst/isomp4/qtdemux.c:10423
 msgid "This file is corrupt and cannot be played."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:3820
+#: gst/isomp4/qtdemux.c:3823
 msgid "Invalid atom size."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:3898
+#: gst/isomp4/qtdemux.c:3901
 msgid "This file is incomplete and cannot be played."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:9029
+#: gst/isomp4/qtdemux.c:9032
 msgid "The video in this file might not play correctly."
 msgstr ""
 
-#: gst/isomp4/qtdemux.c:10461
+#: gst/isomp4/qtdemux.c:10464
 #, c-format
 msgid "This file contains too many streams. Only playing first %d"
 msgstr ""
@@ -115,13 +115,13 @@ msgstr ""
 msgid "Internal data flow error."
 msgstr ""
 
-#: gst/rtsp/gstrtspsrc.c:6354
+#: gst/rtsp/gstrtspsrc.c:6381
 msgid ""
 "No supported stream was found. You might need to install a GStreamer RTSP "
 "extension plugin for Real media streams."
 msgstr ""
 
-#: gst/rtsp/gstrtspsrc.c:6359
+#: gst/rtsp/gstrtspsrc.c:6386
 msgid ""
 "No supported stream was found. You might need to allow more transport "
 "protocols or may otherwise be missing the right GStreamer RTSP extension "
