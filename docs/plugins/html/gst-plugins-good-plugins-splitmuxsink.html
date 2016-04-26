@@ -77,6 +77,11 @@
 <td class="property_name"><a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink--sink" title="The “sink” property">sink</a></td>
 <td class="property_flags">Read / Write</td>
 </tr>
+<tr>
+<td class="property_type"><a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint"><span class="type">guint</span></a></td>
+<td class="property_name"><a class="link" href="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink--max-files" title="The “max-files” property">max-files</a></td>
+<td class="property_flags">Read / Write</td>
+</tr>
 </tbody>
 </table></div>
 </div>
@@ -320,6 +325,14 @@ and 1MB maximum size.
 <pre class="programlisting">  “sink”                     <a href="/usr/share/gtk-doc/html/gstreamer-1.0GstElement.html#GstElement-struct"><span class="type">GstElement</span></a> *</pre>
 <p>The sink element (or element chain) to use (NULL = default filesink).</p>
 <p>Flags: Read / Write</p>
+</div>
+<hr>
+<div class="refsect2">
+<a name="GstSplitMuxSink--max-files"></a><h3>The <code class="literal">“max-files”</code> property</h3>
+<pre class="programlisting">  “max-files”                <a href="/usr/share/gtk-doc/html/glibglib-Basic-Types.html#guint"><span class="type">guint</span></a></pre>
+<p>Maximum number of files to keep on disk. Once the maximum is reached,old files start to be deleted to make room for new ones.</p>
+<p>Flags: Read / Write</p>
+<p>Default value: 0</p>
 </div>
 </div>
 <div class="refsect1">

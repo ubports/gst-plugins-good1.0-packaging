@@ -1089,6 +1089,7 @@
     <keyword type="property" name="The “mux-overhead” property" link="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink--mux-overhead"/>
     <keyword type="property" name="The “muxer” property" link="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink--muxer"/>
     <keyword type="property" name="The “sink” property" link="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink--sink"/>
+    <keyword type="property" name="The “max-files” property" link="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink--max-files"/>
     <keyword type="signal" name="The “format-location” signal" link="gst-plugins-good-plugins-splitmuxsink.html#GstSplitMuxSink-format-location"/>
     <keyword type="struct" name="struct GstSplitMuxSrc" link="gst-plugins-good-plugins-splitmuxsrc.html#GstSplitMuxSrc-struct"/>
     <keyword type="property" name="The “location” property" link="gst-plugins-good-plugins-splitmuxsrc.html#GstSplitMuxSrc--location"/>
