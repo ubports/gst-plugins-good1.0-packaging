@@ -248,6 +248,7 @@ gst_splitmux_sink_init (GstSplitMuxSink * splitmux)
   splitmux->max_files = DEFAULT_MAX_FILES;
 
   GST_OBJECT_FLAG_SET (splitmux, GST_ELEMENT_FLAG_SINK);
+  g_object_set (splitmux, "async-handling", TRUE, NULL);
 }
 
 static void
@@ -590,7 +591,7 @@ handle_mq_output (GstPad * pad, GstPadProbeInfo * info, MqStreamCtx * ctx)
   GstSplitMuxSink *splitmux = ctx->splitmux;
   MqStreamBuf *buf_info = NULL;
 
-  GST_LOG_OBJECT (pad, "Fired probe type 0x%x\n", info->type);
+  GST_LOG_OBJECT (pad, "Fired probe type 0x%x", info->type);
 
   /* FIXME: Handle buffer lists, until then make it clear they won't work */
   if (info->type & GST_PAD_PROBE_TYPE_BUFFER_LIST) {
@@ -755,13 +756,17 @@ static void
 start_next_fragment (GstSplitMuxSink * splitmux)
 {
   /* 1 change to new file */
+  gst_element_set_locked_state (splitmux->muxer, TRUE);
+  gst_element_set_locked_state (splitmux->active_sink, TRUE);
   gst_element_set_state (splitmux->muxer, GST_STATE_NULL);
   gst_element_set_state (splitmux->active_sink, GST_STATE_NULL);
 
   set_next_filename (splitmux);
 
-  gst_element_sync_state_with_parent (splitmux->active_sink);
-  gst_element_sync_state_with_parent (splitmux->muxer);
+  gst_element_set_state (splitmux->active_sink, GST_STATE_TARGET (splitmux));
+  gst_element_set_state (splitmux->muxer, GST_STATE_TARGET (splitmux));
+  gst_element_set_locked_state (splitmux->muxer, FALSE);
+  gst_element_set_locked_state (splitmux->active_sink, FALSE);
 
   g_list_foreach (splitmux->contexts, (GFunc) restart_context, splitmux);
 
@@ -941,6 +946,11 @@ check_completed_gop (GstSplitMuxSink * splitmux, MqStreamCtx * ctx)
       handle_gathered_gop (splitmux);
     }
   }
+
+  /* If upstream reached EOS we are not expecting more data, no need to wait
+   * here. */
+  if (ctx->in_eos)
+    return;
 
   /* Some pad is not yet ready, or GOP is being pushed
    * either way, sleep and wait to get woken */
