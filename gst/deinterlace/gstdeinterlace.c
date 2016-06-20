@@ -148,7 +148,7 @@ static const GEnumValue methods_types[] = {
       "greedyh"},
   {GST_DEINTERLACE_GREEDY_L, "Motion Adaptive: Simple Detection", "greedyl"},
   {GST_DEINTERLACE_VFIR, "Blur Vertical", "vfir"},
-  {GST_DEINTERLACE_LINEAR, "Television: Full resolution", "linear"},
+  {GST_DEINTERLACE_LINEAR, "Linear", "linear"},
   {GST_DEINTERLACE_LINEAR_BLEND, "Blur: Temporal (Do Not Use)",
       "linearblend"},
   {GST_DEINTERLACE_SCALER_BOB, "Double lines", "scalerbob"},
@@ -2519,6 +2519,7 @@ gst_deinterlace_setcaps (GstDeinterlace * self, GstPad * pad, GstCaps * caps)
       return TRUE;
     }
     gst_deinterlace_reset_history (self, FALSE);
+    gst_caps_unref (current_caps);
   }
 
   if (self->locking != GST_DEINTERLACE_LOCKING_NONE) {

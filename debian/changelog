@@ -1,3 +1,9 @@
+gst-plugins-good1.0 (1.8.2-1) unstable; urgency=medium
+
+  * New upstream bugfix release.
+
+ -- Sebastian Dröge <slomo@debian.org>  Thu, 09 Jun 2016 11:26:53 +0300
+
 gst-plugins-good1.0 (1.8.1-1ubuntu1) yakkety; urgency=medium
 
   * Merge with Debian unstable (LP: #1575152); remaining changes:
