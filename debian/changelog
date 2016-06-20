@@ -1,3 +1,9 @@
+gst-plugins-good1.0 (1.8.2-1ubuntu0.1) xenial; urgency=medium
+
+  * No-change backport to 16.04
+
+ -- Iain Lane <iain.lane@canonical.com>  Mon, 20 Jun 2016 17:50:12 +0100
+
 gst-plugins-good1.0 (1.8.2-1ubuntu1) yakkety; urgency=medium
 
   * Merge with Debian unstable (LP: #1594407); remaining changes:
