@@ -374,6 +374,16 @@ gst_rtp_h265_pay_getcaps (GstRTPBasePayload * payload, GstPad * pad,
 
 done:
 
+  if (filter) {
+    GstCaps *tmp;
+
+    GST_DEBUG_OBJECT (payload, "Intersect %" GST_PTR_FORMAT " and filter %"
+        GST_PTR_FORMAT, caps, filter);
+    tmp = gst_caps_intersect_full (filter, caps, GST_CAPS_INTERSECT_FIRST);
+    gst_caps_unref (caps);
+    caps = tmp;
+  }
+
   gst_caps_unref (template_caps);
   gst_caps_unref (allowed_caps);
 
@@ -822,7 +832,7 @@ gst_rtp_h265_pay_decode_nal (GstRtpH265Pay * payloader,
   GST_DEBUG ("NAL payload len=%u", size);
 
   header = data[0];
-  type = header & 0x3f;
+  type = (header & 0x7e) >> 1;
 
   /* We record the timestamp of the last SPS/PPS so
    * that we can insert them at regular intervals and when needed. */

@@ -7207,6 +7207,8 @@ gst_qtdemux_configure_stream (GstQTDemux * qtdemux, QtDemuxStream * stream)
   }
 
   if (stream->pad) {
+    GstCaps *prev_caps = NULL;
+
     GST_PAD_ELEMENT_PRIVATE (stream->pad) = stream;
     gst_pad_set_event_function (stream->pad, gst_qtdemux_handle_src_event);
     gst_pad_set_query_function (stream->pad, gst_qtdemux_handle_src_query);
@@ -7222,7 +7224,6 @@ gst_qtdemux_configure_stream (GstQTDemux * qtdemux, QtDemuxStream * stream)
       }
     }
 
-    GST_DEBUG_OBJECT (qtdemux, "setting caps %" GST_PTR_FORMAT, stream->caps);
     if (stream->new_stream) {
       gchar *stream_id;
       GstEvent *event;
@@ -7258,7 +7259,18 @@ gst_qtdemux_configure_stream (GstQTDemux * qtdemux, QtDemuxStream * stream)
       gst_pad_push_event (stream->pad, event);
       g_free (stream_id);
     }
-    gst_pad_set_caps (stream->pad, stream->caps);
+
+    prev_caps = gst_pad_get_current_caps (stream->pad);
+
+    if (!prev_caps || !gst_caps_is_equal_fixed (prev_caps, stream->caps)) {
+      GST_DEBUG_OBJECT (qtdemux, "setting caps %" GST_PTR_FORMAT, stream->caps);
+      gst_pad_set_caps (stream->pad, stream->caps);
+    } else {
+      GST_DEBUG_OBJECT (qtdemux, "ignore duplicated caps");
+    }
+
+    if (prev_caps)
+      gst_caps_unref (prev_caps);
     stream->new_caps = FALSE;
   }
   return TRUE;
@@ -12304,6 +12316,55 @@ gst_qtdemux_handle_esds (GstQTDemux * qtdemux, QtDemuxStream * stream,
       if (data_ptr != NULL && data_len >= 2) {
         gst_codec_utils_aac_caps_set_level_and_profile (stream->caps,
             data_ptr, data_len);
+      } else {
+        const gchar *profile_str = NULL;
+        GstBuffer *buffer;
+        GstMapInfo map;
+        guint8 *codec_data;
+        gint rate_idx, profile;
+
+        /* No codec_data, let's invent something.
+         * FIXME: This is wrong for SBR! */
+
+        GST_WARNING_OBJECT (qtdemux, "No codec_data for AAC available");
+
+        buffer = gst_buffer_new_and_alloc (2);
+        gst_buffer_map (buffer, &map, GST_MAP_WRITE);
+        codec_data = map.data;
+
+        rate_idx =
+            gst_codec_utils_aac_get_index_from_sample_rate (stream->rate);
+
+        switch (object_type_id) {
+          case 0x66:
+            profile_str = "main";
+            profile = 0;
+            break;
+          case 67:
+            profile_str = "lc";
+            profile = 1;
+            break;
+          case 68:
+            profile_str = "ssr";
+            profile = 2;
+            break;
+          default:
+            profile = 3;
+            break;
+        }
+
+        codec_data[0] = ((profile + 1) << 3) | ((rate_idx & 0xE) >> 1);
+        codec_data[1] = ((rate_idx & 0x1) << 7) | (stream->n_channels << 3);
+
+        gst_buffer_unmap (buffer, &map);
+        gst_caps_set_simple (stream->caps, "codec_data", GST_TYPE_BUFFER,
+            buffer, NULL);
+        gst_buffer_unref (buffer);
+
+        if (profile_str) {
+          gst_caps_set_simple (stream->caps, "profile", G_TYPE_STRING,
+              profile_str, NULL);
+        }
       }
       break;
     case 0x60:                 /* MPEG-2, various profiles */
