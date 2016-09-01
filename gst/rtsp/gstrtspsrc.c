@@ -2156,9 +2156,8 @@ gst_rtspsrc_perform_seek (GstRTSPSrc * src, GstEvent * event)
   if ((stop = seeksegment.stop) == -1)
     stop = seeksegment.duration;
 
-  playing = (src->state == GST_RTSP_STATE_PLAYING);
-
   /* if we were playing, pause first */
+  playing = (src->state == GST_RTSP_STATE_PLAYING);
   if (playing) {
     /* obtain current position in case seek fails */
     gst_rtspsrc_get_position (src);
@@ -2170,10 +2169,6 @@ gst_rtspsrc_perform_seek (GstRTSPSrc * src, GstEvent * event)
 
   /* PLAY will add the range header now. */
   src->need_range = TRUE;
-
-  /* and continue playing */
-  if (playing)
-    gst_rtspsrc_play (src, &seeksegment, FALSE);
 
   /* prepare for streaming again */
   if (flush) {
@@ -2202,6 +2197,15 @@ gst_rtspsrc_perform_seek (GstRTSPSrc * src, GstEvent * event)
     GstRTSPStream *stream = (GstRTSPStream *) walk->data;
     stream->discont = TRUE;
   }
+
+  /* and continue playing if needed */
+  GST_OBJECT_LOCK (src);
+  playing = (GST_STATE_PENDING (src) == GST_STATE_VOID_PENDING
+      && GST_STATE (src) == GST_STATE_PLAYING)
+      || (GST_STATE_PENDING (src) == GST_STATE_PLAYING);
+  GST_OBJECT_UNLOCK (src);
+  if (playing)
+    gst_rtspsrc_play (src, &seeksegment, FALSE);
 
   GST_RTSP_STREAM_UNLOCK (src);
 
@@ -4852,26 +4856,30 @@ gst_rtspsrc_reconnect (GstRTSPSrc * src, gboolean async)
   if (!restart)
     goto done;
 
-  /* we can try only TCP now */
-  src->cur_protocols = GST_RTSP_LOWER_TRANS_TCP;
+  /* unless redirect, try tcp */
+  if (!src->need_redirect)
+    src->cur_protocols = GST_RTSP_LOWER_TRANS_TCP;
 
   /* close and cleanup our state */
   if ((res = gst_rtspsrc_close (src, async, FALSE)) < 0)
     goto done;
 
-  /* see if we have TCP left to try. Also don't try TCP when we were configured
-   * with an SDP. */
-  if (!(src->protocols & GST_RTSP_LOWER_TRANS_TCP) || src->from_sdp)
+  /* unless redirect, see if we have TCP left to try. Also don't 
+   * try TCP when we were configured with an SDP. */
+  if (!src->need_redirect && (!(src->protocols & GST_RTSP_LOWER_TRANS_TCP)
+          || src->from_sdp))
     goto no_protocols;
 
-  /* We post a warning message now to inform the user
-   * that nothing happened. It's most likely a firewall thing. */
-  GST_ELEMENT_WARNING (src, RESOURCE, READ, (NULL),
-      ("Could not receive any UDP packets for %.4f seconds, maybe your "
-          "firewall is blocking it. Retrying using a TCP connection.",
-          gst_guint64_to_gdouble (src->udp_timeout / 1000000.0)));
+  if (!src->need_redirect) {
+    /* We post a warning message now to inform the user
+     * that nothing happened. It's most likely a firewall thing. */
+    GST_ELEMENT_WARNING (src, RESOURCE, READ, (NULL),
+        ("Could not receive any UDP packets for %.4f seconds, maybe your "
+            "firewall is blocking it. Retrying using a tcp connection.",
+            gst_guint64_to_gdouble (src->udp_timeout / 1000000.0)));
+  }
 
-  /* open new connection using tcp */
+  /* unless redirect, open new connection using tcp */
   if (gst_rtspsrc_open (src, async) < 0)
     goto open_failed;
 
@@ -6760,8 +6768,24 @@ restart:
   /* could not be set but since the request returned OK, we assume it
    * was SDP, else check it. */
   if (respcont) {
-    if (g_ascii_strcasecmp (respcont, "application/sdp") != 0)
+    const gchar *props = strchr (respcont, ';');
+
+    if (props) {
+      gchar *mimetype = g_strndup (respcont, props - respcont);
+
+      mimetype = g_strstrip (mimetype);
+      if (g_ascii_strcasecmp (mimetype, "application/sdp") != 0) {
+        g_free (mimetype);
+        goto wrong_content_type;
+      }
+
+      /* TODO: Check for charset property and do conversions of all messages if
+       * needed. Some servers actually send that property */
+
+      g_free (mimetype);
+    } else if (g_ascii_strcasecmp (respcont, "application/sdp") != 0) {
       goto wrong_content_type;
+    }
   }
 
   /* get message body and parse as SDP */
