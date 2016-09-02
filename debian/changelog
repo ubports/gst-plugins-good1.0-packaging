@@ -1,3 +1,25 @@
+gst-plugins-good1.0 (1.8.3-1ubuntu1) yakkety; urgency=medium
+
+  * Merge with Debian unstable; remaining changes:
+    + Import plugins from -bad that are needed for main applications.
+      - jpegformat
+      - camerabin2 (+ basecamerabinsrc + photography)
+    + Break and Replace -bad versions which contained these plugins.
+    + Add a library package containing the shared library and a -dev package for
+      compiling against it. Add Breaks and Replaces against the plugins packages
+      which formerly contained files shipped here.
+    + Add 'pluginsdir' variable to our added pcfile for compatibility with
+      some external software
+    + debian/control{,.in}: Update Vcs-* for Ubuntu
+
+ -- Iain Lane <iain.lane@canonical.com>  Thu, 01 Sep 2016 12:43:36 +0100
+
+gst-plugins-good1.0 (1.8.3-1) unstable; urgency=medium
+
+  * New upstream bugfix release.
+
+ -- Sebastian Dröge <slomo@debian.org>  Fri, 19 Aug 2016 11:59:24 +0300
+
 gst-plugins-good1.0 (1.8.2-1ubuntu0.1) xenial; urgency=medium
 
   * No-change backport to 16.04
