@@ -2,3 +2,5 @@ add-pkgconfig-file
 import-camerabin
 import-jpegformat
 qtdemux-Set-maximum-sample-input-size-in-caps.patch
+flxdec-bounds1.patch
+flxdec-bounds2.patch
