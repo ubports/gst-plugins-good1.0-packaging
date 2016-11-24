@@ -1,3 +1,9 @@
+gst-plugins-good1.0 (1.8.3-1ubuntu0.2) xenial; urgency=medium
+
+  * Rebase on top of security update.
+
+ -- Iain Lane <iain.lane@canonical.com>  Thu, 24 Nov 2016 18:03:23 +0000
+
 gst-plugins-good1.0 (1.8.3-1ubuntu0.1) xenial; urgency=medium
 
   * No-change backport from yakkety to 16.04 (LP: #1619600)
