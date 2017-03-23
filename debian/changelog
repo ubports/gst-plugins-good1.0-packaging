@@ -1,3 +1,28 @@
+gst-plugins-good1.0 (1.8.3-1ubuntu0.4) xenial-security; urgency=medium
+
+  * SECURITY UPDATE: DoS in gst_aac_parse_sink_setcaps
+    - debian/patches/CVE-2016-10198.patch: make sure there's enough data in
+      gst/audioparsers/gstaacparse.c.
+    - CVE-2016-10198
+  * SECURITY UPDATE: DoS in qtdemux_tag_add_str_full
+    - debian/patches/CVE-2016-10199.patch: fix out of bounds read in
+      gst/isomp4/qtdemux.c.
+    - CVE-2016-10199
+  * SECURITY UPDATE: DoS in qtdemux_parse_samples
+    - debian/patches/CVE-2017-5840.patch: properly increment stts index in
+      gst/isomp4/qtdemux.c.
+    - CVE-2017-5840
+  * SECURITY UPDATE: DoS in gst_avi_demux_parse_ncdt
+    - debian/patches/CVE-2017-5841.patch: fix out of bounds reads in
+      gst/avi/gstavidemux.c.
+    - CVE-2017-5841
+  * SECURITY UPDATE: DoS in gst_avi_demux_parse_ncdt
+    - debian/patches/CVE-2017-5845.patch: check size in
+      gst/avi/gstavidemux.c.
+    - CVE-2017-5845
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Thu, 23 Mar 2017 10:23:46 -0400
+
 gst-plugins-good1.0 (1.8.3-1ubuntu0.3) xenial; urgency=medium
 
   * Rebase on top of security update again.

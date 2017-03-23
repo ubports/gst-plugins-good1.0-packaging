@@ -6,3 +6,8 @@ flxdec-bounds1.patch
 flxdec-bounds2.patch
 flxdec-bounds3.patch
 flxdec-bounds4.patch
+CVE-2016-10198.patch
+CVE-2016-10199.patch
+CVE-2017-5840.patch
+CVE-2017-5841.patch
+CVE-2017-5845.patch
