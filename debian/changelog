@@ -1,3 +1,7 @@
+gst-plugins-good1.0 (1.8.3-1ubuntu0.4ubports1) UNRELEASED; urgency=medium
+
+ -- Ratchanan Srirattanamet <peathot@hotmail.com>  Sun, 22 Sep 2019 14:46:35 +0700
+
 gst-plugins-good1.0 (1.8.3-1ubuntu0.4) xenial-security; urgency=medium
 
   * SECURITY UPDATE: DoS in gst_aac_parse_sink_setcaps
