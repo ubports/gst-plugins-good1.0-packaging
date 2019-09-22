@@ -1,6 +1,11 @@
-gst-plugins-good1.0 (1.8.3-1ubuntu0.4ubports1) UNRELEASED; urgency=medium
+gst-plugins-good1.0 (1.8.3-1ubuntu0.4ubports1) xenial; urgency=medium
 
- -- Ratchanan Srirattanamet <peathot@hotmail.com>  Sun, 22 Sep 2019 14:46:35 +0700
+  * Import to UBports
+  * Add a patch for video orientation with QtMultimedia
+    - debian/patches/qtmux-write-rotation-information-into-the-TKHD-matri.patch:
+      qtmux: write rotation information into the TKHD matrix
+
+ -- Ratchanan Srirattanamet <peathot@hotmail.com>  Sun, 22 Sep 2019 22:26:48 +0700
 
 gst-plugins-good1.0 (1.8.3-1ubuntu0.4) xenial-security; urgency=medium
 
