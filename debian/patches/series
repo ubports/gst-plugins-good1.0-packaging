@@ -11,3 +11,4 @@ CVE-2016-10199.patch
 CVE-2017-5840.patch
 CVE-2017-5841.patch
 CVE-2017-5845.patch
+qtmux-write-rotation-information-into-the-TKHD-matri.patch
